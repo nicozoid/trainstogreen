@@ -110,7 +110,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 
 // Draws a rating icon onto a canvas and returns the pixel data Mapbox needs.
 // Using canvas (rather than SVG files) means no extra assets to load.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle', color: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'hexagon', color: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -141,6 +141,23 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     // Filled circle — used for "not recommended" or similar neutral ratings
     ctx.beginPath()
     ctx.arc(12, 12, 7, 0, Math.PI * 2)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = '#ffffff'
+    ctx.lineWidth = STATION_STROKE_WIDTH
+    ctx.stroke()
+  } else if (shape === 'hexagon') {
+    // Regular hexagon — 6 vertices evenly spaced around the centre
+    ctx.beginPath()
+    const cx = 12, cy = 12, hexR = 9
+    for (let i = 0; i < 6; i++) {
+      // -π/6 rotates so the hexagon has a flat top edge (not a pointy top)
+      const angle = (i * Math.PI) / 3 - Math.PI / 6
+      const x = cx + hexR * Math.cos(angle)
+      const y = cy + hexR * Math.sin(angle)
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
+    }
+    ctx.closePath()
     ctx.fillStyle = color
     ctx.fill()
     ctx.strokeStyle = '#ffffff'
@@ -397,6 +414,11 @@ export default function HikeMap() {
       setSelectedStation(null)
       return
     }
+    // London hexagon marker — open the welcome banner instead of station modal
+    if (feature.properties?.isLondon) {
+      setBannerVisible(true)
+      return
+    }
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
     setHovered(null)
     setSelectedStation({
@@ -445,6 +467,8 @@ export default function HikeMap() {
     map.addImage('icon-unrated',         createRatingIcon('circle',        colors.accent), { pixelRatio: dpr })
     map.addImage('icon-unverified',      createRatingIcon('triangle-up',  colors.accent), { pixelRatio: dpr })
     map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.accent), { pixelRatio: dpr })
+    // Green-900 hexagon for the London origin marker
+    map.addImage('icon-london',          createRatingIcon('hexagon',       '#608a70'),      { pixelRatio: dpr })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -635,7 +659,7 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["station-hit-area"]}
+        interactiveLayerIds={["station-hit-area", "london-hit-area"]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -698,6 +722,67 @@ export default function HikeMap() {
               "line-opacity": hovered ? 0.5 : 0,
               "line-opacity-transition": { duration: 300 },
               "line-dasharray": [4, 3],
+            }}
+          />
+        </Source>
+
+        {/* London origin marker — hexagon at Farringdon, opens welcome banner on click */}
+        <Source
+          id="london-marker"
+          type="geojson"
+          data={{
+            type: "FeatureCollection",
+            features: [{
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [LONDON_CENTRE.lng, LONDON_CENTRE.lat] },
+              properties: { isLondon: true, coordKey: "london" },
+            }],
+          }}
+        >
+          <Layer
+            id="london-icon"
+            type="symbol"
+            layout={{
+              "icon-image": "icon-london",
+              "icon-allow-overlap": true,
+              "icon-ignore-placement": true,
+              "icon-size": hovered?.coordKey === "london" ? 1.3 : 1,
+            }}
+          />
+          {/* Hover label — only appears when the London hexagon is hovered,
+              same pattern as station-label-hover */}
+          {hovered?.coordKey === "london" && (
+            <Layer
+              id="london-label"
+              type="symbol"
+              layout={{
+                "text-field": [
+                  "format",
+                  "London", { "font-scale": 1 },
+                  "\n", {},
+                  "time to escape", { "font-scale": 0.8 },
+                ],
+                "text-size": 11,
+                "text-offset": [0, 1.4],
+                "text-anchor": "top",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+              }}
+              paint={{
+                "text-color": "#166534",
+                "text-halo-color": "#fff",
+                "text-halo-width": 1.5,
+              }}
+            />
+          )}
+          {/* Invisible hit area for click detection */}
+          <Layer
+            id="london-hit-area"
+            type="circle"
+            paint={{
+              "circle-radius": 16,
+              "circle-color": "#000000",
+              "circle-opacity": 0.01,
             }}
           />
         </Source>
