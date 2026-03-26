@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Map, { Layer, MapMouseEvent, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
+import { WelcomeBanner } from "@/components/welcome-banner"
 import StationModal from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
 import { colors } from "@/lib/tokens"
@@ -181,6 +182,7 @@ export default function HikeMap() {
   const [maxMinutes, setMaxMinutes] = useState(120)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
+  const [bannerVisible, setBannerVisible] = useState(true)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
   // Tracks stations excluded this session — keyed by OSM node ID so two stations
   // with the same name (e.g. Newport Essex vs Newport Wales) are treated separately
@@ -356,20 +358,36 @@ export default function HikeMap() {
     return createCircleGeoJSON(radiusPos.lng, radiusPos.lat, OUTER_RADIUS_KM)
   }, [radiusPos, emptyPolygon])
 
-  // Fires when the cursor moves over a station dot.
-  // MapMouseEvent gives us pixel coords (point) and the features under the cursor.
-  const handleMouseEnter = useCallback((e: MapMouseEvent) => {
+  // Tracks which station is currently hovered without triggering re-renders.
+  // We compare against this ref in onMouseMove to skip redundant state updates.
+  const hoveredRef = useRef<string | null>(null)
+
+  // Fires on every cursor movement over the map.
+  // Unlike onMouseEnter (which is layer-level and won't re-fire when moving
+  // between features in the same layer), onMouseMove always reports whatever
+  // feature is under the cursor — so hover updates correctly between stations.
+  const handleMouseMove = useCallback((e: MapMouseEvent) => {
     const feature = e.features?.[0]
-    if (!feature) return
-    // feature.geometry is typed as Geometry (abstract), so we cast to access coordinates
+    if (!feature) {
+      if (hoveredRef.current !== null) {
+        hoveredRef.current = null
+        setHovered(null)
+      }
+      return
+    }
+    const coordKey = feature.properties?.coordKey as string
+    // Only update state when the hovered station actually changes
+    if (hoveredRef.current === coordKey) return
+    hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
-    setHovered({ lng, lat, coordKey: feature.properties?.coordKey as string })
-    // Update radius circle position on hover (but NOT on unhover — so the
-    // geometry stays in place while the opacity transitions to 0)
+    setHovered({ lng, lat, coordKey })
     setRadiusPos({ lng, lat })
   }, [])
 
-  const handleMouseLeave = useCallback(() => setHovered(null), [])
+  const handleMouseLeave = useCallback(() => {
+    hoveredRef.current = null
+    setHovered(null)
+  }, [])
 
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
   // Clicking empty map space closes the modal.
@@ -552,6 +570,10 @@ export default function HikeMap() {
         onSearchChange={setSearchQuery}
       />
 
+      {bannerVisible && (
+        <WelcomeBanner onDismiss={() => setBannerVisible(false)} />
+      )}
+
       {/* Dev mode toggle + zoom badge — only rendered in local development.
           process.env.NODE_ENV is inlined at build time by Next.js, so this
           entire block is stripped from production bundles (dead-code elimination). */}
@@ -611,9 +633,9 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["station-dots", "station-rating-icons"]}
+        interactiveLayerIds={["station-hit-area"]}
         cursor={hovered ? "pointer" : undefined}
-        onMouseEnter={handleMouseEnter}
+        onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
       >
@@ -716,6 +738,33 @@ export default function HikeMap() {
                 "icon-size": hovered
                   ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 1]
                   : 1,
+              }}
+            />
+            {/* Invisible hit-area layer — covers ALL stations with a larger radius
+                than the visual icons, making them easier to hover/click.
+                circle-sort-key ensures higher-rated stations render on top, so when
+                hit areas overlap, Mapbox returns the best-rated station first. */}
+            <Layer
+              id="station-hit-area"
+              type="circle"
+              layout={{
+                // Sort key: higher value = drawn on top = returned first by queryRenderedFeatures
+                "circle-sort-key": ["match", ["get", "rating"],
+                  "highlight",       4,
+                  "verified",        3,
+                  "unverified",      2,
+                  "not-recommended", 1,
+                  0, // unrated stations get lowest priority
+                ],
+              }}
+              paint={{
+                // Constant radius — NOT dependent on hover state. If this changed
+                // with `hovered`, every hover would trigger a Mapbox style repaint,
+                // and during that repaint queryRenderedFeatures can briefly return
+                // nothing — causing the hover to flicker on and off.
+                "circle-radius": 16,
+                "circle-color": "#000000",
+                "circle-opacity": 0.01,  // near-invisible but still detected by Mapbox hit testing
               }}
             />
             {/* Name-only labels — each rating tier appears at a different zoom.
