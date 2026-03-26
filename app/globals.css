@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --color-grey-green: var(--primary-muted); /* exposes as Tailwind utility, e.g. bg-grey-green */
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -48,15 +49,16 @@
 }
 
 :root {
+    --primary-muted: oklch(0.84 0.06 148); /* light grey with a noticeable green tint */
     --background: oklch(1 0 0);
     --foreground: oklch(0.153 0.006 107.1);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.153 0.006 107.1);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.153 0.006 107.1);
-    --primary: oklch(0.532 0.157 131.589);
+    --primary: #5EC26A;
     --primary-foreground: oklch(0.986 0.031 120.757);
-    --secondary: oklch(0.967 0.001 286.375);
+    --secondary: oklch(16.72% 0.02909 282.8);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.966 0.005 106.5);
     --muted-foreground: oklch(0.58 0.031 107.3);
@@ -114,6 +116,57 @@
     --sidebar-accent-foreground: oklch(0.988 0.003 106.5);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.58 0.031 107.3);
+}
+
+/* Reset Mapbox popup chrome so our content div owns all spacing */
+.station-popup .mapboxgl-popup-content {
+  padding: 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+}
+
+/* Train-track pattern for the travel-time slider range fill.
+   Two horizontal rails + repeating vertical sleepers, all dark grey. */
+.train-track-range {
+  background:
+    /* top rail */
+    linear-gradient(to bottom, transparent 10%, var(--primary) 10%, var(--primary) 22%, transparent 22%),
+    /* bottom rail */
+    linear-gradient(to bottom, transparent 78%, var(--primary) 78%, var(--primary) 90%, transparent 90%),
+    /* repeating sleeper ties */
+    repeating-linear-gradient(to right, transparent, transparent 7px, var(--primary) 7px, var(--primary) 9px);
+  background-color: transparent;
+}
+
+/* Make the track taller so the train-track pattern is visible */
+.train-track-track {
+  height: 0.875rem; /* 14px — a touch taller than the default 12px */
+}
+
+/* Train thumb: remove default border/bg so the SVG icon is all you see */
+.train-thumb {
+  position: relative;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  width: auto !important;
+  height: auto !important;
+  cursor: grab;
+}
+.train-thumb:active { cursor: grabbing; }
+
+/* Solid rectangle behind the icon that hides the track pattern underneath.
+   Sized to match the track height and icon width. */
+.train-thumb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 0.875rem;           /* matches .train-track-track height */
+  background: var(--muted);   /* same colour as the unfilled track */
+  border-radius: 9999px;
+  z-index: -1;                /* sit behind the icon */
 }
 
 @layer base {

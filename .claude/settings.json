@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \":*)",
+      "Bash(node -e \":*)",
+      "Bash(node -e \"const d = JSON.parse\\(require\\(''fs''\\).readFileSync\\(''public/stations.json'',''utf-8''\\)\\); const e = d.features.find\\(f=>f.properties.name===''Eastbourne''\\); console.log\\(e.properties.londonMinutes\\)\")",
+      "Bash(node -e \"const d = JSON.parse\\(require\\(''fs''\\).readFileSync\\(''public/stations.json'',''utf-8''\\)\\); const matches = d.features.filter\\(f=>f.properties.name===''Eastbourne''\\); matches.forEach\\(\\(f,i\\)=>console.log\\(i, f.properties.londonMinutes, f.geometry.coordinates\\)\\)\")",
+      "Bash(npx next:*)",
+      "Bash(ps -p 98444 -o pid,command)",
+      "Bash(npx storybook@latest init --yes)",
+      "Bash(wait)",
+      "Bash(npx storybook:*)",
+      "Bash(lsof -ti:6006)",
+      "Bash(xargs kill:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:6006)",
+      "Bash(claude mcp:*)",
+      "Read(//usr/local/bin/**)",
+      "Read(//Users/nicolas/.claude/**)",
+      "Bash(npm list:*)",
+      "WebFetch(domain:developers.figma.com)",
+      "Bash(npx shadcn@latest add checkbox --yes)"
+    ],
+    "additionalDirectories": [
+      "/Users/nicolas/.claude"
+    ]
+  }
+}

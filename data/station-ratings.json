@@ -1,0 +1,258 @@
+{
+  "-1.0356438,51.3720595": {
+    "name": "Mortimer",
+    "rating": "highlight"
+  },
+  "-1.0608367,51.3299792": {
+    "name": "Bramley",
+    "rating": "verified"
+  },
+  "0.3061936,51.2931422": {
+    "name": "Borough Green & Wrotham",
+    "rating": "verified"
+  },
+  "0.1819438,51.2764117": {
+    "name": "Sevenoaks",
+    "rating": "highlight"
+  },
+  "-0.6224578,51.800672": {
+    "name": "Tring",
+    "rating": "highlight"
+  },
+  "-0.4422487,51.2192418": {
+    "name": "Gomshall",
+    "rating": "highlight"
+  },
+  "-1.3726319,51.8247081": {
+    "name": "Hanborough",
+    "rating": "highlight"
+  },
+  "0.0113494,50.8705975": {
+    "name": "Lewes",
+    "rating": "highlight"
+  },
+  "0.0306729,50.83111": {
+    "name": "Southease",
+    "rating": "verified"
+  },
+  "-0.5419326,50.8966534": {
+    "name": "Amberley",
+    "rating": "highlight"
+  },
+  "-0.5462656,50.8480121": {
+    "name": "Arundel",
+    "rating": "verified"
+  },
+  "0.2815355,50.7696435": {
+    "name": "Eastbourne",
+    "rating": "highlight"
+  },
+  "0.1000064,50.7729203": {
+    "name": "Seaford",
+    "rating": "verified"
+  },
+  "0.3253781,50.8157704": {
+    "name": "Pevensey and Westham",
+    "rating": "verified"
+  },
+  "0.4949233,50.9128867": {
+    "name": "Battle",
+    "rating": "highlight"
+  },
+  "-1.8064141,51.0705706": {
+    "name": "Salisbury",
+    "rating": "highlight"
+  },
+  "-0.3276687,51.7504966": {
+    "name": "St Albans City",
+    "rating": "verified"
+  },
+  "-0.7476905,51.7618168": {
+    "name": "Wendover",
+    "rating": "verified"
+  },
+  "0.1967655,52.2622818": {
+    "name": "Waterbeach",
+    "rating": "verified"
+  },
+  "0.2664989,52.3906885": {
+    "name": "Ely",
+    "rating": "verified"
+  },
+  "0.2630275,51.1300963": {
+    "name": "Tunbridge Wells",
+    "rating": "verified"
+  },
+  "1.1537821,51.0847184": {
+    "name": "Folkestone West",
+    "rating": "verified"
+  },
+  "-0.137032,51.0555957": {
+    "name": "Balcombe",
+    "rating": "verified"
+  },
+  "-0.6326933,52.0212048": {
+    "name": "Aspley Guise",
+    "rating": "verified"
+  },
+  "0.7025193,50.9339128": {
+    "name": "Winchelsea",
+    "rating": "verified"
+  },
+  "0.5768255,50.8583028": {
+    "name": "Hastings",
+    "rating": "verified"
+  },
+  "0.1731809,51.1972733": {
+    "name": "Penshurst",
+    "rating": "verified"
+  },
+  "0.9760562,51.2444245": {
+    "name": "Chilham",
+    "rating": "verified"
+  },
+  "1.07582,51.274185": {
+    "name": "Canterbury East",
+    "rating": "verified"
+  },
+  "-1.1331195,51.5211885": {
+    "name": "Goring & Streatley",
+    "rating": "verified"
+  },
+  "-1.0904319,51.4853553": {
+    "name": "Pangbourne",
+    "rating": "verified"
+  },
+  "-0.899422,51.5338451": {
+    "name": "Henley-on-Thames",
+    "rating": "verified"
+  },
+  "-0.7664026,51.571086": {
+    "name": "Marlow",
+    "rating": "verified"
+  },
+  "-0.5811391,51.2372003": {
+    "name": "Guildford",
+    "rating": "verified"
+  },
+  "-0.1457168,50.9247179": {
+    "name": "Hassocks",
+    "rating": "verified"
+  },
+  "-0.8440858,51.7180454": {
+    "name": "Princes Risborough",
+    "rating": "verified"
+  },
+  "-0.6105638,51.4832744": {
+    "name": "Windsor and Eton Central",
+    "rating": "verified"
+  },
+  "-1.4457051,51.4026132": {
+    "name": "Kintbury",
+    "rating": "verified"
+  },
+  "0.1083284,51.3566115": {
+    "name": "Chelsfield",
+    "rating": "verified"
+  },
+  "0.1377154,52.1941089": {
+    "name": "Cambridge",
+    "rating": "verified"
+  },
+  "-0.3286723,51.2539871": {
+    "name": "Box Hill & Westhumble",
+    "rating": "verified"
+  },
+  "-0.8155144,50.8391034": {
+    "name": "Fishbourne",
+    "rating": "verified"
+  },
+  "-0.4331815,50.8176931": {
+    "name": "Goring-by-Sea",
+    "rating": "verified"
+  },
+  "-0.3761766,50.8186425": {
+    "name": "Worthing",
+    "rating": "verified"
+  },
+  "1.4052264,51.3410764": {
+    "name": "Ramsgate",
+    "rating": "verified"
+  },
+  "1.3719521,51.3851637": {
+    "name": "Margate",
+    "rating": "verified"
+  },
+  "0.009471,51.6325345": {
+    "name": "Chingford",
+    "rating": "verified"
+  },
+  "-1.7852844,51.5657001": {
+    "name": "Swindon",
+    "rating": "not-recommended"
+  },
+  "-0.134245,51.3220643": {
+    "name": "Coulsdon Town",
+    "rating": "not-recommended"
+  },
+  "-0.137974,51.315543": {
+    "name": "Coulsdon South",
+    "rating": "not-recommended"
+  },
+  "-1.5293235,50.7576921": {
+    "name": "Lymington Pier",
+    "rating": "not-recommended"
+  },
+  "-1.5370862,50.7610847": {
+    "name": "Lymington Town",
+    "rating": "not-recommended"
+  },
+  "-0.6073643,51.6740875": {
+    "name": "Amersham",
+    "rating": "not-recommended"
+  },
+  "-0.165577,51.2400546": {
+    "name": "Redhill",
+    "rating": "not-recommended"
+  },
+  "-1.5734094,50.816746": {
+    "name": "Brockenhurst",
+    "rating": "not-recommended"
+  },
+  "0.215334,51.9798629": {
+    "name": "Newport",
+    "rating": "not-recommended"
+  },
+  "-3.000425,51.5887675": {
+    "name": "Newport (Wales)",
+    "rating": "not-recommended"
+  },
+  "0.2071507,52.0044551": {
+    "name": "Audley End",
+    "rating": "not-recommended"
+  },
+  "-1.2425171,51.6112197": {
+    "name": "Didcot Parkway",
+    "rating": "not-recommended"
+  },
+  "-0.0178578,51.1264031": {
+    "name": "East Grinstead",
+    "rating": "verified"
+  },
+  "-1.628532,51.9024116": {
+    "name": "Kingham",
+    "rating": "verified"
+  },
+  "-2.0230749,51.6767954": {
+    "name": "Kemble",
+    "rating": "highlight"
+  },
+  "-2.1001222,51.8969882": {
+    "name": "Cheltenham Spa",
+    "rating": "verified"
+  },
+  "0.1033213,51.6717759": {
+    "name": "Theydon Bois",
+    "rating": "verified"
+  }
+}
