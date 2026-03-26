@@ -26,14 +26,15 @@ const FLICKR_BASE = "https://www.flickr.com/services/rest/"
 // ── Tag lists ──────────────────────────────────────────────────────────────
 // Tags to search for — "any" mode means a photo needs only one of these.
 const SEARCH_TAGS =
-  "countryside,landscape,view,greenery,hills,woods,forest,meadow,meadows,village,stately home,castle,church,bridleway,byway,path,trek"
+  "landscape, landmark"
+    // "countryside,landscape,view,greenery,hills,woods,forest,meadow,meadows,village,stately home,castle,church,bridleway,byway,path,trek"
 // ex-tags trail, valley, hike,walk
 // Tags that disqualify a photo if present — applied client-side to the gallery.
 // Note: the Flickr API has no native tag-exclusion parameter, so we request the
 // `tags` extra and filter after fetching. The count (used for dot sizing) is
 // unfiltered — it's a relative signal and the noise is acceptable.
 const EXCLUDE_TAGS = new Set([
-  "people", "girls", "boys", "children", "portrait", "portraits", "portait",
+  "people", "girls", "boys", "children", "portrait", "portraits", "portrait",
   "countryfashion", "countryoutfit", "countrystyle",
   "train", "tank", "railway", "trains", "railways", "station",
   "engine", "locomotive",
@@ -45,6 +46,7 @@ const EXCLUDE_TAGS = new Set([
   "object",
   "ducks", "wildlife", "swan", "swans", "mallard",
   "baby", "squirrel",
+  "plane", "taps", "city", "town", "great western railways", "reading", "sexy", "midjourney"
 ])
 
 function getApiKey(): string | null {
@@ -124,7 +126,7 @@ export async function fetchFlickrPhotos(
     tag_mode: "any",
     // `tags` extra returns the photo's tag string — needed for exclusion filtering
     extras: "url_m,url_l,date_taken,owner_name,geo,tags",
-    sort: "interestingness-desc",
+    sort: "relevance",
     per_page: String(fetchCount),
     format: "json",
     nojsoncallback: "1",
