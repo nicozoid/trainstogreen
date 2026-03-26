@@ -5,7 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --color-grey-green: var(--primary-muted); /* exposes as Tailwind utility, e.g. bg-grey-green */
+    --color-grey-green: var(--accent); /* exposes as Tailwind utility, e.g. bg-grey-green */
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
     --color-sidebar-ring: var(--sidebar-ring);
@@ -49,20 +49,19 @@
 }
 
 :root {
-    --primary-muted: oklch(0.84 0.06 148); /* light grey with a noticeable green tint */
     --background: oklch(1 0 0);
     --foreground: oklch(0.153 0.006 107.1);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.153 0.006 107.1);
     --popover: oklch(1 0 0);
     --popover-foreground: oklch(0.153 0.006 107.1);
-    --primary: #5EC26A;
+    --primary: oklch(54.847% 0.1348 145.619);
     --primary-foreground: oklch(0.986 0.031 120.757);
     --secondary: oklch(16.72% 0.02909 282.8);
     --secondary-foreground: oklch(0.21 0.006 285.885);
     --muted: oklch(0.966 0.005 106.5);
     --muted-foreground: oklch(0.58 0.031 107.3);
-    --accent: oklch(0.532 0.157 131.589);
+    --accent: oklch(73.259% 0.15592 146.24);
     --accent-foreground: oklch(0.986 0.031 120.757);
     --destructive: oklch(0.577 0.245 27.325);
     --border: oklch(0.93 0.007 106.5);

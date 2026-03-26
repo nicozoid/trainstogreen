@@ -44,7 +44,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unverified", label: "To-do", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="#aed0b8" stroke="#aed0b8" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
@@ -52,7 +52,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "not-recommended", label: "Unworthy", tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="#aed0b8" stroke="#aed0b8" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
         <polygon points="12 21, 22.39 3, 1.61 3" />
       </svg>
     ),
@@ -60,7 +60,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unrated", label: "Unknown", tooltip: "I have no opinion about this area —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="#aed0b8" stroke="#aed0b8" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
         <circle cx="12" cy="12" r="9" />
       </svg>
     ),
@@ -114,7 +114,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
         <span className="text-sm font-medium">Maximum travel time</span>
         {/* Shows the current value, styled as secondary info */}
         <div className="flex items-center gap-1">
-          <span className="text-sm font-extrabold text-green-600">
+          <span className="text-sm font-extrabold text-primary">
             {formatDuration(maxMinutes)}
           </span>
           <Tooltip>

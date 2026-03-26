@@ -7,7 +7,7 @@ import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner } from "@/components/welcome-banner"
 import StationModal from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
-import { colors } from "@/lib/tokens"
+import { getColors } from "@/lib/tokens"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -437,12 +437,14 @@ export default function HikeMap() {
     hideRoads(e)
     const map = e.target
     // Pre-load icon images so the rating symbol layer can reference them by name.
-    // Full green (--primary) for positive ratings; primary-muted for neutral/negative.
+    // getColors() reads --primary and --accent from CSS at runtime so Mapbox stays in sync.
+    const colors = getColors()
     const dpr = window.devicePixelRatio || 1
     map.addImage('icon-highlight',       createRatingIcon('star',         colors.primary), { pixelRatio: dpr })
     map.addImage('icon-verified',        createRatingIcon('triangle-up',  colors.primary), { pixelRatio: dpr })
-    map.addImage('icon-unverified',      createRatingIcon('triangle-up',  colors.primaryMuted), { pixelRatio: dpr })
-    map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.primaryMuted), { pixelRatio: dpr })
+    map.addImage('icon-unrated',         createRatingIcon('circle',        colors.accent), { pixelRatio: dpr })
+    map.addImage('icon-unverified',      createRatingIcon('triangle-up',  colors.accent), { pixelRatio: dpr })
+    map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.accent), { pixelRatio: dpr })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -702,20 +704,19 @@ export default function HikeMap() {
 
         {displayedStationsWithRatings && (
           <Source id="stations" type="geojson" data={displayedStationsWithRatings}>
-            {/* Unrated stations only — rated ones are hidden here and shown as icons below */}
+            {/* Unrated stations — canvas-drawn circle icon, same approach as rated icons */}
             <Layer
               id="station-dots"
-              type="circle"
-              filter={["!", ["has", "rating"]]} // hide any feature that has a rating property
-              paint={{
-                // Slightly larger dot when hovered — coordKey match is a data expression
-                "circle-radius": hovered
-                  ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 6, 4]
-                  : 4,
-                "circle-radius-transition": { duration: 150 },
-                "circle-color": colors.primaryMuted, // --primary-muted from design system
-                "circle-stroke-width": STATION_STROKE_WIDTH,
-                "circle-stroke-color": "#fff",
+              type="symbol"
+              filter={["!", ["has", "rating"]]}
+              layout={{
+                "icon-image": "icon-unrated",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                // Slightly larger icon when hovered
+                "icon-size": hovered
+                  ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 0.7]
+                  : 0.7,
               }}
             />
             {/* Rated stations — shown as heart/circle icons instead of grey-green dots */}

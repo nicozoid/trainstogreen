@@ -42,10 +42,10 @@ type StationModalProps = {
 
 // Formats minutes as "Xh Ym" or "Xm"
 function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes}m`
+  if (minutes < 60) return `${minutes} minutes`
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  return m === 0 ? `${h}` : `${h}h ${m}m`
+  return m === 0 ? `${h} hour` : `${h} hour and ${m} minutes`
 }
 
 // Builds a Komoot discover URL for hiking near a station.
