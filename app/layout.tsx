@@ -1,9 +1,16 @@
 import { Geist, Geist_Mono, Manrope } from "next/font/google"
 
+import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/trainstogreen-favicon.svg",
+  },
+}
 
 const manrope = Manrope({subsets:['latin'],variable:'--font-sans'})
 

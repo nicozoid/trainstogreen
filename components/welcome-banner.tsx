@@ -1,6 +1,7 @@
 "use client"
 
 import { X } from "lucide-react"
+import { welcomeCopy } from "@/lib/copy"
 
 type WelcomeBannerProps = {
   onDismiss: () => void
@@ -24,26 +25,24 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
 
         {/* Hero image */}
         <img
-          src="/trainstogreen-hero.png"
-          alt="Illustrated train passing through the countryside"
+          src={welcomeCopy.heroImage}
+          alt={welcomeCopy.heroAlt}
           className="w-full aspect-video object-cover"
         />
 
         {/* Text content + CTA */}
         <div className="p-6">
           <h2 className="text-lg font-semibold text-foreground">
-            Find train stations to escape London
+            {welcomeCopy.heading}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            A day hike in the countryside is just a simple train journey away
-            — browse the most charmingly located railway stations in England
-            and plan your next day of green.
+            {welcomeCopy.body}
           </p>
           <button
             onClick={onDismiss}
             className="mt-5 w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors cursor-pointer"
           >
-            Start exploring
+            {welcomeCopy.cta}
           </button>
         </div>
       </div>

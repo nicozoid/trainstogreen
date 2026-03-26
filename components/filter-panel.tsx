@@ -91,10 +91,21 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
     // Positioned over the map, top-left, using card tokens from the design system
     <div className="absolute left-4 top-4 z-10 w-64 rounded-lg border bg-card p-4 text-card-foreground shadow-md">
 
-      <h1 className="text-md text-green-800 font-semibold pb-4 flex items-center gap-3 tracking-wide">
-        <IconTrainFilled size={18} className="text-primary" />
-        Trains to Green
-      </h1>
+      {/* Logo — uses mask-image so the SVG acts as a stencil,
+         filled by bg-primary. This means it auto-updates if --primary changes. */}
+      <div
+        className="mb-1 h-8 w-full bg-primary"
+        role="img"
+        aria-label="Trains to Green"
+        style={{
+          maskImage: "url(/trainstogreen-logo.svg)",
+          maskSize: "contain",
+          maskRepeat: "no-repeat",
+          WebkitMaskImage: "url(/trainstogreen-logo.svg)",
+          WebkitMaskSize: "contain",
+          WebkitMaskRepeat: "no-repeat",
+        }}
+      />
       {/* Search bar — sits at the top of the sidebar */}
       <div className="mb-4">
         <SearchBar value={searchQuery} onChange={onSearchChange} />
