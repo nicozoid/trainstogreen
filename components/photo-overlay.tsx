@@ -273,17 +273,23 @@ export default function StationModal({
             </div>
           )}
 
-          {/* Loading skeleton — grid of shimmering rectangles matching the photo grid layout.
-              Each cell pulses between muted and a lighter mid-stop to suggest a sweep of light. */}
+          {/* Loading skeleton — grid of shimmering rectangles matching the photo grid layout. */}
           {hasApiKey && loading && (
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
               {Array.from({ length: 9 }).map((_, i) => (
                 <div
                   key={i}
-                  /* animate-pulse fades opacity; the gradient gives a lighter band in the centre
-                     so the cell doesn't look like a flat block of dead space */
-                  className="aspect-[4/3] animate-pulse rounded-none sm:rounded-lg bg-gradient-to-br from-muted via-muted-foreground/10 to-muted"
-                />
+                  /* bg-muted-foreground/20 is a clearly visible medium grey — much more contrast
+                     than bg-muted (near-white) so the shimmer sweep is obvious on bright screens */
+                  className="relative overflow-hidden aspect-[4/3] rounded-none sm:rounded-lg bg-muted-foreground/20"
+                >
+                  {/* via-white/80 is a very bright sweep — high contrast against the darker base.
+                      staggered animationDelay creates a cascading wave down the list. */}
+                  <div
+                    className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/80 to-transparent"
+                    style={{ animationDelay: `${(i * 0.12) - 0.8}s` }}
+                  />
+                </div>
               ))}
             </div>
           )}

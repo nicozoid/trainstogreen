@@ -76872,7 +76872,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q280399",
         "wikipedia": "en:Old Hill railway station",
-        "londonMinutes": 138,
+        "londonMinutes": 150,
         "flickrCount": 2624
       },
       "geometry": {
@@ -76930,7 +76930,7 @@
         "west_midlands_fare_zone": "3",
         "wikidata": "Q2358217",
         "wikipedia": "en:Spring Road railway station",
-        "londonMinutes": 154,
+        "londonMinutes": 146,
         "flickrCount": 901
       },
       "geometry": {
@@ -76951,7 +76951,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 200,
+        "londonMinutes": 122,
         "flickrCount": 0
       },
       "geometry": {
@@ -76971,7 +76971,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 174,
+        "londonMinutes": 139,
         "flickrCount": 0
       },
       "geometry": {
@@ -77079,7 +77079,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 202,
+        "londonMinutes": 559,
         "flickrCount": 0
       },
       "geometry": {
@@ -77108,7 +77108,7 @@
         "source": "NPE",
         "wikidata": "Q4350946",
         "wikipedia": "en:Wootton Wawen railway station",
-        "londonMinutes": 192,
+        "londonMinutes": 200,
         "flickrCount": 1738
       },
       "geometry": {
@@ -77137,7 +77137,7 @@
         "west_midlands_fare_zone": "3",
         "wikidata": "Q3543527",
         "wikipedia": "en:Hall Green railway station",
-        "londonMinutes": 152,
+        "londonMinutes": 144,
         "flickrCount": 1009
       },
       "geometry": {
@@ -77166,7 +77166,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q4314461",
         "wikipedia": "en:Olton railway station",
-        "londonMinutes": 137,
+        "londonMinutes": 158,
         "flickrCount": 903
       },
       "geometry": {
@@ -77228,7 +77228,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q2856492",
         "wikipedia": "en:Marston Green railway station",
-        "londonMinutes": 97,
+        "londonMinutes": 109,
         "flickrCount": 742
       },
       "geometry": {
@@ -77314,7 +77314,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2230176",
         "wikipedia": "en:Four Oaks railway station",
-        "londonMinutes": 132,
+        "londonMinutes": 135,
         "flickrCount": 3053
       },
       "geometry": {
@@ -77334,7 +77334,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 177,
+        "londonMinutes": 187,
         "flickrCount": 0
       },
       "geometry": {
@@ -77353,7 +77353,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 176,
+        "londonMinutes": 194,
         "flickrCount": 0
       },
       "geometry": {
@@ -77382,7 +77382,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q1815915",
         "wikipedia": "en:Shirley railway station (England)",
-        "londonMinutes": 158,
+        "londonMinutes": 150,
         "flickrCount": 895
       },
       "geometry": {
@@ -77417,7 +77417,7 @@
         "train": "yes",
         "wikidata": "Q7262951",
         "wikipedia": "en:Pye Corner railway station",
-        "londonMinutes": 148,
+        "londonMinutes": 152,
         "flickrCount": 1129
       },
       "geometry": {
@@ -77464,7 +77464,7 @@
         "usage": "tourism",
         "wikidata": "Q7366236",
         "wikipedia": "en:Rookwood railway station",
-        "londonMinutes": 220,
+        "londonMinutes": 301,
         "flickrCount": 0
       },
       "geometry": {
@@ -77524,7 +77524,7 @@
         "start_date": "2023-10-05",
         "train": "yes",
         "wikidata": "Q5689516",
-        "londonMinutes": 205,
+        "londonMinutes": 212,
         "flickrCount": 588
       },
       "geometry": {
@@ -77555,7 +77555,7 @@
         "wheelchair": "yes",
         "wikidata": "Q7300513",
         "wikipedia": "en:Reading Green Park railway station",
-        "londonMinutes": 57,
+        "londonMinutes": 60,
         "flickrCount": 2247
       },
       "geometry": {
@@ -77606,7 +77606,7 @@
         "railway": "station",
         "station": "funicular",
         "wheelchair": "yes",
-        "londonMinutes": 392,
+        "londonMinutes": null,
         "flickrCount": 0
       },
       "geometry": {
@@ -77627,7 +77627,7 @@
         "railway": "station",
         "usage": "tourism",
         "wheelchair": "yes",
-        "londonMinutes": 237,
+        "londonMinutes": 229,
         "flickrCount": 0
       },
       "geometry": {
@@ -77650,7 +77650,7 @@
         "usage": "tourism",
         "wikidata": "Q4896046",
         "wikipedia": "en:Berwyn railway station",
-        "londonMinutes": 235,
+        "londonMinutes": 268,
         "flickrCount": 0
       },
       "geometry": {
@@ -77671,7 +77671,7 @@
         "railway": "station",
         "request_stop": "yes",
         "usage": "tourism",
-        "londonMinutes": 262,
+        "londonMinutes": 295,
         "flickrCount": 0
       },
       "geometry": {
@@ -77694,7 +77694,7 @@
         "usage": "tourism",
         "wikidata": "Q5572933",
         "wikipedia": "en:Glyndyfrdwy railway station",
-        "londonMinutes": 245,
+        "londonMinutes": 278,
         "flickrCount": 0
       },
       "geometry": {
@@ -77717,7 +77717,7 @@
         "usage": "tourism",
         "wikidata": "Q5046492",
         "wikipedia": "en:Carrog railway station",
-        "londonMinutes": 252,
+        "londonMinutes": 285,
         "flickrCount": 0
       },
       "geometry": {
@@ -77807,7 +77807,7 @@
         "name": "Puxton Park",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 199,
+        "londonMinutes": 195,
         "flickrCount": 0
       },
       "geometry": {
@@ -77826,7 +77826,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 390,
+        "londonMinutes": 314,
         "flickrCount": 0
       },
       "geometry": {
@@ -77977,7 +77977,7 @@
         "train": "yes",
         "wikidata": "Q1966621",
         "wikipedia": "en:Wilmcote railway station",
-        "londonMinutes": 162,
+        "londonMinutes": 153,
         "flickrCount": 1336
       },
       "geometry": {
@@ -78038,7 +78038,7 @@
         "source": "NPE",
         "wikidata": "Q4355883",
         "wikipedia": "en:Alvechurch railway station",
-        "londonMinutes": 153,
+        "londonMinutes": 165,
         "flickrCount": 319
       },
       "geometry": {
@@ -78072,7 +78072,7 @@
         "train": "yes",
         "wikidata": "Q2140425",
         "wikipedia": "en:Cynghordy railway station",
-        "londonMinutes": 298,
+        "londonMinutes": 303,
         "flickrCount": 284
       },
       "geometry": {
@@ -78102,7 +78102,7 @@
         "train": "yes",
         "wikidata": "Q39058374",
         "wikipedia": "en:Portway Park & Ride railway station",
-        "londonMinutes": 147,
+        "londonMinutes": 150,
         "flickrCount": 2097
       },
       "geometry": {
@@ -78136,7 +78136,7 @@
         "train": "yes",
         "wikidata": "Q5188704",
         "wikipedia": "en:Crosskeys railway station",
-        "londonMinutes": 161,
+        "londonMinutes": 164,
         "flickrCount": 1462
       },
       "geometry": {
@@ -78165,7 +78165,7 @@
         "west_midlands_fare_zone": "3",
         "wikidata": "Q2248035",
         "wikipedia": "en:Yardley Wood railway station",
-        "londonMinutes": 157,
+        "londonMinutes": 149,
         "flickrCount": 666
       },
       "geometry": {
@@ -78188,7 +78188,7 @@
         "operator": "Wrexham and District Society of Model Engineers",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 229,
+        "londonMinutes": 214,
         "flickrCount": 0
       },
       "geometry": {
@@ -78209,7 +78209,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 111,
+        "londonMinutes": 105,
         "flickrCount": 0
       },
       "geometry": {
@@ -78323,7 +78323,7 @@
         "@id": "node/9772115517",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 180,
+        "londonMinutes": 169,
         "flickrCount": 0
       },
       "geometry": {
@@ -78386,7 +78386,7 @@
         "ref:crs": "HDG",
         "wikidata": "Q2194508",
         "wikipedia": "en:Heald Green railway station",
-        "londonMinutes": 181,
+        "londonMinutes": 180,
         "flickrCount": 1319
       },
       "geometry": {
@@ -78415,7 +78415,7 @@
         "ref:crs": "MAU",
         "wikidata": "Q5133815",
         "wikipedia": "en:Mauldeth Road railway station",
-        "londonMinutes": 173,
+        "londonMinutes": 179,
         "flickrCount": 592
       },
       "geometry": {
@@ -78440,7 +78440,7 @@
         "website": "https://www.lincolnshirewoldsrailway.co.uk/",
         "wikidata": "Q7056998",
         "wikipedia": "en:North Thoresby railway station",
-        "londonMinutes": 253,
+        "londonMinutes": 250,
         "flickrCount": 0
       },
       "geometry": {
@@ -78461,7 +78461,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 67,
+        "londonMinutes": 56,
         "flickrCount": 0
       },
       "geometry": {
@@ -78482,7 +78482,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 71,
+        "londonMinutes": 60,
         "flickrCount": 0
       },
       "geometry": {
@@ -78513,7 +78513,7 @@
         "uic_ref": "8731753",
         "wikidata": "Q2443663",
         "wikipedia": "fr:Gare d'Eu",
-        "londonMinutes": 373,
+        "londonMinutes": null,
         "flickrCount": 0
       },
       "geometry": {
@@ -78603,7 +78603,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 187,
+        "londonMinutes": 183,
         "flickrCount": 0
       },
       "geometry": {
@@ -78624,7 +78624,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 185,
+        "londonMinutes": 181,
         "flickrCount": 0
       },
       "geometry": {
@@ -78646,7 +78646,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 201,
+        "londonMinutes": 217,
         "flickrCount": 0
       },
       "geometry": {
@@ -78699,7 +78699,7 @@
         "ref:crs": "BKQ",
         "wikidata": "Q305403",
         "wikipedia": "en:Birkenhead Hamilton Square railway station",
-        "londonMinutes": 191,
+        "londonMinutes": 180,
         "flickrCount": 2364
       },
       "geometry": {
@@ -78733,7 +78733,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2881512",
         "wikipedia": "en:Conway Park railway station",
-        "londonMinutes": 190,
+        "londonMinutes": 182,
         "flickrCount": 2358
       },
       "geometry": {
@@ -78767,7 +78767,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2592796",
         "wikipedia": "en:Birkenhead Park railway station",
-        "londonMinutes": 191,
+        "londonMinutes": 183,
         "flickrCount": 1712
       },
       "geometry": {
@@ -78801,7 +78801,7 @@
         "train": "yes",
         "wikidata": "Q2583306",
         "wikipedia": "en:Birkenhead North railway station",
-        "londonMinutes": 194,
+        "londonMinutes": 186,
         "flickrCount": 2705
       },
       "geometry": {
@@ -78836,7 +78836,7 @@
         "wheelchair": "no",
         "wikidata": "Q2592219",
         "wikipedia": "en:Bidston railway station",
-        "londonMinutes": 202,
+        "londonMinutes": 194,
         "flickrCount": 2517
       },
       "geometry": {
@@ -78868,7 +78868,7 @@
         "website": "https://www.merseyrail.org/plan-your-journey/stations/meols.aspx",
         "wikidata": "Q2574955",
         "wikipedia": "en:Meols railway station",
-        "londonMinutes": 210,
+        "londonMinutes": 202,
         "flickrCount": 1444
       },
       "geometry": {
@@ -78898,7 +78898,7 @@
         "source": "npe",
         "wikidata": "Q2216543",
         "wikipedia": "en:Manor Road railway station",
-        "londonMinutes": 213,
+        "londonMinutes": 206,
         "flickrCount": 688
       },
       "geometry": {
@@ -78928,7 +78928,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2196603",
         "wikipedia": "en:Hoylake railway station",
-        "londonMinutes": 215,
+        "londonMinutes": 208,
         "flickrCount": 690
       },
       "geometry": {
@@ -78958,7 +78958,7 @@
         "wheelchair": "yes",
         "wikidata": "Q515270",
         "wikipedia": "en:West Kirby railway station",
-        "londonMinutes": 219,
+        "londonMinutes": 211,
         "flickrCount": 556
       },
       "geometry": {
@@ -78986,7 +78986,7 @@
         "source": "npe",
         "wikidata": "Q508070",
         "wikipedia": "en:Wallasey Village railway station",
-        "londonMinutes": 200,
+        "londonMinutes": 193,
         "flickrCount": 2569
       },
       "geometry": {
@@ -79014,7 +79014,7 @@
         "source": "npe",
         "wikidata": "Q2633126",
         "wikipedia": "en:Wallasey Grove Road railway station",
-        "londonMinutes": 201,
+        "londonMinutes": 193,
         "flickrCount": 2379
       },
       "geometry": {
@@ -79041,7 +79041,7 @@
         "ref:crs": "RFY",
         "wikidata": "Q1812654",
         "wikipedia": "en:Rock Ferry railway station",
-        "londonMinutes": 183,
+        "londonMinutes": 195,
         "flickrCount": 1962
       },
       "geometry": {
@@ -79070,7 +79070,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2192728",
         "wikipedia": "en:Bebington railway station",
-        "londonMinutes": 180,
+        "londonMinutes": 195,
         "flickrCount": 2273
       },
       "geometry": {
@@ -79097,7 +79097,7 @@
         "ref:crs": "SPI",
         "wikidata": "Q2089422",
         "wikipedia": "en:Spital railway station",
-        "londonMinutes": 176,
+        "londonMinutes": 191,
         "flickrCount": 2093
       },
       "geometry": {
@@ -79125,7 +79125,7 @@
         "wheelchair": "no",
         "wikidata": "Q2223694",
         "wikipedia": "en:Bromborough railway station",
-        "londonMinutes": 176,
+        "londonMinutes": 191,
         "flickrCount": 2481
       },
       "geometry": {
@@ -79155,7 +79155,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2043331",
         "wikipedia": "en:Eastham Rake railway station",
-        "londonMinutes": 175,
+        "londonMinutes": 189,
         "flickrCount": 2182
       },
       "geometry": {
@@ -79182,7 +79182,7 @@
         "ref:crs": "HOO",
         "wikidata": "Q2291942",
         "wikipedia": "en:Hooton railway station",
-        "londonMinutes": 168,
+        "londonMinutes": 182,
         "flickrCount": 1116
       },
       "geometry": {
@@ -79263,7 +79263,7 @@
         "ref:crs": "CPU",
         "wikidata": "Q137076",
         "wikipedia": "en:Capenhurst railway station",
-        "londonMinutes": 163,
+        "londonMinutes": 193,
         "flickrCount": 2396
       },
       "geometry": {
@@ -79290,7 +79290,7 @@
         "ref:crs": "BAC",
         "wikidata": "Q139580",
         "wikipedia": "en:Bache railway station",
-        "londonMinutes": 157,
+        "londonMinutes": 173,
         "flickrCount": 2276
       },
       "geometry": {
@@ -79322,7 +79322,7 @@
         "train": "yes",
         "usage": "tourism",
         "website": "https://www.copsewood-railway.com/",
-        "londonMinutes": 125,
+        "londonMinutes": 132,
         "flickrCount": 0
       },
       "geometry": {
@@ -79349,7 +79349,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 254,
+        "londonMinutes": 234,
         "flickrCount": 0
       },
       "geometry": {
@@ -79382,7 +79382,7 @@
         "train": "yes",
         "wikidata": "Q2937934",
         "wikipedia": "en:Cardiff Queen Street railway station",
-        "londonMinutes": 144,
+        "londonMinutes": 149,
         "flickrCount": 2772
       },
       "geometry": {
@@ -79405,7 +79405,7 @@
         "usage": "tourism",
         "wikidata": "Q7653771",
         "wikipedia": "en:Swanwick Junction railway station",
-        "londonMinutes": 208,
+        "londonMinutes": 206,
         "flickrCount": 0
       },
       "geometry": {
@@ -79481,7 +79481,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 156,
+        "londonMinutes": 168,
         "flickrCount": 0
       },
       "geometry": {
@@ -79521,7 +79521,7 @@
         "railway": "station",
         "usage": "tourism",
         "wheelchair": "no",
-        "londonMinutes": 188,
+        "londonMinutes": 173,
         "flickrCount": 0
       },
       "geometry": {
@@ -79563,7 +79563,7 @@
         "train": "yes",
         "usage": "tourism",
         "wheelchair": "no",
-        "londonMinutes": 185,
+        "londonMinutes": 172,
         "flickrCount": 0
       },
       "geometry": {
@@ -79583,7 +79583,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 253,
+        "londonMinutes": 286,
         "flickrCount": 0
       },
       "geometry": {
@@ -79627,7 +79627,7 @@
         "train": "yes",
         "usage": "tourism",
         "wheelchair": "limited",
-        "londonMinutes": 242,
+        "londonMinutes": null,
         "flickrCount": 0
       },
       "geometry": {
@@ -79651,7 +79651,7 @@
         "train": "yes",
         "usage": "tourism",
         "wheelchair": "limited",
-        "londonMinutes": 247,
+        "londonMinutes": null,
         "flickrCount": 0
       },
       "geometry": {
@@ -79695,7 +79695,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 110,
+        "londonMinutes": 122,
         "flickrCount": 0
       },
       "geometry": {
@@ -79716,7 +79716,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 108,
+        "londonMinutes": 120,
         "flickrCount": 0
       },
       "geometry": {
@@ -79796,7 +79796,7 @@
         "train": "yes",
         "usage": "tourism",
         "wikidata": "Q138648162",
-        "londonMinutes": 974,
+        "londonMinutes": 1027,
         "flickrCount": 0
       },
       "geometry": {
@@ -79838,7 +79838,7 @@
         "tourism": "preserved_railway",
         "usage": "tourism",
         "wikidata": "Q7990292",
-        "londonMinutes": 296,
+        "londonMinutes": 253,
         "flickrCount": 0
       },
       "geometry": {
@@ -79873,7 +79873,7 @@
         "wheelchair": "yes",
         "wikidata": "Q119199401",
         "wikipedia": "en:Ashley Down railway station",
-        "londonMinutes": 126,
+        "londonMinutes": 148,
         "flickrCount": 3440
       },
       "geometry": {
@@ -79893,7 +79893,7 @@
         "railway": "station",
         "train": "yes",
         "usage": "tourism",
-        "londonMinutes": 244,
+        "londonMinutes": 593,
         "flickrCount": 0
       },
       "geometry": {
@@ -79945,7 +79945,7 @@
         "wheelchair": "yes",
         "wikidata": "Q24993352",
         "wikipedia": "en:Beaulieu_Park_railway_station",
-        "londonMinutes": 142,
+        "londonMinutes": 65,
         "flickrCount": 480
       },
       "geometry": {
@@ -79995,7 +79995,7 @@
         "railway": "station",
         "short_name": "Kempton Steam Railway",
         "usage": "tourism",
-        "londonMinutes": 108,
+        "londonMinutes": 92,
         "flickrCount": 0
       },
       "geometry": {
@@ -80069,7 +80069,7 @@
         "train": "yes",
         "wikidata": "Q2433782",
         "wikipedia": "en:Llanhilleth railway station",
-        "londonMinutes": 175,
+        "londonMinutes": 178,
         "flickrCount": 967
       },
       "geometry": {
@@ -80125,7 +80125,7 @@
         "railway": "station",
         "usage": "tourism",
         "website": "https://www.rang.org.uk/",
-        "londonMinutes": 60,
+        "londonMinutes": 59,
         "flickrCount": 0
       },
       "geometry": {
@@ -80166,7 +80166,7 @@
         "usage": "tourism",
         "wikidata": "Q7268516",
         "wikipedia": "en:Quainton Road railway station",
-        "londonMinutes": 175,
+        "londonMinutes": 140,
         "flickrCount": 0
       },
       "geometry": {
@@ -80185,7 +80185,7 @@
         "name": "Riverside Halt",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 204,
+        "londonMinutes": 199,
         "flickrCount": 0
       },
       "geometry": {
@@ -80204,7 +80204,7 @@
         "name": "Weighside",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 204,
+        "londonMinutes": 199,
         "flickrCount": 0
       },
       "geometry": {
@@ -80242,7 +80242,7 @@
         "public_transport": "station",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 254,
+        "londonMinutes": 246,
         "flickrCount": 0
       },
       "geometry": {
@@ -80302,7 +80302,7 @@
         "railway": "station",
         "usage": "tourism",
         "wikipedia": "en:Leek_railway_station",
-        "londonMinutes": 208,
+        "londonMinutes": 201,
         "flickrCount": 0
       },
       "geometry": {
@@ -80332,7 +80332,7 @@
         "train": "yes",
         "usage": "tourism",
         "wheelchair": "yes",
-        "londonMinutes": 107,
+        "londonMinutes": 110,
         "flickrCount": 0
       },
       "geometry": {
@@ -80354,7 +80354,7 @@
         "operator": "North Wilts Model Engineering Society",
         "railway": "station",
         "usage": "tourism",
-        "londonMinutes": 101,
+        "londonMinutes": 105,
         "flickrCount": 0
       },
       "geometry": {
@@ -80376,7 +80376,7 @@
         "railway": "station",
         "usage": "tourism",
         "website": "https://mcsme.co.uk/site/our-track/",
-        "londonMinutes": 231,
+        "londonMinutes": 214,
         "flickrCount": 0
       },
       "geometry": {

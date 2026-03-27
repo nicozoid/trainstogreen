@@ -12,8 +12,10 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
     /* Fullscreen overlay: fixed + inset-0 covers the entire viewport.
        bg-black/40 = semi-transparent backdrop that dims the map underneath.
        Grid + place-items-center is the simplest way to dead-centre a child. */
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40">
-      <div className="group relative w-full max-w-md overflow-hidden rounded-xl bg-card shadow-xl border border-border">
+    /* onClick on the backdrop calls onDismiss; the inner card stops propagation
+       so clicking inside it doesn't bubble up and trigger dismissal. */
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40" onClick={onDismiss}>
+      <div className="group relative w-full max-w-md overflow-hidden rounded-xl bg-card shadow-xl border border-border" onClick={e => e.stopPropagation()}>
         {/* Close button — hidden until the dialog is hovered */}
         <button
           onClick={onDismiss}
@@ -23,12 +25,31 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
           <X className="h-4 w-4" />
         </button>
 
-        {/* Hero image */}
-        <img
-          src={welcomeCopy.heroImage}
-          alt={welcomeCopy.heroAlt}
-          className="w-full aspect-video object-cover"
-        />
+        {/* Hero image + logo overlay */}
+        <div className="relative">
+          <img
+            src={welcomeCopy.heroImage}
+            alt={welcomeCopy.heroAlt}
+            className="w-full aspect-video object-cover"
+          />
+          {/* Logo floating over the image, top-left, two-thirds of the card width.
+              The mask technique: bg colour shows through the SVG's shape only.
+              aspect-[591/50] matches the logo SVG's own viewBox dimensions. */}
+          <div
+            className="absolute top-3 left-3 w-1/3 bg-[#161D37]"
+            style={{
+              aspectRatio: "591 / 50",
+              maskImage: "url(/trainstogreen-logo.svg)",
+              maskSize: "contain",
+              maskRepeat: "no-repeat",
+              WebkitMaskImage: "url(/trainstogreen-logo.svg)",
+              WebkitMaskSize: "contain",
+              WebkitMaskRepeat: "no-repeat",
+            }}
+            role="img"
+            aria-label="Trains to Green"
+          />
+        </div>
 
         {/* Text content + CTA */}
         <div className="p-6">
@@ -37,6 +58,15 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {welcomeCopy.body}
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Send any comments or questions to{" "}
+            <a
+              href="mailto:nicolas@niczap.design"
+              className="underline hover:text-foreground transition-colors"
+            >
+              nicolas@niczap.design
+            </a>
           </p>
           <button
             onClick={onDismiss}

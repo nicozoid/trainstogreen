@@ -5,6 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    --animate-shimmer: shimmer 1.6s ease-in-out infinite; /* used by skeleton loading boxes */
     --color-grey-green: var(--accent); /* exposes as Tailwind utility, e.g. bg-grey-green */
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
@@ -166,6 +167,13 @@
   background: var(--muted);   /* same colour as the unfilled track */
   border-radius: 9999px;
   z-index: -1;                /* sit behind the icon */
+}
+
+/* Shimmer sweep animation for loading skeletons.
+   The keyframe slides a gradient strip from left to right across the box. */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
 }
 
 @layer base {

@@ -419,7 +419,9 @@ export default function HikeMap() {
     hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
     setHovered({ lng, lat, coordKey })
-    setRadiusPos({ lng, lat })
+    // London marker shouldn't produce radius circles — clear any previous station's circles
+    if (feature.properties?.isLondon) setRadiusPos(null)
+    else setRadiusPos({ lng, lat })
   }, [])
 
   const handleMouseLeave = useCallback(() => {
@@ -827,7 +829,7 @@ export default function HikeMap() {
               layout={{
                 "text-field": "Easy hike",
                 "text-size": 10,
-                "text-anchor": "center", // top edge sits on the circle line, so the label hangs just below it
+                "text-anchor": "bottom", // top edge sits on the circle line, so the label hangs just below it
                 "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
                 "text-allow-overlap": true,
                 "text-letter-spacing": 0.08,
@@ -850,7 +852,7 @@ export default function HikeMap() {
               layout={{
                 "text-field": "Epic hike",
                 "text-size": 10,
-                "text-anchor": "center",
+                "text-anchor": "bottom",
                 "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
                 "text-allow-overlap": true,
                 "text-letter-spacing": 0.08,
