@@ -26,7 +26,7 @@ function InfoTip({ text }: { text: string }) {
 // matching the map markers exactly: star, triangle-up, triangle-down, circle.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string }[] = [
   {
-    key: "highlight", label: "Favourite", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
+    key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
     icon: (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -34,7 +34,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Recommended", tooltip: "A hiking spot I can personally recommend —TrainToGreen creator",
+    key: "verified", label: "Good", tooltip: "A hiking spot I can personally recommend —TrainToGreen creator",
     icon: (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -42,7 +42,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unverified", label: "To-do", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
+    key: "unverified", label: "Probably?", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
         <polygon points="12 3, 22.39 21, 1.61 21" />

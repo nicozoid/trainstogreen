@@ -116,7 +116,7 @@ export default function StationModal({
           <div className="flex gap-5 items-center justify-between">
             <div id="title_subtitle_stack" className="flex flex-col gap-2">
               <DialogTitle className="text-3xl">
-                {stationName}
+                {stationName} Station
               </DialogTitle>
               <DialogDescription className="text-sm">
                 {formatMinutes(minutes)} from central London
@@ -134,7 +134,7 @@ export default function StationModal({
                   className=""
                 >
                   <HugeiconsIcon icon={MapingIcon} />
-                  Find walking routes
+                  Hikes from station
                 </a>
               </Button>
             </div>
