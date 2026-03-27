@@ -199,10 +199,6 @@
     "name": "Coulsdon South",
     "rating": "not-recommended"
   },
-  "-1.5293235,50.7576921": {
-    "name": "Lymington Pier",
-    "rating": "not-recommended"
-  },
   "-1.5370862,50.7610847": {
     "name": "Lymington Town",
     "rating": "not-recommended"
@@ -221,10 +217,6 @@
   },
   "0.215334,51.9798629": {
     "name": "Newport",
-    "rating": "not-recommended"
-  },
-  "-3.000425,51.5887675": {
-    "name": "Newport (Wales)",
     "rating": "not-recommended"
   },
   "0.2071507,52.0044551": {
@@ -286,5 +278,117 @@
   "-0.8253668,51.6758974": {
     "name": "Saunderton",
     "rating": "unverified"
+  },
+  "0.4040202,52.7537968": {
+    "name": "King's Lynn",
+    "rating": "unverified"
+  },
+  "-1.6576697,50.7557623": {
+    "name": "New Milton",
+    "rating": "unverified"
+  },
+  "0.1971759,51.3129318": {
+    "name": "Otford",
+    "rating": "unverified"
+  },
+  "0.2112588,51.1939929": {
+    "name": "Leigh",
+    "rating": "unverified"
+  },
+  "0.4121616,51.2266654": {
+    "name": "Yalding",
+    "rating": "unverified"
+  },
+  "-0.5250129,51.2151195": {
+    "name": "Chilworth",
+    "rating": "unverified"
+  },
+  "-0.566879,51.2143603": {
+    "name": "Shalford",
+    "rating": "unverified"
+  },
+  "-0.6368939,51.163179": {
+    "name": "Milford",
+    "rating": "unverified"
+  },
+  "-0.7194871,51.0887757": {
+    "name": "Haslemere",
+    "rating": "unverified"
+  },
+  "-0.7924218,51.2118094": {
+    "name": "Farnham",
+    "rating": "unverified"
+  },
+  "-0.776776,51.3315657": {
+    "name": "Blackwater",
+    "rating": "unverified"
+  },
+  "-0.8681985,51.1812254": {
+    "name": "Bentley",
+    "rating": "unverified"
+  },
+  "0.1887766,51.3321241": {
+    "name": "Shoreham",
+    "rating": "unverified"
+  },
+  "0.2042149,51.3623288": {
+    "name": "Eynsford",
+    "rating": "unverified"
+  },
+  "0.2467483,50.8211277": {
+    "name": "Polegate",
+    "rating": "unverified"
+  },
+  "0.1657244,50.8404862": {
+    "name": "Berwick",
+    "rating": "unverified"
+  },
+  "0.0703481,50.8591176": {
+    "name": "Glynde",
+    "rating": "unverified"
+  },
+  "-0.2714448,50.8343756": {
+    "name": "Shoreham-by-Sea",
+    "rating": "unverified"
+  },
+  "-0.3232037,50.8270176": {
+    "name": "Lancing",
+    "rating": "unverified"
+  },
+  "-0.150065,51.2641687": {
+    "name": "Merstham",
+    "rating": "unverified"
+  },
+  "-0.2421857,51.308624": {
+    "name": "Tattenham Corner",
+    "rating": "unverified"
+  },
+  "-0.0516667,51.2896975": {
+    "name": "Woldingham",
+    "rating": "unverified"
+  },
+  "0.3130406,51.0733883": {
+    "name": "Wadhurst",
+    "rating": "unverified"
+  },
+  "-0.3425203,51.4020159": {
+    "name": "Hampton Court",
+    "rating": "verified"
+  },
+  "-0.3004127,51.4632072": {
+    "name": "Richmond",
+    "rating": "verified"
+  },
+  "-0.284962,51.4771341": {
+    "name": "Kew Gardens",
+    "rating": "verified"
+  },
+  "-0.1653912,51.5552396": {
+    "name": "Hampstead Heath",
+    "rating": "verified"
+  },
+  "-0.1990432,51.4340563": {
+    "name": "Wimbledon Park",
+    "rating": "verified"
   }
 }

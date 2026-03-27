@@ -27,14 +27,11 @@ type SelectedStation = {
 const INITIAL_VIEW = {
   longitude: -0.118,
   latitude: 51.509,
-  zoom: 9,
+  zoom: 7.4,
 }
 
-// Farringdon Station — used as the centre of London for distance calculations
+// Farringdon Station — used as the centre of London for the London marker on the map
 const LONDON_CENTRE = { lat: 51.5203, lng: -0.1053 }
-
-// Stations within this distance (km) are considered "in London" and excluded
-const MIN_DISTANCE_KM = 12
 
 // White outline thickness for station icons and dots — lower = thinner strokes
 const STATION_STROKE_WIDTH = 1.0
@@ -46,20 +43,6 @@ const OUTER_RADIUS_KM = 14
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
 // All entries are station names. If two stations share a name, add both (they'll both be excluded).
 const EXCLUDED_STATIONS = new Set(excludedStationsList)
-
-// Haversine formula: calculates straight-line distance between two GPS coordinates.
-// It accounts for the curvature of the Earth — important over larger distances.
-function distanceFromLondon(lat: number, lng: number): number {
-  const R = 6371 // Earth's radius in km
-  const dLat = ((lat - LONDON_CENTRE.lat) * Math.PI) / 180
-  const dLng = ((lng - LONDON_CENTRE.lng) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((LONDON_CENTRE.lat * Math.PI) / 180) *
-      Math.cos((lat * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 // Describes the shape of a single GeoJSON feature from our stations.json.
 // TypeScript uses this to check we're accessing valid properties later.
@@ -219,7 +202,8 @@ export default function HikeMap() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
-  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set())
+  // Default: show only the three positive ratings; "Unworthy" and "Unknown" start hidden
+  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set(['highlight', 'verified', 'unverified']))
 
   // Fetch universal ratings from the standalone JSON file on mount
   useEffect(() => {
@@ -335,15 +319,16 @@ export default function HikeMap() {
           return { ...f, properties: { ...f.properties, coordKey: `${lng},${lat}` } as StationFeature["properties"] }
         })
 
-        // Filter out stations inside London
+        // Filter out excluded stations
         const outside = stamped.filter((f) => {
-          const [lng, lat] = f.geometry.coordinates
           return (
-            // Only keep National Rail stations — ref:crs is the CRS station code
-            // that all NR stops have. Filters out heritage/tourism railway nodes
-            // that share a name with a real station (e.g. Amberley Museum Railway).
-            f.properties["ref:crs"] != null &&
-            distanceFromLondon(lat, lng) >= MIN_DISTANCE_KM &&
+            // Keep National Rail/Overground/Elizabeth line stations (have a CRS code),
+            // or TfL stations (London Underground / DLR). Blocks heritage railways,
+            // which OSM tags with usage=tourism and no CRS code.
+            (f.properties["ref:crs"] != null ||
+              f.properties["network"] === "London Underground" ||
+              f.properties["network"] === "Docklands Light Railway") &&
+            f.properties["usage"] !== "tourism" &&
             // Check both name (legacy exclusion entries) and coordKey (new entries)
             !EXCLUDED_STATIONS.has(f.properties.name as string) &&
             !EXCLUDED_STATIONS.has(f.properties.coordKey as string)
@@ -994,8 +979,10 @@ export default function HikeMap() {
             {/* Name-only labels — each rating tier appears at a different zoom.
                 These layers cap at maxzoom 11 where the full label layer takes over.
                 Camera expressions (like step/zoom) can't go inside "format", so we
-                use separate layers for name-only vs name+time instead. */}
-            {([
+                use separate layers for name-only vs name+time instead.
+                Hidden entirely when searching — the full label layer (minzoom=0 when
+                searching) takes over, and having both active at once causes overlapping text. */}
+            {!isSearching && ([
               // [layerId, minzoom, filter]
               ["station-labels-highlight", 7, ["==", ["get", "rating"], "highlight"]],
               ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
@@ -1005,8 +992,8 @@ export default function HikeMap() {
                 key={id}
                 id={id}
                 type="symbol"
-                minzoom={isSearching ? 0 : minZ}
-                maxzoom={11} // at zoom 11+ the full label layer below takes over
+                minzoom={minZ}
+                maxzoom={11}
                 /* eslint-disable @typescript-eslint/no-explicit-any */
                 filter={(hovered
                   ? ["all", filter, ["!=", ["get", "coordKey"], hovered.coordKey]]

@@ -182,6 +182,7 @@
     }
   body {
     @apply bg-background text-foreground;
+    overflow: hidden; /* prevents page scroll — the map is full-screen and handles its own scroll/zoom */
     }
   html {
     @apply font-sans;

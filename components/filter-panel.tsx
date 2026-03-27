@@ -53,7 +53,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unverified", label: "Probably?", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
+    key: "unverified", label: "Probably", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
       <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
         <polygon points="12 3, 22.39 21, 1.61 21" />
