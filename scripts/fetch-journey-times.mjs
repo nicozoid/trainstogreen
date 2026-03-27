@@ -18,14 +18,10 @@ if (!API_KEY) {
 // Farringdon Station — central, equidistant from most London termini
 const ORIGIN = "51.5203,-0.1053"
 
-// Returns Unix timestamps for next Saturday at each time in the departure window.
+// Returns Unix timestamps for Saturday 4 July 2026 at each time in the departure window.
 // We query multiple departure times so we catch the fastest train, not just the first.
+// Date is hardcoded to avoid accidentally running on a disrupted weekend (e.g. engineering works).
 function getDepartureWindow() {
-  const now = new Date()
-  const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7
-  const saturday = new Date(now)
-  saturday.setDate(now.getDate() + daysUntilSaturday)
-
   // Query every 15 minutes from 09:30 to 10:30 — 5 departure times total
   const times = [
     [9, 30],
@@ -36,8 +32,8 @@ function getDepartureWindow() {
   ]
 
   return times.map(([h, m]) => {
-    const d = new Date(saturday)
-    d.setHours(h, m, 0, 0)
+    // Month is 0-indexed in JS: 6 = July
+    const d = new Date(2026, 6, 4, h, m, 0, 0)
     return Math.floor(d.getTime() / 1000)
   })
 }
@@ -115,12 +111,6 @@ async function main() {
 
     // Skip excluded stations entirely — no point computing journey times for them
     if (excluded.has(name)) {
-      skipped++
-      continue
-    }
-
-    // Skip stations already known to exceed 3h — they'll never appear on the map
-    if (feature.properties.londonMinutes > 180) {
       skipped++
       continue
     }

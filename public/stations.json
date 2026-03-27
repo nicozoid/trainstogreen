@@ -28,7 +28,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3244572",
         "wikipedia": "en:Swindon railway station",
-        "londonMinutes": 70,
+        "londonMinutes": 73,
         "trailScore": 6369,
         "popularityScore": 6,
         "flickrCount": 467
@@ -89,7 +89,7 @@
         "wheelchair": "limited",
         "wikidata": "Q3095938",
         "wikipedia": "en:Beaulieu Road railway station",
-        "londonMinutes": 130,
+        "londonMinutes": 127,
         "trailScore": 1430,
         "popularityScore": 6,
         "flickrCount": 3451
@@ -151,7 +151,7 @@
         "wheelchair": "yes",
         "wikidata": "Q1913828",
         "wikipedia": "en:New Milton railway station",
-        "londonMinutes": 143,
+        "londonMinutes": 132,
         "trailScore": 1029,
         "popularityScore": 10,
         "flickrCount": 1545
@@ -184,7 +184,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2317360",
         "wikipedia": "en:Canley railway station",
-        "londonMinutes": 90,
+        "londonMinutes": 102,
         "trailScore": 4933,
         "popularityScore": 59,
         "flickrCount": 13179
@@ -219,7 +219,7 @@
         "train": "yes",
         "wikidata": "Q2043736",
         "wikipedia": "en:Rhyl railway station",
-        "londonMinutes": 193,
+        "londonMinutes": 209,
         "trailScore": 1178,
         "popularityScore": 5,
         "flickrCount": 517
@@ -283,7 +283,7 @@
         "source": "NPE",
         "wikidata": "Q3287228",
         "wikipedia": "en:Elsecar railway station",
-        "londonMinutes": 168,
+        "londonMinutes": 166,
         "trailScore": 2197,
         "popularityScore": 7,
         "flickrCount": 815
@@ -313,7 +313,7 @@
         "ref:crs": "BUO",
         "wikidata": "Q2219439",
         "wikipedia": "en:Bursledon railway station",
-        "londonMinutes": 141,
+        "londonMinutes": 139,
         "trailScore": 3667,
         "popularityScore": 14,
         "flickrCount": 763
@@ -344,7 +344,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2183741",
         "wikipedia": "en:Walton-on-Thames railway station",
-        "londonMinutes": 108,
+        "londonMinutes": 64,
         "trailScore": 3914,
         "popularityScore": 10,
         "flickrCount": 422
@@ -436,7 +436,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q525739",
         "wikipedia": "en:Sutton Coldfield railway station",
-        "londonMinutes": 130,
+        "londonMinutes": 140,
         "trailScore": 2184,
         "popularityScore": 6,
         "flickrCount": 1915
@@ -561,7 +561,7 @@
         "wheelchair": "yes",
         "wikidata": "Q6918669",
         "wikipedia": "en:Mottisfont & Dunbridge railway station",
-        "londonMinutes": 151,
+        "londonMinutes": 144,
         "trailScore": 1119,
         "popularityScore": 3,
         "flickrCount": 471
@@ -735,7 +735,7 @@
         "train": "yes",
         "wikidata": "Q2686491",
         "wikipedia": "en:Hedge End railway station",
-        "londonMinutes": 143,
+        "londonMinutes": 117,
         "trailScore": 3435,
         "popularityScore": 19,
         "flickrCount": 594
@@ -766,7 +766,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q5002705",
         "wikipedia": "en:Butlers Lane railway station",
-        "londonMinutes": 136,
+        "londonMinutes": 133,
         "trailScore": 1428,
         "popularityScore": 4,
         "flickrCount": 3228
@@ -831,7 +831,7 @@
         "wikidata": "Q4567463",
         "wikimedia_commons": "File:Ryde St. John's Road Railway station 1971.jpg",
         "wikipedia": "en:Ryde St John's Road railway station",
-        "londonMinutes": 230,
+        "londonMinutes": 244,
         "trailScore": null,
         "popularityScore": 12,
         "flickrCount": 1238
@@ -864,7 +864,7 @@
         "wikidata": "Q2274755",
         "wikimedia_commons": "File:Brading station, Isle of Wight.jpg",
         "wikipedia": "en:Brading railway station",
-        "londonMinutes": 238,
+        "londonMinutes": 283,
         "trailScore": 2594,
         "popularityScore": 8,
         "flickrCount": 1089
@@ -897,7 +897,7 @@
         "website": "https://www.southwesternrailway.com/travelling-with-us/at-the-station/smallbrook-junction",
         "wikidata": "Q1868757",
         "wikipedia": "en:Smallbrook Junction railway station",
-        "londonMinutes": 271,
+        "londonMinutes": 279,
         "trailScore": null,
         "popularityScore": 12,
         "flickrCount": 1706
@@ -924,7 +924,7 @@
         "railway": "station",
         "usage": "tourism",
         "wikidata": "Q5683726",
-        "londonMinutes": 283,
+        "londonMinutes": 288,
         "trailScore": 2192,
         "popularityScore": 11,
         "flickrCount": 0
@@ -954,7 +954,7 @@
         "train": "yes",
         "wikidata": "Q671580",
         "wikipedia": "en:Dean railway station",
-        "londonMinutes": 145,
+        "londonMinutes": 141,
         "trailScore": 770,
         "popularityScore": 5,
         "flickrCount": 208
@@ -1023,7 +1023,7 @@
         "ref:crs": "BOE",
         "wikidata": "Q2041220",
         "wikipedia": "en:Botley railway station",
-        "londonMinutes": 147,
+        "londonMinutes": 121,
         "trailScore": 2286,
         "popularityScore": 19,
         "flickrCount": 179
@@ -1056,7 +1056,7 @@
         "train": "yes",
         "wikidata": "Q2740729",
         "wikipedia": "en:Culham railway station",
-        "londonMinutes": 86,
+        "londonMinutes": 90,
         "trailScore": 2358,
         "popularityScore": 8,
         "flickrCount": 1850
@@ -1087,7 +1087,7 @@
         "source": "NPE",
         "wikidata": "Q2550440",
         "wikipedia": "en:Appleford railway station",
-        "londonMinutes": 84,
+        "londonMinutes": 88,
         "trailScore": 2897,
         "popularityScore": null,
         "flickrCount": 1136
@@ -1153,7 +1153,7 @@
         "train": "yes",
         "wikidata": "Q927502",
         "wikipedia": "en:Hamble railway station",
-        "londonMinutes": 144,
+        "londonMinutes": 136,
         "trailScore": 2848,
         "popularityScore": 11,
         "flickrCount": 960
@@ -1190,7 +1190,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2344848",
         "wikipedia": "en:Llandudno Junction railway station",
-        "londonMinutes": 202,
+        "londonMinutes": 217,
         "trailScore": 1864,
         "popularityScore": 8,
         "flickrCount": 2487
@@ -1227,7 +1227,7 @@
         "train": "yes",
         "wikidata": "Q2110992",
         "wikipedia": "en:Flint railway station",
-        "londonMinutes": 165,
+        "londonMinutes": 181,
         "trailScore": null,
         "popularityScore": 6,
         "flickrCount": 739
@@ -1267,7 +1267,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2913893",
         "wikipedia": "en:Shotton railway station",
-        "londonMinutes": 169,
+        "londonMinutes": 174,
         "trailScore": 2202,
         "popularityScore": 9,
         "flickrCount": 1568
@@ -1297,7 +1297,7 @@
         "uic_ref": "7000024",
         "wikidata": "Q2097961",
         "wikipedia": "en:Acton Bridge railway station",
-        "londonMinutes": 148,
+        "londonMinutes": 158,
         "trailScore": 1350,
         "popularityScore": 8,
         "flickrCount": 194
@@ -1395,7 +1395,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2368596",
         "wikipedia": "en:Finstock railway station",
-        "londonMinutes": 131,
+        "londonMinutes": 181,
         "trailScore": 654,
         "popularityScore": 7,
         "flickrCount": 463
@@ -1425,7 +1425,7 @@
         "train": "yes",
         "wikidata": "Q1951021",
         "wikipedia": "en:Portchester railway station",
-        "londonMinutes": 137,
+        "londonMinutes": 138,
         "trailScore": 2804,
         "popularityScore": 23,
         "flickrCount": 1372
@@ -1451,7 +1451,7 @@
         "usage": "tourism",
         "wikidata": "Q4735710",
         "wikipedia": "en:Alresford_railway_station_(Hampshire)",
-        "londonMinutes": 156,
+        "londonMinutes": 149,
         "trailScore": 710,
         "popularityScore": 9,
         "flickrCount": 0
@@ -1481,7 +1481,7 @@
         "train": "yes",
         "wikidata": "Q2674112",
         "wikipedia": "en:Water Orton railway station",
-        "londonMinutes": 132,
+        "londonMinutes": 127,
         "trailScore": 2716,
         "popularityScore": 7,
         "flickrCount": 419
@@ -1585,7 +1585,7 @@
         "wheelchair": "limited",
         "wikidata": "Q5172759",
         "wikipedia": "en:Cosham railway station",
-        "londonMinutes": 138,
+        "londonMinutes": 125,
         "trailScore": 3826,
         "popularityScore": 29,
         "flickrCount": 1486
@@ -1641,7 +1641,7 @@
         "wheelchair": "yes",
         "wikidata": "Q5170476",
         "wikipedia": "en:Corfe Castle railway station",
-        "londonMinutes": 216,
+        "londonMinutes": null,
         "trailScore": 1652,
         "popularityScore": 17,
         "flickrCount": 0
@@ -1666,7 +1666,7 @@
         "railway": "station",
         "usage": "tourism",
         "wikidata": "Q5659026",
-        "londonMinutes": 236,
+        "londonMinutes": null,
         "trailScore": 2023,
         "popularityScore": 14,
         "flickrCount": 0
@@ -1690,7 +1690,7 @@
         "request_stop": "yes",
         "usage": "tourism",
         "wikidata": "Q15223746",
-        "londonMinutes": 228,
+        "londonMinutes": null,
         "trailScore": 1853,
         "popularityScore": 11,
         "flickrCount": 0
@@ -1876,7 +1876,7 @@
         "train": "yes",
         "wikidata": "Q1847555",
         "wikipedia": "en:Islip railway station",
-        "londonMinutes": 92,
+        "londonMinutes": 96,
         "trailScore": 1206,
         "popularityScore": 12,
         "flickrCount": 2249
@@ -1908,7 +1908,7 @@
         "train": "yes",
         "wikidata": "Q1873632",
         "wikipedia": "en:Bicester Village railway station",
-        "londonMinutes": 112,
+        "londonMinutes": 95,
         "trailScore": 2505,
         "popularityScore": 4,
         "flickrCount": 445
@@ -2007,7 +2007,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2760814",
         "wikipedia": "en:Blackwater railway station",
-        "londonMinutes": 72,
+        "londonMinutes": 74,
         "trailScore": 5582,
         "popularityScore": 15,
         "flickrCount": 1595
@@ -2068,7 +2068,7 @@
         "wheelchair": "yes",
         "wikidata": "Q5090223",
         "wikipedia": "en:Cheltenham Race Course railway station",
-        "londonMinutes": null,
+        "londonMinutes": 630,
         "flickrCount": 0
       },
       "geometry": {
@@ -2096,7 +2096,7 @@
         "train": "yes",
         "wikidata": "Q2555327",
         "wikipedia": "en:Netley railway station",
-        "londonMinutes": 147,
+        "londonMinutes": 134,
         "trailScore": 3092,
         "popularityScore": 11,
         "flickrCount": 1383
@@ -2129,7 +2129,7 @@
         "ref:crs": "HSB",
         "wikidata": "Q3401861",
         "wikipedia": "en:Helsby railway station",
-        "londonMinutes": 170,
+        "londonMinutes": 148,
         "trailScore": 1148,
         "popularityScore": null,
         "flickrCount": 269
@@ -2163,7 +2163,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2385086",
         "wikipedia": "en:Patchway railway station",
-        "londonMinutes": 123,
+        "londonMinutes": 132,
         "trailScore": 5082,
         "popularityScore": 12,
         "flickrCount": 2842
@@ -2227,7 +2227,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3900748",
         "wikipedia": "en:Yate railway station",
-        "londonMinutes": 123,
+        "londonMinutes": 127,
         "trailScore": 2979,
         "popularityScore": 6,
         "flickrCount": 445
@@ -2258,7 +2258,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2618118",
         "wikipedia": "en:Fratton railway station",
-        "londonMinutes": 177,
+        "londonMinutes": 111,
         "trailScore": 3342,
         "popularityScore": 27,
         "flickrCount": 1407
@@ -2294,7 +2294,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2184930",
         "wikipedia": "en:Bicester North railway station",
-        "londonMinutes": 128,
+        "londonMinutes": 78,
         "trailScore": 2501,
         "popularityScore": 4,
         "flickrCount": 338
@@ -2360,7 +2360,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2974092",
         "wikipedia": "en:Trowbridge railway station",
-        "londonMinutes": 121,
+        "londonMinutes": 115,
         "trailScore": 2220,
         "popularityScore": 7,
         "flickrCount": 1136
@@ -2499,7 +2499,7 @@
         "source": "Landsat photo",
         "wikidata": "Q2431706",
         "wikipedia": "en:Caldicot railway station",
-        "londonMinutes": 165,
+        "londonMinutes": 184,
         "trailScore": 797,
         "popularityScore": 7,
         "flickrCount": 250
@@ -2864,7 +2864,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2271679",
         "wikipedia": "en:Holton Heath railway station",
-        "londonMinutes": 173,
+        "londonMinutes": 170,
         "trailScore": 2060,
         "popularityScore": 16,
         "flickrCount": 2328
@@ -2900,7 +2900,7 @@
         "train": "yes",
         "wikidata": "Q3400252",
         "wikipedia": "en:Milford Haven railway station",
-        "londonMinutes": 326,
+        "londonMinutes": 330,
         "trailScore": 378,
         "popularityScore": 3,
         "flickrCount": 512
@@ -2936,7 +2936,7 @@
         "train": "yes",
         "wikidata": "Q1812881",
         "wikipedia": "en:Johnston railway station",
-        "londonMinutes": 320,
+        "londonMinutes": 325,
         "trailScore": 315,
         "popularityScore": 2,
         "flickrCount": 452
@@ -2970,7 +2970,7 @@
         "ref:crs": "HVF",
         "wikidata": "Q1931357",
         "wikipedia": "en:Haverfordwest railway station",
-        "londonMinutes": 306,
+        "londonMinutes": 312,
         "trailScore": 407,
         "popularityScore": 2,
         "flickrCount": 281
@@ -3074,7 +3074,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2004430",
         "wikipedia": "en:Chirk railway station",
-        "londonMinutes": 189,
+        "londonMinutes": 219,
         "popularityScore": 5,
         "flickrCount": 826
       },
@@ -3108,7 +3108,7 @@
         "train": "yes",
         "wikidata": "Q2334676",
         "wikipedia": "en:Ruabon railway station",
-        "londonMinutes": 183,
+        "londonMinutes": 215,
         "popularityScore": 9,
         "flickrCount": 875
       },
@@ -3180,7 +3180,7 @@
         "train": "yes",
         "wikidata": "Q2137827",
         "wikipedia": "en:Clarbeston Road railway station",
-        "londonMinutes": 287,
+        "londonMinutes": 290,
         "popularityScore": 2,
         "flickrCount": 171
       },
@@ -3284,7 +3284,7 @@
         "request_stop": "yes",
         "wikidata": "Q3400242",
         "wikipedia": "en:Clunderwen railway station",
-        "londonMinutes": 279,
+        "londonMinutes": 282,
         "popularityScore": 2,
         "flickrCount": 140
       },
@@ -3316,7 +3316,7 @@
         "ref:crs": "WTL",
         "wikidata": "Q2129176",
         "wikipedia": "en:Whitland railway station",
-        "londonMinutes": 274,
+        "londonMinutes": 277,
         "popularityScore": 4,
         "flickrCount": 341
       },
@@ -3508,7 +3508,7 @@
         "train": "yes",
         "wikidata": "Q2927580",
         "wikipedia": "en:Kilgetty railway station",
-        "londonMinutes": 300,
+        "londonMinutes": 304,
         "popularityScore": 4,
         "flickrCount": 1177
       },
@@ -3542,7 +3542,7 @@
         "train": "yes",
         "wikidata": "Q2570866",
         "wikipedia": "en:Tenby railway station",
-        "londonMinutes": 307,
+        "londonMinutes": 311,
         "popularityScore": 4,
         "flickrCount": 1067
       },
@@ -3579,7 +3579,7 @@
         "train": "yes",
         "wikidata": "Q2430381",
         "wikipedia": "en:Penally railway station",
-        "londonMinutes": 313,
+        "londonMinutes": 316,
         "popularityScore": 4,
         "flickrCount": 1075
       },
@@ -3614,7 +3614,7 @@
         "train": "yes",
         "wikidata": "Q1832240",
         "wikipedia": "en:Manorbier railway station",
-        "londonMinutes": 320,
+        "londonMinutes": 324,
         "popularityScore": 3,
         "flickrCount": 1724
       },
@@ -3650,7 +3650,7 @@
         "train": "yes",
         "wikidata": "Q1986174",
         "wikipedia": "en:Lamphey railway station",
-        "londonMinutes": 328,
+        "londonMinutes": 332,
         "popularityScore": 3,
         "flickrCount": 1286
       },
@@ -3685,7 +3685,7 @@
         "ref:crs": "PMB",
         "wikidata": "Q2688589",
         "wikipedia": "en:Pembroke railway station",
-        "londonMinutes": 331,
+        "londonMinutes": 336,
         "popularityScore": 4,
         "flickrCount": 1394
       },
@@ -3784,7 +3784,7 @@
         "train": "yes",
         "wikidata": "Q2162503",
         "wikipedia": "en:Park Street railway station (England)",
-        "londonMinutes": 58,
+        "londonMinutes": 61,
         "popularityScore": 7,
         "flickrCount": 222
       },
@@ -3818,7 +3818,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2407794",
         "wikipedia": "en:Bricket Wood railway station",
-        "londonMinutes": 52,
+        "londonMinutes": 55,
         "popularityScore": 5,
         "flickrCount": 285
       },
@@ -3851,7 +3851,7 @@
         "wheelchair": "limited",
         "wikidata": "Q19895",
         "wikipedia": "en:Garston railway station (Hertfordshire)",
-        "londonMinutes": 49,
+        "londonMinutes": 52,
         "popularityScore": 6,
         "flickrCount": 182
       },
@@ -3884,7 +3884,7 @@
         "wheelchair": "yes",
         "wikidata": "Q19902",
         "wikipedia": "en:Watford North railway station",
-        "londonMinutes": 47,
+        "londonMinutes": 50,
         "popularityScore": 6,
         "flickrCount": 178
       },
@@ -3917,7 +3917,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2664311",
         "wikipedia": "en:How Wood railway station",
-        "londonMinutes": 59,
+        "londonMinutes": 62,
         "popularityScore": 6,
         "flickrCount": 259
       },
@@ -4055,7 +4055,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2093451",
         "wikipedia": "en:Kidwelly railway station",
-        "londonMinutes": 239,
+        "londonMinutes": 240,
         "popularityScore": 3,
         "flickrCount": 419
       },
@@ -4129,7 +4129,7 @@
         "train": "yes",
         "wikidata": "Q3400321",
         "wikipedia": "en:Ferryside railway station",
-        "londonMinutes": 242,
+        "londonMinutes": 243,
         "popularityScore": 3,
         "flickrCount": 434
       },
@@ -4163,7 +4163,7 @@
         "train": "yes",
         "wikidata": "Q1945743",
         "wikipedia": "en:Port Talbot Parkway railway station",
-        "londonMinutes": 181,
+        "londonMinutes": 185,
         "popularityScore": 1,
         "flickrCount": 797
       },
@@ -4235,7 +4235,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2221390",
         "wikipedia": "en:Bridgend railway station",
-        "londonMinutes": 150,
+        "londonMinutes": 155,
         "popularityScore": 1,
         "flickrCount": 561
       },
@@ -4267,7 +4267,7 @@
         "ref:crs": "PYL",
         "wikidata": "Q1869277",
         "wikipedia": "en:Pyle railway station",
-        "londonMinutes": 179,
+        "londonMinutes": 182,
         "popularityScore": 1,
         "flickrCount": 589
       },
@@ -4647,7 +4647,7 @@
         "ref:crs": "DUL",
         "wikidata": "Q3353344",
         "wikipedia": "en:Dullingham railway station",
-        "londonMinutes": 119,
+        "londonMinutes": 102,
         "popularityScore": 5,
         "flickrCount": 302
       },
@@ -4740,7 +4740,7 @@
         "ref:crs": "HTN",
         "wikidata": "Q13528205",
         "wikipedia": "en:Hatton railway station (England)",
-        "londonMinutes": 146,
+        "londonMinutes": 138,
         "popularityScore": 20,
         "flickrCount": 1235
       },
@@ -4798,7 +4798,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2512506",
         "wikipedia": "en:Dorridge railway station",
-        "londonMinutes": 147,
+        "londonMinutes": 134,
         "popularityScore": 26,
         "flickrCount": 532
       },
@@ -4827,7 +4827,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q2079928",
         "wikipedia": "en:Widney Manor railway station",
-        "londonMinutes": 144,
+        "londonMinutes": 152,
         "popularityScore": null,
         "flickrCount": 516
       },
@@ -4856,7 +4856,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q7558107",
         "wikipedia": "en:Solihull railway station",
-        "londonMinutes": 153,
+        "londonMinutes": 140,
         "popularityScore": 17,
         "flickrCount": 3480
       },
@@ -4953,7 +4953,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3250380",
         "wikipedia": "en:Rugby railway station",
-        "londonMinutes": 74,
+        "londonMinutes": 75,
         "popularityScore": 20,
         "flickrCount": 2283
       },
@@ -4988,7 +4988,7 @@
         "wheelchair": "no",
         "wikidata": "Q19898",
         "wikipedia": "en:Watford High Street railway station",
-        "londonMinutes": 47,
+        "londonMinutes": 55,
         "popularityScore": 5,
         "flickrCount": 183
       },
@@ -5020,7 +5020,7 @@
         "train": "yes",
         "wikidata": "Q2277649",
         "wikipedia": "en:Fenny Stratford railway station",
-        "londonMinutes": 87,
+        "londonMinutes": 90,
         "popularityScore": 7,
         "flickrCount": 836
       },
@@ -5052,7 +5052,7 @@
         "train": "yes",
         "wikidata": "Q925646",
         "wikipedia": "en:Monks Risborough railway station",
-        "londonMinutes": 141,
+        "londonMinutes": 85,
         "popularityScore": 36,
         "flickrCount": 1157
       },
@@ -5080,7 +5080,7 @@
         "ref:crs": "HDM",
         "wikidata": "Q2848978",
         "wikipedia": "en:Haddenham & Thame Parkway railway station",
-        "londonMinutes": 112,
+        "londonMinutes": 66,
         "popularityScore": 20,
         "flickrCount": 844
       },
@@ -5110,7 +5110,7 @@
         "train": "yes",
         "wikidata": "Q2740928",
         "wikipedia": "en:Saunderton railway station",
-        "londonMinutes": 131,
+        "londonMinutes": 75,
         "popularityScore": 32,
         "flickrCount": 1530
       },
@@ -5141,7 +5141,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2412080",
         "wikipedia": "en:Gerrards Cross railway station",
-        "londonMinutes": 86,
+        "londonMinutes": 45,
         "popularityScore": 6,
         "flickrCount": 273
       },
@@ -5171,7 +5171,7 @@
         "wheelchair": "no",
         "wikidata": "Q2521362",
         "wikipedia": "en:Denham Golf Club railway station",
-        "londonMinutes": 90,
+        "londonMinutes": 65,
         "popularityScore": 5,
         "flickrCount": 241
       },
@@ -5202,7 +5202,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2780894",
         "wikipedia": "en:Denham railway station",
-        "londonMinutes": 76,
+        "londonMinutes": 48,
         "popularityScore": 5,
         "flickrCount": 249
       },
@@ -5299,7 +5299,7 @@
         "source": "NPE",
         "wikidata": "Q2751439",
         "wikipedia": "en:Wendover railway station",
-        "londonMinutes": 131,
+        "londonMinutes": 114,
         "popularityScore": 33,
         "flickrCount": 1622
       },
@@ -5331,7 +5331,7 @@
         "wheelchair": "yes",
         "wikidata": "Q1843842",
         "wikipedia": "en:Great Missenden railway station",
-        "londonMinutes": 91,
+        "londonMinutes": 74,
         "popularityScore": 31,
         "flickrCount": 1859
       },
@@ -5476,7 +5476,7 @@
         "train": "yes",
         "wikidata": "Q1924638",
         "wikipedia": "en:Lichfield City railway station",
-        "londonMinutes": 132,
+        "londonMinutes": 125,
         "popularityScore": 8,
         "flickrCount": 4810
       },
@@ -5507,7 +5507,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2649169",
         "wikipedia": "en:Rugeley Town railway station",
-        "londonMinutes": 133,
+        "londonMinutes": 153,
         "popularityScore": 12,
         "flickrCount": 3115
       },
@@ -5866,7 +5866,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2505295",
         "wikipedia": "en:Alsager railway station",
-        "londonMinutes": 140,
+        "londonMinutes": 144,
         "popularityScore": 9,
         "flickrCount": 1102
       },
@@ -5896,7 +5896,7 @@
         "train": "yes",
         "wikidata": "Q2658226",
         "wikipedia": "en:Barnt Green railway station",
-        "londonMinutes": 143,
+        "londonMinutes": 156,
         "popularityScore": 13,
         "flickrCount": 346
       },
@@ -5926,7 +5926,7 @@
         "train": "yes",
         "wikidata": "Q2360854",
         "wikipedia": "en:Droitwich Spa railway station",
-        "londonMinutes": 156,
+        "londonMinutes": 175,
         "popularityScore": 16,
         "flickrCount": 1207
       },
@@ -6172,7 +6172,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2432877",
         "wikipedia": "en:Weston Milton railway station",
-        "londonMinutes": 156,
+        "londonMinutes": 159,
         "popularityScore": 7,
         "flickrCount": 845
       },
@@ -6205,7 +6205,7 @@
         "train": "yes",
         "wikidata": "Q1957149",
         "wikipedia": "en:Yatton railway station",
-        "londonMinutes": 140,
+        "londonMinutes": 143,
         "popularityScore": 12,
         "flickrCount": 1219
       },
@@ -6238,7 +6238,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2335883",
         "wikipedia": "en:Weston-super-Mare railway station",
-        "londonMinutes": 130,
+        "londonMinutes": 133,
         "popularityScore": 6,
         "flickrCount": 720
       },
@@ -6432,7 +6432,7 @@
         "source": "NPE",
         "wikidata": "Q2657768",
         "wikipedia": "en:Malvern Link railway station",
-        "londonMinutes": 174,
+        "londonMinutes": 162,
         "popularityScore": 15,
         "flickrCount": 1737
       },
@@ -6551,7 +6551,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2045806",
         "wikipedia": "en:Stourbridge Junction railway station",
-        "londonMinutes": 148,
+        "londonMinutes": 151,
         "popularityScore": 15,
         "flickrCount": 2735
       },
@@ -6582,7 +6582,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2746016",
         "wikipedia": "en:Stourbridge Town railway station",
-        "londonMinutes": 155,
+        "londonMinutes": 167,
         "popularityScore": null,
         "flickrCount": 2618
       },
@@ -6766,7 +6766,7 @@
         "source": "NPE",
         "usage": "tourism",
         "wikidata": "Q4899741",
-        "londonMinutes": 197,
+        "londonMinutes": 210,
         "popularityScore": 12,
         "flickrCount": 0
       },
@@ -6792,7 +6792,7 @@
         "source": "NPE",
         "usage": "tourism",
         "wikidata": "Q7060470",
-        "londonMinutes": 246,
+        "londonMinutes": 269,
         "popularityScore": 11,
         "flickrCount": 0
       },
@@ -6820,7 +6820,7 @@
         "usage": "tourism",
         "wikidata": "Q4792219",
         "wikipedia": "en:Arley railway station",
-        "londonMinutes": 209,
+        "londonMinutes": 261,
         "popularityScore": 12,
         "flickrCount": 0
       },
@@ -6939,7 +6939,7 @@
         "train": "yes",
         "wikidata": "Q2765966",
         "wikipedia": "en:Swanwick railway station",
-        "londonMinutes": 123,
+        "londonMinutes": 130,
         "popularityScore": 16,
         "flickrCount": 160
       },
@@ -6972,7 +6972,7 @@
         "wheelchair": "yes",
         "wikidata": "Q1877761",
         "wikipedia": "en:Kemble railway station",
-        "londonMinutes": 87,
+        "londonMinutes": 91,
         "popularityScore": 6,
         "flickrCount": 331
       },
@@ -7038,7 +7038,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3079073",
         "wikipedia": "en:Stroud railway station",
-        "londonMinutes": 103,
+        "londonMinutes": 107,
         "popularityScore": 11,
         "flickrCount": 820
       },
@@ -7072,7 +7072,7 @@
         "wheelchair": "yes",
         "wikidata": "Q1992485",
         "wikipedia": "en:Stonehouse railway station",
-        "londonMinutes": 109,
+        "londonMinutes": 113,
         "popularityScore": 12,
         "flickrCount": 1000
       },
@@ -7146,7 +7146,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2300730",
         "wikipedia": "en:Cathays railway station",
-        "londonMinutes": 154,
+        "londonMinutes": 159,
         "popularityScore": 6,
         "flickrCount": 2934
       },
@@ -7181,7 +7181,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2253187",
         "wikipedia": "en:Llandaf railway station",
-        "londonMinutes": 160,
+        "londonMinutes": 164,
         "popularityScore": 7,
         "flickrCount": 2818
       },
@@ -7388,7 +7388,7 @@
         "wheelchair": "no",
         "wikidata": "Q2178092",
         "wikipedia": "en:Deganwy railway station",
-        "londonMinutes": 226,
+        "londonMinutes": 257,
         "popularityScore": 8,
         "flickrCount": 2303
       },
@@ -7422,7 +7422,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2415206",
         "wikipedia": "en:Llandudno railway station",
-        "londonMinutes": 232,
+        "londonMinutes": 264,
         "popularityScore": 8,
         "flickrCount": 2341
       },
@@ -7492,7 +7492,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2733409",
         "wikipedia": "en:Hinckley railway station",
-        "londonMinutes": 104,
+        "londonMinutes": 117,
         "popularityScore": 55,
         "flickrCount": 2175
       },
@@ -7523,7 +7523,7 @@
         "ref:crs": "RAD",
         "wikidata": "Q4386081",
         "wikipedia": "en:Radley railway station",
-        "londonMinutes": 92,
+        "londonMinutes": 96,
         "popularityScore": 12,
         "flickrCount": 2091
       },
@@ -7554,7 +7554,7 @@
         "source": "NPE",
         "wikidata": "Q3060156",
         "wikipedia": "en:Kirton Lindsey railway station",
-        "londonMinutes": 225,
+        "londonMinutes": 203,
         "popularityScore": 0,
         "flickrCount": 855
       },
@@ -7585,7 +7585,7 @@
         "ref:crs": "MTP",
         "wikidata": "Q962430",
         "wikipedia": "en:Montpelier railway station",
-        "londonMinutes": 131,
+        "londonMinutes": 135,
         "popularityScore": 16,
         "flickrCount": 3509
       },
@@ -7651,7 +7651,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2537961",
         "wikipedia": "en:Stapleton Road railway station",
-        "londonMinutes": 127,
+        "londonMinutes": 131,
         "popularityScore": 15,
         "flickrCount": 2966
       },
@@ -7686,7 +7686,7 @@
         "wheelchair": "limited",
         "wikidata": "Q4785868",
         "wikipedia": "en:Lawrence Hill railway station",
-        "londonMinutes": 125,
+        "londonMinutes": 129,
         "popularityScore": 15,
         "flickrCount": 3827
       },
@@ -7716,7 +7716,7 @@
         "train": "yes",
         "wikidata": "Q2165170",
         "wikipedia": "en:Moreton railway station (Dorset)",
-        "londonMinutes": 210,
+        "londonMinutes": 191,
         "popularityScore": 8,
         "flickrCount": 1316
       },
@@ -7746,7 +7746,7 @@
         "train": "yes",
         "wikidata": "Q2547367",
         "wikipedia": "en:Wool railway station",
-        "londonMinutes": 200,
+        "londonMinutes": 181,
         "popularityScore": 11,
         "flickrCount": 1362
       },
@@ -7779,7 +7779,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2969859",
         "wikipedia": "en:Wavertree Technology Park railway station",
-        "londonMinutes": 181,
+        "londonMinutes": 188,
         "popularityScore": 5,
         "flickrCount": 1417
       },
@@ -8131,7 +8131,7 @@
         "west_midlands_fare_zone": "3",
         "wikidata": "Q2419238",
         "wikipedia": "en:Stechford railway station",
-        "londonMinutes": 104,
+        "londonMinutes": 117,
         "popularityScore": 8,
         "flickrCount": 892
       },
@@ -8160,7 +8160,7 @@
         "west_midlands_fare_zone": "3",
         "wikidata": "Q2499943",
         "wikipedia": "en:Lea Hall railway station",
-        "londonMinutes": 99,
+        "londonMinutes": 112,
         "popularityScore": 11,
         "flickrCount": 733
       },
@@ -8225,7 +8225,7 @@
         "west_midlands_fare_zone": "5",
         "wikidata": "Q2728174",
         "wikipedia": "en:Hampton-in-Arden railway station",
-        "londonMinutes": 102,
+        "londonMinutes": 114,
         "popularityScore": 37,
         "flickrCount": 2097
       },
@@ -8328,7 +8328,7 @@
         "train": "yes",
         "wikidata": "Q2353885",
         "wikipedia": "en:Derby Road railway station",
-        "londonMinutes": 186,
+        "londonMinutes": 114,
         "popularityScore": 5,
         "flickrCount": 1809
       },
@@ -8359,7 +8359,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3247616",
         "wikipedia": "en:Felixstowe railway station",
-        "londonMinutes": 202,
+        "londonMinutes": 130,
         "popularityScore": 3,
         "flickrCount": 975
       },
@@ -8388,7 +8388,7 @@
         "start_date": "1859-06-01",
         "wikidata": "Q1815407",
         "wikipedia": "en:Westerfield railway station",
-        "londonMinutes": 182,
+        "londonMinutes": 110,
         "popularityScore": 5,
         "flickrCount": 2012
       },
@@ -8448,7 +8448,7 @@
         "usage": "tourism",
         "wheelchair": "yes",
         "wikidata": "Q7085686",
-        "londonMinutes": 153,
+        "londonMinutes": 156,
         "popularityScore": 12,
         "flickrCount": 0
       },
@@ -8645,7 +8645,7 @@
         "wheelchair": "no",
         "wikidata": "Q2262602",
         "wikipedia": "en:Brundall Gardens railway station",
-        "londonMinutes": 188,
+        "londonMinutes": 144,
         "popularityScore": 6,
         "flickrCount": 1455
       },
@@ -8676,7 +8676,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2658052",
         "wikipedia": "en:Keynsham railway station",
-        "londonMinutes": 120,
+        "londonMinutes": 119,
         "popularityScore": 12,
         "flickrCount": 1421
       },
@@ -8706,7 +8706,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2462275",
         "wikipedia": "en:Clifton Down railway station",
-        "londonMinutes": 138,
+        "londonMinutes": 142,
         "popularityScore": 17,
         "flickrCount": 3379
       },
@@ -8795,7 +8795,7 @@
         "usage": "tourism",
         "website": "https://www.watercressline.co.uk/",
         "wikidata": "Q7366762",
-        "londonMinutes": 169,
+        "londonMinutes": 134,
         "popularityScore": 10,
         "flickrCount": 0
       },
@@ -8827,7 +8827,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2275914",
         "wikipedia": "en:Oldfield Park railway station",
-        "londonMinutes": 111,
+        "londonMinutes": 110,
         "popularityScore": 11,
         "flickrCount": 1747
       },
@@ -8857,7 +8857,7 @@
         "wheelchair": "yes",
         "wikidata": "Q282288",
         "wikipedia": "en:Brundall railway station",
-        "londonMinutes": 192,
+        "londonMinutes": 139,
         "popularityScore": 5,
         "flickrCount": 1446
       },
@@ -8888,7 +8888,7 @@
         "train": "yes",
         "wikidata": "Q4489756",
         "wikipedia": "en:Colchester Town railway station",
-        "londonMinutes": 147,
+        "londonMinutes": 75,
         "popularityScore": 6,
         "flickrCount": 730
       },
@@ -8956,7 +8956,7 @@
         "ref:crs": "HPE",
         "wikidata": "Q2357931",
         "wikipedia": "en:Hope railway station (Wales)",
-        "londonMinutes": 213,
+        "londonMinutes": 228,
         "popularityScore": 6,
         "flickrCount": 254
       },
@@ -8988,7 +8988,7 @@
         "ref:crs": "CGW",
         "wikidata": "Q2684872",
         "wikipedia": "en:Caergwrle railway station",
-        "londonMinutes": 211,
+        "londonMinutes": 226,
         "popularityScore": 5,
         "flickrCount": 442
       },
@@ -9020,7 +9020,7 @@
         "ref:crs": "CYB",
         "wikidata": "Q2623509",
         "wikipedia": "en:Cefn-y-Bedd railway station",
-        "londonMinutes": 209,
+        "londonMinutes": 224,
         "popularityScore": 6,
         "flickrCount": 331
       },
@@ -9054,7 +9054,7 @@
         "ref:crs": "GWE",
         "wikidata": "Q2243062",
         "wikipedia": "en:Gwersyllt railway station",
-        "londonMinutes": 205,
+        "londonMinutes": 220,
         "popularityScore": 6,
         "flickrCount": 231
       },
@@ -9105,7 +9105,7 @@
         "ref:crs": "CSG",
         "wikidata": "Q2465226",
         "wikipedia": "en:Cressington railway station",
-        "londonMinutes": 172,
+        "londonMinutes": 182,
         "popularityScore": 7,
         "flickrCount": 1794
       },
@@ -9136,7 +9136,7 @@
         "train": "yes",
         "wikidata": "Q1915042",
         "wikipedia": "en:Freshford railway station",
-        "londonMinutes": 119,
+        "londonMinutes": 123,
         "popularityScore": 6,
         "flickrCount": 2169
       },
@@ -9271,7 +9271,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2540573",
         "wikipedia": "en:Neston railway station",
-        "londonMinutes": 198,
+        "londonMinutes": 216,
         "popularityScore": 7,
         "flickrCount": 1003
       },
@@ -9332,7 +9332,7 @@
         "wheelchair": "no",
         "wikidata": "Q2677471",
         "wikipedia": "en:Aigburth railway station",
-        "londonMinutes": 173,
+        "londonMinutes": 183,
         "popularityScore": 7,
         "flickrCount": 1706
       },
@@ -9364,7 +9364,7 @@
         "wheelchair": "yes",
         "wikidata": "Q4879315",
         "wikipedia": "en:Bedminster railway station",
-        "londonMinutes": 126,
+        "londonMinutes": 129,
         "popularityScore": 16,
         "flickrCount": 3231
       },
@@ -9395,7 +9395,7 @@
         "train": "yes",
         "wikidata": "Q2492432",
         "wikipedia": "en:Parson Street railway station",
-        "londonMinutes": 127,
+        "londonMinutes": 130,
         "popularityScore": 16,
         "flickrCount": 3100
       },
@@ -9430,7 +9430,7 @@
         "train": "yes",
         "wikidata": "Q2441170",
         "wikipedia": "en:Penmaenmawr railway station",
-        "londonMinutes": 222,
+        "londonMinutes": 226,
         "popularityScore": 10,
         "flickrCount": 3001
       },
@@ -9466,7 +9466,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2840781",
         "wikipedia": "en:Llanfairfechan railway station",
-        "londonMinutes": 226,
+        "londonMinutes": 231,
         "popularityScore": 11,
         "flickrCount": 1964
       },
@@ -9508,7 +9508,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2528020",
         "wikipedia": "en:Llanfairpwll railway station",
-        "londonMinutes": 243,
+        "londonMinutes": 249,
         "popularityScore": 4,
         "flickrCount": 1178
       },
@@ -9542,7 +9542,7 @@
         "train": "yes",
         "wikidata": "Q3085974",
         "wikipedia": "en:Bodorgan railway station",
-        "londonMinutes": 253,
+        "londonMinutes": 283,
         "popularityScore": 1,
         "flickrCount": 931
       },
@@ -9578,7 +9578,7 @@
         "train": "yes",
         "wikidata": "Q3400226",
         "wikipedia": "en:Tŷ Croes railway station",
-        "londonMinutes": 257,
+        "londonMinutes": 287,
         "popularityScore": 1,
         "flickrCount": 876
       },
@@ -9612,7 +9612,7 @@
         "train": "yes",
         "wikidata": "Q3400589",
         "wikipedia": "en:Rhosneigr railway station",
-        "londonMinutes": 265,
+        "londonMinutes": 295,
         "popularityScore": 1,
         "flickrCount": 792
       },
@@ -9650,7 +9650,7 @@
         "train": "yes",
         "wikidata": "Q2682339",
         "wikipedia": "en:Valley railway station",
-        "londonMinutes": 266,
+        "londonMinutes": 296,
         "popularityScore": 1,
         "flickrCount": 1228
       },
@@ -9708,7 +9708,7 @@
         "train": "yes",
         "wikidata": "Q2661734",
         "wikipedia": "en:Sleaford railway station",
-        "londonMinutes": 116,
+        "londonMinutes": 114,
         "popularityScore": 2,
         "flickrCount": 455
       },
@@ -9848,7 +9848,7 @@
         "wheelchair": "yes",
         "wikidata": "Q4753369",
         "wikipedia": "en:Faversham railway station",
-        "londonMinutes": 88,
+        "londonMinutes": 86,
         "popularityScore": 11,
         "flickrCount": 2223
       },
@@ -9879,7 +9879,7 @@
         "train": "yes",
         "wikidata": "Q3043426",
         "wikipedia": "en:Aspley Guise railway station",
-        "londonMinutes": 95,
+        "londonMinutes": 109,
         "popularityScore": 5,
         "flickrCount": 623
       },
@@ -9910,7 +9910,7 @@
         "train": "yes",
         "wikidata": "Q7332882",
         "wikipedia": "en:Ridgmont railway station",
-        "londonMinutes": 99,
+        "londonMinutes": 105,
         "popularityScore": 4,
         "flickrCount": 495
       },
@@ -10033,7 +10033,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2471511",
         "wikipedia": "en:Brunswick railway station",
-        "londonMinutes": 178,
+        "londonMinutes": 185,
         "popularityScore": 7,
         "flickrCount": 1482
       },
@@ -10062,7 +10062,7 @@
         "train": "yes",
         "wikidata": "Q2075322",
         "wikipedia": "en:Southbourne railway station",
-        "londonMinutes": 125,
+        "londonMinutes": 116,
         "popularityScore": 31,
         "flickrCount": 791
       },
@@ -10090,7 +10090,7 @@
         "ref:crs": "EMS",
         "wikidata": "Q1991227",
         "wikipedia": "en:Emsworth railway station",
-        "londonMinutes": 127,
+        "londonMinutes": 114,
         "popularityScore": 33,
         "flickrCount": 600
       },
@@ -10118,7 +10118,7 @@
         "ref:crs": "HLS",
         "wikidata": "Q5391111",
         "wikipedia": "en:Hilsea railway station",
-        "londonMinutes": 157,
+        "londonMinutes": 118,
         "popularityScore": 28,
         "flickrCount": 1490
       },
@@ -10158,7 +10158,7 @@
         "wheelchair": "limited",
         "wikidata": "Q519727",
         "wikipedia": "en:Hawarden Bridge railway station",
-        "londonMinutes": 179,
+        "londonMinutes": 184,
         "popularityScore": 9,
         "flickrCount": 2443
       },
@@ -10194,7 +10194,7 @@
         "wheelchair": "limited",
         "wikidata": "Q673005",
         "wikipedia": "en:Llanwrtyd railway station",
-        "londonMinutes": 314,
+        "londonMinutes": 320,
         "popularityScore": 1,
         "flickrCount": 265
       },
@@ -10296,7 +10296,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2781536",
         "wikipedia": "en:Ivybridge railway station",
-        "londonMinutes": 211,
+        "londonMinutes": 212,
         "popularityScore": 5,
         "flickrCount": 270
       },
@@ -10426,7 +10426,7 @@
         "train": "yes",
         "wikidata": "Q2454049",
         "wikipedia": "en:Pembroke Dock railway station",
-        "londonMinutes": 343,
+        "londonMinutes": 345,
         "popularityScore": 3,
         "flickrCount": 1208
       },
@@ -10459,7 +10459,7 @@
         "wikidata": "Q6413185",
         "wikimedia_commons": "File:Kingscote_Railway_Station_waiting_carriage.JPG",
         "wikipedia": "en:Kingscote railway station",
-        "londonMinutes": 93,
+        "londonMinutes": 112,
         "popularityScore": 15,
         "flickrCount": 0
       },
@@ -10485,7 +10485,7 @@
         "usage": "tourism",
         "website": "http://www.bluebell-railway.co.uk",
         "wikidata": "Q15225335",
-        "londonMinutes": 108,
+        "londonMinutes": 101,
         "popularityScore": 15,
         "flickrCount": 0
       },
@@ -10513,7 +10513,7 @@
         "website": "http://www.bluebell-railway.co.uk",
         "wheelchair": "yes",
         "wikidata": "Q7492725",
-        "londonMinutes": 135,
+        "londonMinutes": 112,
         "popularityScore": 7,
         "flickrCount": 0
       },
@@ -10640,7 +10640,7 @@
         "usage": "tourism",
         "wikidata": "Q8028586",
         "wikipedia": "en:Wittersham Road railway station",
-        "londonMinutes": 172,
+        "londonMinutes": 192,
         "popularityScore": 5,
         "flickrCount": 0
       },
@@ -10844,7 +10844,7 @@
         "ref:crs": "BML",
         "wikidata": "Q2352421",
         "wikipedia": "en:Bramhall railway station",
-        "londonMinutes": 163,
+        "londonMinutes": 175,
         "popularityScore": 14,
         "flickrCount": 1998
       },
@@ -10970,7 +10970,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2288120",
         "wikipedia": "en:Hockley railway station (Essex)",
-        "londonMinutes": 131,
+        "londonMinutes": 65,
         "popularityScore": 3,
         "flickrCount": 1126
       },
@@ -11076,7 +11076,7 @@
         "train": "yes",
         "wikidata": "Q5259635",
         "wikipedia": "en:Denton railway station",
-        "londonMinutes": 197,
+        "londonMinutes": 200,
         "popularityScore": 12,
         "flickrCount": 655
       },
@@ -11106,7 +11106,7 @@
         "train": "yes",
         "wikidata": "Q7305639",
         "wikipedia": "en:Reddish South railway station",
-        "londonMinutes": 184,
+        "londonMinutes": 188,
         "popularityScore": 11,
         "flickrCount": 443
       },
@@ -11139,7 +11139,7 @@
         "wikimedia_commons": "Category:Middlewood railway station",
         "wikipedia": "en:Middlewood railway station",
         "wikipedia:en": "Middlewood railway station",
-        "londonMinutes": 169,
+        "londonMinutes": 172,
         "popularityScore": 19,
         "flickrCount": 2314
       },
@@ -11215,7 +11215,7 @@
         "wheelchair:description": "Access from platform",
         "wikidata": "Q4330307",
         "wikipedia": "en:Taplow railway station",
-        "londonMinutes": 50,
+        "londonMinutes": 49,
         "popularityScore": 14,
         "flickrCount": 314
       },
@@ -11306,7 +11306,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2889017",
         "wikipedia": "en:Trimley railway station",
-        "londonMinutes": 195,
+        "londonMinutes": 123,
         "popularityScore": null,
         "flickrCount": 1009
       },
@@ -11370,7 +11370,7 @@
         "train": "yes",
         "wikidata": "Q2346420",
         "wikipedia": "en:Shirehampton railway station",
-        "londonMinutes": 146,
+        "londonMinutes": 149,
         "popularityScore": 16,
         "flickrCount": 2296
       },
@@ -11434,7 +11434,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2638933",
         "wikipedia": "en:Kirkby railway station",
-        "londonMinutes": 197,
+        "londonMinutes": 207,
         "popularityScore": 3,
         "flickrCount": 2097
       },
@@ -11465,7 +11465,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2184297",
         "wikipedia": "en:Aintree railway station",
-        "londonMinutes": 201,
+        "londonMinutes": 196,
         "popularityScore": 5,
         "flickrCount": 1996
       },
@@ -11527,7 +11527,7 @@
         "wheelchair": "yes",
         "wikidata": "Q7440410",
         "wikipedia": "en:Seaforth & Litherland railway station",
-        "londonMinutes": 190,
+        "londonMinutes": 200,
         "popularityScore": null,
         "flickrCount": 2289
       },
@@ -11558,7 +11558,7 @@
         "train": "yes",
         "wikidata": "Q2183294",
         "wikipedia": "en:Bootle New Strand railway station",
-        "londonMinutes": 190,
+        "londonMinutes": 200,
         "popularityScore": 5,
         "flickrCount": 1959
       },
@@ -11587,7 +11587,7 @@
         "source": "npe",
         "wikidata": "Q2149213",
         "wikipedia": "en:Bootle Oriel Road railway station",
-        "londonMinutes": 187,
+        "londonMinutes": 197,
         "popularityScore": 5,
         "flickrCount": 1857
       },
@@ -11919,7 +11919,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2724332",
         "wikipedia": "en:Dingle Road railway station",
-        "londonMinutes": 151,
+        "londonMinutes": 155,
         "popularityScore": 4,
         "flickrCount": 1902
       },
@@ -11953,7 +11953,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2470011",
         "wikipedia": "en:Cogan railway station",
-        "londonMinutes": 158,
+        "londonMinutes": 163,
         "popularityScore": 4,
         "flickrCount": 2114
       },
@@ -11987,7 +11987,7 @@
         "train": "yes",
         "wikidata": "Q3401825",
         "wikipedia": "en:Eastbrook railway station",
-        "londonMinutes": 164,
+        "londonMinutes": 168,
         "popularityScore": 4,
         "flickrCount": 2452
       },
@@ -12022,7 +12022,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2433033",
         "wikipedia": "en:Dinas Powys railway station",
-        "londonMinutes": 165,
+        "londonMinutes": 170,
         "popularityScore": 4,
         "flickrCount": 2165
       },
@@ -12059,7 +12059,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2665080",
         "wikipedia": "en:Cardiff Bay railway station",
-        "londonMinutes": 152,
+        "londonMinutes": 156,
         "popularityScore": 4,
         "flickrCount": 2424
       },
@@ -12090,7 +12090,7 @@
         "train": "yes",
         "wikidata": "Q3441748",
         "wikipedia": "en:Leasowe railway station",
-        "londonMinutes": 201,
+        "londonMinutes": 196,
         "popularityScore": 5,
         "flickrCount": 2238
       },
@@ -12122,7 +12122,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2556146",
         "wikipedia": "en:Moreton railway station (Merseyside)",
-        "londonMinutes": 203,
+        "londonMinutes": 198,
         "popularityScore": null,
         "flickrCount": 2391
       },
@@ -12160,7 +12160,7 @@
         "wheelchair": "limited",
         "wikidata": "Q2736977",
         "wikipedia": "en:Upton railway station",
-        "londonMinutes": 215,
+        "londonMinutes": 207,
         "flickrCount": 2308
       },
       "geometry": {
@@ -12264,7 +12264,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2090331",
         "wikipedia": "en:Taffs Well railway station",
-        "londonMinutes": 158,
+        "londonMinutes": 162,
         "popularityScore": 8,
         "flickrCount": 2685
       },
@@ -12298,7 +12298,7 @@
         "ref:crs": "TRE",
         "wikidata": "Q2531139",
         "wikipedia": "en:Treforest Estate railway station",
-        "londonMinutes": 160,
+        "londonMinutes": 165,
         "popularityScore": null,
         "flickrCount": 2013
       },
@@ -12337,7 +12337,7 @@
         "wheelchair": "yes",
         "wikidata": "Q3400263",
         "wikipedia": "en:Treforest railway station",
-        "londonMinutes": 165,
+        "londonMinutes": 169,
         "popularityScore": 6,
         "flickrCount": 1506
       },
@@ -12424,7 +12424,7 @@
         "wheelchair": "yes",
         "wikidata": "Q1941516",
         "wikipedia": "en:Stratford-upon-Avon railway station",
-        "londonMinutes": 168,
+        "londonMinutes": 160,
         "popularityScore": 7,
         "flickrCount": 652
       },
@@ -12454,7 +12454,7 @@
         "west_midlands_fare_zone": "4",
         "wikidata": "Q2133242",
         "wikipedia": "en:Whitlocks End railway station",
-        "londonMinutes": 161,
+        "londonMinutes": 153,
         "popularityScore": 7,
         "flickrCount": 645
       },
@@ -12515,7 +12515,7 @@
         "train": "yes",
         "wikidata": "Q2185706",
         "wikipedia": "en:Henley-in-Arden railway station",
-        "londonMinutes": 190,
+        "londonMinutes": 191,
         "popularityScore": 12,
         "flickrCount": 1587
       },
@@ -12544,7 +12544,7 @@
         "ref:crs": "STY",
         "wikidata": "Q7621977",
         "wikipedia": "en:Stratford-upon-Avon Parkway railway station",
-        "londonMinutes": 165,
+        "londonMinutes": 156,
         "popularityScore": 6,
         "flickrCount": 1094
       },
@@ -12579,7 +12579,7 @@
         "wheelchair": "yes",
         "wikidata": "Q2433998",
         "wikipedia": "en:Radyr railway station",
-        "londonMinutes": 152,
+        "londonMinutes": 156,
         "popularityScore": 8,
         "flickrCount": 2586
       },
@@ -12612,7 +12612,7 @@
         "train": "yes",
         "wikidata": "Q7020367",
         "wikipedia": "en:Newton St Cyres railway station",
-        "londonMinutes": 178,
+        "londonMinutes": 167,
         "popularityScore": 26,
         "flickrCount": 512
       },
@@ -12645,7 +12645,7 @@
         "train": "yes",
         "wikidata": "Q5183802",
         "wikipedia": "en:Crediton railway station",
-        "londonMinutes": 182,
+        "londonMinutes": 169,
         "popularityScore": 14,
         "flickrCount": 371
       },

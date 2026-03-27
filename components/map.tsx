@@ -420,6 +420,16 @@ export default function HikeMap() {
     setHovered(null)
   }, [])
 
+  // Dev only — right-clicking a station immediately excludes it without opening the modal.
+  const handleContextMenu = useCallback((e: MapMouseEvent) => {
+    if (!devExcludeActive) return
+    const feature = e.features?.[0]
+    if (!feature || feature.properties?.isLondon) return
+    const name = feature.properties?.name as string
+    const coordKey = feature.properties?.coordKey as string
+    handleExcludeFromModal(name, coordKey)
+  }, [devExcludeActive, handleExcludeFromModal])
+
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
   // Clicking empty map space closes the modal.
   const handleClick = useCallback((e: MapMouseEvent) => {
@@ -683,6 +693,7 @@ export default function HikeMap() {
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
+        onContextMenu={handleContextMenu}
       >
         {/* Waymarked Trails raster overlay — toggled on/off via the filter panel */}
         {showTrails && (
