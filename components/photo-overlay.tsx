@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -18,7 +19,7 @@ import {
 import { fetchFlickrPhotos, type FlickrPhoto } from "@/lib/flickr"
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { MapingIcon } from "@hugeicons/core-free-icons"
+import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
@@ -109,35 +110,45 @@ export default function StationModal({
       {/* Large modal: 5xl width, up to 90% viewport height */}
       {/* w/h use dvw/dvh so the modal scales with the viewport on any screen size.
           sm:max-w-none overrides the sm:max-w-md baked into DialogContent's base styles. */}
-      <DialogContent className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col overflow-hidden p-0">
+      {/* max-sm: overrides make the modal fullscreen on small viewports (no margins, no rounded corners).
+          inset-0 replaces the top-1/2/left-1/2 centering from the base DialogContent. */}
+      <DialogContent className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col overflow-hidden p-0 max-sm:inset-0 max-sm:h-dvh max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none">
 
         {/* ── Header: station info left, Komoot button right ── */}
         <DialogHeader className="shrink-0 px-6 pt-6 pb-0">
-          <div className="flex gap-5 items-center justify-between">
-            <div id="title_subtitle_stack" className="flex flex-col gap-2">
-              <DialogTitle className="text-3xl">
-                {stationName} Station
-              </DialogTitle>
+          {/* On mobile: single column stack. On sm+: row with title/subtitle left, button right. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+
+            {/* Left group: title + description always stacked together.
+                On mobile the title row also contains the X button (hidden on sm+). */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-start justify-between">
+                <DialogTitle className="text-3xl">
+                  {stationName} Station
+                </DialogTitle>
+                <DialogClose asChild className="sm:hidden">
+                  <Button variant="outline" size="icon" className="text-foreground mt-0 cursor-pointer">
+                    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </DialogClose>
+              </div>
               <DialogDescription className="text-sm">
                 {formatMinutes(minutes)} from central London
               </DialogDescription>
             </div>
-            {/* Second row: travel time left, button right — sits below the title/close row */}
-            <div className="flex items-center justify-between gap-4">
-              {/* DialogDescription keeps Radix happy (accessibility) */}
-            
-              <Button asChild>
-                <a
-                  href={komootUrl(stationName, lat, lng)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className=""
-                >
-                  <HugeiconsIcon icon={MapingIcon} />
-                  Hikes from station
-                </a>
-              </Button>
-            </div>
+
+            {/* max-sm:w-full makes the button stretch full-width in the single-column mobile layout */}
+            <Button asChild className="max-sm:w-full">
+              <a
+                href={komootUrl(stationName, lat, lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <HugeiconsIcon icon={MapingIcon} />
+                Hikes from station
+              </a>
+            </Button>
           </div>
         </DialogHeader>
 
@@ -262,13 +273,16 @@ export default function StationModal({
             </div>
           )}
 
-          {/* Loading skeleton — 2–3 col grid of pulsing rectangles */}
+          {/* Loading skeleton — grid of shimmering rectangles matching the photo grid layout.
+              Each cell pulses between muted and a lighter mid-stop to suggest a sweep of light. */}
           {hasApiKey && loading && (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
               {Array.from({ length: 9 }).map((_, i) => (
                 <div
                   key={i}
-                  className="aspect-[4/3] animate-pulse rounded-lg bg-muted"
+                  /* animate-pulse fades opacity; the gradient gives a lighter band in the centre
+                     so the cell doesn't look like a flat block of dead space */
+                  className="aspect-[4/3] animate-pulse rounded-none sm:rounded-lg bg-gradient-to-br from-muted via-muted-foreground/10 to-muted"
                 />
               ))}
             </div>
@@ -290,7 +304,7 @@ export default function StationModal({
               so the last row is always full at every breakpoint. */}
           {hasApiKey && !loading && photos.length > 0 && (
             <>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
                 {photos.slice(0, Math.floor(photos.length / 12) * 12 || 12).map((photo) => (
                   <PhotoCard key={photo.id} photo={photo} />
                 ))}
@@ -353,7 +367,8 @@ function PhotoCard({ photo }: { photo: FlickrPhoto }) {
       target="_blank"
       rel="noopener noreferrer"
       // `group` lets child elements react to this element's hover state
-      className="group relative block overflow-hidden rounded-lg bg-muted"
+      // max-sm:rounded-none removes the card rounding so photos bleed to the edges on mobile
+      className="group relative block overflow-hidden rounded-none sm:rounded-lg bg-muted"
     >
       {/* Landscape-ratio photo — object-cover fills the box without distortion */}
       <img

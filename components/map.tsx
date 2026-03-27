@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import Map, { Layer, MapMouseEvent, Source } from "react-map-gl/mapbox"
+import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner } from "@/components/welcome-banner"
@@ -375,23 +375,30 @@ export default function HikeMap() {
     return createCircleGeoJSON(radiusPos.lng, radiusPos.lat, OUTER_RADIUS_KM)
   }, [radiusPos, emptyPolygon])
 
-  // Label points — positioned at the top of each circle so the text sits on the dashed line.
+  // Label points — positioned at the bottom of each circle so the text sits on the dashed line.
   // Latitude offset = radius_km / Earth_radius_km * (180/π), same formula used in createCircleGeoJSON.
   const innerLabelPoint = useMemo(() => {
     if (!radiusPos) return null
     const latOffset = (INNER_RADIUS_KM / 6371) * (180 / Math.PI)
-    return { lng: radiusPos.lng, lat: radiusPos.lat + latOffset }
+    return { lng: radiusPos.lng, lat: radiusPos.lat - latOffset } // negative = south
   }, [radiusPos])
 
   const outerLabelPoint = useMemo(() => {
     if (!radiusPos) return null
     const latOffset = (OUTER_RADIUS_KM / 6371) * (180 / Math.PI)
-    return { lng: radiusPos.lng, lat: radiusPos.lat + latOffset }
+    return { lng: radiusPos.lng, lat: radiusPos.lat - latOffset } // negative = south
   }, [radiusPos])
 
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
   const hoveredRef = useRef<string | null>(null)
+
+  // Ref to the Mapbox map instance — needed to call queryRenderedFeatures for touch events
+  const mapRef = useRef<MapRef>(null)
+  // Timer for long-press detection on touch devices
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Set to true when a long press fires — suppresses the click that follows touchend
+  const longPressFired = useRef(false)
 
   // Fires on every cursor movement over the map.
   // Unlike onMouseEnter (which is layer-level and won't re-fire when moving
@@ -420,6 +427,43 @@ export default function HikeMap() {
     setHovered(null)
   }, [])
 
+  // Long-press on touch: after 400ms hold on a station, show radius circles.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleTouchStart = useCallback((e: any) => {
+    const point = e.point // {x, y} pixel coords on the map canvas
+    const map = mapRef.current?.getMap()
+    if (!map || !point) return
+
+    // Query which station (if any) is under the finger
+    const features = map.queryRenderedFeatures([point.x, point.y], {
+      layers: ["station-hit-area", "london-hit-area"],
+    })
+    if (!features.length) return
+
+    const feature = features[0]
+    longPressTimer.current = setTimeout(() => {
+      const coordKey = feature.properties?.coordKey as string
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const [lng, lat] = (feature.geometry as any).coordinates as [number, number]
+      hoveredRef.current = coordKey
+      setHovered({ lng, lat, coordKey })
+      setRadiusPos({ lng, lat })
+      longPressTimer.current = null
+      longPressFired.current = true
+    }, 400)
+  }, [])
+
+  // Cancel the long-press if the finger lifts or moves (pan gesture)
+  const handleTouchEndOrMove = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+    // Clear circles when finger lifts
+    hoveredRef.current = null
+    setHovered(null)
+  }, [])
+
   // Dev only — right-clicking a station immediately excludes it without opening the modal.
   const handleContextMenu = useCallback((e: MapMouseEvent) => {
     if (!devExcludeActive) return
@@ -433,6 +477,11 @@ export default function HikeMap() {
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
   // Clicking empty map space closes the modal.
   const handleClick = useCallback((e: MapMouseEvent) => {
+    // A long press just ended — the browser fires a click on touchend, ignore it
+    if (longPressFired.current) {
+      longPressFired.current = false
+      return
+    }
     const feature = e.features?.[0]
     if (!feature) {
       setSelectedStation(null)
@@ -482,6 +531,9 @@ export default function HikeMap() {
   function handleMapLoad(e: any) {
     hideRoads(e)
     const map = e.target
+    // Touch zoom and rotate share one handler. disableRotation() keeps pinch-zoom
+    // but removes the two-finger twist gesture that rotates the map on touchscreens.
+    map.touchZoomRotate.disableRotation()
     // Pre-load icon images so the rating symbol layer can reference them by name.
     // getColors() reads --primary and --accent from CSS at runtime so Mapbox stays in sync.
     const colors = getColors()
@@ -492,7 +544,7 @@ export default function HikeMap() {
     map.addImage('icon-unverified',      createRatingIcon('triangle-up',  colors.accent), { pixelRatio: dpr })
     map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.accent), { pixelRatio: dpr })
     // Green-900 hexagon for the London origin marker
-    map.addImage('icon-london',          createRatingIcon('hexagon',       '#608a70'),      { pixelRatio: dpr })
+    map.addImage('icon-london',          createRatingIcon('hexagon',       colors.primary),      { pixelRatio: dpr })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -676,8 +728,9 @@ export default function HikeMap() {
         onLoad={handleMapLoad}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onZoom={(e: any) => setZoom(e.viewState.zoom)}
-        pitchWithRotate={false} // disables 3D tilt
+        pitchWithRotate={false} // disables 3D tilt on desktop
         dragRotate={false}      // disables rotation (locks north-up)
+        touchPitch={false}      // disables 3D tilt on touch devices
         // Bounding box that covers England — prevents panning to Europe, open sea, etc.
         // Format: [[west, south], [east, north]] in longitude/latitude
         // west: higher numbers cut more off
@@ -694,6 +747,10 @@ export default function HikeMap() {
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         onContextMenu={handleContextMenu}
+        ref={mapRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEndOrMove}
+        onTouchMove={handleTouchEndOrMove}
       >
         {/* Waymarked Trails raster overlay — toggled on/off via the filter panel */}
         {showTrails && (

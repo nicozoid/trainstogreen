@@ -76,6 +76,7 @@ function DialogContent({
               cursor-pointer
               opacity-40
               hover:opacity-100
+              max-sm:hidden
               "
               size="icon-sm"
             >
