@@ -263,8 +263,28 @@
     "name": "Moreton-in-Marsh",
     "rating": "unverified"
   },
-  "-0.2809477,52.1249106": {
-    "name": "Sandy",
+  "1.3048692,51.1259357": {
+    "name": "Dover Priory",
+    "rating": "unverified"
+  },
+  "-0.9071791,50.8481981": {
+    "name": "Southbourne",
+    "rating": "unverified"
+  },
+  "-0.781845,50.8318805": {
+    "name": "Chichester",
+    "rating": "unverified"
+  },
+  "-1.2599752,51.2541369": {
+    "name": "Overton",
+    "rating": "unverified"
+  },
+  "0.7021425,51.5816749": {
+    "name": "Rochford",
+    "rating": "unverified"
+  },
+  "-0.8253668,51.6758974": {
+    "name": "Saunderton",
     "rating": "unverified"
   }
 }

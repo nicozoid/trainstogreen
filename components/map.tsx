@@ -44,8 +44,7 @@ const INNER_RADIUS_KM = 7
 const OUTER_RADIUS_KM = 14
 
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
-// Entries can be either a plain name ("Newport") or an OSM node ID ("node/6137852399").
-// Node IDs are used when two stations share the same name, so each can be targeted individually.
+// All entries are station names. If two stations share a name, add both (they'll both be excluded).
 const EXCLUDED_STATIONS = new Set(excludedStationsList)
 
 // Haversine formula: calculates straight-line distance between two GPS coordinates.
@@ -621,7 +620,12 @@ export default function HikeMap() {
       {process.env.NODE_ENV === "development" && (
         <div className="absolute bottom-8 left-2 z-10 flex items-center gap-2">
           <button
-            onClick={() => setDevExcludeActive((v) => !v)}
+            onClick={() => {
+              const next = !devExcludeActive
+              setDevExcludeActive(next)
+              // Show all stations when entering dev mode so nothing is hidden while curating
+              if (next) setMaxMinutes(180)
+            }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
               devExcludeActive ? "bg-red-600/80" : "bg-black/40 hover:bg-black/60"
             }`}
