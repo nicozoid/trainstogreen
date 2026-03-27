@@ -254,5 +254,17 @@
   "0.1033213,51.6717759": {
     "name": "Theydon Bois",
     "rating": "verified"
+  },
+  "-0.3241359,51.2411653": {
+    "name": "Dorking",
+    "rating": "unverified"
+  },
+  "-1.7002657,51.9921819": {
+    "name": "Moreton-in-Marsh",
+    "rating": "unverified"
+  },
+  "-0.2809477,52.1249106": {
+    "name": "Sandy",
+    "rating": "unverified"
   }
 }

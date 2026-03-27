@@ -108,6 +108,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
   }
 }
 
+
 // Draws a rating icon onto a canvas and returns the pixel data Mapbox needs.
 // Using canvas (rather than SVG files) means no extra assets to load.
 function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'hexagon', color: string): ImageData {
@@ -374,6 +375,20 @@ export default function HikeMap() {
     if (!radiusPos) return emptyPolygon
     return createCircleGeoJSON(radiusPos.lng, radiusPos.lat, OUTER_RADIUS_KM)
   }, [radiusPos, emptyPolygon])
+
+  // Label points — positioned at the top of each circle so the text sits on the dashed line.
+  // Latitude offset = radius_km / Earth_radius_km * (180/π), same formula used in createCircleGeoJSON.
+  const innerLabelPoint = useMemo(() => {
+    if (!radiusPos) return null
+    const latOffset = (INNER_RADIUS_KM / 6371) * (180 / Math.PI)
+    return { lng: radiusPos.lng, lat: radiusPos.lat + latOffset }
+  }, [radiusPos])
+
+  const outerLabelPoint = useMemo(() => {
+    if (!radiusPos) return null
+    const latOffset = (OUTER_RADIUS_KM / 6371) * (180 / Math.PI)
+    return { lng: radiusPos.lng, lat: radiusPos.lat + latOffset }
+  }, [radiusPos])
 
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
@@ -718,13 +733,62 @@ export default function HikeMap() {
             type="line"
             paint={{
               "line-color": "#16a34a",
-              "line-width": 1.5,
-              "line-opacity": hovered ? 0.5 : 0,
+              "line-width": 1.0,
+              "line-opacity": hovered ? 0.3 : 0,
               "line-opacity-transition": { duration: 300 },
               "line-dasharray": [4, 3],
             }}
           />
         </Source>
+
+        {/* Circle labels — only rendered while a station is hovered at zoom 9+.
+            Each is a single point at the top of its circle, centered on the dashed line. */}
+        {hovered && zoom >= 9 && innerLabelPoint && (
+          <Source
+            id="inner-label"
+            type="geojson"
+            data={{ type: "Feature", geometry: { type: "Point", coordinates: [innerLabelPoint.lng, innerLabelPoint.lat] }, properties: {} }}
+          >
+            <Layer
+              id="inner-label-text"
+              type="symbol"
+              layout={{
+                "text-field": "Easy hike",
+                "text-size": 10,
+                "text-anchor": "center", // top edge sits on the circle line, so the label hangs just below it
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+                "text-letter-spacing": 0.08,
+              }}
+              paint={{
+                "text-color": "#16a34a",
+              }}
+            />
+          </Source>
+        )}
+        {hovered && zoom >= 9 && outerLabelPoint && (
+          <Source
+            id="outer-label"
+            type="geojson"
+            data={{ type: "Feature", geometry: { type: "Point", coordinates: [outerLabelPoint.lng, outerLabelPoint.lat] }, properties: {} }}
+          >
+            <Layer
+              id="outer-label-text"
+              type="symbol"
+              layout={{
+                "text-field": "Epic hike",
+                "text-size": 10,
+                "text-anchor": "center",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+                "text-letter-spacing": 0.08,
+              }}
+              paint={{
+                "text-color": "#16a34a",
+              }}
+            />
+          </Source>
+        )}
 
         {/* London origin marker — hexagon at Farringdon, opens welcome banner on click */}
         <Source
