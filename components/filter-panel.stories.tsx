@@ -54,6 +54,7 @@ export const Interactive: Story = {
         onToggleRating={toggleRating}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        adminMode={false}
       />
     )
   },
