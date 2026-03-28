@@ -5,7 +5,7 @@ import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner } from "@/components/welcome-banner"
-import StationModal from "@/components/photo-overlay"
+import StationModal, { type FlickrPhoto } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
 import { getColors } from "@/lib/tokens"
 
@@ -184,6 +184,9 @@ export default function HikeMap() {
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
+  // True once the map's onLoad fires — icon images are registered at that point,
+  // so icon-dependent layers should only render after this is true.
+  const [mapReady, setMapReady] = useState(false)
   // Tracks stations excluded this session — keyed by OSM node ID so two stations
   // with the same name (e.g. Newport Essex vs Newport Wales) are treated separately
   const [sessionExcluded, setSessionExcluded] = useState<Set<string>>(new Set())
@@ -205,11 +208,19 @@ export default function HikeMap() {
   // Default: show only the three positive ratings; "Unworthy" and "Unknown" start hidden
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set(['highlight', 'verified', 'unverified']))
 
-  // Fetch universal ratings from the standalone JSON file on mount
+  // Photo curations — per-station approved/rejected photo lists, loaded from
+  // data/photo-curations.json via API. Only used in admin mode.
+  type CurationEntry = { name: string; approved: FlickrPhoto[]; rejected: string[] }
+  const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
+
+  // Fetch universal ratings and photo curations on mount
   useEffect(() => {
     fetch("/api/dev/rate-station")
       .then((res) => res.json())
       .then((data) => setRatings(data))
+    fetch("/api/dev/curate-photo")
+      .then((res) => res.json())
+      .then((data) => setCurations(data))
   }, [])
 
 
@@ -300,6 +311,76 @@ export default function HikeMap() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, rating }),
+    })
+  }, [])
+
+  // Dev action: approve a photo for a station — persists to data/photo-curations.json
+  const handleApprovePhoto = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
+    // Optimistic update
+    setCurations((prev) => {
+      const entry = prev[coordKey] ?? { name, approved: [], rejected: [] }
+      if (entry.approved.some((p) => p.id === photo.id)) return prev // already approved
+      return {
+        ...prev,
+        [coordKey]: {
+          ...entry,
+          name,
+          approved: [...entry.approved, photo],
+          rejected: entry.rejected.filter((id) => id !== photo.id),
+        },
+      }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "approve", photo }),
+    })
+  }, [])
+
+  // Dev action: reject a photo for a station — it disappears and won't return
+  const handleRejectPhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
+    // Optimistic update
+    setCurations((prev) => {
+      const entry = prev[coordKey] ?? { name, approved: [], rejected: [] }
+      if (entry.rejected.includes(photoId)) return prev // already rejected
+      return {
+        ...prev,
+        [coordKey]: {
+          ...entry,
+          name,
+          approved: entry.approved.filter((p) => p.id !== photoId),
+          rejected: [...entry.rejected, photoId],
+        },
+      }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId, action: "reject" }),
+    })
+  }, [])
+
+  // Dev action: un-approve a photo — removes from approved without rejecting it
+  const handleUnapprovePhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
+    setCurations((prev) => {
+      const entry = prev[coordKey]
+      if (!entry) return prev
+      const updated = {
+        ...entry,
+        approved: entry.approved.filter((p) => p.id !== photoId),
+      }
+      // Clean up if both lists are now empty
+      if (updated.approved.length === 0 && updated.rejected.length === 0) {
+        const next = { ...prev }
+        delete next[coordKey]
+        return next
+      }
+      return { ...prev, [coordKey]: updated }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId, action: "unapprove" }),
     })
   }, [])
 
@@ -532,6 +613,7 @@ export default function HikeMap() {
     map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.accent), { pixelRatio: dpr })
     // Green-900 hexagon for the London origin marker
     map.addImage('icon-london',          createRatingIcon('hexagon',       colors.primary),      { pixelRatio: dpr })
+    setMapReady(true)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -863,16 +945,18 @@ export default function HikeMap() {
             }],
           }}
         >
-          <Layer
-            id="london-icon"
-            type="symbol"
-            layout={{
-              "icon-image": "icon-london",
-              "icon-allow-overlap": true,
-              "icon-ignore-placement": true,
-              "icon-size": hovered?.coordKey === "london" ? 1.3 : 1,
-            }}
-          />
+          {mapReady && (
+            <Layer
+              id="london-icon"
+              type="symbol"
+              layout={{
+                "icon-image": "icon-london",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-size": hovered?.coordKey === "london" ? 1.3 : 1,
+              }}
+            />
+          )}
           {/* Hover label — only appears when the London hexagon is hovered,
               same pattern as station-label-hover */}
           {hovered?.coordKey === "london" && (
@@ -929,27 +1013,29 @@ export default function HikeMap() {
               }}
             />
             {/* Rated stations — shown as heart/circle icons instead of grey-green dots */}
-            <Layer
-              id="station-rating-icons"
-              type="symbol"
-              filter={["has", "rating"]} // only features with a rating property
-              layout={{
-                // "match" picks the right pre-loaded image by the rating value
-                "icon-image": ["match", ["get", "rating"],
-                  "highlight",       "icon-highlight",
-                  "verified",        "icon-verified",
-                  "unverified",      "icon-unverified",
-                  "not-recommended", "icon-not-recommended",
-                  "" // fallback: no icon (shouldn't occur given the filter above)
-                ],
-                "icon-allow-overlap": true,    // don't hide icons when they overlap labels
-                "icon-ignore-placement": true, // don't let icons block other symbols
-                // Slightly larger icon when hovered
-                "icon-size": hovered
-                  ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 1]
-                  : 1,
-              }}
-            />
+            {mapReady && (
+              <Layer
+                id="station-rating-icons"
+                type="symbol"
+                filter={["has", "rating"]} // only features with a rating property
+                layout={{
+                  // "match" picks the right pre-loaded image by the rating value
+                  "icon-image": ["match", ["get", "rating"],
+                    "highlight",       "icon-highlight",
+                    "verified",        "icon-verified",
+                    "unverified",      "icon-unverified",
+                    "not-recommended", "icon-not-recommended",
+                    "" // fallback: no icon (shouldn't occur given the filter above)
+                  ],
+                  "icon-allow-overlap": true,    // don't hide icons when they overlap labels
+                  "icon-ignore-placement": true, // don't let icons block other symbols
+                  // Slightly larger icon when hovered
+                  "icon-size": hovered
+                    ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 1]
+                    : 1,
+                }}
+              />
+            )}
             {/* Invisible hit-area layer — covers ALL stations with a larger radius
                 than the visual icons, making them easier to hover/click.
                 circle-sort-key ensures higher-rated stations render on top, so when
@@ -1118,6 +1204,11 @@ export default function HikeMap() {
             currentRating={ratings[selectedStation.coordKey] ?? null}
             onRate={(rating: Rating | null) => handleRate(selectedStation.coordKey, selectedStation.name, rating)}
             onExclude={() => handleExcludeFromModal(selectedStation.name, selectedStation.coordKey)}
+            approvedPhotos={curations[selectedStation.coordKey]?.approved ?? []}
+            rejectedIds={new Set(curations[selectedStation.coordKey]?.rejected ?? [])}
+            onApprovePhoto={(photo) => handleApprovePhoto(selectedStation.coordKey, selectedStation.name, photo)}
+            onRejectPhoto={(photoId) => handleRejectPhoto(selectedStation.coordKey, selectedStation.name, photoId)}
+            onUnapprovePhoto={(photoId) => handleUnapprovePhoto(selectedStation.coordKey, selectedStation.name, photoId)}
           />
         )}
 

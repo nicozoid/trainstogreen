@@ -21,6 +21,8 @@ import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
+export type { FlickrPhoto }
+
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
 type StationModalProps = {
@@ -39,6 +41,16 @@ type StationModalProps = {
   onRate?: (rating: Rating | null) => void
   /** Excludes (deletes) the station */
   onExclude?: () => void
+  /** Photos the admin has approved for this station (always displayed) */
+  approvedPhotos?: FlickrPhoto[]
+  /** Flickr IDs the admin has rejected for this station (never displayed) */
+  rejectedIds?: Set<string>
+  /** Called when the admin approves a photo */
+  onApprovePhoto?: (photo: FlickrPhoto) => void
+  /** Called when the admin rejects a photo */
+  onRejectPhoto?: (photoId: string) => void
+  /** Called when the admin un-approves a photo (removes from approved, does not reject) */
+  onUnapprovePhoto?: (photoId: string) => void
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -74,35 +86,59 @@ export default function StationModal({
   currentRating = null,
   onRate,
   onExclude,
+  approvedPhotos = [],
+  rejectedIds = new Set(),
+  onApprovePhoto,
+  onRejectPhoto,
+  onUnapprovePhoto,
 }: StationModalProps) {
-  const [photos, setPhotos] = useState<FlickrPhoto[]>([])
+  // allPhotos = full buffer from Flickr (more than we display, for replacements)
+  const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
   const [loading, setLoading] = useState(false)
-  const [hasFetched, setHasFetched] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const hasApiKey = Boolean(process.env.NEXT_PUBLIC_FLICKR_API_KEY)
 
+  // How many Flickr photos to display (approved photos are added on top)
+  const DISPLAY_COUNT = 30
+
   // Reset when a different station is selected
   useEffect(() => {
-    setHasFetched(false)
-    setPhotos([])
+    setAllPhotos([])
   }, [lat, lng])
 
-  // Fetch photos when the dialog opens — only once per station
+  // Fetch photos when the dialog opens, and re-fetch when the rejected count
+  // crosses a 100-photo page boundary (so more buffer is pulled in).
+  // The cache inside fetchFlickrPhotos prevents redundant API calls — if the
+  // page count hasn't changed, it's an instant cache hit.
   useEffect(() => {
-    if (!open || hasFetched || !hasApiKey) return
+    if (!open || !hasApiKey) return
 
-    setLoading(true)
+    // Only show the loading skeleton on the very first fetch for this station
+    if (allPhotos.length === 0) setLoading(true)
     setError(null)
 
-    fetchFlickrPhotos(lat, lng)
+    const hasCurations = approvedPhotos.length > 0 || rejectedIds.size > 0
+    console.log(`[photos] fetching: hasCurations=${hasCurations}, rejectedCount=${rejectedIds.size}, approvedCount=${approvedPhotos.length}`)
+    fetchFlickrPhotos(lat, lng, hasCurations, rejectedIds.size)
       .then((result) => {
-        setPhotos(result)
-        setHasFetched(true)
+        console.log(`[photos] fetched ${result.length} photos from Flickr`)
+        setAllPhotos(result)
       })
-      .catch(() => setError("Couldn't load photos. Try again later."))
+      .catch((err) => {
+        console.error('[photos] fetch error:', err)
+        setError("Couldn't load photos. Try again later.")
+      })
       .finally(() => setLoading(false))
-  }, [open, hasFetched, hasApiKey, lat, lng])
+  }, [open, hasApiKey, lat, lng, approvedPhotos.length, rejectedIds.size])
+
+  // Build the display list: approved photos first, then Flickr results — filtering
+  // out rejected and already-approved photos at display time so the full buffer is
+  // always preserved for replacements when new rejections happen.
+  const approvedIds = new Set(approvedPhotos.map((p) => p.id))
+  const flickrOnly = allPhotos.filter((p) => !approvedIds.has(p.id) && !rejectedIds.has(p.id))
+  // Combine: approved photos at the start, then fill remaining slots from Flickr
+  const photos = [...approvedPhotos, ...flickrOnly.slice(0, DISPLAY_COUNT)]
 
   return (
     // onOpenChange fires on overlay click or Escape — close the modal
@@ -300,7 +336,7 @@ export default function StationModal({
           )}
 
           {/* No photos found */}
-          {hasApiKey && !loading && !error && hasFetched && photos.length === 0 && (
+          {hasApiKey && !loading && !error && allPhotos.length === 0 && photos.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No hiking photos found near this station on Flickr.
             </p>
@@ -312,7 +348,15 @@ export default function StationModal({
             <>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
                 {photos.slice(0, Math.floor(photos.length / 12) * 12 || 12).map((photo) => (
-                  <PhotoCard key={photo.id} photo={photo} />
+                  <PhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    devMode={devMode}
+                    isApproved={approvedIds.has(photo.id)}
+                    onApprove={() => onApprovePhoto?.(photo)}
+                    onReject={() => onRejectPhoto?.(photo.id)}
+                    onUnapprove={() => onUnapprovePhoto?.(photo.id)}
+                  />
                 ))}
               </div>
 
@@ -365,32 +409,88 @@ function DevActionButton({ label, icon, active, onClick }: {
 // ── Photo card ─────────────────────────────────────────────────────────────
 // Uses largeUrl (1024px) when available, falls back to thumbnailUrl (240px).
 // 4:3 aspect ratio gives photos a scenic landscape feel at this size.
+//
+// In admin mode, hovering shows approve (✓) and reject (✕) icon buttons.
+// Approved photos display a persistent tick badge in the top-right corner.
 
-function PhotoCard({ photo }: { photo: FlickrPhoto }) {
+function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprove }: {
+  photo: FlickrPhoto
+  devMode: boolean
+  isApproved: boolean
+  onApprove: () => void
+  onReject: () => void
+  onUnapprove: () => void
+}) {
   return (
-    <a
-      href={photo.flickrUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      // `group` lets child elements react to this element's hover state
-      // max-sm:rounded-none removes the card rounding so photos bleed to the edges on mobile
-      className="group relative block overflow-hidden rounded-none sm:rounded-lg bg-muted"
-    >
-      {/* Landscape-ratio photo — object-cover fills the box without distortion */}
-      <img
-        src={photo.largeUrl ?? photo.thumbnailUrl}
-        alt={photo.title}
-        className="aspect-[4/3] w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
-        loading="lazy"
-      />
+    // `group` lets child elements react to this container's hover state.
+    // We use a <div> wrapper instead of making the <a> the group so that
+    // the approve/reject buttons can intercept clicks without navigating.
+    <div className="group relative overflow-hidden rounded-none sm:rounded-lg bg-muted">
+      <a
+        href={photo.flickrUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block"
+      >
+        {/* Landscape-ratio photo — object-cover fills the box without distortion */}
+        <img
+          src={photo.largeUrl ?? photo.thumbnailUrl}
+          alt={photo.title}
+          className="aspect-[4/3] w-full object-cover transition-opacity duration-150 group-hover:opacity-90"
+          loading="lazy"
+        />
+      </a>
+
+      {/* Approved badge — clickable to un-approve (admin only, always visible) */}
+      {devMode && isApproved && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onUnapprove() }}
+          title="Remove approval"
+          className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/30 shadow-sm cursor-pointer hover:bg-black/50 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.6">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </button>
+      )}
+
+      {/* Admin hover actions — approve and reject buttons, top-left so they don't overlap the attribution */}
+      {devMode && (
+        <div className="absolute top-0 left-0 flex gap-1 p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          {/* Approve button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onApprove() }}
+            title="Approve photo"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-emerald-600/90 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </button>
+          {/* Reject button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onReject() }}
+            title="Reject photo"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-red-600/90 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Attribution overlay — slides up on hover */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-black/70 to-transparent px-2.5 pb-2 pt-5 transition-transform duration-150 group-hover:translate-y-0">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-black/70 to-transparent px-2.5 pb-2 pt-5 transition-transform duration-150 group-hover:translate-y-0">
         <p className="truncate text-xs font-medium leading-tight text-white">
           {photo.title}
         </p>
         <p className="truncate text-[10px] text-white/70">{photo.ownerName}</p>
       </div>
-    </a>
+    </div>
   )
 }
