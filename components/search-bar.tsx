@@ -14,7 +14,7 @@ export default function SearchBar({ value, onChange }: SearchBarProps) {
     <div className="relative">
       <Input
         type="text"
-        placeholder="Search"
+        placeholder="Search stations"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         // pr-8 reserves space on the right so text doesn't slide under the X button

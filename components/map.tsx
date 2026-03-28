@@ -657,6 +657,7 @@ export default function HikeMap() {
         }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        adminMode={devExcludeActive}
       />
 
       {bannerVisible && (
@@ -679,7 +680,7 @@ export default function HikeMap() {
               devExcludeActive ? "bg-red-600/80" : "bg-black/40 hover:bg-black/60"
             }`}
           >
-            {devExcludeActive ? "dev ✕" : "dev"}
+            {devExcludeActive ? "admin ✕" : "admin"}
           </button>
           {/* Zoom level indicator — only visible when dev mode is active */}
           {devExcludeActive && (

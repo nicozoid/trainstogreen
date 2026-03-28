@@ -5,28 +5,36 @@ import SearchBar from "@/components/search-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { InformationCircleIcon } from "@hugeicons/core-free-icons"
-import { useState } from "react"
+import { useRef, useState } from "react"
 
-// Tiny info-circle tooltip — reused next to every checkbox.
-// Uses controlled `open` state so tapping works on touch screens:
-// a tap toggles the tooltip open/closed, while hover still works on desktop.
-function InfoTip({ text }: { text: string }) {
+// Wraps any inline content with a tooltip that works on both desktop (hover)
+// and touchscreens (tap toggles open/closed). Uses controlled `open` state
+// so Radix honours our state while still closing on blur.
+// On touch devices, tapping the label only shows the tooltip — it won't
+// bubble up to toggle a parent <label>'s checkbox.
+function LabelTip({ text, children }: { text: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
+  // Tracks whether the click originated from a touch event
+  const touchedRef = useRef(false)
   return (
-    // open + onOpenChange gives us controlled mode: Radix honours our state
-    // but still closes the tooltip when focus leaves, etc.
     <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild>
-        {/* onClick toggles open — this is what fires on a touchscreen tap */}
-        <button
-          className="ml-1 text-muted-foreground"
-          type="button"
-          onClick={() => setOpen((v) => !v)}
+        <span
+          className="cursor-default"
+          // Flag that a touch just happened — the click handler checks this
+          onTouchStart={() => { touchedRef.current = true }}
+          onClick={(e) => {
+            if (touchedRef.current) {
+              // Stop the click from reaching the parent <label>,
+              // so the checkbox doesn't toggle on tap
+              e.preventDefault()
+              touchedRef.current = false
+            }
+            setOpen((v) => !v)
+          }}
         >
-          <HugeiconsIcon icon={InformationCircleIcon} size={14} />
-        </button>
+          {children}
+        </span>
       </TooltipTrigger>
       <TooltipContent>{text}</TooltipContent>
     </Tooltip>
@@ -87,9 +95,10 @@ type FilterPanelProps = {
   onToggleRating: (key: string) => void
   searchQuery: string
   onSearchChange: (value: string) => void
+  adminMode: boolean
 }
 
-export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -128,7 +137,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className="shrink-0 rounded p-1 text-primary sm:hidden cursor-pointer"
+          className="shrink-0 rounded p-1 text-primary sm:hidden cursor-pointer -translate-y-0.5"
           aria-label={collapsed ? "Expand filters" : "Collapse filters"}
         >
           {/* Chevron flips direction to signal the current action */}
@@ -148,18 +157,20 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
         <>
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
-          <div className="mb-4 mt-3 sm:mt-0">
-            <SearchBar value={searchQuery} onChange={onSearchChange} />
-          </div>
-          <div className="mb-3 flex items-baseline justify-between">
-            <span className="text-sm font-medium">Maximum travel time</span>
-            {/* Shows the current value, styled as secondary info */}
-            <div className="flex items-center gap-2 sm:gap-1">
-              <span className="text-sm font-extrabold text-primary">
-                {formatDuration(maxMinutes)}
-              </span>
-              <InfoTip text={`Showing all stations within ${formatDuration(maxMinutes)} of Farringdon Station on a Saturday morning`} />
+          {/* Search bar only shows when admin mode is toggled on */}
+          {adminMode && (
+            <div className="mb-4 mt-3 sm:mt-0">
+              <SearchBar value={searchQuery} onChange={onSearchChange} />
             </div>
+          )}
+          <div id="SLIDER-LABEL" className="mt-3 sm:mt-0 mb-3 flex items-baseline justify-between">
+            <LabelTip text={`Showing all stations within ${formatDuration(maxMinutes)} public transport travel from central London on a Saturday morning`}>
+              <span className="text-sm font-medium">Max time from London</span>
+            </LabelTip>
+            {/* Shows the current value, styled as secondary info */}
+            <span className="text-sm font-extrabold text-primary">
+              {formatDuration(maxMinutes)}
+            </span>
           </div>
           <Slider
             min={45}
@@ -183,38 +194,35 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           <div className="mt-4 border-t pt-3">
             <span className="mb-2 block text-sm font-medium">Ratings</span>
             {RATING_FILTERS.map(({ key, label, icon, tooltip }) => (
-              <label key={key} className="mt-1.5 flex items-center justify-between">
-                <span className="flex items-center gap-2.5 text-sm">
-                  {icon}
-                  {label}
-                </span>
-                {/* gap-2 on mobile (easier to tap), gap-1 on larger viewports */}
-                <span className="flex items-center gap-2 sm:gap-1">
-                  <Checkbox
-                    checked={visibleRatings.has(key)}
-                    onCheckedChange={() => onToggleRating(key)}
-                    className="cursor-pointer"
-                  />
-                  <InfoTip text={tooltip} />
-                </span>
-              </label>
+              <div key={key} className="mt-1.5 flex items-center justify-between">
+                {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
+                <LabelTip text={tooltip}>
+                  <span className="flex items-center gap-2.5 text-sm">
+                    {icon}
+                    {label}
+                  </span>
+                </LabelTip>
+                <Checkbox
+                  checked={visibleRatings.has(key)}
+                  onCheckedChange={() => onToggleRating(key)}
+                  className="cursor-pointer"
+                />
+              </div>
             ))}
           </div>
 
-          {/* Trails toggle — label wraps the checkbox so clicking the text also toggles it.
-             Radix Checkbox uses checked/onCheckedChange instead of the native onChange. */}
-          <label className="mt-4 flex items-center justify-between border-t pt-3">
-            <span className="text-sm font-medium">Waymarked trails</span>
-            {/* gap-2 on mobile (easier to tap), gap-1 on larger viewports */}
-            <span className="flex items-center gap-2 sm:gap-1">
-              <Checkbox
-                checked={showTrails}
-                onCheckedChange={(checked) => onToggleTrails(checked === true)}
-                className="cursor-pointer"
-              />
-              <InfoTip text="Show sign-posted walking routes from OpenStreetMaps" />
-            </span>
-          </label>
+          {/* Trails toggle — <div> instead of <label> so tapping the gap
+             on touchscreens doesn't toggle the checkbox */}
+          <div className="mt-4 flex items-center justify-between border-t pt-3">
+            <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
+              <span className="text-sm font-medium">Waymarked trails</span>
+            </LabelTip>
+            <Checkbox
+              checked={showTrails}
+              onCheckedChange={(checked) => onToggleTrails(checked === true)}
+              className="cursor-pointer"
+            />
+          </div>
         </>
       )}
     </div>
