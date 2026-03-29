@@ -756,7 +756,11 @@ export default function HikeMap() {
               const next = !devExcludeActive
               setDevExcludeActive(next)
               // Show all stations when entering dev mode so nothing is hidden while curating
-              if (next) setMaxMinutes(180)
+              if (next) {
+                setMaxMinutes(180)
+                // Clear all rating checkboxes — empty set means "show all" in the filter logic
+                setVisibleRatings(new Set())
+              }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
               devExcludeActive ? "bg-red-600/80" : "bg-black/40 hover:bg-black/60"
@@ -822,17 +826,22 @@ export default function HikeMap() {
         onTouchEnd={handleTouchEndOrMove}
         onTouchMove={handleTouchEndOrMove}
       >
-        {/* Waymarked Trails raster overlay — toggled on/off via the filter panel */}
-        {showTrails && (
-          <Source
-            id="trails-overlay"
+        {/* Waymarked Trails raster overlay — always mounted so it keeps its position
+            in the layer stack (below station labels). Toggled via layout visibility
+            instead of conditional rendering, because mounting later would push it on top. */}
+        <Source
+          id="trails-overlay"
+          type="raster"
+          tiles={["https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png"]}
+          tileSize={256}
+        >
+          <Layer
+            id="trails-raster"
             type="raster"
-            tiles={["https://tile.waymarkedtrails.org/hiking/{z}/{x}/{y}.png"]}
-            tileSize={256}
-          >
-            <Layer id="trails-raster" type="raster" paint={{ "raster-opacity": 0.8 }} />
-          </Source>
-        )}
+            layout={{ visibility: showTrails ? "visible" : "none" }}
+            paint={{ "raster-opacity": 0.5 }}
+          />
+        </Source>
 
         {/* Outer radius circle — always mounted so opacity can transition in/out.
             Uses emptyGeoJSON when not hovered to keep the layer alive. */}
@@ -1074,6 +1083,7 @@ export default function HikeMap() {
               ["station-labels-highlight", 7, ["==", ["get", "rating"], "highlight"]],
               ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
               ["station-labels-not-recommended", 10, ["==", ["get", "rating"], "not-recommended"]],
+              ["station-labels-unrated", 10, ["!", ["has", "rating"]]],
             ] as const).map(([id, minZ, filter]) => (
               <Layer
                 key={id}

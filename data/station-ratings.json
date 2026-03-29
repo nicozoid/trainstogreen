@@ -390,5 +390,37 @@
   "-0.1990432,51.4340563": {
     "name": "Wimbledon Park",
     "rating": "verified"
+  },
+  "1.3986457,51.2231068": {
+    "name": "Deal",
+    "rating": "unverified"
+  },
+  "1.3614558,51.3307843": {
+    "name": "Thanet Parkway",
+    "rating": "unverified"
+  },
+  "0.7468492,51.3889653": {
+    "name": "Swale",
+    "rating": "unverified"
+  },
+  "0.6110362,51.3666656": {
+    "name": "Rainham",
+    "rating": "unverified"
+  },
+  "0.7945675,51.531446": {
+    "name": "Shoeburyness",
+    "rating": "unverified"
+  },
+  "1.3498136,51.9670171": {
+    "name": "Felixstowe",
+    "rating": "unverified"
+  },
+  "1.3009038,51.3775024": {
+    "name": "Birchington-on-Sea",
+    "rating": "unverified"
+  },
+  "1.1183071,51.3644375": {
+    "name": "Herne Bay",
+    "rating": "unverified"
   }
 }
