@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   // OpenGraph tags control how link previews look on social media / messaging apps
   openGraph: {
     siteName: "Trains to Green",
-    title: "Trains to Green: the best rural railway stations for day hikes from London",
+    title: "Trains to Green: best rural stations for London day hikes",
     description: "Walk straight off a London train into England's most charming rural idylls",
   }
 }
