@@ -27,6 +27,9 @@
    bg-primary, text-primary, border-primary, etc. in your markup.
    Without this block, Tailwind wouldn't know these variables exist. */
 @theme inline {
+    /* This spacing value is just to register the --spacing variable with tailwind; it doesn't do anything except possibly as a fallback. See root and @Media for the meaningful values */
+    --spacing: 0.3rem;
+
     /* Custom animation */
     --animate-shimmer: shimmer 1.6s ease-in-out infinite; /* used by skeleton loading boxes */
 
@@ -100,13 +103,21 @@
     --radius-2xl: calc(var(--radius) * 1.8);
     --radius-3xl: calc(var(--radius) * 2.2);
     --radius-4xl: calc(var(--radius) * 2.6);
+
 }
+
+
+
 
 /* --- Light theme (default) ---------------------------------
    Actual color values using oklch() notation.
    oklch(lightness chroma hue) — higher lightness = lighter,
    higher chroma = more saturated, hue = color angle (0–360). */
 :root {
+    /* Responsive spacing — tighter on mobile, roomier on larger screens.
+       Overrides the --spacing registered in @theme inline above. */
+    --spacing: 0.3rem;          
+
     --background: var(--beach-500);                    /* white */
     --foreground: var(--abyss-900);        /* near-black */
     --card: var(--beach-400); /* filter-panel bg, welcome-banner, buttons */
@@ -130,7 +141,7 @@
     --chart-3: var(--brand-500);
     --chart-4: var(--brand-600);
     --chart-5: var(--brand-700);
-    --radius: 0.625rem;                            /* base radius (10px) — all rounded-* classes derive from this */
+    --radius: 0.625rem;       /* base radius (10px) — all rounded-* classes derive from this. Original value 0.625rem */
     --sidebar: var(--beach-500);
     --sidebar-foreground: var(--brand-950);
     --sidebar-primary: var(--tree-800);
@@ -215,6 +226,13 @@
     --sidebar-ring: var(--seawater-700);
 }
 
+/* Larger screens get more breathing room */
+@media (max-width: 768px) {
+    :root {
+        --spacing: 0.6rem;      
+    }
+}
+
 /* ============================================================
    COMPONENT-SPECIFIC OVERRIDES
    Styles for third-party widgets (Mapbox) and custom UI pieces
@@ -244,7 +262,7 @@
 
 /* Make the track taller so the train-track pattern is visible */
 .train-track-track {
-  height: 0.875rem; /* 14px — a touch taller than the default 12px */
+  height: 1.1rem; /* ~18px — gives the train-track pattern more room */
 }
 
 /* Train thumb: remove default border/bg so the SVG icon is all you see */
@@ -267,7 +285,7 @@
   inset: 0;
   top: 50%;
   transform: translateY(-50%);
-  height: 0.875rem;           /* matches .train-track-track height */
+  height: 1.1rem;             /* matches .train-track-track height */
   background: var(--muted);   /* same colour as the unfilled track */
   border-radius: 9999px;
   z-index: -1;                /* sit behind the icon */
@@ -294,6 +312,12 @@
     }
   html {
     @apply font-sans;
+    font-size: 20px; /* mobile: slightly larger than the 16px browser default */
+    }
+  @media (min-width: 768px) {
+    html {
+      font-size: 17px; /* tablet+: back to default */
+      }
     }
   /* Default link styling — excluded inside buttons so variant="link" keeps its own styles */
   a:not([data-slot="button"] *, [data-slot="button"]) {

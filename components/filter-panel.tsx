@@ -47,7 +47,8 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5">
+      /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
+      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem] scale-125">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
     ),
@@ -55,7 +56,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "verified", label: "Good", tooltip: "A hiking spot I can personally recommend —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5">
+      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
@@ -63,7 +64,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unverified", label: "Probably", secondary: true, tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
@@ -71,7 +72,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "not-recommended", label: "Unworthy", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
       </svg>
     ),
@@ -79,7 +80,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unrated", label: "Unknown", secondary: true, tooltip: "I have no opinion about this area —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
         <circle cx="12" cy="12" r="9" />
       </svg>
     ),
@@ -113,14 +114,14 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
   return (
     // On mobile: left-4 right-4 stretches the card to full width minus margin on both sides.
     // On sm+: right-auto + w-64 revert to the fixed sidebar width.
-    <div className="absolute left-4 right-4 top-4 z-10 rounded-lg border bg-card p-4 text-card-foreground shadow-md sm:right-auto sm:w-64">
+    <div className="absolute left-4 right-4 top-4 z-10 rounded-lg bg-card p-4 text-card-foreground shadow-md sm:right-auto sm:w-64">
 
       {/* Header row: logo on the left, collapse toggle on the right (mobile only) */}
       {/* gap-4 on mobile for breathing room between logo and button; sm:gap-0 removes it */}
-      <div className="mb-0 sm:mb-1 flex items-center justify-between gap-2">
+      <div id="LOGO_AND_COLLAPSE_STACK" className="mb-0 sm:mb-1 flex items-center justify-between gap-2">
         {/* Logo — mask-image uses the SVG as a stencil filled by bg-primary */}
         <div
-          className="h-8 w-full cursor-pointer bg-primary sm:cursor-default"
+          className="w-full aspect-[597/51] cursor-pointer bg-primary sm:cursor-default"
           role="img"
           aria-label="Trains to Green"
           onClick={() => setCollapsed((v) => !v)}
@@ -137,7 +138,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className="shrink-0 rounded p-1 text-primary sm:hidden cursor-pointer -translate-y-0.5"
+          className="shrink-0 rounded p-0 text-primary sm:hidden cursor-pointer -translate-y-0"
           aria-label={collapsed ? "Expand filters" : "Collapse filters"}
         >
           {/* Chevron flips direction to signal the current action */}
@@ -163,7 +164,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
               <SearchBar value={searchQuery} onChange={onSearchChange} />
             </div>
           )}
-          <div id="SLIDER-LABEL" className="mt-3 sm:mt-0 mb-3 flex items-baseline justify-between">
+          <div id="SLIDER-LABEL" className="mt-4 mb-2 flex items-baseline justify-between">
             <LabelTip text={`Showing all stations within ${formatDuration(maxMinutes)} public transport travel from central London on a Saturday morning`}>
               <span className="text-sm font-medium">Max time from London</span>
             </LabelTip>
@@ -186,12 +187,12 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             thumbContent={
               /* Lucide TrainFront icon — uses text-primary to inherit
                  the design system green via stroke="currentColor". */
-              <IconTrainFilled size={20} className="text-primary drop-shadow-sm" />
+              <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
             }
           />
 
           {/* Rating visibility toggles — one checkbox per rating category */}
-          <div className="mt-4 border-t pt-3">
+          <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
             {/* <span className="mb-2 block text-sm font-medium">Ratings</span> */}
             {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
               <div key={key} className="mt-1.5 flex items-center justify-between">

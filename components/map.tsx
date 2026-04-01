@@ -795,7 +795,7 @@ export default function HikeMap() {
             id="outer-radius-fill"
             type="fill"
             paint={{
-              "fill-color": "#16a34a",
+              "fill-color": "#2f6544",
               "fill-opacity": hovered ? 0.03 : 0,
               "fill-opacity-transition": { duration: 300 },
             }}
@@ -804,7 +804,7 @@ export default function HikeMap() {
             id="outer-radius-outline"
             type="line"
             paint={{
-              "line-color": "#16a34a",
+              "line-color": "#2f6544",
               "line-width": 1,
               "line-opacity": hovered ? 0.25 : 0,
               "line-opacity-transition": { duration: 300 },
@@ -819,7 +819,7 @@ export default function HikeMap() {
             id="radius-fill"
             type="fill"
             paint={{
-              "fill-color": "#16a34a",
+              "fill-color": "#2f6544",
               "fill-opacity": hovered ? 0.07 : 0,
               "fill-opacity-transition": { duration: 300 },
             }}
@@ -828,7 +828,7 @@ export default function HikeMap() {
             id="radius-outline"
             type="line"
             paint={{
-              "line-color": "#16a34a",
+              "line-color": "#2f6544",
               "line-width": 1.0,
               "line-opacity": hovered ? 0.3 : 0,
               "line-opacity-transition": { duration: 300 },
@@ -857,7 +857,7 @@ export default function HikeMap() {
                 "text-letter-spacing": 0.08,
               }}
               paint={{
-                "text-color": "#16a34a",
+                "text-color": "#2f6544", /* --tree-800 */
               }}
             />
           </Source>
@@ -880,7 +880,7 @@ export default function HikeMap() {
                 "text-letter-spacing": 0.08,
               }}
               paint={{
-                "text-color": "#16a34a",
+                "text-color": "#2f6544", /* --tree-800 */
               }}
             />
           </Source>
