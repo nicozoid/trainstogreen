@@ -12,8 +12,10 @@ export default function Page() {
     // h-dvh = 100% of the dynamic viewport height (better than vh on mobile)
     <main className="h-dvh w-full relative">
       <HikeMap />
-      {/* Theme toggle floats over the map in the top-right corner */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Theme toggle floats over the map in the top-right corner.
+          hidden md:block = hidden on mobile, visible from md (768px) up.
+          On mobile, we always use light mode (enforced in ThemeToggle). */}
+      <div className="hidden md:block absolute top-4 right-4 z-50">
         <ThemeToggle />
       </div>
     </main>
