@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogClose,
@@ -102,13 +102,27 @@ export default function StationModal({
   // How many Flickr photos to display (approved photos are added on top)
   const DISPLAY_COUNT = 30
 
+  // Snapshot hasCurations at dialog-open time so that approving/rejecting
+  // a photo during this session doesn't immediately switch to the broader
+  // tag set. The broader tags only kick in the *next* time the overlay opens.
+  const hasCurationsRef = useRef(false)
+
   // Reset when a different station is selected
   useEffect(() => {
     setAllPhotos([])
   }, [lat, lng])
 
+  // Capture the curations state each time the dialog opens (not on every edit)
+  useEffect(() => {
+    if (open) {
+      hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
+    }
+    // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lat, lng])
+
   // Fetch photos when the dialog opens, and re-fetch when the rejected count
-  // crosses a 100-photo page boundary (so more buffer is pulled in).
+  // crosses a 100-page boundary (so more buffer is pulled in).
   // The cache inside fetchFlickrPhotos prevents redundant API calls — if the
   // page count hasn't changed, it's an instant cache hit.
   useEffect(() => {
@@ -118,9 +132,8 @@ export default function StationModal({
     if (allPhotos.length === 0) setLoading(true)
     setError(null)
 
-    const hasCurations = approvedPhotos.length > 0 || rejectedIds.size > 0
-    console.log(`[photos] fetching: hasCurations=${hasCurations}, rejectedCount=${rejectedIds.size}, approvedCount=${approvedPhotos.length}`)
-    fetchFlickrPhotos(lat, lng, hasCurations, rejectedIds.size)
+    console.log(`[photos] fetching: hasCurations=${hasCurationsRef.current}, rejectedCount=${rejectedIds.size}, approvedCount=${approvedPhotos.length}`)
+    fetchFlickrPhotos(lat, lng, hasCurationsRef.current, rejectedIds.size)
       .then((result) => {
         console.log(`[photos] fetched ${result.length} photos from Flickr`)
         setAllPhotos(result)
@@ -130,7 +143,7 @@ export default function StationModal({
         setError("Couldn't load photos. Try again later.")
       })
       .finally(() => setLoading(false))
-  }, [open, hasApiKey, lat, lng, approvedPhotos.length, rejectedIds.size])
+  }, [open, hasApiKey, lat, lng, rejectedIds.size])
 
   // Build the display list: approved photos first, then Flickr results — filtering
   // out rejected and already-approved photos at display time so the full buffer is

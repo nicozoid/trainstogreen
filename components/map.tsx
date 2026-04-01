@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useTheme } from "next-themes"
 import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
@@ -93,7 +94,9 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 
 // Draws a rating icon onto a canvas and returns the pixel data Mapbox needs.
 // Using canvas (rather than SVG files) means no extra assets to load.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'hexagon', color: string): ImageData {
+// strokeColor switches between white (light mode) and black (dark mode) so
+// the outline stays visible against the map background.
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'hexagon', color: string, strokeColor: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -117,7 +120,7 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.closePath()
     ctx.fillStyle = color
     ctx.fill()
-    ctx.strokeStyle = '#ffffff'
+    ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else if (shape === 'circle') {
@@ -126,7 +129,7 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.arc(12, 12, 7, 0, Math.PI * 2)
     ctx.fillStyle = color
     ctx.fill()
-    ctx.strokeStyle = '#ffffff'
+    ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else if (shape === 'hexagon') {
@@ -143,7 +146,7 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.closePath()
     ctx.fillStyle = color
     ctx.fill()
-    ctx.strokeStyle = '#ffffff'
+    ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else {
@@ -167,7 +170,7 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.closePath()
     ctx.fillStyle = color
     ctx.fill()
-    ctx.strokeStyle = '#ffffff'
+    ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   }
@@ -177,6 +180,12 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
 }
 
 export default function HikeMap() {
+  const { theme } = useTheme()
+  // Ref keeps theme accessible inside the style.load callback (which is a stale
+  // closure from handleMapLoad). Without this, registerIcons would always see
+  // whatever theme was active when the map first loaded.
+  const themeRef = useRef(theme)
+  themeRef.current = theme
   const [stations, setStations] = useState<StationCollection | null>(null)
   // Start at 180min (the max) so all stations are visible on load
   const [maxMinutes, setMaxMinutes] = useState(120)
@@ -184,9 +193,26 @@ export default function HikeMap() {
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
+  // The Mapbox style URL — switches between light and dark based on theme.
+  const mapStyle = theme === "dark"
+    ? "mapbox://styles/niczap/cmnepmfm2001p01sfe63j3ktq"
+    : "mapbox://styles/niczap/cmneh11gr001q01qxeu1leyuc"
+  // Halo behind label text — white in light mode, black in dark mode
+  const haloColor = theme === "dark" ? "#000" : "#fff"
+  // Label text color — --beach-100 (#fdfcf8) in dark mode, dark green in light mode
+  const labelColor = theme === "dark" ? "#fdfcf8" : "#166534"
   // True once the map's onLoad fires — icon images are registered at that point,
   // so icon-dependent layers should only render after this is true.
+  // Reset to false when the style changes (theme toggle) so Sources/Layers
+  // don't try to render before the new style has finished loading.
   const [mapReady, setMapReady] = useState(false)
+  const prevStyleRef = useRef(mapStyle)
+  useEffect(() => {
+    if (prevStyleRef.current !== mapStyle) {
+      prevStyleRef.current = mapStyle
+      setMapReady(false)
+    }
+  }, [mapStyle])
   // Tracks stations excluded this session — keyed by OSM node ID so two stations
   // with the same name (e.g. Newport Essex vs Newport Wales) are treated separately
   const [sessionExcluded, setSessionExcluded] = useState<Set<string>>(new Set())
@@ -591,136 +617,53 @@ export default function HikeMap() {
     })
   }, [undoName, undoId])
 
-  // Roads, rail, and trails all appear at zoom 14+. Contours are always hidden.
-  const TRAIL_ZOOM = 14
-
-  // Called once the map style has loaded
+  // Called on initial map load and handles icon registration.
+  // Also registers a style.load listener for theme swaps.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleMapLoad(e: any) {
-    hideRoads(e)
     const map = e.target
     // Touch zoom and rotate share one handler. disableRotation() keeps pinch-zoom
     // but removes the two-finger twist gesture that rotates the map on touchscreens.
     map.touchZoomRotate.disableRotation()
-    // Pre-load icon images so the rating symbol layer can reference them by name.
-    // getColors() reads --primary and --accent from CSS at runtime so Mapbox stays in sync.
-    const colors = getColors()
-    const dpr = window.devicePixelRatio || 1
-    map.addImage('icon-highlight',       createRatingIcon('star',         colors.primary), { pixelRatio: dpr })
-    map.addImage('icon-verified',        createRatingIcon('triangle-up',  colors.primary), { pixelRatio: dpr })
-    map.addImage('icon-unrated',         createRatingIcon('circle',        colors.accent), { pixelRatio: dpr })
-    map.addImage('icon-unverified',      createRatingIcon('triangle-up',  colors.accent), { pixelRatio: dpr })
-    map.addImage('icon-not-recommended', createRatingIcon('triangle-down', colors.accent), { pixelRatio: dpr })
-    // Green-900 hexagon for the London origin marker
-    map.addImage('icon-london',          createRatingIcon('hexagon',       colors.primary),      { pixelRatio: dpr })
+
+    // Register custom icon images for station markers.
+    registerIcons(map)
+
+    // Re-register icons on every subsequent style change (dark/light theme swap).
+    // The flat styles already have road/label hiding baked in, so no basemap
+    // configuration is needed — just icon re-registration.
+    map.on('style.load', () => {
+      registerIcons(map)
+      setMapReady(true)
+    })
+
     setMapReady(true)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function hideRoads(e: any) {
-    const map = e.target
-    // Greenery label layers — force visible and restrict to zoom 12+
-    const greeneryLabelLayers = ["natural-line-label", "natural-point-label", "poi-label"]
-    greeneryLabelLayers.forEach((id) => {
-      map.setLayoutProperty(id, "visibility", "visible")
-      map.setLayerZoomRange(id, 12, 24)
-    })
-
-    // Trail/path layers — lower the minimum zoom so they appear earlier when zooming in
-    const pathLayers = [
-      "road-path-trail", "road-path-cycleway-piste", "road-path", "road-path-bg",
-      "road-steps", "road-steps-bg", "road-pedestrian", "road-pedestrian-case",
-      "bridge-path-trail", "bridge-path-cycleway-piste", "bridge-path", "bridge-path-bg",
-      "bridge-steps", "bridge-steps-bg", "bridge-pedestrian", "bridge-pedestrian-case",
-    ]
-    pathLayers.forEach((id) => {
-      if (map.getLayer(id)) map.setLayerZoomRange(id, 0, 24)
-    })
-
-    // Darken urban/built-up areas so they stand out from countryside.
-    // Uses "case" (if/else) instead of "match" so that non-urban classes (parks, forests,
-    // farmland, etc.) fall through to their original Mapbox-assigned color untouched.
-    // Darken urban/built-up areas by adding a new layer on top of the base "landuse" layer.
-    // We can't modify the original layer's fill-color because it uses a zoom-interpolation
-    // expression, and Mapbox doesn't allow nesting zoom expressions inside case/match.
-    // Instead, a separate layer filtered to urban classes draws over the original with a flat color.
-    if (map.getLayer("landuse") && !map.getLayer("landuse-urban")) {
-      map.addLayer(
-        {
-          id: "landuse-urban",
-          type: "fill",
-          source: "composite",          // Mapbox's default vector tile source
-          "source-layer": "landuse",    // same data as the base landuse layer
-          filter: ["in", "class", "residential", "commercial_area", "industrial"],
-          paint: {
-            "fill-color": "#d4d4d4",    // grey-300
-          },
-        },
-        "landuse"  // insert just below the original landuse layer so it renders on top of terrain
-                   // but under parks/forests (which the original landuse layer draws above)
-      )
+  function registerIcons(map: any) {
+    // getColors() reads --primary and --secondary from CSS at runtime so Mapbox
+    // stays in sync with the current theme's CSS variables.
+    const colors = getColors()
+    const dpr = window.devicePixelRatio || 1
+    // White stroke in light mode, black in dark — keeps icons readable on both maps.
+    // Reads from themeRef so the style.load callback always gets the current theme.
+    const stroke = themeRef.current === 'dark' ? '#000000' : '#ffffff'
+    // addImage throws if the name already exists, so check first
+    const add = (name: string, img: ImageData) => {
+      if (map.hasImage(name)) map.removeImage(name)
+      map.addImage(name, img, { pixelRatio: dpr })
     }
-
-    map.getStyle().layers.forEach((layer: { id: string }) => {
-      const id = layer.id
-
-      // Never touch our own custom layers
-      if (id.startsWith("station-")) return
-
-      // Contours: always hidden
-      if (id === "contour" || id === "contour-label") {
-        map.setLayoutProperty(id, "visibility", "none")
-        return
-      }
-
-      // Layers we always want visible (paths, trails, nature labels)
-      const keep = new Set([
-        "natural-line-label",     // rivers, ridges, forests etc.
-        "natural-point-label",    // peaks, bays, natural features
-        "poi-label",              // parks, gardens, nature reserves
-        // Road-level path layers (surface paths, not tunnels/bridges)
-        "road-path-trail",             // hiking trails — the main one we want
-        "road-path-cycleway-piste",    // cycleways and ski pistes
-        "road-path",                   // general footpaths/bridleways/byways
-        "road-path-bg",                // white casing behind path lines
-        "road-steps",                  // stepped paths
-        "road-steps-bg",               // casing behind steps
-        "road-pedestrian",             // pedestrian-only ways
-        "road-pedestrian-case",        // outline around pedestrian ways
-        "road-pedestrian-polygon-fill",
-        "road-pedestrian-polygon-pattern",
-        // Bridge equivalents — same path types but over bridges
-        "bridge-path-trail",
-        "bridge-path-cycleway-piste",
-        "bridge-path",
-        "bridge-path-bg",
-        "bridge-steps",
-        "bridge-steps-bg",
-        "bridge-pedestrian",
-        "bridge-pedestrian-case",
-        // Path labels (hidden by "label" in the regex without this exemption)
-        "path-pedestrian-label",
-      ])
-
-      if (keep.has(id)) return
-
-      // Road and rail LINE layers: visible only at zoom 14+, same as trails.
-      // Excludes path/pedestrian/label types — those are handled above or always hidden.
-      if (
-        /road|rail|motorway/.test(id) &&
-        !/label|path|trail|pedestrian|steps|cycleway|piste/.test(id)
-      ) {
-        map.setLayoutProperty(id, "visibility", "visible")
-        map.setLayerZoomRange(id, TRAIL_ZOOM, 24)
-        return
-      }
-
-      // Everything else matching the hide pattern: always hidden
-      if (/road|bridge|tunnel|motorway|label|place|poi|settlement|country|state|airport|waterway|admin/.test(id)) {
-        map.setLayoutProperty(id, "visibility", "none")
-      }
-    })
+    add('icon-highlight',       createRatingIcon('star',          colors.primary,   stroke))
+    add('icon-verified',        createRatingIcon('triangle-up',   colors.primary,   stroke))
+    add('icon-unrated',         createRatingIcon('circle',        colors.secondary, stroke))
+    add('icon-unverified',      createRatingIcon('triangle-up',   colors.secondary, stroke))
+    add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
+    add('icon-london',          createRatingIcon('hexagon',       colors.primary,   stroke))
   }
+
+  // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
+  // hiding, label visibility, and zoom ranges baked in at the style level.
 
   return (
     <div className="relative h-full w-full">
@@ -797,7 +740,7 @@ export default function HikeMap() {
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialViewState={INITIAL_VIEW}
-        mapStyle="mapbox://styles/mapbox/outdoors-v12"
+        mapStyle={mapStyle}
         style={{ width: "100%", height: "100%" }}
         onLoad={handleMapLoad}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -826,6 +769,8 @@ export default function HikeMap() {
         onTouchEnd={handleTouchEndOrMove}
         onTouchMove={handleTouchEndOrMove}
       >
+        {/* Wait for the map style to finish loading before mounting any Sources/Layers */}
+        {mapReady && <>
         {/* Waymarked Trails raster overlay — always mounted so it keeps its position
             in the layer stack (below station labels). Toggled via layout visibility
             instead of conditional rendering, because mounting later would push it on top. */}
@@ -986,8 +931,8 @@ export default function HikeMap() {
                 "text-allow-overlap": true,
               }}
               paint={{
-                "text-color": "#166534",
-                "text-halo-color": "#fff",
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
                 "text-halo-width": 1.5,
               }}
             />
@@ -1038,6 +983,14 @@ export default function HikeMap() {
                   ],
                   "icon-allow-overlap": true,    // don't hide icons when they overlap labels
                   "icon-ignore-placement": true, // don't let icons block other symbols
+                  // Higher value = drawn on top — so better-rated stations sit above weaker ones
+                  "symbol-sort-key": ["match", ["get", "rating"],
+                    "highlight",       4,
+                    "verified",        3,
+                    "unverified",      2,
+                    "not-recommended", 1,
+                    0
+                  ],
                   // Slightly larger icon when hovered
                   "icon-size": hovered
                     ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 1]
@@ -1105,8 +1058,8 @@ export default function HikeMap() {
                   "text-allow-overlap": true,
                 }}
                 paint={{
-                  "text-color": "#166534",
-                  "text-halo-color": "#fff",
+                  "text-color": labelColor,
+                  "text-halo-color": haloColor,
                   "text-halo-width": 1.5,
                 }}
               />
@@ -1151,8 +1104,8 @@ export default function HikeMap() {
                 "text-allow-overlap": true,
               }}
               paint={{
-                "text-color": "#166534",
-                "text-halo-color": "#fff",
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
                 "text-halo-width": 1.5,
               }}
             />
@@ -1191,8 +1144,8 @@ export default function HikeMap() {
                   "text-allow-overlap": true,
                 }}
                 paint={{
-                  "text-color": "#166534",
-                  "text-halo-color": "#fff",
+                  "text-color": labelColor,
+                  "text-halo-color": haloColor,
                   "text-halo-width": 1.5,
                 }}
               />
@@ -1221,6 +1174,7 @@ export default function HikeMap() {
             onUnapprovePhoto={(photoId) => handleUnapprovePhoto(selectedStation.coordKey, selectedStation.name, photoId)}
           />
         )}
+        </>}
 
       </Map>
     </div>

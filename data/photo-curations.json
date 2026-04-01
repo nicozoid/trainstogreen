@@ -2046,5 +2046,53 @@
       "49969642986",
       "49969642826"
     ]
+  },
+  "-0.1653912,51.5552396": {
+    "name": "Hampstead Heath",
+    "approved": [
+      {
+        "id": "54981225453",
+        "title": "Autumn early morning mist rising off the Hampstead Heath",
+        "ownerName": "IA Photography",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54981225453_3c3c5bc487.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54981225453_3c3c5bc487_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/53822808@N02/54981225453",
+        "dateTaken": "2025-11-09 08:43:01"
+      },
+      {
+        "id": "54273829623",
+        "title": "The Quiet Beauty of a Winter Morning",
+        "ownerName": "IA Photography",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54273829623_4c32ac2e24.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54273829623_4c32ac2e24_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/53822808@N02/54273829623",
+        "dateTaken": "2025-01-12 08:27:06"
+      }
+    ],
+    "rejected": [
+      "54403668528",
+      "46906330004",
+      "44752904925",
+      "28823486857",
+      "52696083711",
+      "19337016123",
+      "52695568417",
+      "52696502320",
+      "52510586140",
+      "30497355290",
+      "53459550983",
+      "53128911882",
+      "52696082791",
+      "42631342435",
+      "32906578576",
+      "30235244722",
+      "30969893442",
+      "45437195202",
+      "15762915033",
+      "16197022607",
+      "14846453492",
+      "14379046918",
+      "8477567414"
+    ]
   }
 }

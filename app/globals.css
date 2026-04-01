@@ -1,14 +1,57 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* ============================================================
+   GLOBALS.CSS — The design system for this app
+   ============================================================
+   In Tailwind v4, this file replaces tailwind.config.js.
+   Everything — colors, fonts, radii, animations — is defined
+   here in plain CSS instead of a JavaScript config file.
+   ============================================================ */
 
+
+/* Here's the chain:
+
+1. In `:root` you define the raw value: `-primary: oklch(0.72 0.12 70)`
+2. In `@theme inline`, the line `-color-primary: var(--primary)` registers it with Tailwind
+3. Tailwind then **automatically generates** utility classes from anything starting with `-color-`. So `-color-primary` creates `bg-primary`, `text-primary`, `border-primary`, etc. */
+
+/* --- Core imports ------------------------------------------ */
+@import "tailwindcss";       /* Tailwind's base, utilities, and variants */
+@import "tw-animate-css";    /* Animation utilities (fade, slide, etc.) */
+@import "shadcn/tailwind.css"; /* shadcn/ui component styles */
+
+/* Tells Tailwind how to detect dark mode: any element inside a .dark parent */
 @custom-variant dark (&:is(.dark *));
 
+/* --- Tailwind theme registration ---------------------------
+   @theme inline bridges CSS variables into Tailwind utilities.
+   For example, --color-primary: var(--primary) lets you write
+   bg-primary, text-primary, border-primary, etc. in your markup.
+   Without this block, Tailwind wouldn't know these variables exist. */
 @theme inline {
+    /* Custom animation */
     --animate-shimmer: shimmer 1.6s ease-in-out infinite; /* used by skeleton loading boxes */
+
+    /* Custom color alias */
     --color-grey-green: var(--accent); /* exposes as Tailwind utility, e.g. bg-grey-green */
+
+    /* Brand spectrum — registers each step so you can use e.g. bg-brand-500, text-brand-200 */
+
+    --color-brand-50:  var(--brand-50);
+    --color-brand-100: var(--brand-100);
+    --color-brand-200: var(--brand-200);
+    --color-brand-300: var(--brand-300);
+    --color-brand-400: var(--brand-400);
+    --color-brand-500: var(--brand-500);
+    --color-brand-600: var(--brand-600);
+    --color-brand-700: var(--brand-700);
+    --color-brand-800: var(--brand-800);
+    --color-brand-900: var(--brand-900);
+    --color-brand-950: var(--brand-950);
+
+    /* Fonts */
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
+
+    /* Sidebar colors — used by shadcn/ui sidebar component */
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -17,29 +60,39 @@
     --color-sidebar-primary: var(--sidebar-primary);
     --color-sidebar-foreground: var(--sidebar-foreground);
     --color-sidebar: var(--sidebar);
+
+    /* Chart colors — used by shadcn/ui chart components */
     --color-chart-5: var(--chart-5);
     --color-chart-4: var(--chart-4);
     --color-chart-3: var(--chart-3);
     --color-chart-2: var(--chart-2);
     --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
+
+    /* Core UI colors — the main palette used across all components.
+       Each --color-X maps to a CSS variable defined in :root / .dark below.
+       "foreground" variants are the text colors designed to sit on top of
+       their matching background (e.g. text-primary-foreground on bg-primary). */
+    --color-ring: var(--ring);               /* focus ring color */
+    --color-input: var(--input);             /* form input borders */
+    --color-border: var(--border);           /* general borders */
+    --color-destructive: var(--destructive); /* delete / error actions */
     --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
+    --color-accent: var(--accent);           /* secondary highlight (green) */
     --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
+    --color-muted: var(--muted);             /* subtle backgrounds */
     --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
+    --color-secondary: var(--secondary);     /* secondary buttons / badges */
     --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
+    --color-primary: var(--primary);         /* main brand color (green) */
     --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
+    --color-popover: var(--popover);         /* dropdown / tooltip backgrounds */
     --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
+    --color-card: var(--card);               /* card backgrounds */
+    --color-foreground: var(--foreground);   /* default text */
+    --color-background: var(--background);   /* page background */
+
+    /* Border-radius scale — all derived from a single --radius value
+       so the entire app's roundness can be tuned in one place */
     --radius-sm: calc(var(--radius) * 0.6);
     --radius-md: calc(var(--radius) * 0.8);
     --radius-lg: var(--radius);
@@ -49,74 +102,124 @@
     --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* --- Light theme (default) ---------------------------------
+   Actual color values using oklch() notation.
+   oklch(lightness chroma hue) — higher lightness = lighter,
+   higher chroma = more saturated, hue = color angle (0–360). */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.153 0.006 107.1);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.153 0.006 107.1);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.153 0.006 107.1);
-    --primary: oklch(54.847% 0.1348 145.619);
-    --primary-foreground: oklch(0.986 0.031 120.757);
-    --secondary: oklch(16.72% 0.02909 282.8);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.966 0.005 106.5);
-    --muted-foreground: oklch(0.58 0.031 107.3);
-    --accent: oklch(73.259% 0.15592 146.24);
-    --accent-foreground: oklch(0.986 0.031 120.757);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.93 0.007 106.5);
-    --input: oklch(0.93 0.007 106.5);
-    --ring: oklch(0.737 0.021 106.9);
-    --chart-1: oklch(0.871 0.15 154.449);
-    --chart-2: oklch(0.723 0.219 149.579);
-    --chart-3: oklch(0.627 0.194 149.214);
-    --chart-4: oklch(0.527 0.154 150.069);
-    --chart-5: oklch(0.448 0.119 151.328);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.988 0.003 106.5);
-    --sidebar-foreground: oklch(0.153 0.006 107.1);
-    --sidebar-primary: oklch(0.648 0.2 131.684);
-    --sidebar-primary-foreground: oklch(0.986 0.031 120.757);
-    --sidebar-accent: oklch(0.966 0.005 106.5);
-    --sidebar-accent-foreground: oklch(0.228 0.013 107.4);
-    --sidebar-border: oklch(0.93 0.007 106.5);
-    --sidebar-ring: oklch(0.737 0.021 106.9);
+    --background: var(--beach-500);                    /* white */
+    --foreground: var(--abyss-900);        /* near-black */
+    --card: var(--beach-400); /* filter-panel bg, welcome-banner, buttons */
+    --card-foreground: var(--abyss-900);
+    --popover: var(--beach-500);
+    --popover-foreground: var(--abyss-900);
+    --primary: var(--tree-800);      /* primary icons, logo */
+    --primary-foreground: var(--beach-300); /* light text on green */
+    --secondary: var(--tree-600); /* secondary icon set */
+    --secondary-foreground: var(--abyss-900);
+    --muted: var(--palm-400);
+    --muted-foreground: var(--tree-700);
+    --accent: var(--seawater-500);
+    --accent-foreground: var(--abyss-900);
+    --destructive: var(--fire-500);      /* red */
+    --border: var(--beach-600);             /* light grey */
+    --input: var(--tree-300);
+    --ring: var(--tree-300);
+    --chart-1: var(--brand-300);          /* greens, light to dark */
+    --chart-2: var(--brand-400);
+    --chart-3: var(--brand-500);
+    --chart-4: var(--brand-600);
+    --chart-5: var(--brand-700);
+    --radius: 0.625rem;                            /* base radius (10px) — all rounded-* classes derive from this */
+    --sidebar: var(--beach-500);
+    --sidebar-foreground: var(--brand-950);
+    --sidebar-primary: var(--tree-800);
+    --sidebar-primary-foreground: var(--beach-500);
+    --sidebar-accent: var(--seawater-500);
+    --sidebar-accent-foreground: var(--abyss-900);
+    --sidebar-border: var(--beach-600);
+    --sidebar-ring: var(--tree-300);
+
+
+/* Brand colours V2 */
+  --seawater-100: oklch(96% 0.025 177.791);
+  --seawater-300: oklch(89% 0.06 177.791);
+  --seawater-500: oklch(80.214% 0.10656 177.791);
+  --seawater-700: oklch(55% 0.09 177.791);
+  --seawater-900: oklch(32% 0.055 177.791);
+  --tree-100: oklch(89.524% 0.04317 139.995);
+  --tree-300: oklch(85.315% 0.06074 139.183);
+  --tree-400: oklch(81.402% 0.07873 143.766);
+  --tree-500: oklch(76.063% 0.10886 145.904);
+  --tree-600: oklch(64.404% 0.09787 148.877);
+  --tree-700: oklch(59.473% 0.0981 140.15);
+  --tree-800: oklch(45.999% 0.07937 154.865);
+  --tree-900: oklch(36% 0.065 154.865);
+  --tree-950: oklch(25% 0.045 154.865);
+  --palm-300: oklch(92.762% 0.029 114.676);
+  --palm-400: oklch(90.5% 0.035 110);
+  --palm-500: oklch(88% 0.04 105);
+  --palm-800: oklch(42% 0.038 138);
+  --fire-300: oklch(78% 0.10 34.257);
+  --fire-500: oklch(60.764% 0.16187 34.257);
+  --fire-700: oklch(45% 0.14 34.257);
+  --beach-100: oklch(99% 0.005 89.356);
+  --beach-200: oklch(98% 0.008 89.356);
+  --beach-300: oklch(97% 0.011 89.356);
+  --beach-400: oklch(96% 0.015 89.356);
+  --beach-500: oklch(94.646% 0.01797 89.356);
+  --beach-600: oklch(90.15% 0.01568 86.405);
+  --beach-700: oklch(83% 0.03 89.356);
+  --beach-800: oklch(74% 0.04 89.356);
+  --abyss-700: oklch(42% 0.055 200);
+  --abyss-800: oklch(34% 0.05 201);
+  --abyss-900: oklch(26.468% 0.04191 202.665);
+  --abyss-950: oklch(12.82% 0.01854 195.134);
 }
 
+/* --- Dark theme -------------------------------------------
+   Same variable names, different values.
+   Activated when a parent element has class="dark". */
 .dark {
-    --background: oklch(0.153 0.006 107.1);
-    --foreground: oklch(0.988 0.003 106.5);
-    --card: oklch(0.228 0.013 107.4);
-    --card-foreground: oklch(0.988 0.003 106.5);
-    --popover: oklch(0.228 0.013 107.4);
-    --popover-foreground: oklch(0.988 0.003 106.5);
-    --primary: oklch(0.453 0.124 130.933);
-    --primary-foreground: oklch(0.986 0.031 120.757);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.286 0.016 107.4);
-    --muted-foreground: oklch(0.737 0.021 106.9);
-    --accent: oklch(0.453 0.124 130.933);
-    --accent-foreground: oklch(0.986 0.031 120.757);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.58 0.031 107.3);
-    --chart-1: oklch(0.871 0.15 154.449);
-    --chart-2: oklch(0.723 0.219 149.579);
-    --chart-3: oklch(0.627 0.194 149.214);
-    --chart-4: oklch(0.527 0.154 150.069);
-    --chart-5: oklch(0.448 0.119 151.328);
-    --sidebar: oklch(0.228 0.013 107.4);
-    --sidebar-foreground: oklch(0.988 0.003 106.5);
-    --sidebar-primary: oklch(0.768 0.233 130.85);
-    --sidebar-primary-foreground: oklch(0.986 0.031 120.757);
-    --sidebar-accent: oklch(0.286 0.016 107.4);
-    --sidebar-accent-foreground: oklch(0.988 0.003 106.5);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.58 0.031 107.3);
+    --background: var(--tree-950);
+    --foreground: var(--beach-100);
+    --card: var(--tree-950);
+    --card-foreground: var(--beach-100);
+    --popover: var(--tree-950);
+    --popover-foreground: var(--beach-100);
+    --primary: var(--tree-600);
+    --primary-foreground: var(--abyss-950);
+    --secondary: var(--tree-800);
+    --secondary-foreground: var(--beach-100);
+    --muted: var(--tree-900);
+    --muted-foreground: var(--seawater-500);
+    --accent: var(--seawater-700);
+    --accent-foreground: var(--beach-200);
+    --destructive: var(--fire-300);
+    --border: var(--tree-900);
+    --input: var(--tree-900);
+    --ring: var(--seawater-700);
+    --chart-1: var(--tree-700);
+    --chart-2: var(--seawater-700);
+    --chart-3: var(--seawater-500);
+    --chart-4: var(--tree-400);
+    --chart-5: var(--seawater-300);
+    --sidebar: var(--abyss-900);
+    --sidebar-foreground: var(--beach-100);
+    --sidebar-primary: var(--seawater-500);
+    --sidebar-primary-foreground: var(--abyss-950);
+    --sidebar-accent: var(--abyss-800);
+    --sidebar-accent-foreground: var(--beach-100);
+    --sidebar-border: var(--abyss-800);
+    --sidebar-ring: var(--seawater-700);
 }
+
+/* ============================================================
+   COMPONENT-SPECIFIC OVERRIDES
+   Styles for third-party widgets (Mapbox) and custom UI pieces
+   (travel-time slider, loading skeletons) that can't be fully
+   handled with Tailwind utility classes alone.
+   ============================================================ */
 
 /* Reset Mapbox popup chrome so our content div owns all spacing */
 .station-popup .mapboxgl-popup-content {
@@ -176,6 +279,10 @@
   to   { transform: translateX(100%); }
 }
 
+/* --- Base layer -------------------------------------------
+   @layer base tells Tailwind these styles sit in the "base" layer,
+   which means they apply globally but can still be overridden by
+   utility classes. Think of it as your global defaults. */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -186,5 +293,9 @@
     }
   html {
     @apply font-sans;
+    }
+  /* Default link styling — excluded inside buttons so variant="link" keeps its own styles */
+  a:not([data-slot="button"] *, [data-slot="button"]) {
+    @apply underline underline-offset-1 decoration-[0.5px] hover:text-black dark:hover:text-white hover:decoration-1 transition-colors;
     }
 }

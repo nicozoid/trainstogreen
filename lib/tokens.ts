@@ -15,6 +15,6 @@ function resolveVar(varName: string): string {
 export function getColors() {
   return {
     primary: resolveVar("--primary"),
-    accent: resolveVar("--accent"),
+    secondary: resolveVar("--secondary"),
   }
 }

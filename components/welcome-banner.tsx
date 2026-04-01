@@ -15,11 +15,11 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
     /* onClick on the backdrop calls onDismiss; the inner card stops propagation
        so clicking inside it doesn't bubble up and trigger dismissal. */
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40" onClick={onDismiss}>
-      <div className="group relative w-full max-w-md overflow-hidden rounded-xl bg-card shadow-xl border border-border" onClick={e => e.stopPropagation()}>
+      <div className="group relative w-full max-w-md overflow-hidden rounded-xl bg-card shadow-xl" onClick={e => e.stopPropagation()}>
         {/* Close button — hidden until the dialog is hovered */}
         <button
           onClick={onDismiss}
-          className="absolute top-3 right-3 z-10 rounded-full bg-black/40 p-1 text-white hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+          className="absolute top-3 right-3 z-10 rounded-full dark bg-accent/50 p-1 text-accent-foreground hover:bg-accent/80 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
           aria-label="Dismiss dialog"
         >
           <X className="h-4 w-4" />
@@ -53,20 +53,20 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
 
         {/* Text content + CTA */}
         <div className="p-6">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-lg font-semibold ">
             {welcomeCopy.heading}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <p className="mt-2 text-sm leading-relaxed text-foreground font-light">
             {welcomeCopy.body}
           </p>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-foreground font-light">
             Send any comments or questions to{" "}
             <a
               href="mailto:nicolas@niczap.design"
-              className="underline hover:text-foreground transition-colors"
+              
             >
               nicolas@niczap.design
-            </a>
+            </a>.
           </p>
           <button
             onClick={onDismiss}

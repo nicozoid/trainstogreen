@@ -43,7 +43,7 @@ function LabelTip({ text, children }: { text: string; children: React.ReactNode 
 
 // Each rating category with its display label, colour, and inline SVG icon
 // matching the map markers exactly: star, triangle-up, triangle-down, circle.
-const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string }[] = [
+const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean }[] = [
   {
     key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
     icon: (
@@ -61,25 +61,25 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unverified", label: "Probably", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
+    key: "unverified", label: "Probably", secondary: true, tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
   },
   {
-    key: "not-recommended", label: "Unworthy", tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
+    key: "not-recommended", label: "Unworthy", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
         <polygon points="12 21, 22.39 3, 1.61 3" />
       </svg>
     ),
   },
   {
-    key: "unrated", label: "Unknown", tooltip: "I have no opinion about this area —TrainToGreen creator",
+    key: "unrated", label: "Unknown", secondary: true, tooltip: "I have no opinion about this area —TrainToGreen creator",
     icon: (
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--accent)" stroke="var(--accent)" strokeWidth="1.5">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5">
         <circle cx="12" cy="12" r="9" />
       </svg>
     ),
@@ -192,12 +192,12 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
 
           {/* Rating visibility toggles — one checkbox per rating category */}
           <div className="mt-4 border-t pt-3">
-            <span className="mb-2 block text-sm font-medium">Ratings</span>
-            {RATING_FILTERS.map(({ key, label, icon, tooltip }) => (
+            {/* <span className="mb-2 block text-sm font-medium">Ratings</span> */}
+            {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
               <div key={key} className="mt-1.5 flex items-center justify-between">
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
                 <LabelTip text={tooltip}>
-                  <span className="flex items-center gap-2.5 text-sm">
+                  <span className="flex items-center gap-2.5 text-sm font-medium">
                     {icon}
                     {label}
                   </span>
@@ -205,7 +205,11 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
                 <Checkbox
                   checked={visibleRatings.has(key)}
                   onCheckedChange={() => onToggleRating(key)}
-                  className="cursor-pointer"
+                  /* secondary ratings get --secondary fill instead of --primary */
+                  className={secondary
+                    ? "cursor-pointer data-checked:!bg-secondary data-checked:!border-secondary"
+                    : "cursor-pointer"
+                  }
                 />
               </div>
             ))}
