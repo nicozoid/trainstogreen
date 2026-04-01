@@ -3886,5 +3886,92 @@
       "55042734833",
       "55042735358"
     ]
+  },
+  "-0.3276687,51.7504966": {
+    "name": "St Albans City",
+    "approved": [
+      {
+        "id": "54888365598",
+        "title": "PA280654",
+        "ownerName": "xjnhnpeo75",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54888365598_7f21ae54d0.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54888365598_7f21ae54d0_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/201857044@N06/54888365598",
+        "dateTaken": "2025-10-28 10:09:46"
+      },
+      {
+        "id": "54768866568",
+        "title": "Verulamium Lake",
+        "ownerName": "Chris Kench",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54768866568_32076d8398.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54768866568_32076d8398_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/16257414@N00/54768866568",
+        "dateTaken": "2025-09-06 09:33:21"
+      },
+      {
+        "id": "52552393319",
+        "title": "Frosty fields and clouds",
+        "ownerName": "35mmMan",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52552393319_94db5c66f9.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52552393319_94db5c66f9_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/79478905@N04/52552393319",
+        "dateTaken": "2022-12-08 08:46:17"
+      },
+      {
+        "id": "52202174763",
+        "title": "GOC Heartwood Forest and lunch 026: Nomansland Common, Sandridge",
+        "ownerName": "Peter O'Connor aka anemoneprojectors",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52202174763_f47c9f7561.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52202174763_f47c9f7561_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/58414938@N00/52202174763",
+        "dateTaken": "2019-01-12 12:04:54"
+      },
+      {
+        "id": "52201148442",
+        "title": "GOC Heartwood Forest and lunch 031: Heartwood Forest, Sandridge",
+        "ownerName": "Peter O'Connor aka anemoneprojectors",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52201148442_ffe542778a.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52201148442_ffe542778a_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/58414938@N00/52201148442",
+        "dateTaken": "2019-01-12 12:46:34"
+      },
+      {
+        "id": "52202174358",
+        "title": "GOC Heartwood Forest and lunch 030: Heartwood Forest, Sandridge",
+        "ownerName": "Peter O'Connor aka anemoneprojectors",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52202174358_1c48dbf633.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52202174358_1c48dbf633_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/58414938@N00/52202174358",
+        "dateTaken": "2019-01-12 12:36:02"
+      },
+      {
+        "id": "52484274989",
+        "title": "Verulam Lake sunset",
+        "ownerName": "Chris Kench",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52484274989_3f9eca7434.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52484274989_3f9eca7434_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/16257414@N00/52484274989",
+        "dateTaken": "2016-03-31 19:33:08"
+      },
+      {
+        "id": "52616881022",
+        "title": "Winter in the fields",
+        "ownerName": "35mmMan",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52616881022_4c55862ac6.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52616881022_4c55862ac6_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/79478905@N04/52616881022",
+        "dateTaken": "2023-01-08 09:45:02"
+      }
+    ],
+    "rejected": [
+      "54713750890",
+      "49801037643",
+      "49909931692",
+      "49930896856",
+      "49909113863",
+      "54859597275",
+      "54859541719",
+      "54859546748"
+    ]
   }
 }

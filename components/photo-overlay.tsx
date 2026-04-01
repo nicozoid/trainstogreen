@@ -386,7 +386,7 @@ export default function StationModal({
               {flickrCount != null && flickrCount > 0 && (
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   <a
-                    href={`https://www.flickr.com/search/?tags=landscape&lat=${lat}&lon=${lng}&radius=7&sort=interestingness-desc`}
+                    href={`https://www.flickr.com/search/?tags=landscape&lat=${lat}&lon=${lng}&radius=7&sort=relevance`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline underline-offset-2 hover:text-foreground"

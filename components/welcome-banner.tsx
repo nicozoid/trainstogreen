@@ -56,10 +56,10 @@ export function WelcomeBanner({ onDismiss }: WelcomeBannerProps) {
           <h2 className="text-lg font-semibold ">
             {welcomeCopy.heading}
           </h2>
-          <p className="mt-2 text-sm leading-relaxed text-foreground font-light">
+          <p className="mt-2 text-sm leading-relaxed text-foreground font-normal">
             {welcomeCopy.body}
           </p>
-          <p className="mt-3 text-sm text-foreground font-light">
+          <p className="mt-3 text-sm text-foreground font-normal">
             Send any comments or questions to{" "}
             <a
               href="mailto:nicolas@niczap.design"
