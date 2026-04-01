@@ -198,7 +198,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
               <div key={key} className="mt-1.5 flex items-center justify-between">
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
                 <LabelTip text={tooltip}>
-                  <span className="flex items-center gap-2.5 text-sm font-medium">
+                  <span className="flex items-center gap-3 text-sm font-medium">
                     {icon}
                     {label}
                   </span>
