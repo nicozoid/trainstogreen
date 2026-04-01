@@ -25,11 +25,56 @@ type SelectedStation = {
   flickrCount: number | null
 }
 
-const INITIAL_VIEW = {
-  longitude: -0.118,
-  latitude: 51.509,
-  zoom: 7.4,
+// Computes center + zoom so the bounding box [west,south]–[east,north] fits
+// the viewport, with Eastbourne (~50.77°N) landing ~150px above the bottom.
+// Doing this as pure math avoids calling fitBounds() at runtime, which
+// react-map-gl's internal state manager can silently override.
+function computeInitialView() {
+  if (typeof window === 'undefined' || window.innerWidth < 640) {
+    // Mobile fallback — the onLoad handler applies fitBounds with
+    // panel-aware padding, so exact values here don't matter much.
+    return { longitude: -0.118, latitude: 51.509, zoom: 7.4 }
+  }
+
+  const W = window.innerWidth
+  const H = window.innerHeight
+  const bottomPad = 150
+
+  // Geographic region to frame (same bounds used by the mobile fitBounds)
+  const west = -3.6, east = 2.0, south = 50.77, north = 52.8
+
+  // --- Web Mercator helpers (Mapbox uses 512 px tiles) ---
+  // Convert latitude to Mercator Y in "world units" (0–1 range)
+  const latToY = (lat: number) =>
+    (1 - Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) / Math.PI) / 2
+
+  const ySouth = latToY(south)
+  const yNorth = latToY(north)
+  const mercH = Math.abs(ySouth - yNorth) // height in 0–1 Mercator units
+
+  // Zoom that fits the longitude span in W pixels
+  const zoomX = Math.log2((W * 360) / (512 * (east - west)))
+  // Zoom that fits the latitude span in (H − bottomPad) pixels
+  const zoomY = Math.log2((H - bottomPad) / (512 * mercH))
+  // Use the tighter constraint so nothing overflows
+  const zoom = Math.min(zoomX, zoomY)
+
+  const centerLon = (west + east) / 2
+
+  // Place the southern bound at exactly bottomPad px above the viewport bottom.
+  // In pixel space: south should sit at y = H − bottomPad (from top).
+  // Pixel offset from center: H/2 − bottomPad  (positive = below center).
+  // Convert that offset to Mercator units, then to latitude.
+  const scale = 512 * Math.pow(2, zoom) // pixels per full Mercator width
+  const offsetY = (H / 2 - bottomPad) / scale // in 0–1 Mercator units
+  const yCenterMerc = ySouth - offsetY // move center north of south bound
+  // Inverse Mercator Y → latitude
+  const centerLat =
+    (Math.atan(Math.sinh(Math.PI * (1 - 2 * yCenterMerc))) * 180) / Math.PI
+
+  return { longitude: centerLon, latitude: centerLat, zoom }
 }
+const INITIAL_VIEW = computeInitialView()
 
 // Farringdon Station — used as the centre of London for the London marker on the map
 const LONDON_CENTRE = { lat: 51.5203, lng: -0.1053 }
@@ -498,6 +543,7 @@ export default function HikeMap() {
   // Set to true when a long press fires — suppresses the click that follows touchend
   const longPressFired = useRef(false)
 
+
   // Fires on every cursor movement over the map.
   // Unlike onMouseEnter (which is layer-level and won't re-fire when moving
   // between features in the same layer), onMouseMove always reports whatever
@@ -647,20 +693,17 @@ export default function HikeMap() {
     // up to East Anglia (NE). Uses padding so the filter panel doesn't obscure
     // stations: top padding = panel height, right padding pushes East Anglia's
     // west edge to align with the panel's right edge.
+    // Desktop initial positioning is computed in computeInitialView() and
+    // passed as initialViewState — no fitBounds needed.
     if (window.innerWidth < 640) {
       const panel = document.querySelector('.absolute.left-4.right-4.top-4')
       const panelBottom = panel ? panel.getBoundingClientRect().bottom : 0
       const panelRight = panel ? panel.getBoundingClientRect().right : 0
 
-      // The visible region we want to frame:
-      // SW corner: Newton Abbot area     NE corner: East Anglia coast
       map.fitBounds(
         [[-3.6, 50.4], [2.0, 52.8]],
         {
           animate: false,
-          // top: push content below the filter panel
-          // right: push East Anglia's east edge inward so its west edge
-          //        aligns roughly with the panel's right edge
           padding: {
             top: panelBottom,
             right: window.innerWidth - panelRight,
