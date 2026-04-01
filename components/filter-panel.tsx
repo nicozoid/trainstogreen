@@ -16,13 +16,31 @@ function LabelTip({ text, children }: { text: string; children: React.ReactNode 
   const [open, setOpen] = useState(false)
   // Tracks whether the click originated from a touch event
   const touchedRef = useRef(false)
+  // After a manual close-via-click, briefly ignore Radix's open signals
+  // (hover, focus, pointerdown) so the tooltip doesn't flicker back open.
+  const lockUntilRef = useRef(0)
   return (
-    <Tooltip open={open} onOpenChange={setOpen}>
+    <Tooltip
+      open={open}
+      onOpenChange={(next) => {
+        if (next && Date.now() < lockUntilRef.current) return
+        setOpen(next)
+      }}
+    >
       <TooltipTrigger asChild>
-        <span
-          className="cursor-default"
-          // Flag that a touch just happened — the click handler checks this
+        <button
+          type="button"
+          className="cursor-default appearance-none border-0 bg-transparent p-0 text-left font-inherit text-inherit"
+          // Flag that a touch just happened
           onTouchStart={() => { touchedRef.current = true }}
+          // pointerDown fires before Radix's handler and before click.
+          // Close + lock here so there's no gap where Radix can re-open.
+          onPointerDown={() => {
+            if (open) {
+              lockUntilRef.current = Date.now() + 300
+              setOpen(false)
+            }
+          }}
           onClick={(e) => {
             if (touchedRef.current) {
               // Stop the click from reaching the parent <label>,
@@ -30,11 +48,12 @@ function LabelTip({ text, children }: { text: string; children: React.ReactNode 
               e.preventDefault()
               touchedRef.current = false
             }
-            setOpen((v) => !v)
+            // Only open — closing already happened in onPointerDown
+            if (!open) setOpen(true)
           }}
         >
           {children}
-        </span>
+        </button>
       </TooltipTrigger>
       <TooltipContent>{text}</TooltipContent>
     </Tooltip>

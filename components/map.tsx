@@ -231,8 +231,14 @@ export default function HikeMap() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
-  // Default: show only the three positive ratings; "Unworthy" and "Unknown" start hidden
-  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set(['highlight', 'verified', 'unverified']))
+  // Mobile defaults to "Heavenly" only for a curated first impression;
+  // desktop shows the three positive ratings. 640px matches Tailwind's `sm` breakpoint.
+  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+    return isMobile
+      ? new Set(['highlight'])
+      : new Set(['highlight', 'verified', 'unverified'])
+  })
 
   // Photo curations — per-station approved/rejected photo lists, loaded from
   // data/photo-curations.json via API. Only used in admin mode.
@@ -636,6 +642,34 @@ export default function HikeMap() {
       registerIcons(map)
       setMapReady(true)
     })
+
+    // Mobile: fit the map to show the hiking region — from Newton Abbot (SW)
+    // up to East Anglia (NE). Uses padding so the filter panel doesn't obscure
+    // stations: top padding = panel height, right padding pushes East Anglia's
+    // west edge to align with the panel's right edge.
+    if (window.innerWidth < 640) {
+      const panel = document.querySelector('.absolute.left-4.right-4.top-4')
+      const panelBottom = panel ? panel.getBoundingClientRect().bottom : 0
+      const panelRight = panel ? panel.getBoundingClientRect().right : 0
+
+      // The visible region we want to frame:
+      // SW corner: Newton Abbot area     NE corner: East Anglia coast
+      map.fitBounds(
+        [[-3.6, 50.4], [2.0, 52.8]],
+        {
+          animate: false,
+          // top: push content below the filter panel
+          // right: push East Anglia's east edge inward so its west edge
+          //        aligns roughly with the panel's right edge
+          padding: {
+            top: panelBottom,
+            right: window.innerWidth - panelRight,
+            bottom: 0,
+            left: 0,
+          },
+        }
+      )
+    }
 
     setMapReady(true)
   }
