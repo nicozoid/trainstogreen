@@ -178,11 +178,11 @@ export default function StationModal({
         {/* ── Header: station info left, Komoot button right ── */}
         <DialogHeader className="shrink-0 px-6 pt-6 pb-0">
           {/* On mobile: single column stack. On sm+: row with title/subtitle left, button right. */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+          <div id="TEXT_BTN_CONTAINER" className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
 
             {/* Left group: title + description always stacked together.
                 On mobile the title row also contains the X button (hidden on sm+). */}
-            <div className="flex flex-col gap-2">
+            <div id="STATION-NAME_DESCRIPTION" className="flex flex-col gap-2">
               <div className="flex items-start justify-between">
                 <DialogTitle className="text-3xl">
                   {stationName} Station

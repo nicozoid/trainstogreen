@@ -1244,7 +1244,7 @@ export default function HikeMap() {
               // [layerId, minzoom, filter]
               ["station-labels-highlight", isMobile ? 6 : 7, ["==", ["get", "rating"], "highlight"]],
               ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
-              ["station-labels-not-recommended", 10, ["==", ["get", "rating"], "not-recommended"]],
+              ["station-labels-not-recommended", 8, ["==", ["get", "rating"], "not-recommended"]],
               ["station-labels-unrated", 10, ["!", ["has", "rating"]]],
             ] as const).map(([id, minZ, filter]) => (
               <Layer
