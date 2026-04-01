@@ -301,6 +301,20 @@ export default function HikeMap() {
   }, [])
 
 
+  // Drives the grow-in animation for newly-appearing icons (isNew features).
+  const [iconScale, setIconScale] = useState(0.01)
+  // Drives the shrink-out animation for disappearing icons (isLeaving features).
+  // Starts at 1 (full size) and animates down to 0.01 when a category is unchecked.
+  const [leaveScale, setLeaveScale] = useState(1)
+
+  // Tracks which rating categories were visible before the latest filter change.
+  // Used by newlyAddedRatings/newlyRemovedRatings memos to detect what changed.
+  // Must be STATE (not a ref) so updating it triggers a re-render — otherwise
+  // the memos return stale cached values and leaving features reappear.
+  // Only updated when the animation completes, keeping newlyRemovedRatings
+  // non-empty throughout the leave animation so features stay on the map.
+  const [prevVisibleRatings, setPrevVisibleRatings] = useState<Set<string>>(new Set())
+
   const [searchQuery, setSearchQuery] = useState("")
   // Only filter once the user has typed at least 3 characters
   const isSearching = searchQuery.length >= 3
@@ -337,28 +351,118 @@ export default function HikeMap() {
     }
   }, [filteredStations, isSearching, searchQuery])
 
-  // Injects a `rating` property into each visible feature that has one.
-  // Mapbox reads it via ["get", "rating"] in layer expressions.
-  // Derived from displayedStations (after search) so ratings respect the search filter.
-  // Only rated stations get the property — unrated features are passed through unchanged.
-  const displayedStationsWithRatings = useMemo(() => {
+  // Stamps each feature with its rating but does NOT filter by visibleRatings.
+  // Filtering happens in stationsForMap so we can keep leaving features during their animation.
+  const allStationsWithRatings = useMemo(() => {
     if (!displayedStations) return null
     return {
       ...displayedStations,
-      features: displayedStations.features
-        .map(f => {
-          const r = ratings[f.properties.coordKey as string]
-          if (!r) return f
-          return { ...f, properties: { ...f.properties, rating: r } }
-        })
-        // Filter by the visible-ratings checkboxes — empty set means "show all"
+      features: displayedStations.features.map(f => {
+        const r = ratings[f.properties.coordKey as string]
+        if (!r) return f
+        return { ...f, properties: { ...f.properties, rating: r } }
+      }),
+    }
+  }, [displayedStations, ratings])
+
+  // Categories just toggled on — their icons get isNew=1 and grow in.
+  const newlyAddedRatings = useMemo(() => {
+    const added = new Set<string>()
+    for (const r of visibleRatings) {
+      if (!prevVisibleRatings.has(r)) added.add(r)
+    }
+    return added
+  }, [visibleRatings, prevVisibleRatings])
+
+  // Categories just toggled off — computed as a memo (not in the effect)
+  // so it's available synchronously for stationsForMap on the same render.
+  const newlyRemovedRatings = useMemo(() => {
+    const removed = new Set<string>()
+    for (const r of prevVisibleRatings) {
+      if (!visibleRatings.has(r)) removed.add(r)
+    }
+    return removed
+  }, [visibleRatings, prevVisibleRatings])
+
+  // Filters by visibleRatings + keeps leaving features during their shrink animation.
+  // Stamps boolean flags (isNew / isLeaving) — NOT the scale values themselves.
+  // Scale values live in the Layer expressions so stationsForMap doesn't recompute
+  // on every animation frame, and avoids stale-value flashes on the first render.
+  const stationsForMap = useMemo(() => {
+    if (!allStationsWithRatings) return null
+    return {
+      ...allStationsWithRatings,
+      features: allStationsWithRatings.features
         .filter(f => {
-          if (visibleRatings.size === 0) return true
-          const r = f.properties.rating as string | undefined
-          return r ? visibleRatings.has(r) : visibleRatings.has('unrated')
+          if (visibleRatings.size === 0 && newlyRemovedRatings.size === 0) return true
+          const category = (f.properties.rating as string | undefined) ?? 'unrated'
+          return visibleRatings.has(category) || newlyRemovedRatings.has(category)
+        })
+        .map(f => {
+          const category = (f.properties.rating as string | undefined) ?? 'unrated'
+          if (newlyAddedRatings.has(category)) {
+            return { ...f, properties: { ...f.properties, isNew: 1 } }
+          }
+          if (newlyRemovedRatings.has(category)) {
+            return { ...f, properties: { ...f.properties, isLeaving: 1 } }
+          }
+          return f
         }),
     }
-  }, [displayedStations, ratings, visibleRatings])
+  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings])
+
+  // Single effect handles both enter and leave animations when filters change.
+  // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
+  // no state delay, so icons don't flash before the shrink starts.
+  useEffect(() => {
+    if (!mapReady || !stationsForMap) return
+
+    const hasEntering = newlyAddedRatings.size > 0
+    const hasLeaving = newlyRemovedRatings.size > 0
+
+    // No animation needed — just sync the ref
+    if (!hasEntering && !hasLeaving) {
+      setPrevVisibleRatings(new Set(visibleRatings))
+      setIconScale(1)
+      return
+    }
+
+    // Reset scales to their starting positions
+    if (hasLeaving) setLeaveScale(1)
+    if (hasEntering) setIconScale(0.01)
+
+    const duration = 400 // ms
+    const startTime = performance.now()
+    let frameId: number
+
+    function step(now: number) {
+      const elapsed = now - startTime
+      const t = Math.min(elapsed / duration, 1)
+
+      if (hasEntering) {
+        // Ease-out cubic: fast start, gentle landing
+        const eased = 1 - Math.pow(1 - t, 3)
+        setIconScale(0.01 + 0.99 * eased)
+      }
+      if (hasLeaving) {
+        // Ease-in cubic: gentle start, fast end
+        setLeaveScale(Math.max(0.01, Math.pow(1 - t, 3)))
+      }
+
+      if (t < 1) {
+        frameId = requestAnimationFrame(step)
+      } else {
+        // Animation done — update the ref so newlyRemoved/newlyAdded become empty,
+        // which removes isLeaving features from stationsForMap on the next render.
+        setPrevVisibleRatings(new Set(visibleRatings))
+        if (hasLeaving) setLeaveScale(1)
+      }
+    }
+
+    frameId = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frameId)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, visibleRatings])
 
   // Dev action: exclude a station (called from the modal's delete button)
   const handleExcludeFromModal = useCallback(async (name: string, coordKey: string) => {
@@ -1027,8 +1131,8 @@ export default function HikeMap() {
           />
         </Source>
 
-        {displayedStationsWithRatings && (
-          <Source id="stations" type="geojson" data={displayedStationsWithRatings}>
+        {stationsForMap && (
+          <Source id="stations" type="geojson" data={stationsForMap}>
             {/* Unrated stations — canvas-drawn circle icon, same approach as rated icons */}
             <Layer
               id="station-dots"
@@ -1038,10 +1142,14 @@ export default function HikeMap() {
                 "icon-image": "icon-unrated",
                 "icon-allow-overlap": true,
                 "icon-ignore-placement": true,
-                // Slightly larger icon when hovered
+                // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
                 "icon-size": hovered
-                  ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 0.7]
-                  : 0.7,
+                  ? ["case",
+                      ["==", ["get", "coordKey"], hovered.coordKey],
+                        ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
+                        ["case", ["has", "isNew"], 0.7 * iconScale, ["has", "isLeaving"], 0.7 * leaveScale, 0.7],
+                    ]
+                  : ["case", ["has", "isNew"], 0.7 * iconScale, ["has", "isLeaving"], 0.7 * leaveScale, 0.7],
               }}
             />
             {/* Rated stations — shown as heart/circle icons instead of grey-green dots */}
@@ -1070,9 +1178,14 @@ export default function HikeMap() {
                     0
                   ],
                   // Slightly larger icon when hovered
+                  // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
                   "icon-size": hovered
-                    ? ["case", ["==", ["get", "coordKey"], hovered.coordKey], 1.3, 1]
-                    : 1,
+                    ? ["case",
+                        ["==", ["get", "coordKey"], hovered.coordKey],
+                          ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
+                          ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                      ]
+                    : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
                 }}
               />
             )}
@@ -1139,6 +1252,8 @@ export default function HikeMap() {
                   "text-color": labelColor,
                   "text-halo-color": haloColor,
                   "text-halo-width": 1.5,
+                  // Fade in/out with the icon grow/shrink animation
+                  "text-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
                 }}
               />
             ))}
@@ -1185,6 +1300,8 @@ export default function HikeMap() {
                 "text-color": labelColor,
                 "text-halo-color": haloColor,
                 "text-halo-width": 1.5,
+                // Fade in/out with the icon grow/shrink animation
+                "text-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
               }}
             />
             {/* Hover label — shows the full name+time label for the hovered station
