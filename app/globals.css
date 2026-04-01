@@ -111,7 +111,7 @@
     --foreground: var(--abyss-900);        /* near-black */
     --card: var(--beach-400); /* filter-panel bg, welcome-banner, buttons */
     --card-foreground: var(--abyss-900);
-    --popover: var(--beach-500);
+    --popover: var(--beach-500); /* photo overlay */
     --popover-foreground: var(--abyss-900);
     --primary: var(--tree-800);      /* primary icons, logo */
     --primary-foreground: var(--beach-300); /* light text on green */
@@ -156,6 +156,7 @@
   --tree-800: oklch(45.999% 0.07937 154.865);
   --tree-900: oklch(36% 0.065 154.865);
   --tree-950: oklch(25% 0.045 154.865);
+  --tree-1000: oklch(25% 0.045 154.865);
   --palm-300: oklch(92.762% 0.029 114.676);
   --palm-400: oklch(90.5% 0.035 110);
   --palm-500: oklch(88% 0.04 105);
@@ -170,7 +171,7 @@
   --beach-500: oklch(94.646% 0.01797 89.356);
   --beach-600: oklch(90.15% 0.01568 86.405);
   --beach-700: oklch(83% 0.03 89.356);
-  --beach-800: oklch(74% 0.04 89.356);
+  --beach-800: oklch(22.708% 0.00812 128.98);
   --abyss-700: oklch(42% 0.055 200);
   --abyss-800: oklch(34% 0.05 201);
   --abyss-900: oklch(26.468% 0.04191 202.665);
@@ -191,7 +192,7 @@
     --primary-foreground: var(--abyss-950);
     --secondary: var(--tree-800);
     --secondary-foreground: var(--beach-100);
-    --muted: var(--tree-900);
+    --muted: var(--tree-1000);
     --muted-foreground: var(--seawater-500);
     --accent: var(--seawater-700);
     --accent-foreground: var(--beach-200);

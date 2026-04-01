@@ -102,29 +102,35 @@ export default function StationModal({
   // How many Flickr photos to display (approved photos are added on top)
   const DISPLAY_COUNT = 30
 
-  // Snapshot hasCurations at dialog-open time so that approving/rejecting
-  // a photo during this session doesn't immediately switch to the broader
-  // tag set. The broader tags only kick in the *next* time the overlay opens.
+  // Snapshot fetch parameters at dialog-open time so that approving/rejecting
+  // photos during this session doesn't trigger re-fetches (which cause scroll jumps).
+  // The broader tag set and extra buffer pages only kick in the *next* time the overlay opens.
   const hasCurationsRef = useRef(false)
+  const rejectedCountRef = useRef(0)
+  // Snapshot of approved photo IDs at open time — photos approved *before* this
+  // session get promoted to the top; photos approved *during* this session stay
+  // in their original grid position so the layout doesn't shift.
+  const initialApprovedIdsRef = useRef<Set<string>>(new Set())
 
   // Reset when a different station is selected
   useEffect(() => {
     setAllPhotos([])
   }, [lat, lng])
 
-  // Capture the curations state each time the dialog opens (not on every edit)
+  // Capture fetch parameters each time the dialog opens (not on every edit)
   useEffect(() => {
     if (open) {
       hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
+      rejectedCountRef.current = rejectedIds.size
+      initialApprovedIdsRef.current = new Set(approvedPhotos.map((p) => p.id))
     }
     // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lat, lng])
 
-  // Fetch photos when the dialog opens, and re-fetch when the rejected count
-  // crosses a 100-page boundary (so more buffer is pulled in).
-  // The cache inside fetchFlickrPhotos prevents redundant API calls — if the
-  // page count hasn't changed, it's an instant cache hit.
+  // Fetch photos once when the dialog opens. No re-fetches during the session —
+  // approvals/rejections are handled at display time by filtering allPhotos,
+  // so scroll position is preserved. Updated counts take effect on next open.
   useEffect(() => {
     if (!open || !hasApiKey) return
 
@@ -132,8 +138,8 @@ export default function StationModal({
     if (allPhotos.length === 0) setLoading(true)
     setError(null)
 
-    console.log(`[photos] fetching: hasCurations=${hasCurationsRef.current}, rejectedCount=${rejectedIds.size}, approvedCount=${approvedPhotos.length}`)
-    fetchFlickrPhotos(lat, lng, hasCurationsRef.current, rejectedIds.size)
+    console.log(`[photos] fetching: hasCurations=${hasCurationsRef.current}, rejectedCount=${rejectedCountRef.current}, approvedCount=${approvedPhotos.length}`)
+    fetchFlickrPhotos(lat, lng, hasCurationsRef.current, rejectedCountRef.current)
       .then((result) => {
         console.log(`[photos] fetched ${result.length} photos from Flickr`)
         setAllPhotos(result)
@@ -143,15 +149,18 @@ export default function StationModal({
         setError("Couldn't load photos. Try again later.")
       })
       .finally(() => setLoading(false))
-  }, [open, hasApiKey, lat, lng, rejectedIds.size])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasApiKey, lat, lng])
 
-  // Build the display list: approved photos first, then Flickr results — filtering
-  // out rejected and already-approved photos at display time so the full buffer is
-  // always preserved for replacements when new rejections happen.
+  // Build the display list. Photos approved *before* this session are promoted
+  // to the top. Photos approved *during* this session stay in their original
+  // grid position (just get the badge) so the layout doesn't jump around.
   const approvedIds = new Set(approvedPhotos.map((p) => p.id))
-  const flickrOnly = allPhotos.filter((p) => !approvedIds.has(p.id) && !rejectedIds.has(p.id))
-  // Combine: approved photos at the start, then fill remaining slots from Flickr
-  const photos = [...approvedPhotos, ...flickrOnly.slice(0, DISPLAY_COUNT)]
+  // Photos that were already approved when the dialog opened — shown at the top
+  const preApproved = approvedPhotos.filter((p) => initialApprovedIdsRef.current.has(p.id))
+  // Flickr results minus rejected and pre-approved (newly approved stay in place)
+  const flickrOnly = allPhotos.filter((p) => !initialApprovedIdsRef.current.has(p.id) && !rejectedIds.has(p.id))
+  const photos = [...preApproved, ...flickrOnly.slice(0, DISPLAY_COUNT)]
 
   return (
     // onOpenChange fires on overlay click or Escape — close the modal
