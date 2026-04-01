@@ -1,4 +1,5 @@
-import { Geist, Geist_Mono, Manrope } from "next/font/google"
+import { Geist_Mono } from "next/font/google"
+import localFont from "next/font/local"
 
 import type { Metadata } from "next"
 import "./globals.css"
@@ -13,7 +14,12 @@ export const metadata: Metadata = {
   },
 }
 
-const manrope = Manrope({subsets:['latin'],variable:'--font-sans'})
+// localFont loads a self-hosted font file instead of pulling from Google Fonts
+const generalSans = localFont({
+  src: "../public/fonts/GeneralSans-Variable.woff2",
+  variable: "--font-sans", // sets the same CSS variable Manrope was using
+  weight: "200 700",       // the range supported by this variable font
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -29,7 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", manrope.variable)}
+      className={cn("antialiased", fontMono.variable, "font-sans", generalSans.variable)}
     >
       <body suppressHydrationWarning>
         <ThemeProvider><TooltipProvider>{children}</TooltipProvider></ThemeProvider>

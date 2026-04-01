@@ -48,7 +48,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
-      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem] scale-125">
+      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem] scale-125">
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
     ),
@@ -56,7 +56,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "verified", label: "Good", tooltip: "A hiking spot I can personally recommend —TrainToGreen creator",
     icon: (
-      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
+      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
@@ -64,7 +64,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unverified", label: "Probably", secondary: true, tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
-      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
       </svg>
     ),
@@ -72,7 +72,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "not-recommended", label: "Unworthy", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
     icon: (
-      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
       </svg>
     ),
@@ -80,7 +80,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     key: "unrated", label: "Unknown", secondary: true, tooltip: "I have no opinion about this area —TrainToGreen creator",
     icon: (
-      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[0.75rem] h-[0.75rem]">
+      <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <circle cx="12" cy="12" r="9" />
       </svg>
     ),

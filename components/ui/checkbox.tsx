@@ -22,9 +22,9 @@ function Checkbox({
     >
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
-        className="grid place-content-center text-current transition-none [&>svg]:size-3.5"
+        className="grid place-content-center text-current transition-none [&>svg]:size-2.5"
       >
-        <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} />
+        <HugeiconsIcon icon={Tick02Icon} strokeWidth={3.5} strokeLinejoin="miter" strokeLinecap="square" />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   )
