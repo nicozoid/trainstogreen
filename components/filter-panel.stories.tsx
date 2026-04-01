@@ -55,6 +55,7 @@ export const Interactive: Story = {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         adminMode={false}
+        bannerVisible={false}
       />
     )
   },
