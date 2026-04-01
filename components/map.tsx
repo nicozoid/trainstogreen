@@ -254,6 +254,18 @@ export default function HikeMap() {
   // Only filter once the user has typed at least 3 characters
   const isSearching = searchQuery.length >= 3
 
+  // On mobile, highlight stations appear a zoom level earlier (6 vs 7)
+  // so the best stations are visible sooner at arm's length.
+  // Same 768px breakpoint (md) used across the app.
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mq.matches)
+    const update = () => setIsMobile(mq.matches)
+    mq.addEventListener("change", update)
+    return () => mq.removeEventListener("change", update)
+  }, [])
+
   // Recompute filtered stations whenever the slider or raw data changes.
   // useMemo avoids re-filtering the whole array on every render.
   const filteredStations = useMemo(() => {
@@ -1033,7 +1045,7 @@ export default function HikeMap() {
                 searching) takes over, and having both active at once causes overlapping text. */}
             {!isSearching && ([
               // [layerId, minzoom, filter]
-              ["station-labels-highlight", 7, ["==", ["get", "rating"], "highlight"]],
+              ["station-labels-highlight", isMobile ? 6 : 7, ["==", ["get", "rating"], "highlight"]],
               ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
               ["station-labels-not-recommended", 10, ["==", ["get", "rating"], "not-recommended"]],
               ["station-labels-unrated", 10, ["!", ["has", "rating"]]],
