@@ -6,20 +6,18 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils";
-import { welcomeCopy } from "@/lib/copy";
 
 export const metadata: Metadata = {
   title: "Trains to Green | Nic Zap",
-  // Reuses the welcome banner body as the page-level description
-  description: welcomeCopy.body,
+  description: "Walk straight off a London train and into England's most charming rural idylls",
   icons: {
     icon: "/trainstogreen-favicon.svg",
   },
   // OpenGraph tags control how link previews look on social media / messaging apps
   openGraph: {
     siteName: "Trains to Green",
-    title: welcomeCopy.heading,
-    description: welcomeCopy.body,
+    title: "Trains to Green: the best rural railway stations for day hikes from London",
+    description: "Walk straight off a London train and into England's most charming rural idylls",
   },
 }
 
