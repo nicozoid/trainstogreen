@@ -33,7 +33,7 @@ function computeInitialView() {
   if (typeof window === 'undefined' || window.innerWidth < 640) {
     // Mobile fallback — the onLoad handler applies fitBounds with
     // panel-aware padding, so exact values here don't matter much.
-    return { longitude: -0.118, latitude: 51.509, zoom: 7.4 }
+    return { longitude: -0.118, latitude: 51.509, zoom: 6.1 }
   }
 
   const W = window.innerWidth
@@ -553,6 +553,32 @@ export default function HikeMap() {
     })
   }, [])
 
+  // Dev action: move an approved photo up or down in the display order
+  const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top") => {
+    // Optimistic update — swap with neighbour, or splice to front for "top"
+    setCurations((prev) => {
+      const entry = prev[coordKey]
+      if (!entry) return prev
+      const approved = [...entry.approved]
+      const idx = approved.findIndex((p) => p.id === photoId)
+      if (idx < 0) return prev
+      if (direction === "top") {
+        const [photo] = approved.splice(idx, 1)
+        approved.unshift(photo)
+      } else {
+        const targetIdx = direction === "up" ? idx - 1 : idx + 1
+        if (targetIdx < 0 || targetIdx >= approved.length) return prev
+        ;[approved[idx], approved[targetIdx]] = [approved[targetIdx], approved[idx]]
+      }
+      return { ...prev, [coordKey]: { ...entry, approved } }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId, action: "move", direction }),
+    })
+  }, [])
+
   // Dev action: un-approve a photo — removes from approved without rejecting it
   const handleUnapprovePhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
     setCurations((prev) => {
@@ -805,30 +831,10 @@ export default function HikeMap() {
       setMapReady(true)
     })
 
-    // Mobile: fit the map to show the hiking region — from Newton Abbot (SW)
-    // up to East Anglia (NE). Uses padding so the filter panel doesn't obscure
-    // stations: top padding = panel height, right padding pushes East Anglia's
-    // west edge to align with the panel's right edge.
-    // Desktop initial positioning is computed in computeInitialView() and
-    // passed as initialViewState — no fitBounds needed.
-    if (window.innerWidth < 640) {
-      const panel = document.querySelector('.absolute.left-4.right-4.top-4')
-      const panelBottom = panel ? panel.getBoundingClientRect().bottom : 0
-      const panelRight = panel ? panel.getBoundingClientRect().right : 0
-
-      map.fitBounds(
-        [[-3.6, 50.4], [2.0, 52.8]],
-        {
-          animate: false,
-          padding: {
-            top: panelBottom,
-            right: window.innerWidth - panelRight,
-            bottom: 0,
-            left: 0,
-          },
-        }
-      )
-    }
+    // Both mobile and desktop positioning come from computeInitialView()
+    // via initialViewState. Calling fitBounds here would set an internal
+    // viewport state in react-map-gl that silently overrides the zoom on
+    // the first user interaction (pan/pinch).
 
     setMapReady(true)
   }
@@ -1379,6 +1385,7 @@ export default function HikeMap() {
             onApprovePhoto={(photo) => handleApprovePhoto(selectedStation.coordKey, selectedStation.name, photo)}
             onRejectPhoto={(photoId) => handleRejectPhoto(selectedStation.coordKey, selectedStation.name, photoId)}
             onUnapprovePhoto={(photoId) => handleUnapprovePhoto(selectedStation.coordKey, selectedStation.name, photoId)}
+            onMovePhoto={(photoId, direction) => handleMovePhoto(selectedStation.coordKey, selectedStation.name, photoId, direction)}
           />
         )}
         </>}

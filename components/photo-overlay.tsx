@@ -51,6 +51,8 @@ type StationModalProps = {
   onRejectPhoto?: (photoId: string) => void
   /** Called when the admin un-approves a photo (removes from approved, does not reject) */
   onUnapprovePhoto?: (photoId: string) => void
+  /** Called when the admin moves an approved photo up or down in the display order */
+  onMovePhoto?: (photoId: string, direction: "up" | "down" | "top") => void
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -91,6 +93,7 @@ export default function StationModal({
   onApprovePhoto,
   onRejectPhoto,
   onUnapprovePhoto,
+  onMovePhoto,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -333,7 +336,7 @@ export default function StationModal({
 
           {/* Loading skeleton — grid of shimmering rectangles matching the photo grid layout. */}
           {hasApiKey && loading && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
               {Array.from({ length: 9 }).map((_, i) => (
                 <div
                   key={i}
@@ -368,8 +371,11 @@ export default function StationModal({
               so the last row is always full at every breakpoint. */}
           {hasApiKey && !loading && photos.length > 0 && (
             <>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4 max-sm:-mx-6">
-                {photos.slice(0, Math.floor(photos.length / 12) * 12 || 12).map((photo) => (
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
+                {/* Trim to a multiple of 6 (LCM of 1,2,3) so the last row is always full */}
+                {photos.slice(0, Math.floor(photos.length / 6) * 6 || 6).map((photo) => {
+                  const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
+                  return (
                   <PhotoCard
                     key={photo.id}
                     photo={photo}
@@ -378,8 +384,14 @@ export default function StationModal({
                     onApprove={() => onApprovePhoto?.(photo)}
                     onReject={() => onRejectPhoto?.(photo.id)}
                     onUnapprove={() => onUnapprovePhoto?.(photo.id)}
+                    onMoveToTop={() => onMovePhoto?.(photo.id, "top")}
+                    onMoveUp={() => onMovePhoto?.(photo.id, "up")}
+                    onMoveDown={() => onMovePhoto?.(photo.id, "down")}
+                    canMoveUp={approvedIndex > 0}
+                    canMoveDown={approvedIndex >= 0 && approvedIndex < approvedPhotos.length - 1}
                   />
-                ))}
+                  )
+                })}
               </div>
 
               {/* "X photos" link — shown below the grid if we have a count */}
@@ -435,13 +447,18 @@ function DevActionButton({ label, icon, active, onClick }: {
 // In admin mode, hovering shows approve (✓) and reject (✕) icon buttons.
 // Approved photos display a persistent tick badge in the top-right corner.
 
-function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprove }: {
+function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprove, onMoveToTop, onMoveUp, onMoveDown, canMoveUp, canMoveDown }: {
   photo: FlickrPhoto
   devMode: boolean
   isApproved: boolean
   onApprove: () => void
   onReject: () => void
   onUnapprove: () => void
+  onMoveToTop?: () => void
+  onMoveUp?: () => void
+  onMoveDown?: () => void
+  canMoveUp?: boolean
+  canMoveDown?: boolean
 }) {
   return (
     // `group` lets child elements react to this container's hover state.
@@ -503,6 +520,48 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
+          {/* Reorder — only shown on approved photos (reordering the curated set) */}
+          {isApproved && (
+            <>
+              {/* Jump to top — double chevron icon */}
+              <button
+                onClick={(e) => { e.stopPropagation(); onMoveToTop?.() }}
+                title="Move photo to top"
+                disabled={!canMoveUp}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 11 12 5 6 11" />
+                  <polyline points="18 19 12 13 6 19" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
+                title="Move photo up"
+                disabled={!canMoveUp}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              >
+                {/* Chevron up */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
+                title="Move photo down"
+                disabled={!canMoveDown}
+                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              >
+                {/* Chevron down */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            </>
+          )}
         </div>
       )}
 

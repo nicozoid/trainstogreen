@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   openGraph: {
     siteName: "Trains to Green",
     title: "Trains to Green: the best rural railway stations for day hikes from London",
-    description: "Walk straight off a London train and into England's most charming rural idylls",
-  },
+    description: "Walk straight off a London train into England's most charming rural idylls",
+  }
 }
 
 // localFont loads a self-hosted font file instead of pulling from Google Fonts

@@ -25,7 +25,7 @@ function writeFile(data: Record<string, CurationEntry>) {
 // Body: { coordKey, name, photoId, action: "approve" | "reject", photo?: FlickrPhoto }
 // "photo" is required when action is "approve" (stores the full object).
 export async function POST(req: NextRequest) {
-  const { coordKey, name, photoId, action, photo } = await req.json()
+  const { coordKey, name, photoId, action, photo, direction } = await req.json()
 
   if (!coordKey || !photoId || !action) {
     return NextResponse.json({ error: "missing coordKey, photoId, or action" }, { status: 400 })
@@ -55,8 +55,22 @@ export async function POST(req: NextRequest) {
   } else if (action === "unapprove") {
     // Remove from approved without adding to rejected — photo returns to neutral state
     entry.approved = entry.approved.filter((p) => p.id !== photoId)
+  } else if (action === "move") {
+    // Swap the photo with its neighbour in the given direction
+    const idx = entry.approved.findIndex((p) => p.id === photoId)
+    if (idx >= 0) {
+      if (direction === "top") {
+        const [photo] = entry.approved.splice(idx, 1)
+        entry.approved.unshift(photo)
+      } else {
+        const targetIdx = direction === "up" ? idx - 1 : idx + 1
+        if (targetIdx >= 0 && targetIdx < entry.approved.length) {
+          ;[entry.approved[idx], entry.approved[targetIdx]] = [entry.approved[targetIdx], entry.approved[idx]]
+        }
+      }
+    }
   } else {
-    return NextResponse.json({ error: "action must be 'approve', 'reject', or 'unapprove'" }, { status: 400 })
+    return NextResponse.json({ error: "action must be 'approve', 'reject', 'unapprove', or 'move'" }, { status: 400 })
   }
 
   // Clean up empty entries
