@@ -291,6 +291,10 @@
   z-index: -1;                /* sit behind the icon */
 }
 
+/* (Train arrival animation is driven by JS/rAF in filter-panel.tsx —
+   no CSS keyframes needed. The fake overlay elements get their width/left
+   updated directly via refs for smooth, frame-accurate motion.) */
+
 /* Shimmer sweep animation for loading skeletons.
    The keyframe slides a gradient strip from left to right across the box. */
 @keyframes shimmer {

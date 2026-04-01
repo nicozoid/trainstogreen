@@ -5,7 +5,7 @@ import SearchBar from "@/components/search-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 // Wraps any inline content with a tooltip that works on both desktop (hover)
 // and touchscreens (tap toggles open/closed). Uses controlled `open` state
@@ -116,11 +116,89 @@ type FilterPanelProps = {
   searchQuery: string
   onSearchChange: (value: string) => void
   adminMode: boolean
+  /** Whether the welcome banner is currently showing */
+  bannerVisible: boolean
 }
 
-export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
+
+  // --- Train arrival animation ---
+  // Purely visual: after the banner is dismissed, a fake slider overlay
+  // animates the train icon smoothly from 0% → the real thumb position.
+  // The real slider stays hidden underneath so maxMinutes never changes,
+  // the label stays at "2h", and station filtering isn't affected.
+  // Once the animation ends we hide the fake and reveal the real slider.
+  //
+  // We drive the animation with requestAnimationFrame updating a percentage
+  // ref, because CSS keyframe animations on custom properties weren't
+  // rendering reliably across browsers.
+  const [trainArriving, setTrainArriving] = useState(false)
+  const trainProgressRef = useRef(0)
+  const rangeRef = useRef<HTMLDivElement>(null)
+  const thumbRef = useRef<HTMLDivElement>(null)
+  const sliderWrapperRef = useRef<HTMLDivElement>(null)
+  const prevBannerRef = useRef(bannerVisible)
+
+  useEffect(() => {
+    if (prevBannerRef.current && !bannerVisible) {
+      // Read the real Radix thumb's actual left value so the animation
+      // lands in exactly the same spot — avoids a 1px jump on handoff.
+      let targetPercent = ((maxMinutes - 45) / (180 - 45)) * 100
+      const realThumb = sliderWrapperRef.current?.querySelector<HTMLSpanElement>("[data-slot='slider-thumb']")
+      if (realThumb) {
+        // Radix wraps the thumb in a <span style="left: calc(X% + Ypx)">;
+        // the parent of the [data-slot] element has the actual position.
+        const parent = realThumb.parentElement
+        if (parent) {
+          const track = sliderWrapperRef.current?.querySelector<HTMLSpanElement>("[data-slot='slider-track']")
+          if (track) {
+            const trackRect = track.getBoundingClientRect()
+            const parentRect = parent.getBoundingClientRect()
+            // Centre of the thumb relative to the track, as a percentage
+            const thumbCentre = parentRect.left + parentRect.width / 2 - trackRect.left
+            targetPercent = (thumbCentre / trackRect.width) * 100
+          }
+        }
+      }
+      const duration = 3000
+      let cancelled = false
+
+      trainProgressRef.current = 0
+      setTrainArriving(true)
+
+      // 300ms pause so the banner exit settles before the train moves
+      const delayTimer = setTimeout(() => {
+        let startTime: number | null = null
+
+        function step(timestamp: number) {
+          if (cancelled) return
+          if (!startTime) startTime = timestamp
+          const progress = Math.min((timestamp - startTime) / duration, 1)
+          // Cubic ease-out: starts fast, decelerates into the station
+          const eased = 1 - Math.pow(1 - progress, 3)
+          const percent = targetPercent * eased
+
+          // Update DOM directly (no re-render) for buttery-smooth animation
+          if (rangeRef.current) rangeRef.current.style.width = `${percent}%`
+          if (thumbRef.current) thumbRef.current.style.left = `${percent}%`
+
+          if (progress < 1) {
+            requestAnimationFrame(step)
+          } else {
+            setTrainArriving(false)
+          }
+        }
+
+        requestAnimationFrame(step)
+      }, 300)
+
+      prevBannerRef.current = bannerVisible
+      return () => { cancelled = true; clearTimeout(delayTimer) }
+    }
+    prevBannerRef.current = bannerVisible
+  }, [bannerVisible]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Convert minutes to hours + minutes for display (e.g. 90 → "1h 30m")
   function formatDuration(mins: number) {
@@ -192,23 +270,62 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
               {formatDuration(maxMinutes)}
             </span>
           </div>
-          <Slider
-            min={45}
-            max={180}
-            step={15}
-            value={[maxMinutes]}
-            // Slider returns an array (it supports multiple thumbs), so we take index 0
-            onValueChange={([value]) => onChange(value)}
-            /* Custom train-track styling — classes defined in globals.css */
-            trackClassName="train-track-track"
-            rangeClassName="train-track-range bg-transparent"
-            thumbClassName="train-thumb"
-            thumbContent={
-              /* Lucide TrainFront icon — uses text-primary to inherit
-                 the design system green via stroke="currentColor". */
-              <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
-            }
-          />
+          {/* Wrapper gives position context for the fake animation overlay */}
+          <div className="relative">
+            {/* Real slider — invisible during the arrival animation so it
+                doesn't flash at full width before the train has arrived */}
+            <div ref={sliderWrapperRef} className={trainArriving ? "invisible" : ""}>
+              <Slider
+                min={45}
+                max={180}
+                step={15}
+                value={[maxMinutes]}
+                // Slider returns an array (it supports multiple thumbs), so we take index 0
+                onValueChange={([value]) => onChange(value)}
+                /* Custom train-track styling — classes defined in globals.css */
+                trackClassName="train-track-track"
+                rangeClassName="train-track-range bg-transparent"
+                thumbClassName="train-thumb"
+                thumbContent={
+                  /* Tabler TrainFilled icon — uses text-primary to inherit
+                     the design system green via stroke="currentColor". */
+                  <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
+                }
+              />
+            </div>
+
+            {/* Fake slider overlay — purely cosmetic, plays the arrival animation.
+                Mimics the real slider's structure: a muted track, a patterned range
+                that grows, and a train icon that slides along with it.
+                Positions are updated via refs in the rAF loop above — no re-renders. */}
+            {trainArriving && (
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                {/* Track background — matches .train-track-track height + muted bg */}
+                <div className="relative h-[1.1rem] w-full rounded-full bg-muted overflow-hidden">
+                  {/* Range fill — starts at width:0%, JS animates to target */}
+                  <div
+                    ref={rangeRef}
+                    className="train-track-range absolute inset-y-0 left-0"
+                    style={{ width: "0%" }}
+                  />
+                </div>
+                {/* Train icon — starts at left:0%, JS animates to target.
+                    z-10 keeps the icon above the track pattern.
+                    train-thumb reuses the real thumb's ::before pseudo-element
+                    (a muted-colour block that hides the track behind the icon). */}
+                <div
+                  ref={thumbRef}
+                  className="absolute top-1/2 z-10 -translate-y-1/2 -translate-x-1/2"
+                  style={{ left: "0%" }}
+                >
+                  {/* Track-hiding block — sits behind the icon, same colour as
+                      the unfilled track so the track pattern is hidden underneath */}
+                  <span className="absolute inset-0 top-1/2 -translate-y-1/2 h-[1.1rem] rounded-full bg-muted -z-10" />
+                  <IconTrainFilled size={24} className="relative z-10 text-primary drop-shadow-sm" />
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Rating visibility toggles — one checkbox per rating category */}
           <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
