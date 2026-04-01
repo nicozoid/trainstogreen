@@ -683,6 +683,7 @@ export default function HikeMap() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         adminMode={devExcludeActive}
+        bannerVisible={bannerVisible}
       />
 
       {bannerVisible && (
