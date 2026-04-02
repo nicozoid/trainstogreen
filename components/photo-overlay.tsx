@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogClose,
@@ -33,6 +33,9 @@ type StationModalProps = {
   stationName: string
   minutes: number
   flickrCount: number | null
+  /** Screen-pixel position of the station icon — the modal animates from/to here */
+  originX?: number
+  originY?: number
   /** When true, the dev tools section is shown in the modal */
   devMode?: boolean
   /** The station's current universal rating, or null if unrated */
@@ -84,6 +87,8 @@ export default function StationModal({
   stationName,
   minutes,
   flickrCount,
+  originX,
+  originY,
   devMode = false,
   currentRating = null,
   onRate,
@@ -101,6 +106,30 @@ export default function StationModal({
   const [error, setError] = useState<string | null>(null)
 
   const hasApiKey = Boolean(process.env.NEXT_PUBLIC_FLICKR_API_KEY)
+
+  // ── Manual close animation ──
+  // Radix Dialog's exit-animation detection can fail on mobile Safari (it checks
+  // getAnimations() before the browser has evaluated the new CSS). To work around
+  // this, we keep the Dialog open={true} while playing the exit animation ourselves,
+  // then actually close after the animation duration.
+  const ANIM_DURATION = 400 // ms — must match --tw-duration in animationStyle below
+  const [isClosing, setIsClosing] = useState(false)
+  const closingTimer = useRef<ReturnType<typeof setTimeout>>(null)
+
+  // Reset closing state whenever the dialog opens (e.g. user clicks another station)
+  useEffect(() => {
+    if (open) setIsClosing(false)
+    return () => { if (closingTimer.current) clearTimeout(closingTimer.current) }
+  }, [open])
+
+  const handleAnimatedClose = useCallback(() => {
+    if (isClosing) return
+    setIsClosing(true)
+    closingTimer.current = setTimeout(() => {
+      setIsClosing(false)
+      onClose()
+    }, ANIM_DURATION * 0.65)
+  }, [isClosing, onClose])
 
   // How many Flickr photos to display (approved photos are added on top)
   const DISPLAY_COUNT = 30
@@ -165,35 +194,83 @@ export default function StationModal({
   const flickrOnly = allPhotos.filter((p) => !initialApprovedIdsRef.current.has(p.id) && !rejectedIds.has(p.id))
   const photos = [...preApproved, ...flickrOnly.slice(0, DISPLAY_COUNT)]
 
+  // ── Open/close animation ──
+  // Desktop: grow from / shrink to the clicked station icon.
+  // Mobile: slide up from / down to the bottom of the screen.
+  const hasOrigin = originX != null && originY != null
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640
+
+  // Desktop offset: from station icon position relative to viewport center
+  const enterX = hasOrigin ? originX - window.innerWidth / 2 : 0
+  const enterY = hasOrigin ? originY - window.innerHeight / 2 : 0
+
+  // These CSS custom properties are read by tw-animate-css's enter/exit keyframes.
+  //
+  // When isClosing we set the `animation` property directly in the inline style.
+  // This is necessary because the Dialog is still technically "open" (so Radix keeps
+  // the content mounted), which means data-open:animate-in is active and would
+  // conflict with a class-based animate-out. Inline style wins over any class.
+  let animationStyle: React.CSSProperties
+
+  if (isMobile) {
+    // Mobile: simple slide up/down from bottom edge
+    animationStyle = isClosing
+      ? {
+          "--tw-exit-translate-y": "100%",
+          animation: `exit ${ANIM_DURATION * 0.65}ms cubic-bezier(0.4, 0, 1, 1) forwards`,
+        } as React.CSSProperties
+      : {
+          "--tw-enter-translate-y": "100%",
+          "--tw-duration": `${ANIM_DURATION}ms`,
+          "--tw-ease": "cubic-bezier(0.16, 1, 0.3, 1)",
+        } as React.CSSProperties
+  } else {
+    // Desktop: grow from / shrink to station icon
+    animationStyle = isClosing
+      ? {
+          "--tw-exit-translate-x": `${enterX}px`,
+          "--tw-exit-translate-y": `${enterY}px`,
+          "--tw-exit-scale": "0.02",
+          "--tw-exit-opacity": "0",
+          animation: `exit ${ANIM_DURATION * 0.65}ms cubic-bezier(0.4, 0, 1, 1) forwards`,
+        } as React.CSSProperties
+      : {
+          "--tw-enter-translate-x": `${enterX}px`,
+          "--tw-enter-translate-y": `${enterY}px`,
+          "--tw-enter-scale": "0.02",
+          "--tw-enter-opacity": "0",
+          "--tw-duration": `${ANIM_DURATION}ms`,
+          "--tw-ease": "cubic-bezier(0.16, 1, 0.3, 1)",
+        } as React.CSSProperties
+  }
+
   return (
-    // onOpenChange fires on overlay click or Escape — close the modal
-    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+    // Dialog stays open during isClosing so the content remains in the DOM.
+    // The actual close (onClose → setSelectedStation(null)) fires after the timer.
+    <Dialog open={open || isClosing} onOpenChange={(v) => { if (!v) handleAnimatedClose() }}>
       {/* Large modal: 5xl width, up to 90% viewport height */}
       {/* w/h use dvw/dvh so the modal scales with the viewport on any screen size.
           sm:max-w-none overrides the sm:max-w-md baked into DialogContent's base styles. */}
       {/* max-sm: overrides make the modal fullscreen on small viewports (no margins, no rounded corners).
           inset-0 replaces the top-1/2/left-1/2 centering from the base DialogContent. */}
-      <DialogContent className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col overflow-hidden p-0 max-sm:inset-0 max-sm:h-dvh max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none">
+      <DialogContent
+        style={animationStyle}
+        overlayStyle={isClosing ? {
+          animation: "exit 300ms ease forwards",
+          "--tw-exit-opacity": "0",
+        } as React.CSSProperties : undefined}
+        className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col overflow-hidden p-0 max-sm:top-auto max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:h-[92dvh] max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none">
 
         {/* ── Header: station info left, Komoot button right ── */}
         <DialogHeader className="shrink-0 px-6 pt-6 pb-0">
           {/* On mobile: single column stack. On sm+: row with title/subtitle left, button right. */}
           <div id="TEXT_BTN_CONTAINER" className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
 
-            {/* Left group: title + description always stacked together.
-                On mobile the title row also contains the X button (hidden on sm+). */}
+            {/* Left group: title + description stacked together */}
             <div id="STATION-NAME_DESCRIPTION" className="flex flex-col gap-2">
-              <div className="flex items-start justify-between">
-                <DialogTitle className="text-3xl">
-                  {stationName} Station
-                </DialogTitle>
-                <DialogClose asChild className="sm:hidden">
-                  <Button variant="outline" size="icon" className="text-foreground mt-0 cursor-pointer">
-                    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
-                    <span className="sr-only">Close</span>
-                  </Button>
-                </DialogClose>
-              </div>
+              <DialogTitle className="text-2xl sm:text-3xl">
+                {stationName} Station
+              </DialogTitle>
               <DialogDescription className="text-sm">
                 {formatMinutes(minutes)} from central London
               </DialogDescription>

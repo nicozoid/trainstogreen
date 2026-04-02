@@ -23,6 +23,10 @@ type SelectedStation = {
   // (e.g. Newport Essex vs Newport Wales) get distinct ratings this way
   coordKey: string
   flickrCount: number | null
+  // Screen-space pixel position of the icon at click time — used to animate
+  // the modal growing from / shrinking to this point
+  screenX: number
+  screenY: number
 }
 
 // Computes center + zoom so the bounding box [west,south]–[east,north] fits
@@ -243,6 +247,8 @@ export default function HikeMap() {
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
+  // Screen-pixel origin of the London icon — null on initial page load (no icon click)
+  const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
   // The Mapbox style URL — switches between light and dark based on theme.
   const mapStyle = theme === "dark"
@@ -277,6 +283,11 @@ export default function HikeMap() {
   const [devExcludeActive, setDevExcludeActive] = useState(false)
   // The station whose detail panel is open, or null if none
   const [selectedStation, setSelectedStation] = useState<SelectedStation | null>(null)
+  // Keeps the last station data alive during the close animation so the
+  // component stays mounted while Radix plays the exit transition
+  const lastStationRef = useRef<SelectedStation | null>(null)
+  if (selectedStation) lastStationRef.current = selectedStation
+  const displayStation = selectedStation ?? lastStationRef.current
   // Maps coordKey → rating; loaded from data/station-ratings.json via API.
   // Universal (not per-user) — ratings are set in dev mode and affect all viewers.
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
@@ -783,10 +794,14 @@ export default function HikeMap() {
     }
     // London hexagon marker — open the welcome banner instead of station modal
     if (feature.properties?.isLondon) {
+      const pt = mapRef.current?.project([LONDON_CENTRE.lng, LONDON_CENTRE.lat])
+      setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
       setBannerVisible(true)
       return
     }
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
+    // Convert geo coords → screen pixels so the modal can animate from this point
+    const screenPt = mapRef.current?.project([lng, lat])
     setHovered(null)
     setSelectedStation({
       name: feature.properties?.name as string,
@@ -795,6 +810,8 @@ export default function HikeMap() {
       minutes: feature.properties?.londonMinutes as number,
       coordKey: feature.properties?.coordKey as string,
       flickrCount: feature.properties?.flickrCount as number | null ?? null,
+      screenX: screenPt?.x ?? window.innerWidth / 2,
+      screenY: screenPt?.y ?? window.innerHeight / 2,
     })
   }, [])
 
@@ -891,9 +908,12 @@ export default function HikeMap() {
         bannerVisible={bannerVisible}
       />
 
-      {bannerVisible && (
-        <WelcomeBanner onDismiss={() => setBannerVisible(false)} />
-      )}
+      <WelcomeBanner
+        open={bannerVisible}
+        onDismiss={() => setBannerVisible(false)}
+        originX={bannerOrigin?.x}
+        originY={bannerOrigin?.y}
+      />
 
       {/* Dev mode toggle + zoom badge — only rendered in local development.
           process.env.NODE_ENV is inlined at build time by Next.js, so this
@@ -1372,26 +1392,30 @@ export default function HikeMap() {
           </Source>
         )}
 
-        {/* Station modal — opens when a dot is clicked, dismissed by clicking overlay */}
-        {selectedStation && (
+        {/* Station modal — opens when a dot is clicked, dismissed by clicking overlay.
+            Uses displayStation (ref-backed) so the component stays mounted during the
+            exit animation even after selectedStation is set to null. */}
+        {displayStation && (
           <StationModal
             open={!!selectedStation}
             onClose={() => setSelectedStation(null)}
-            lat={selectedStation.lat}
-            lng={selectedStation.lng}
-            stationName={selectedStation.name}
-            minutes={selectedStation.minutes}
-            flickrCount={selectedStation.flickrCount}
+            lat={displayStation.lat}
+            lng={displayStation.lng}
+            stationName={displayStation.name}
+            minutes={displayStation.minutes}
+            flickrCount={displayStation.flickrCount}
+            originX={displayStation.screenX}
+            originY={displayStation.screenY}
             devMode={devExcludeActive}
-            currentRating={ratings[selectedStation.coordKey] ?? null}
-            onRate={(rating: Rating | null) => handleRate(selectedStation.coordKey, selectedStation.name, rating)}
-            onExclude={() => handleExcludeFromModal(selectedStation.name, selectedStation.coordKey)}
-            approvedPhotos={curations[selectedStation.coordKey]?.approved ?? []}
-            rejectedIds={new Set(curations[selectedStation.coordKey]?.rejected ?? [])}
-            onApprovePhoto={(photo) => handleApprovePhoto(selectedStation.coordKey, selectedStation.name, photo)}
-            onRejectPhoto={(photoId) => handleRejectPhoto(selectedStation.coordKey, selectedStation.name, photoId)}
-            onUnapprovePhoto={(photoId) => handleUnapprovePhoto(selectedStation.coordKey, selectedStation.name, photoId)}
-            onMovePhoto={(photoId, direction) => handleMovePhoto(selectedStation.coordKey, selectedStation.name, photoId, direction)}
+            currentRating={ratings[displayStation.coordKey] ?? null}
+            onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
+            onExclude={() => handleExcludeFromModal(displayStation.name, displayStation.coordKey)}
+            approvedPhotos={curations[displayStation.coordKey]?.approved ?? []}
+            rejectedIds={new Set(curations[displayStation.coordKey]?.rejected ?? [])}
+            onApprovePhoto={(photo) => handleApprovePhoto(displayStation.coordKey, displayStation.name, photo)}
+            onRejectPhoto={(photoId) => handleRejectPhoto(displayStation.coordKey, displayStation.name, photoId)}
+            onUnapprovePhoto={(photoId) => handleUnapprovePhoto(displayStation.coordKey, displayStation.name, photoId)}
+            onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
           />
         )}
         </>}
