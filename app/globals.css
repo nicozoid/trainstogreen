@@ -134,7 +134,7 @@
     --accent-foreground: var(--abyss-900);
     --destructive: var(--fire-500);      /* red */
     --border: var(--beach-600);             /* light grey */
-    --input: var(--tree-300);
+    --input: var(--tree-400);
     --ring: var(--tree-300);
     --chart-1: var(--brand-300);          /* greens, light to dark */
     --chart-2: var(--brand-400);
