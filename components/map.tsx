@@ -30,15 +30,16 @@ type SelectedStation = {
 // Doing this as pure math avoids calling fitBounds() at runtime, which
 // react-map-gl's internal state manager can silently override.
 function computeInitialView() {
-  if (typeof window === 'undefined' || window.innerWidth < 640) {
-    // Mobile fallback — the onLoad handler applies fitBounds with
-    // panel-aware padding, so exact values here don't matter much.
+  if (typeof window === 'undefined') {
+    // SSR fallback — no window dimensions available.
     return { longitude: -0.118, latitude: 51.509, zoom: 6.1 }
   }
 
   const W = window.innerWidth
   const H = window.innerHeight
-  const bottomPad = 150
+  const isMobile = W < 640
+  // Less bottom padding on mobile — no filter panel at the bottom to clear
+  const bottomPad = isMobile ? 50 : 150
 
   // Geographic region to frame (same bounds used by the mobile fitBounds)
   const west = -3.6, east = 2.0, south = 50.77, north = 52.8
@@ -56,10 +57,15 @@ function computeInitialView() {
   const zoomX = Math.log2((W * 360) / (512 * (east - west)))
   // Zoom that fits the latitude span in (H − bottomPad) pixels
   const zoomY = Math.log2((H - bottomPad) / (512 * mercH))
-  // Use the tighter constraint so nothing overflows
-  const zoom = Math.min(zoomX, zoomY)
+  // Desktop: use the tighter constraint so nothing overflows.
+  // Mobile (<640px): only use zoomY (height-based) — the wide bounding box
+  // would force a very low zoom on narrow screens, pushing Eastbourne
+  // too far from the bottom. Letting width overflow is fine; users can pan.
+  const zoom = isMobile ? zoomY : Math.min(zoomX, zoomY)
 
-  const centerLon = (west + east) / 2
+  // On mobile, center on London longitude instead of the full bounding box
+  // midpoint (which sits too far west when the map is zoomed in).
+  const centerLon = isMobile ? -0.118 : (west + east) / 2
 
   // Place the southern bound at exactly bottomPad px above the viewport bottom.
   // In pixel space: south should sit at y = H − bottomPad (from top).
