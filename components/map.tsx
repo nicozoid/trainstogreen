@@ -147,7 +147,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 // Using canvas (rather than SVG files) means no extra assets to load.
 // strokeColor switches between white (light mode) and black (dark mode) so
 // the outline stays visible against the map background.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'hexagon', color: string, strokeColor: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon', color: string, strokeColor: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -183,10 +183,22 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
-  } else if (shape === 'hexagon') {
-    // Regular hexagon — 6 vertices evenly spaced around the centre
+  } else if (shape === 'square') {
+    // Filled square centred at (12, 12) — used for the London marker
+    const side = 16
+    const offset = (24 - side) / 2 // 4px from each edge
     ctx.beginPath()
-    const cx = 12, cy = 12, hexR = 9
+    ctx.rect(offset, offset, side, side)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = strokeColor
+    ctx.lineWidth = STATION_STROKE_WIDTH
+    ctx.stroke()
+  } else if (shape === 'hexagon') {
+    // Regular hexagon — 6 vertices evenly spaced, flat top edge
+    // Smaller radius (7) so it reads as a more compact shape
+    ctx.beginPath()
+    const cx = 12, cy = 12, hexR = 5.8
     for (let i = 0; i < 6; i++) {
       // -π/6 rotates so the hexagon has a flat top edge (not a pointy top)
       const angle = (i * Math.PI) / 3 - Math.PI / 6
@@ -862,9 +874,9 @@ export default function HikeMap() {
     add('icon-highlight',       createRatingIcon('star',          colors.primary,   stroke))
     add('icon-verified',        createRatingIcon('triangle-up',   colors.primary,   stroke))
     add('icon-unrated',         createRatingIcon('circle',        colors.secondary, stroke))
-    add('icon-unverified',      createRatingIcon('triangle-up',   colors.secondary, stroke))
+    add('icon-unverified',      createRatingIcon('hexagon',        colors.secondary, stroke))
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
-    add('icon-london',          createRatingIcon('hexagon',       colors.primary,   stroke))
+    add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
   }
 
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
