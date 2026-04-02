@@ -1,9 +1,0 @@
-/* Load Manrope directly from Google Fonts for Storybook.
-   In the real app, next/font/google handles this and sets --font-sans
-   on the <html> element — but Storybook doesn't use Next.js's layout,
-   so we need to define --font-sans ourselves here. */
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
-
-:root {
-  --font-sans: "Manrope", sans-serif;
-}
