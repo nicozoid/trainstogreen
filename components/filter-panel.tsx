@@ -1,6 +1,6 @@
 "use client"
 
-import { IconTrainFilled, IconChevronUp, IconChevronDown } from "@tabler/icons-react"
+import { IconTrainFilled, IconChevronDown } from "@tabler/icons-react"
 import SearchBar from "@/components/search-bar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
@@ -238,21 +238,28 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           className="shrink-0 rounded p-0 text-primary sm:hidden cursor-pointer -translate-y-0"
           aria-label={collapsed ? "Expand filters" : "Collapse filters"}
         >
-          {/* Chevron flips direction to signal the current action */}
-          {/* strokeLinecap="square" sharpens the line ends; strokeLinejoin="miter" sharpens the corner */}
-          {collapsed
-            ? <IconChevronDown size={24} stroke={4.5} strokeLinecap="square" strokeLinejoin="miter" />
-            : <IconChevronUp   size={24} stroke={4.5} strokeLinecap="square" strokeLinejoin="miter" />
-          }
+          {/* transition-transform + duration-200 animates the rotation smoothly */}
+          {/* rotate-180 flips the chevron to point up when expanded */}
+          <IconChevronDown
+            size={24} stroke={4.5}
+            strokeLinecap="square" strokeLinejoin="miter"
+            className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-180"}`}
+          />
         </button>
       </div>
       {/* Extra bottom breathing room when collapsed — the card's p-4 is there but feels tight */}
       {/* {collapsed && <div className="h-2 sm:hidden" />} */}
 
-      {/* Everything below the logo is hidden when collapsed on mobile.
-          On sm+ collapsed is irrelevant because the toggle button is hidden. */}
-      {!collapsed && (
-        <>
+      {/* Collapsible content wrapper — uses the CSS grid row trick to animate
+          height between 0 and "auto". grid-rows-[0fr] collapses to zero height,
+          grid-rows-[1fr] expands to the content's natural height, and
+          transition-[grid-template-rows] animates smoothly between them.
+          On sm+ the panel never collapses, so we force grid-rows-[1fr]. */}
+      <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out sm:grid-rows-[1fr] ${
+        collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
+      }`}>
+        {/* overflow-hidden clips the content as the grid row shrinks to 0 */}
+        <div className="overflow-hidden">
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
           {/* Search bar only shows when admin mode is toggled on */}
@@ -364,8 +371,8 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
               className="cursor-pointer"
             />
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   )
 }
