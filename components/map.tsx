@@ -844,6 +844,8 @@ export default function HikeMap() {
     const style = document.createElement('style')
     style.textContent = `
       .mapbox-improve-map { display: none !important; }
+
+      /* Collapsed (just the © button): transparent + subtle */
       .mapboxgl-ctrl-attrib.mapboxgl-compact { background: transparent !important; }
       .mapboxgl-ctrl-attrib-button {
         opacity: 0.4;
@@ -852,6 +854,13 @@ export default function HikeMap() {
         font-size: 16px;
         line-height: 24px;
         text-align: center;
+      }
+
+      /* Expanded (full attribution text visible): restore white bg for readability */
+      .mapboxgl-ctrl-attrib.mapboxgl-compact-show { background-color: #fff !important; }
+      .mapboxgl-compact-show .mapboxgl-ctrl-attrib-button {
+        opacity: 1;
+        background-color: rgba(0,0,0,0.05) !important;
       }
     `
     document.head.appendChild(style)
