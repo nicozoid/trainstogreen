@@ -1207,6 +1207,12 @@ export default function HikeMap() {
                     ]
                   : ["case", ["has", "isNew"], 0.7 * iconScale, ["has", "isLeaving"], 0.7 * leaveScale, 0.7],
               }}
+              paint={{
+                // Fade opacity in sync with scale so the icon's drop shadow
+                // (rendered by the Mapbox Standard basemap) doesn't pop away
+                // abruptly when the feature is removed after the shrink animation.
+                "icon-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+              }}
             />
             {/* Rated stations — shown as heart/circle icons instead of grey-green dots */}
             {mapReady && (
@@ -1243,6 +1249,12 @@ export default function HikeMap() {
                       ]
                     : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
                 }}
+                paint={{
+                  // Fade opacity in sync with scale so the icon's drop shadow
+                  // (rendered by the Mapbox Standard basemap) doesn't pop away
+                  // abruptly when the feature is removed after the shrink animation.
+                  "icon-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                }}
               />
             )}
             {/* Invisible hit-area layer — covers ALL stations with a larger radius
@@ -1269,7 +1281,14 @@ export default function HikeMap() {
                 // nothing — causing the hover to flicker on and off.
                 "circle-radius": 16,
                 "circle-color": "#000000",
-                "circle-opacity": 0.01,  // near-invisible but still detected by Mapbox hit testing
+                // Near-invisible but still detected by Mapbox hit testing.
+                // Fades with the leave/enter animation so the faint circle
+                // doesn't pop away abruptly when features are removed.
+                "circle-opacity": ["case",
+                  ["has", "isLeaving"], 0.005 * leaveScale,
+                  ["has", "isNew"],     0.005 * iconScale,
+                  0.005,
+                ],
               }}
             />
             {/* Name-only labels — each rating tier appears at a different zoom.
