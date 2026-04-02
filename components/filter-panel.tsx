@@ -12,13 +12,16 @@ import { useEffect, useRef, useState } from "react"
 // so Radix honours our state while still closing on blur.
 // On touch devices, tapping the label only shows the tooltip — it won't
 // bubble up to toggle a parent <label>'s checkbox.
-function LabelTip({ text, children }: { text: string; children: React.ReactNode }) {
+function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   // Tracks whether the click originated from a touch event
   const touchedRef = useRef(false)
   // After a manual close-via-click, briefly ignore Radix's open signals
   // (hover, focus, pointerdown) so the tooltip doesn't flicker back open.
   const lockUntilRef = useRef(0)
+  // When true, the icon hops upward; a timeout flips it back to false,
+  // and the CSS transition eases it back down — a small "jump" effect.
+  const [jumped, setJumped] = useState(false)
   return (
     <Tooltip
       open={open}
@@ -40,6 +43,11 @@ function LabelTip({ text, children }: { text: string; children: React.ReactNode 
               lockUntilRef.current = Date.now() + 300
               setOpen(false)
             }
+            // Trigger jump: move up immediately, then ease back down after 120ms
+            if (icon) {
+              setJumped(true)
+              setTimeout(() => setJumped(false), 120)
+            }
           }}
           onClick={(e) => {
             if (touchedRef.current) {
@@ -52,7 +60,23 @@ function LabelTip({ text, children }: { text: string; children: React.ReactNode 
             if (!open) setOpen(true)
           }}
         >
-          {children}
+          <span className="flex items-center gap-3 text-sm font-medium">
+            {icon && (
+              /* Only the icon jumps — translateY shifts it upward then the
+                 CSS transition eases it back. inline-block is required
+                 because transforms are ignored on plain inline elements. */
+              <span
+                style={{
+                  display: "inline-block",
+                  transform: jumped ? "translateY(-3px)" : "translateY(0)",
+                  transition: "transform 150ms ease-out",
+                }}
+              >
+                {icon}
+              </span>
+            )}
+            {children}
+          </span>
         </button>
       </TooltipTrigger>
       <TooltipContent>{text}</TooltipContent>
@@ -353,11 +377,8 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
               <div key={key} className="mt-1.5 flex items-center justify-between">
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
-                <LabelTip text={tooltip}>
-                  <span className="flex items-center gap-3 text-sm font-medium">
-                    {icon}
-                    {label}
-                  </span>
+                <LabelTip text={tooltip} icon={icon}>
+                  {label}
                 </LabelTip>
                 <Checkbox
                   checked={visibleRatings.has(key)}
