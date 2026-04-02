@@ -136,6 +136,9 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
   // ref, because CSS keyframe animations on custom properties weren't
   // rendering reliably across browsers.
   const [trainArriving, setTrainArriving] = useState(false)
+  // Tracks whether the train animation has completed at least once,
+  // so we know when to stop showing the blank placeholder track
+  const hasAnimatedRef = useRef(false)
   const trainProgressRef = useRef(0)
   const rangeRef = useRef<HTMLDivElement>(null)
   const thumbRef = useRef<HTMLDivElement>(null)
@@ -188,6 +191,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           if (progress < 1) {
             requestAnimationFrame(step)
           } else {
+            hasAnimatedRef.current = true
             setTrainArriving(false)
           }
         }
@@ -282,7 +286,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           <div className="relative">
             {/* Real slider — invisible during the arrival animation so it
                 doesn't flash at full width before the train has arrived */}
-            <div ref={sliderWrapperRef} className={trainArriving ? "invisible" : ""}>
+            <div ref={sliderWrapperRef} className={trainArriving || (bannerVisible && !hasAnimatedRef.current) ? "invisible" : ""}>
               <Slider
                 min={45}
                 max={180}
@@ -301,6 +305,14 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
                 }
               />
             </div>
+
+            {/* Blank track placeholder — shows before the animation has ever run,
+                so the slider area isn't empty but also doesn't reveal the train */}
+            {bannerVisible && !hasAnimatedRef.current && !trainArriving && (
+              <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                <div className="h-[1.1rem] w-full rounded-full bg-muted" />
+              </div>
+            )}
 
             {/* Fake slider overlay — purely cosmetic, plays the arrival animation.
                 Mimics the real slider's structure: a muted track, a patterned range
