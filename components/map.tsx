@@ -855,6 +855,28 @@ export default function HikeMap() {
     // but removes the two-finger twist gesture that rotates the map on touchscreens.
     map.touchZoomRotate.disableRotation()
 
+    // Hide the "Improve this map" link — not required by Mapbox ToS
+    // (only the logo + © attributions are). We inject a <style> tag
+    // because Tailwind v4 strips unknown class selectors from globals.css.
+    const style = document.createElement('style')
+    style.textContent = `
+      .mapbox-improve-map { display: none !important; }
+      .mapboxgl-ctrl-attrib.mapboxgl-compact { background: transparent !important; }
+      .mapboxgl-ctrl-attrib-button {
+        opacity: 0.4;
+        background-color: transparent !important;
+        background-image: none !important;
+        font-size: 16px;
+        line-height: 24px;
+        text-align: center;
+      }
+    `
+    document.head.appendChild(style)
+
+    // Replace the ⓘ icon with a © character
+    const attribBtn = document.querySelector('.mapboxgl-ctrl-attrib-button')
+    if (attribBtn) attribBtn.textContent = '©'
+
     // Register custom icon images for station markers.
     registerIcons(map)
 
