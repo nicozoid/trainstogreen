@@ -40,7 +40,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/30 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-black/30 duration-200 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}
@@ -52,13 +52,19 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  overlayClassName,
+  overlayStyle,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /** Extra classes forwarded to the backdrop overlay (e.g. for custom exit animations) */
+  overlayClassName?: string
+  /** Extra inline styles forwarded to the backdrop overlay */
+  overlayStyle?: React.CSSProperties
 }) {
   return (
     <DialogPortal>
-      <DialogOverlay />
+      <DialogOverlay className={overlayClassName} style={overlayStyle} />
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
