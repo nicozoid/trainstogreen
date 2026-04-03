@@ -1,22 +1,19 @@
-# Next.js template
+<p align="center">
+  <img src="public/trainstogreen-hero.png" alt="Trains to Green" width="600" />
+</p>
 
-This is a Next.js template with shadcn/ui.
+# Trains to Green
 
-## Adding components
+A web app that helps Londoners discover rail-accessible day hikes. Compare stations by travel time, hiking quality, and nearby scenery — no car needed.
 
-To add components to your app, run the following command:
+**[View the case study](https://www.niczap.design/trains-to-green)**
 
-```bash
-npx shadcn@latest add button
-```
+## What it does
 
-This will place the ui components in the `components` directory.
+- Compare train stations by travel time from London and the quality of nearby hikes
+- See which stations can be walked to from which in a day's hiking
+- Be inspired by beautiful rural photography around each station
 
-## Using components
+## Built with
 
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
-```
-# londonhikes
+React, TypeScript, Tailwind CSS, shadcn/ui, Mapbox GL
