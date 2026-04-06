@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type RefCallback } from "react"
 import {
   Dialog,
   DialogClose,
@@ -83,6 +83,38 @@ function komootUrl(name: string, lat: number, lng: number): string {
     `&startLocation=${lat}%2C${lng}` +
     `&max_distance=5000&pageNumber=1`
   )
+}
+
+/** Reset a textarea's height so it exactly fits its content (no scrollbar). */
+function autoResize(el: HTMLTextAreaElement) {
+  el.style.height = "auto"        // shrink first so scrollHeight recalculates
+  el.style.height = `${el.scrollHeight}px`  // expand to fit content
+}
+
+/**
+ * Turn markdown-style [text](url) links into clickable <a> elements.
+ * Plain text passes through unchanged.
+ */
+function renderWithLinks(text: string) {
+  // Match [link text](url) — the standard markdown link syntax
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/)
+  return parts.map((part, i) => {
+    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+    if (match) {
+      return (
+        <a
+          key={i}
+          href={match[2]}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-primary hover:text-primary/80"
+        >
+          {match[1]}
+        </a>
+      )
+    }
+    return part
+  })
 }
 
 export default function StationModal({
@@ -319,26 +351,34 @@ export default function StationModal({
           {/* Public note: editable textarea in admin mode, plain text for everyone else */}
           {devMode ? (
             <textarea
+              ref={(el) => { if (el) autoResize(el) }}
               value={localPublicNote}
-              onChange={(e) => setLocalPublicNote(e.target.value)}
+              onChange={(e) => {
+                setLocalPublicNote(e.target.value)
+                autoResize(e.target)
+              }}
               placeholder="Public notes..."
-              className="mt-1 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="mt-1 w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
           ) : (
             /* Only render the paragraph when there's something to show */
             localPublicNote && (
-              <p className="text-sm text-foreground">{localPublicNote}</p>
+              <p className="text-sm text-foreground">{renderWithLinks(localPublicNote)}</p>
             )
           )}
 
           {/* Private note: only visible in admin mode, always as a textarea */}
           {devMode && (
             <textarea
+              ref={(el) => { if (el) autoResize(el) }}
               value={localPrivateNote}
-              onChange={(e) => setLocalPrivateNote(e.target.value)}
+              onChange={(e) => {
+                setLocalPrivateNote(e.target.value)
+                autoResize(e.target)
+              }}
               placeholder="Private notes (admin only)..."
-              className="w-full resize-none rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:bg-orange-950/20"
+              className="w-full resize-none overflow-hidden rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:bg-orange-950/20"
               rows={2}
             />
           )}
