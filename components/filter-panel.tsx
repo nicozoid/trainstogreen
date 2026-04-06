@@ -79,7 +79,15 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
           </span>
         </button>
       </TooltipTrigger>
-      <TooltipContent>{text}</TooltipContent>
+      {/* Tapping the tooltip bubble itself also dismisses it */}
+      <TooltipContent
+        onPointerDown={() => {
+          lockUntilRef.current = Date.now() + 300
+          setOpen(false)
+        }}
+      >
+        {text}
+      </TooltipContent>
     </Tooltip>
   )
 }
