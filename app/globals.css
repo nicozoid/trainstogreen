@@ -226,7 +226,7 @@
     --sidebar-ring: var(--seawater-700);
 }
 
-/* Larger screens get more breathing room */
+
 @media (max-width: 768px) {
     :root {
         --spacing: 0.6rem;      
