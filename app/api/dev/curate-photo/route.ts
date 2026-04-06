@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { readDataFile, writeDataFile } from "@/lib/github-data"
 import type { FlickrPhoto } from "@/lib/flickr"
 
-const FILE = path.join(process.cwd(), "data", "photo-curations.json")
+const FILE_PATH = "data/photo-curations.json"
 
 // Each station's curations: approved photos (full objects so they can always
 // be displayed) and rejected photo IDs (just need the ID to filter them out).
@@ -11,14 +10,6 @@ type CurationEntry = {
   name: string
   approved: FlickrPhoto[]
   rejected: string[]
-}
-
-function readFile(): Record<string, CurationEntry> {
-  return JSON.parse(fs.readFileSync(FILE, "utf-8"))
-}
-
-function writeFile(data: Record<string, CurationEntry>) {
-  fs.writeFileSync(FILE, JSON.stringify(data, null, 2) + "\n", "utf-8")
 }
 
 // POST — approve or reject a photo for a station
@@ -31,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing coordKey, photoId, or action" }, { status: 400 })
   }
 
-  const curations = readFile()
+  const { data: curations, sha } = await readDataFile<Record<string, CurationEntry>>(FILE_PATH)
   const entry = curations[coordKey] ?? { name: name ?? coordKey, approved: [], rejected: [] }
   entry.name = name ?? entry.name
 
@@ -80,11 +71,12 @@ export async function POST(req: NextRequest) {
     curations[coordKey] = entry
   }
 
-  writeFile(curations)
+  await writeDataFile(FILE_PATH, curations, `${action} photo for ${name ?? coordKey}`, sha)
   return NextResponse.json({ message: "ok" })
 }
 
 // GET — returns all curations so the modal can use them
 export async function GET() {
-  return NextResponse.json(readFile())
+  const { data } = await readDataFile<Record<string, CurationEntry>>(FILE_PATH)
+  return NextResponse.json(data)
 }
