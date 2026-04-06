@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
-import fs from "fs"
-import path from "path"
+import { readDataFile, writeDataFile } from "@/lib/github-data"
 
-const FILE = path.join(process.cwd(), "data", "excluded-stations.json")
+const FILE_PATH = "data/excluded-stations.json"
 
 export async function POST(req: NextRequest) {
   const { name } = await req.json()
@@ -10,13 +9,13 @@ export async function POST(req: NextRequest) {
 
   const entry = name
 
-  const list: string[] = JSON.parse(fs.readFileSync(FILE, "utf-8"))
+  const { data: list, sha } = await readDataFile<string[]>(FILE_PATH)
 
   if (list.includes(entry)) {
     return NextResponse.json({ message: "already excluded" })
   }
 
   list.push(entry)
-  fs.writeFileSync(FILE, JSON.stringify(list, null, 2) + "\n", "utf-8")
+  await writeDataFile(FILE_PATH, list, `Exclude ${name}`, sha)
   return NextResponse.json({ message: `excluded "${name}"` })
 }
