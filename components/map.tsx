@@ -319,6 +319,10 @@ export default function HikeMap() {
   type CurationEntry = { name: string; approved: FlickrPhoto[]; rejected: string[] }
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
+  // Station notes — public (visible to all) and private (admin-only) text per station
+  type NotesEntry = { name: string; publicNote: string; privateNote: string }
+  const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
+
   // Fetch universal ratings and photo curations on mount
   useEffect(() => {
     fetch("/api/dev/rate-station")
@@ -327,6 +331,9 @@ export default function HikeMap() {
     fetch("/api/dev/curate-photo")
       .then((res) => res.json())
       .then((data) => setCurations(data))
+    fetch("/api/dev/station-notes")
+      .then((res) => res.json())
+      .then((data) => setStationNotes(data))
   }, [])
 
 
@@ -629,6 +636,24 @@ export default function HikeMap() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, photoId, action: "unapprove" }),
+    })
+  }, [])
+
+  // Save public/private notes for a station — called when the overlay closes
+  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string) => {
+    // Optimistic update
+    setStationNotes((prev) => {
+      if (!publicNote && !privateNote) {
+        const next = { ...prev }
+        delete next[coordKey]
+        return next
+      }
+      return { ...prev, [coordKey]: { name, publicNote, privateNote } }
+    })
+    await fetch("/api/dev/station-notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, publicNote, privateNote }),
     })
   }, [])
 
@@ -1513,6 +1538,9 @@ export default function HikeMap() {
             onRejectPhoto={(photoId) => handleRejectPhoto(displayStation.coordKey, displayStation.name, photoId)}
             onUnapprovePhoto={(photoId) => handleUnapprovePhoto(displayStation.coordKey, displayStation.name, photoId)}
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
+            publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
+            privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
+            onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
           />
         )}
         </>}
