@@ -56,6 +56,12 @@ type StationModalProps = {
   onUnapprovePhoto?: (photoId: string) => void
   /** Called when the admin moves an approved photo up or down in the display order */
   onMovePhoto?: (photoId: string, direction: "up" | "down" | "top") => void
+  /** Public note for this station — visible to everyone */
+  publicNote?: string
+  /** Private note — only visible in admin mode */
+  privateNote?: string
+  /** Saves both notes when the overlay closes */
+  onSaveNotes?: (publicNote: string, privateNote: string) => void
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -99,6 +105,9 @@ export default function StationModal({
   onRejectPhoto,
   onUnapprovePhoto,
   onMovePhoto,
+  publicNote = "",
+  privateNote = "",
+  onSaveNotes,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -106,6 +115,18 @@ export default function StationModal({
   const [error, setError] = useState<string | null>(null)
 
   const hasApiKey = Boolean(process.env.NEXT_PUBLIC_FLICKR_API_KEY)
+
+  // ── Local note editing state — synced from props when a new station opens ──
+  const [localPublicNote, setLocalPublicNote] = useState(publicNote)
+  const [localPrivateNote, setLocalPrivateNote] = useState(privateNote)
+  useEffect(() => {
+    if (open) {
+      setLocalPublicNote(publicNote)
+      setLocalPrivateNote(privateNote)
+    }
+  // Only reset when the dialog opens with new data, not on every prop change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, lat, lng])
 
   // ── Manual close animation ──
   // Radix Dialog's exit-animation detection can fail on mobile Safari (it checks
@@ -124,12 +145,16 @@ export default function StationModal({
 
   const handleAnimatedClose = useCallback(() => {
     if (isClosing) return
+    // Save notes if anything changed (fire-and-forget — optimistic update in parent)
+    if (onSaveNotes && (localPublicNote !== publicNote || localPrivateNote !== privateNote)) {
+      onSaveNotes(localPublicNote, localPrivateNote)
+    }
     setIsClosing(true)
     closingTimer.current = setTimeout(() => {
       setIsClosing(false)
       onClose()
     }, ANIM_DURATION * 0.65)
-  }, [isClosing, onClose])
+  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote])
 
   // How many Flickr photos to display (approved photos are added on top)
   const DISPLAY_COUNT = 30
@@ -272,7 +297,7 @@ export default function StationModal({
                 {stationName} Station
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {formatMinutes(minutes)} from central London
+                {formatMinutes(minutes)} from central London.
               </DialogDescription>
             </div>
 
@@ -288,6 +313,35 @@ export default function StationModal({
               </a>
             </Button>
           </div>
+
+          {/* ── Notes: full-width, below the title/button row ── */}
+
+          {/* Public note: editable textarea in admin mode, plain text for everyone else */}
+          {devMode ? (
+            <textarea
+              value={localPublicNote}
+              onChange={(e) => setLocalPublicNote(e.target.value)}
+              placeholder="Public notes..."
+              className="mt-1 w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              rows={2}
+            />
+          ) : (
+            /* Only render the paragraph when there's something to show */
+            localPublicNote && (
+              <p className="text-sm text-foreground">{localPublicNote}</p>
+            )
+          )}
+
+          {/* Private note: only visible in admin mode, always as a textarea */}
+          {devMode && (
+            <textarea
+              value={localPrivateNote}
+              onChange={(e) => setLocalPrivateNote(e.target.value)}
+              placeholder="Private notes (admin only)..."
+              className="w-full resize-none rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:bg-orange-950/20"
+              rows={2}
+            />
+          )}
         </DialogHeader>
 
         {/* ── Dev tools: rating buttons + delete ── */}
