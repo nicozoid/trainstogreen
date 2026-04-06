@@ -734,6 +734,13 @@ export default function HikeMap() {
     hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
     setHovered({ lng, lat, coordKey })
+    // Secret admin marker — ignore hover entirely (no cursor, no radius)
+    if (feature.properties?.isSecretAdmin) {
+      hoveredRef.current = null
+      setHovered(null)
+      setRadiusPos(null)
+      return
+    }
     // London marker shouldn't produce radius circles — clear any previous station's circles
     if (feature.properties?.isLondon) setRadiusPos(null)
     else setRadiusPos({ lng, lat })
@@ -804,6 +811,16 @@ export default function HikeMap() {
       setSelectedStation(null)
       return
     }
+    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France)
+    if (feature.properties?.isSecretAdmin) {
+      const next = !devExcludeActive
+      setDevExcludeActive(next)
+      if (next) {
+        setMaxMinutes(180)
+        setVisibleRatings(new Set())
+      }
+      return
+    }
     // London hexagon marker — open the welcome banner instead of station modal
     if (feature.properties?.isLondon) {
       const pt = mapRef.current?.project([LONDON_CENTRE.lng, LONDON_CENTRE.lat])
@@ -825,7 +842,7 @@ export default function HikeMap() {
       screenX: screenPt?.x ?? window.innerWidth / 2,
       screenY: screenPt?.y ?? window.innerHeight / 2,
     })
-  }, [])
+  }, [devExcludeActive, setMaxMinutes, setVisibleRatings])
 
   // Dev only — reverses the last exclusion while the toast is still showing
   const handleUndo = useCallback(async () => {
@@ -1018,7 +1035,7 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["station-hit-area", "london-hit-area"]}
+        interactiveLayerIds={["station-hit-area", "london-hit-area", "secret-admin-hit"]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -1205,6 +1222,33 @@ export default function HikeMap() {
               "circle-radius": 16,
               "circle-color": "#000000",
               "circle-opacity": 0.01,
+            }}
+          />
+        </Source>
+
+        {/* Secret admin toggle — invisible tap target at Boulogne-Tintelleries
+            (France, across the Channel). Same pattern as the London hit area but
+            with zero visual presence. Always mounted so it works in production. */}
+        <Source
+          id="secret-admin"
+          type="geojson"
+          data={{
+            type: "FeatureCollection",
+            features: [{
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [1.6096, 50.7231] },
+              properties: { isSecretAdmin: true },
+            }],
+          }}
+        >
+          <Layer
+            id="secret-admin-hit"
+            type="circle"
+            paint={{
+              "circle-radius": 16,
+              "circle-color": "#000000",
+              // Virtually invisible but non-zero so Mapbox treats it as a hit target
+              "circle-opacity": 0.005,
             }}
           />
         </Source>
