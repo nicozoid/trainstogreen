@@ -692,6 +692,22 @@ export default function HikeMap() {
       })
   }, [])
 
+  // Stop the Mapbox rendering loop when the browser tab is hidden so the GPU
+  // is released and macOS can sleep normally. Resume on visibility restore.
+  useEffect(() => {
+    function handleVisibilityChange() {
+      const map = mapRef.current?.getMap()
+      if (!map) return
+      if (document.hidden) {
+        map.stop()
+      } else {
+        map.triggerRepaint()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [])
+
   // Remembers the last hovered position so the radius circles stay rendered
   // while their opacity transitions to 0. Without this, the geometry disappears
   // instantly on unhover and there's nothing left for the fade-out to show.
