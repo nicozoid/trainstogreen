@@ -418,5 +418,9 @@
   "1.1183071,51.3644375": {
     "name": "Herne Bay",
     "rating": "unverified"
+  },
+  "-0.193118,51.6975545": {
+    "name": "Potters Bar",
+    "rating": "not-recommended"
   }
 }
