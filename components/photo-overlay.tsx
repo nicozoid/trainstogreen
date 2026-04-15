@@ -25,6 +25,13 @@ export type { FlickrPhoto }
 
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
+/** Journey info for a single origin, as stored in the GeoJSON */
+export type JourneyInfo = {
+  durationMinutes: number
+  changes: number
+  legs: { departureStation: string; arrivalStation: string }[]
+}
+
 type StationModalProps = {
   open: boolean
   onClose: () => void
@@ -62,6 +69,8 @@ type StationModalProps = {
   privateNote?: string
   /** Saves both notes when the overlay closes */
   onSaveNotes?: (publicNote: string, privateNote: string) => void
+  /** Journey data keyed by origin station name (e.g. "Farringdon") */
+  journeys?: Record<string, JourneyInfo>
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -70,6 +79,35 @@ function formatMinutes(minutes: number): string {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return m === 0 ? `${h} hour` : `${h} hour and ${m} minutes`
+}
+
+// Builds a travel description from journey data, e.g.
+// "1 hour from Farringdon. 2 changes: St Pancras and South Croydon"
+// Falls back to the simple "Xh Ym from central London." if no journey data.
+function journeyDescription(
+  minutes: number,
+  journeys?: Record<string, JourneyInfo>
+): string {
+  // Pick the first available origin's journey
+  const entry = journeys ? Object.entries(journeys).find(([, j]) => j) : undefined
+  if (!entry) return `${formatMinutes(minutes)} from central London.`
+
+  const [origin, journey] = entry
+  const time = formatMinutes(journey.durationMinutes)
+  const { changes, legs } = journey
+
+  if (changes === 0) return `${time} from ${origin}. Direct train.`
+
+  // Change stations are where you get off one train and board the next —
+  // that's the arrivalStation of every leg except the last one
+  const changeStations = legs.slice(0, -1).map((leg) => leg.arrivalStation)
+  const changeList =
+    changeStations.length <= 2
+      ? changeStations.join(" and ")
+      : changeStations.slice(0, -1).join(", ") + " and " + changeStations.at(-1)
+
+  const changeWord = changes === 1 ? "change" : "changes"
+  return `${time} from ${origin}. ${changes} ${changeWord}: ${changeList}.`
 }
 
 // Builds a Komoot discover URL for hiking near a station.
@@ -140,6 +178,7 @@ export default function StationModal({
   publicNote = "",
   privateNote = "",
   onSaveNotes,
+  journeys,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -329,7 +368,7 @@ export default function StationModal({
                 {stationName} Station
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {formatMinutes(minutes)} from central London.
+                {journeyDescription(minutes, journeys)}
               </DialogDescription>
             </div>
 

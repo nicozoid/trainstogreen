@@ -6,8 +6,9 @@ import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner } from "@/components/welcome-banner"
-import StationModal, { type FlickrPhoto } from "@/components/photo-overlay"
+import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
+import originStationsList from "@/data/origin-stations.json"
 import { getColors } from "@/lib/tokens"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
@@ -27,6 +28,7 @@ type SelectedStation = {
   // the modal growing from / shrinking to this point
   screenX: number
   screenY: number
+  journeys?: Record<string, JourneyInfo>
 }
 
 // Computes center + zoom so the bounding box [west,south]–[east,north] fits
@@ -86,6 +88,28 @@ function computeInitialView() {
 }
 const INITIAL_VIEW = computeInitialView()
 
+// Decodes a Google Maps encoded polyline into an array of [lng, lat] pairs.
+// Algorithm: https://developers.google.com/maps/documentation/utilities/polylinealgorithm
+function decodePolyline(encoded: string): [number, number][] {
+  const coords: [number, number][] = []
+  let i = 0, lat = 0, lng = 0
+  while (i < encoded.length) {
+    // Each coordinate component is a variable-length sequence of 5-bit chunks
+    for (const apply of [(v: number) => { lat += v }, (v: number) => { lng += v }]) {
+      let shift = 0, result = 0, byte: number
+      do {
+        byte = encoded.charCodeAt(i++) - 63
+        result |= (byte & 0x1f) << shift
+        shift += 5
+      } while (byte >= 0x20)
+      // Zig-zag decode: if the lowest bit is 1, the value is negative
+      apply(result & 1 ? ~(result >> 1) : result >> 1)
+    }
+    coords.push([lng / 1e5, lat / 1e5])
+  }
+  return coords
+}
+
 // Farringdon Station — used as the centre of London for the London marker on the map
 const LONDON_CENTRE = { lat: 51.5203, lng: -0.1053 }
 
@@ -99,6 +123,10 @@ const OUTER_RADIUS_KM = 14
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
 // All entries are station names. If two stations share a name, add both (they'll both be excluded).
 const EXCLUDED_STATIONS = new Set(excludedStationsList)
+
+// Origin stations — shown as squares, only visible in admin mode (except London/Farringdon
+// which has its own dedicated marker). Lowercase for case-insensitive matching.
+const ORIGIN_STATIONS = new Set(originStationsList.map(n => n.toLowerCase()))
 
 // Describes the shape of a single GeoJSON feature from our stations.json.
 // TypeScript uses this to check we're accessing valid properties later.
@@ -376,6 +404,9 @@ export default function HikeMap() {
       features: stations.features.filter((f) => {
         const mins = f.properties.londonMinutes as number | null
         if (mins == null || mins > maxMinutes) return false
+        // Origin stations (except Farringdon, which has its own London marker)
+        // are only visible in admin mode
+        if (f.properties.isOrigin && !devExcludeActive) return false
         // In dev mode, also hide stations excluded this session (before hot-reload kicks in).
         // Read coordKey from properties — it was stamped in at load time from the original
         // coordinates, so it's guaranteed to match what the click handler stored.
@@ -669,8 +700,12 @@ export default function HikeMap() {
         // returning geometry from click events, but string properties always pass through intact.
         const stamped = data.features.map((f) => {
           const [lng, lat] = f.geometry.coordinates
+          const name = (f.properties.name as string ?? '').toLowerCase()
+          // Stamp coordKey for consistent identity, and isOrigin for origin stations
+          const extra: Record<string, unknown> = { coordKey: `${lng},${lat}` }
+          if (ORIGIN_STATIONS.has(name)) extra.isOrigin = true
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
-          return { ...f, properties: { ...f.properties, coordKey: `${lng},${lat}` } as StationFeature["properties"] }
+          return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
         })
 
         // Filter out excluded stations
@@ -727,6 +762,75 @@ export default function HikeMap() {
     const latOffset = (OUTER_RADIUS_KM / 6371) * (180 / Math.PI)
     return { lng: radiusPos.lng, lat: radiusPos.lat - latOffset } // negative = south
   }, [radiusPos])
+
+  // GeoJSON LineString for the hovered station's journey polyline from London.
+  // Always mounted (with an empty geometry when not hovered) so the opacity
+  // can transition smoothly, same pattern as the radius circles.
+  const emptyLine = useMemo(() => ({
+    type: "Feature" as const,
+    geometry: { type: "LineString" as const, coordinates: [] as [number, number][] },
+    properties: {},
+  }), [])
+
+  // Decodes the full set of coordinates for the hovered station's journey.
+  // Returns the array (not GeoJSON) so the animation can slice it progressively.
+  const hoveredJourneyCoords = useMemo(() => {
+    if (!hovered || !stations) return null
+    const feature = stations.features.find(
+      (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
+    )
+    const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
+    if (!journeys) return null
+    const polyline = Object.values(journeys).find((j) => j?.polyline)?.polyline
+    if (!polyline) return null
+    return decodePolyline(polyline)
+  }, [hovered, stations])
+
+  // The animated journey line GeoJSON — grows from origin to destination over time.
+  // Starts with 0 points, progressively adds more, ends with the full line.
+  // On unhover the full line persists (via the ref) while opacity fades it out.
+  const JOURNEY_ANIM_MS = 800
+  const [journeyLine, setJourneyLine] = useState(emptyLine)
+  const journeyAnimRef = useRef<number | null>(null)
+  const prevJourneyKey = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!hoveredJourneyCoords) {
+      // Reset so re-hovering the same station replays the animation
+      prevJourneyKey.current = null
+      return
+    }
+    const key = hovered?.coordKey ?? null
+    if (key === prevJourneyKey.current) return
+
+    prevJourneyKey.current = key
+    if (journeyAnimRef.current) cancelAnimationFrame(journeyAnimRef.current)
+
+    const coords = hoveredJourneyCoords
+    const total = coords.length
+    const start = performance.now()
+
+    function step(now: number) {
+      const elapsed = now - start
+      // Ease-out cubic: fast start, gentle arrival
+      const t = Math.min(elapsed / JOURNEY_ANIM_MS, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      // Show at least 2 points (minimum for a LineString) up to all points
+      const count = Math.max(2, Math.round(eased * total))
+      setJourneyLine({
+        type: "Feature" as const,
+        geometry: { type: "LineString" as const, coordinates: coords.slice(0, count) },
+        properties: {},
+      })
+      if (t < 1) journeyAnimRef.current = requestAnimationFrame(step)
+    }
+    journeyAnimRef.current = requestAnimationFrame(step)
+
+    return () => {
+      if (journeyAnimRef.current) cancelAnimationFrame(journeyAnimRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredJourneyCoords, hovered])
 
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
@@ -856,18 +960,26 @@ export default function HikeMap() {
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
     // Convert geo coords → screen pixels so the modal can animate from this point
     const screenPt = mapRef.current?.project([lng, lat])
+    const coordKey = feature.properties?.coordKey as string
+    // Look up journey data from the raw GeoJSON (Mapbox flattens nested props)
+    const rawFeature = stations?.features.find(
+      (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === coordKey
+    )
+    const journeys = rawFeature?.properties?.journeys as
+      Record<string, JourneyInfo> | undefined
     setHovered(null)
     setSelectedStation({
       name: feature.properties?.name as string,
       lng,
       lat,
       minutes: feature.properties?.londonMinutes as number,
-      coordKey: feature.properties?.coordKey as string,
+      coordKey,
       flickrCount: feature.properties?.flickrCount as number | null ?? null,
       screenX: screenPt?.x ?? window.innerWidth / 2,
       screenY: screenPt?.y ?? window.innerHeight / 2,
+      journeys,
     })
-  }, [devExcludeActive, setMaxMinutes, setVisibleRatings])
+  }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations])
 
   // Dev only — reverses the last exclusion while the toast is still showing
   const handleUndo = useCallback(async () => {
@@ -957,6 +1069,7 @@ export default function HikeMap() {
     add('icon-unrated',         createRatingIcon('circle',        colors.secondary, stroke))
     add('icon-unverified',      createRatingIcon('hexagon',        colors.secondary, stroke))
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
+    add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
     add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
   }
 
@@ -1087,6 +1200,23 @@ export default function HikeMap() {
             type="raster"
             layout={{ visibility: showTrails ? "visible" : "none" }}
             paint={{ "raster-opacity": 0.5 }}
+          />
+        </Source>
+
+        {/* Journey polyline — shows the rail route from London on hover.
+            Always mounted with empty geometry so the opacity can transition.
+            The geometry itself grows progressively via coordinate slicing in the
+            animation effect above — no need for line-trim-offset. */}
+        <Source id="journey-line" type="geojson" data={journeyLine}>
+          <Layer
+            id="journey-line-stroke"
+            type="line"
+            paint={{
+              "line-color": "#2f6544",
+              "line-width": 2.5,
+              "line-opacity": hovered ? 0.5 : 0,
+              "line-opacity-transition": { duration: 300 },
+            }}
           />
         </Source>
 
@@ -1310,25 +1440,31 @@ export default function HikeMap() {
               <Layer
                 id="station-rating-icons"
                 type="symbol"
-                filter={["has", "rating"]} // only features with a rating property
+                filter={["any", ["has", "rating"], ["has", "isOrigin"]]}
                 layout={{
-                  // "match" picks the right pre-loaded image by the rating value
-                  "icon-image": ["match", ["get", "rating"],
-                    "highlight",       "icon-highlight",
-                    "verified",        "icon-verified",
-                    "unverified",      "icon-unverified",
-                    "not-recommended", "icon-not-recommended",
-                    "" // fallback: no icon (shouldn't occur given the filter above)
+                  // Origin stations always get the square icon; others use rating-based icons
+                  "icon-image": ["case",
+                    ["has", "isOrigin"], "icon-origin",
+                    ["match", ["get", "rating"],
+                      "highlight",       "icon-highlight",
+                      "verified",        "icon-verified",
+                      "unverified",      "icon-unverified",
+                      "not-recommended", "icon-not-recommended",
+                      "" // fallback
+                    ],
                   ],
                   "icon-allow-overlap": true,    // don't hide icons when they overlap labels
                   "icon-ignore-placement": true, // don't let icons block other symbols
-                  // Higher value = drawn on top — so better-rated stations sit above weaker ones
-                  "symbol-sort-key": ["match", ["get", "rating"],
-                    "highlight",       4,
-                    "verified",        3,
-                    "unverified",      2,
-                    "not-recommended", 1,
-                    0
+                  // Higher value = drawn on top — origin stations above all, then by rating
+                  "symbol-sort-key": ["case",
+                    ["has", "isOrigin"], 5,
+                    ["match", ["get", "rating"],
+                      "highlight",       4,
+                      "verified",        3,
+                      "unverified",      2,
+                      "not-recommended", 1,
+                      0
+                    ],
                   ],
                   // Slightly larger icon when hovered
                   // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
@@ -1357,12 +1493,15 @@ export default function HikeMap() {
               type="circle"
               layout={{
                 // Sort key: higher value = drawn on top = returned first by queryRenderedFeatures
-                "circle-sort-key": ["match", ["get", "rating"],
-                  "highlight",       4,
-                  "verified",        3,
-                  "unverified",      2,
-                  "not-recommended", 1,
-                  0, // unrated stations get lowest priority
+                "circle-sort-key": ["case",
+                  ["has", "isOrigin"], 5,
+                  ["match", ["get", "rating"],
+                    "highlight",       4,
+                    "verified",        3,
+                    "unverified",      2,
+                    "not-recommended", 1,
+                    0, // unrated stations get lowest priority
+                  ],
                 ],
               }}
               paint={{
@@ -1541,6 +1680,7 @@ export default function HikeMap() {
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
+            journeys={displayStation.journeys}
           />
         )}
         </>}
