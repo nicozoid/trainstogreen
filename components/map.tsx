@@ -788,23 +788,34 @@ export default function HikeMap() {
 
   // The animated journey line GeoJSON — grows from origin to destination over time.
   // Starts with 0 points, progressively adds more, ends with the full line.
-  // On unhover the full line persists (via the ref) while opacity fades it out.
+  // On unhover, opacity is manually animated to 0 via requestAnimationFrame
+  // (Mapbox's line-opacity-transition doesn't survive React re-renders).
   const JOURNEY_ANIM_MS = 800
+  const JOURNEY_FADE_MS = 250
   const [journeyLine, setJourneyLine] = useState(emptyLine)
+  // Numeric opacity driven by rAF — avoids relying on Mapbox paint transitions
+  const [journeyOpacity, setJourneyOpacity] = useState(0)
   const journeyAnimRef = useRef<number | null>(null)
+  const journeyFadeRef = useRef<number | null>(null)
   const prevJourneyKey = useRef<string | null>(null)
 
+  // --- Draw-in animation on hover ---
   useEffect(() => {
     if (!hoveredJourneyCoords) {
-      // Reset so re-hovering the same station replays the animation
       prevJourneyKey.current = null
       return
+    }
+    // Cancel any running fade-out so the new line appears at full opacity
+    if (journeyFadeRef.current) {
+      cancelAnimationFrame(journeyFadeRef.current)
+      journeyFadeRef.current = null
     }
     const key = hovered?.coordKey ?? null
     if (key === prevJourneyKey.current) return
 
     prevJourneyKey.current = key
     if (journeyAnimRef.current) cancelAnimationFrame(journeyAnimRef.current)
+    setJourneyOpacity(0.5)
 
     const coords = hoveredJourneyCoords
     const total = coords.length
@@ -831,6 +842,32 @@ export default function HikeMap() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hoveredJourneyCoords, hovered])
+
+  // --- Fade-out animation on unhover ---
+  useEffect(() => {
+    if (hoveredJourneyCoords) return // still hovered, nothing to fade
+    if (journeyOpacity === 0) return // already invisible
+
+    const start = performance.now()
+    const startOpacity = journeyOpacity
+
+    function fade(now: number) {
+      const t = Math.min((now - start) / JOURNEY_FADE_MS, 1)
+      setJourneyOpacity(startOpacity * (1 - t))
+      if (t < 1) {
+        journeyFadeRef.current = requestAnimationFrame(fade)
+      } else {
+        journeyFadeRef.current = null
+        setJourneyLine(emptyLine)
+      }
+    }
+    journeyFadeRef.current = requestAnimationFrame(fade)
+
+    return () => {
+      if (journeyFadeRef.current) cancelAnimationFrame(journeyFadeRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredJourneyCoords])
 
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
@@ -1214,8 +1251,7 @@ export default function HikeMap() {
             paint={{
               "line-color": "#2f6544",
               "line-width": 2.5,
-              "line-opacity": hovered ? 0.5 : 0,
-              "line-opacity-transition": { duration: 300 },
+              "line-opacity": journeyOpacity,
             }}
           />
         </Source>
