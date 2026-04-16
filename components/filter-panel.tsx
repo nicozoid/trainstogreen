@@ -1,7 +1,8 @@
 "use client"
 
-import { IconTrainFilled, IconChevronDown } from "@tabler/icons-react"
+import { IconTrainFilled, IconChevronDown, IconPlus, IconX } from "@tabler/icons-react"
 import SearchBar from "@/components/search-bar"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -151,9 +152,15 @@ type FilterPanelProps = {
   adminMode: boolean
   /** Whether the welcome banner is currently showing */
   bannerVisible: boolean
+  /** Friend origin station name, or null if not active */
+  friendOrigin: string | null
+  friendMaxMinutes: number
+  onFriendMaxMinutesChange: (value: number) => void
+  onActivateFriend: () => void
+  onDeactivateFriend: () => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, friendOrigin, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -295,13 +302,14 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
       <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out sm:grid-rows-[1fr] ${
         collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       }`}>
-        {/* overflow-hidden clips the content as the grid row shrinks to 0 */}
-        <div className="overflow-hidden">
+        {/* overflow-y-clip clips content vertically for the collapse animation
+            while allowing horizontal overflow (e.g. negative-margin buttons) */}
+        <div className="overflow-y-clip">
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
           {/* Search bar only shows when admin mode is toggled on */}
           {adminMode && (
-            <div className="mb-4 mt-3 sm:mt-0">
+            <div className="mb-4 mt-4 sm:mt-2">
               <SearchBar value={searchQuery} onChange={onSearchChange} />
             </div>
           )}
@@ -378,6 +386,49 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
               </div>
             )}
           </div>
+
+          {/* Friend origin: show slider when active, button when not */}
+          {adminMode && !friendOrigin && (
+            <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground" onClick={onActivateFriend}>
+              <IconPlus size={14} />
+              Add friend&apos;s home station
+            </Button>
+          )}
+          {friendOrigin && (
+            <>
+              {/* Label row with dismiss button on hover */}
+              <div className="group mt-3 flex items-baseline justify-between">
+                <span className="flex items-center gap-1 text-sm font-medium">
+                  Max time from {friendOrigin}
+                  {/* X button — visible on hover (or always on touch) */}
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    className="cursor-pointer text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                    onClick={onDeactivateFriend}
+                  >
+                    <IconX size={12} />
+                  </Button>
+                </span>
+                <span className="text-sm font-extrabold text-primary">
+                  {formatDuration(friendMaxMinutes)}
+                </span>
+              </div>
+              <Slider
+                min={45}
+                max={180}
+                step={15}
+                value={[friendMaxMinutes]}
+                onValueChange={([value]) => onFriendMaxMinutesChange(value)}
+                trackClassName="train-track-track"
+                rangeClassName="train-track-range bg-transparent"
+                thumbClassName="train-thumb"
+                thumbContent={
+                  <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
+                }
+              />
+            </>
+          )}
 
           {/* Rating visibility toggles — one checkbox per rating category */}
           <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
