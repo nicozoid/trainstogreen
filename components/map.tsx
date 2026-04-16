@@ -129,8 +129,24 @@ function timeExpression(prop: string): any {
   ]
 }
 
-// Farringdon Station — used as the centre of London for the London marker on the map
-const LONDON_CENTRE = { lat: 51.5203, lng: -0.1053 }
+// Coordinates for each supported primary origin — the active one drives the
+// origin marker position, polyline lookups, and londonMinutes override.
+const ORIGIN_COORDS: Record<string, { lat: number; lng: number }> = {
+  Farringdon: { lat: 51.5203, lng: -0.1053 },
+  Stratford:  { lat: 51.541289, lng: -0.0035472 },
+}
+
+// Extensible lists of origin stations available in each dropdown.
+// Add new entries here as more origins get journey data.
+const PRIMARY_ORIGINS = ["Farringdon", "Stratford"]
+const FRIEND_ORIGINS = ["Birmingham New Street", "Nottingham"]
+
+// Short display names for the filter UI — full canonical names are used
+// everywhere else (data lookups, property keys). Only add entries for
+// stations whose full name is too long for the panel.
+const ORIGIN_DISPLAY_NAMES: Record<string, string> = {
+  "Birmingham New Street": "Birmingham",
+}
 
 // White outline thickness for station icons and dots — lower = thinner strokes
 const STATION_STROKE_WIDTH = 1.0
@@ -295,12 +311,15 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
 
 export default function HikeMap() {
   const { theme } = useTheme()
+  const [primaryOrigin, setPrimaryOrigin] = useState("Farringdon")
+  const originCoords = ORIGIN_COORDS[primaryOrigin]
   // Ref keeps theme accessible inside the style.load callback (which is a stale
   // closure from handleMapLoad). Without this, registerIcons would always see
   // whatever theme was active when the map first loaded.
   const themeRef = useRef(theme)
   themeRef.current = theme
-  const [stations, setStations] = useState<StationCollection | null>(null)
+  // Raw station data — loaded once, without primaryOrigin-dependent overrides
+  const [baseStations, setBaseStations] = useState<StationCollection | null>(null)
   // Start at 180min (the max) so all stations are visible on load
   const [maxMinutes, setMaxMinutes] = useState(120)
   // Friend origin mode — when non-null, a second origin filters stations
@@ -357,12 +376,8 @@ export default function HikeMap() {
   // "unrated" is a pseudo-category for stations without any rating.
   // Mobile defaults to "Heavenly" only for a curated first impression;
   // desktop shows the three positive ratings. 640px matches Tailwind's `sm` breakpoint.
-  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(() => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
-    return isMobile
-      ? new Set(['highlight'])
-      : new Set(['highlight', 'verified', 'unverified'])
-  })
+  // Empty set = no filter = all stations visible
+  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set())
 
   // Photo curations — per-station approved/rejected photo lists, loaded from
   // data/photo-curations.json via API. Only used in admin mode.
@@ -417,6 +432,23 @@ export default function HikeMap() {
     return () => mq.removeEventListener("change", update)
   }, [])
 
+  // Derived stations — overrides londonMinutes when primaryOrigin isn't Farringdon,
+  // so slider filtering and Mapbox labels show the selected origin's travel times.
+  // Recomputes when the user switches origin via the dropdown, without re-fetching.
+  const stations = useMemo(() => {
+    if (!baseStations) return null
+    if (primaryOrigin === "Farringdon") return baseStations
+    return {
+      ...baseStations,
+      features: baseStations.features.map((f) => {
+        const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
+        const originMins = journeys?.[primaryOrigin]?.durationMinutes
+        if (originMins == null) return f
+        return { ...f, properties: { ...f.properties, londonMinutes: originMins } as StationFeature["properties"] }
+      }),
+    }
+  }, [baseStations, primaryOrigin])
+
   // Recompute filtered stations whenever the slider or raw data changes.
   // useMemo avoids re-filtering the whole array on every render.
   const filteredStations = useMemo(() => {
@@ -426,8 +458,14 @@ export default function HikeMap() {
       features: stations.features.filter((f) => {
         // In admin mode, origin stations always pass all filters
         if (f.properties.isOrigin && devExcludeActive) return true
-        // Origin stations are hidden in normal mode
-        if (f.properties.isOrigin) return false
+        // Origin stations are hidden in normal mode — except the active
+        // friend origin, which appears as a marker on the map
+        if (f.properties.isOrigin) {
+          // The friend origin always shows (it's the origin point, not a
+          // hiking destination, so travel-time filters don't apply to it)
+          if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
+          return false
+        }
 
         const mins = f.properties.londonMinutes as number | null
         if (mins == null || mins > maxMinutes) return false
@@ -512,6 +550,8 @@ export default function HikeMap() {
       ...allStationsWithRatings,
       features: allStationsWithRatings.features
         .filter(f => {
+          // The active friend origin always shows regardless of rating filters
+          if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
           if (visibleRatings.size === 0 && newlyRemovedRatings.size === 0) return true
           const category = (f.properties.rating as string | undefined) ?? 'unrated'
           return visibleRatings.has(category) || newlyRemovedRatings.has(category)
@@ -527,7 +567,7 @@ export default function HikeMap() {
           return f
         }),
     }
-  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings])
+  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin])
 
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
@@ -762,7 +802,7 @@ export default function HikeMap() {
             !EXCLUDED_STATIONS.has(f.properties.coordKey as string)
           )
         })
-        setStations({ ...data, features: outside })
+        setBaseStations({ ...data, features: outside })
       })
   }, [])
 
@@ -819,11 +859,11 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
-    // Explicitly use Farringdon polyline (not first-found) to avoid picking up friend origin's
-    const polyline = journeys?.["Farringdon"]?.polyline
+    // Use the primary origin's polyline (not first-found) to avoid picking up friend origin's
+    const polyline = journeys?.[primaryOrigin]?.polyline
     if (!polyline) return null
     return decodePolyline(polyline)
-  }, [hovered, stations])
+  }, [hovered, stations, primaryOrigin])
 
   // Friend origin polyline — same logic but for the friend's journey
   const hoveredFriendJourneyCoords = useMemo(() => {
@@ -836,6 +876,16 @@ export default function HikeMap() {
     if (!polyline) return null
     return decodePolyline(polyline)
   }, [friendOrigin, hovered, stations])
+
+  // Whether the currently hovered station is the active friend origin —
+  // used to show "liberate your friend" instead of travel times in the label
+  const hoveredIsFriendOrigin = useMemo(() => {
+    if (!friendOrigin || !hovered) return false
+    const feature = stationsForMap?.features.find(
+      f => (f.properties.coordKey as string) === hovered.coordKey
+    )
+    return (feature?.properties.name as string) === friendOrigin
+  }, [friendOrigin, hovered, stationsForMap])
 
   // The animated journey line GeoJSON — grows from origin to destination over time.
   // Starts with 0 points, progressively adds more, ends with the full line.
@@ -1112,7 +1162,7 @@ export default function HikeMap() {
     }
     // London hexagon marker — open the welcome banner instead of station modal
     if (feature.properties?.isLondon) {
-      const pt = mapRef.current?.project([LONDON_CENTRE.lng, LONDON_CENTRE.lat])
+      const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
       setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
       setBannerVisible(true)
       return
@@ -1255,10 +1305,16 @@ export default function HikeMap() {
         onSearchChange={setSearchQuery}
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
+        primaryOrigin={primaryOrigin}
+        primaryOrigins={PRIMARY_ORIGINS}
+        onPrimaryOriginChange={setPrimaryOrigin}
+        originDisplayName={(name) => ORIGIN_DISPLAY_NAMES[name] ?? name}
         friendOrigin={friendOrigin}
+        friendOrigins={FRIEND_ORIGINS}
+        onFriendOriginChange={setFriendOrigin}
         friendMaxMinutes={friendMaxMinutes}
         onFriendMaxMinutesChange={setFriendMaxMinutes}
-        onActivateFriend={() => setFriendOrigin("Nottingham")}
+        onActivateFriend={() => setFriendOrigin(FRIEND_ORIGINS[0])}
         onDeactivateFriend={() => setFriendOrigin(null)}
       />
 
@@ -1503,7 +1559,7 @@ export default function HikeMap() {
             type: "FeatureCollection",
             features: [{
               type: "Feature",
-              geometry: { type: "Point", coordinates: [LONDON_CENTRE.lng, LONDON_CENTRE.lat] },
+              geometry: { type: "Point", coordinates: [originCoords.lng, originCoords.lat] },
               properties: { isLondon: true, coordKey: "london" },
             }],
           }}
@@ -1529,7 +1585,7 @@ export default function HikeMap() {
               layout={{
                 "text-field": [
                   "format",
-                  "London", { "font-scale": 1 },
+                  primaryOrigin, { "font-scale": 1 },
                   "\n", {},
                   "time to escape", { "font-scale": 0.8 },
                 ],
@@ -1788,15 +1844,17 @@ export default function HikeMap() {
                 filter={["==", ["get", "coordKey"], hovered.coordKey] as any}
                 /* eslint-enable @typescript-eslint/no-explicit-any */
                 layout={{
-                  "text-field": [
-                    "format",
-                    ["get", "name"], { "font-scale": 1 },
-                    "\n", {},
-                    ...(friendOrigin
-                      ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
-                      : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
-                    ),
-                  ],
+                  "text-field": hoveredIsFriendOrigin
+                    ? ["format", ["get", "name"], { "font-scale": 1 }]
+                    : [
+                        "format",
+                        ["get", "name"], { "font-scale": 1 },
+                        "\n", {},
+                        ...(friendOrigin
+                          ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
+                          : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
+                        ),
+                      ],
                   "text-size": 11,
                   "text-offset": [0, 1.4],
                   "text-anchor": "top",
@@ -1842,6 +1900,8 @@ export default function HikeMap() {
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             journeys={displayStation.journeys}
             friendOrigin={friendOrigin}
+            primaryOrigin={primaryOrigin}
+            isFriendOrigin={!!friendOrigin && displayStation.name === friendOrigin}
           />
         )}
         </>}

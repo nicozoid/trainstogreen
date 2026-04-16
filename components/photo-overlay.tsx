@@ -73,6 +73,10 @@ type StationModalProps = {
   journeys?: Record<string, JourneyInfo>
   /** Friend origin station name — when set, shows dual journey info */
   friendOrigin?: string | null
+  /** Which origin station is the primary (default "Farringdon", or "Stratford" via URL) */
+  primaryOrigin?: string
+  /** When true, this station is a friend origin — hides travel info and hike button */
+  isFriendOrigin?: boolean
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -103,16 +107,17 @@ function singleOriginDescription(origin: string, journey: JourneyInfo): string {
 }
 
 // Builds travel description — shows both origins when friend mode is active.
+// primaryOrigin controls which journey is shown first (e.g. "Farringdon" or "Stratford").
 function journeyDescription(
   minutes: number,
   journeys?: Record<string, JourneyInfo>,
-  friendOrigin?: string | null
+  friendOrigin?: string | null,
+  primaryOrigin: string = "Farringdon"
 ): string {
-  const entry = journeys ? Object.entries(journeys).find(([, j]) => j) : undefined
-  if (!entry) return `${formatMinutes(minutes)} from central London.`
+  const journey = journeys?.[primaryOrigin]
+  if (!journey) return `${formatMinutes(minutes)} from central London.`
 
-  const [origin, journey] = entry
-  let desc = singleOriginDescription(origin, journey)
+  let desc = singleOriginDescription(primaryOrigin, journey)
 
   if (friendOrigin && journeys?.[friendOrigin]) {
     desc += " " + singleOriginDescription(friendOrigin, journeys[friendOrigin])
@@ -191,6 +196,8 @@ export default function StationModal({
   onSaveNotes,
   journeys,
   friendOrigin,
+  primaryOrigin = "Farringdon",
+  isFriendOrigin = false,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -379,22 +386,38 @@ export default function StationModal({
               <DialogTitle className="text-2xl sm:text-3xl">
                 {stationName} Station
               </DialogTitle>
-              <DialogDescription className="text-sm">
-                {journeyDescription(minutes, journeys, friendOrigin)}
-              </DialogDescription>
+              {/* Friend origin stations don't show travel time — they're not hiking destinations */}
+              {!isFriendOrigin && (
+                <>
+                  {/* Primary origin journey info */}
+                  <DialogDescription className="text-sm">
+                    {journeys?.[primaryOrigin]
+                      ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
+                      : `${formatMinutes(minutes)} from central London.`}
+                  </DialogDescription>
+                  {/* Friend origin journey info — separate paragraph underneath */}
+                  {friendOrigin && journeys?.[friendOrigin] && (
+                    <p className="text-sm">
+                      {singleOriginDescription(friendOrigin, journeys[friendOrigin])}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
 
-            {/* max-sm:w-full makes the button stretch full-width in the single-column mobile layout */}
-            <Button asChild className="max-sm:w-full">
-              <a
-                href={komootUrl(stationName, lat, lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <HugeiconsIcon icon={MapingIcon} />
-                Hikes from station
-              </a>
-            </Button>
+            {/* Hike button hidden for friend origin stations — not relevant for origin points */}
+            {!isFriendOrigin && (
+              <Button asChild className="max-sm:w-full">
+                <a
+                  href={komootUrl(stationName, lat, lng)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <HugeiconsIcon icon={MapingIcon} />
+                  Hikes from station
+                </a>
+              </Button>
+            )}
           </div>
 
           {/* ── Notes: full-width, below the title/button row ── */}
