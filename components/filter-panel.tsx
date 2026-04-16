@@ -1,9 +1,16 @@
 "use client"
 
-import { IconTrainFilled, IconChevronDown, IconPlus, IconX } from "@tabler/icons-react"
+import { IconTrainFilled, IconChevronDown, IconPlus } from "@tabler/icons-react"
 import SearchBar from "@/components/search-bar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useEffect, useRef, useState } from "react"
@@ -152,15 +159,27 @@ type FilterPanelProps = {
   adminMode: boolean
   /** Whether the welcome banner is currently showing */
   bannerVisible: boolean
+  /** Currently selected primary origin station name */
+  primaryOrigin: string
+  /** All available primary origin options */
+  primaryOrigins: string[]
+  /** Switch the primary origin */
+  onPrimaryOriginChange: (origin: string) => void
+  /** Maps a canonical station name to a shorter display name (e.g. "Birmingham New Street" → "Birmingham") */
+  originDisplayName: (name: string) => string
   /** Friend origin station name, or null if not active */
   friendOrigin: string | null
+  /** All available friend origin options */
+  friendOrigins: string[]
+  /** Switch the friend origin (without deactivating) */
+  onFriendOriginChange: (origin: string) => void
   friendMaxMinutes: number
   onFriendMaxMinutesChange: (value: number) => void
   onActivateFriend: () => void
   onDeactivateFriend: () => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, friendOrigin, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -257,15 +276,20 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
     // On sm+: right-auto + w-64 revert to the fixed sidebar width.
     <div className="absolute left-4 right-4 top-4 z-10 rounded-lg bg-card p-4 text-card-foreground shadow-md sm:right-auto sm:w-64">
 
-      {/* Header row: logo on the left, collapse toggle on the right (mobile only) */}
-      {/* gap-4 on mobile for breathing room between logo and button; sm:gap-0 removes it */}
-      <div id="LOGO_AND_COLLAPSE_STACK" className="mb-0 sm:mb-1 flex items-center justify-between gap-2">
+      {/* Header row — single button wrapping logo + chevron so the entire
+          row is one continuous hit area for toggling collapse */}
+      <button
+        id="LOGO_AND_COLLAPSE_STACK"
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className="mb-0 sm:mb-1 flex w-full cursor-pointer items-center justify-between gap-2 border-0 bg-transparent p-0"
+        aria-label={collapsed ? "Expand filters" : "Collapse filters"}
+      >
         {/* Logo — mask-image uses the SVG as a stencil filled by bg-primary */}
         <div
-          className="w-full aspect-[597/51] cursor-pointer bg-primary sm:cursor-default"
+          className="w-full aspect-[597/51] bg-primary"
           role="img"
           aria-label="Trains to Green"
-          onClick={() => setCollapsed((v) => !v)}
           style={{
             maskImage: "url(/trainstogreen-logo.svg)",
             maskSize: "contain",
@@ -275,22 +299,12 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             WebkitMaskRepeat: "no-repeat",
           }}
         />
-        {/* sm:hidden — this button is only relevant on narrow viewports */}
-        <button
-          type="button"
-          onClick={() => setCollapsed((v) => !v)}
-          className="shrink-0 rounded p-0 text-primary sm:hidden cursor-pointer -translate-y-0"
-          aria-label={collapsed ? "Expand filters" : "Collapse filters"}
-        >
-          {/* transition-transform + duration-200 animates the rotation smoothly */}
-          {/* rotate-180 flips the chevron to point up when expanded */}
-          <IconChevronDown
-            size={24} stroke={4.5}
-            strokeLinecap="square" strokeLinejoin="miter"
-            className={`transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-180"}`}
-          />
-        </button>
-      </div>
+        <IconChevronDown
+          size={24} stroke={4.5}
+          strokeLinecap="square" strokeLinejoin="miter"
+          className={`shrink-0 text-primary transition-transform duration-200 ${collapsed ? "rotate-0" : "rotate-180"}`}
+        />
+      </button>
       {/* Extra bottom breathing room when collapsed — the card's p-4 is there but feels tight */}
       {/* {collapsed && <div className="h-2 sm:hidden" />} */}
 
@@ -298,13 +312,13 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           height between 0 and "auto". grid-rows-[0fr] collapses to zero height,
           grid-rows-[1fr] expands to the content's natural height, and
           transition-[grid-template-rows] animates smoothly between them.
-          On sm+ the panel never collapses, so we force grid-rows-[1fr]. */}
-      <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out sm:grid-rows-[1fr] ${
+          Clicking the logo toggles collapsed on both mobile and desktop. */}
+      <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
         collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       }`}>
         {/* overflow-y-clip clips content vertically for the collapse animation
             while allowing horizontal overflow (e.g. negative-margin buttons) */}
-        <div className="overflow-y-clip">
+        <div className="min-h-0 overflow-y-clip">
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
           {/* Search bar only shows when admin mode is toggled on */}
@@ -314,9 +328,37 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             </div>
           )}
           <div id="SLIDER-LABEL" className="mt-4 mb-2 flex items-baseline justify-between">
-            <LabelTip text={`Showing all stations within ${formatDuration(maxMinutes)} public transport travel from central London on a Saturday morning`}>
-              <span className="text-sm font-medium">Max time from London</span>
-            </LabelTip>
+            <span className="flex items-center gap-1 text-sm font-medium">
+              {/* relative so this text renders above the trigger's before: pseudo-element */}
+              <span className="relative">Max time from</span>
+              {/* Chevron dropdown — clicking the origin name or chevron opens it */}
+              {primaryOrigins.length > 1 ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    {/* relative + before: pseudo-element creates the hover background
+                        BEHIND adjacent text. -z-10 on the pseudo puts it below sibling
+                        spans that have `relative`, while the button itself stays clickable. */}
+                    <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit hover:text-accent-foreground data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                      {originDisplayName(primaryOrigin)}
+                      <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {primaryOrigins.map((origin) => (
+                      <DropdownMenuCheckboxItem
+                        key={origin}
+                        checked={origin === primaryOrigin}
+                        onCheckedChange={() => onPrimaryOriginChange(origin)}
+                      >
+                        {originDisplayName(origin)}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                originDisplayName(primaryOrigin)
+              )}
+            </span>
             {/* Shows the current value, styled as secondary info */}
             <span className="text-sm font-extrabold text-primary">
               {formatDuration(maxMinutes)}
@@ -388,7 +430,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           </div>
 
           {/* Friend origin: show slider when active, button when not */}
-          {adminMode && !friendOrigin && (
+          {!friendOrigin && (
             <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground" onClick={onActivateFriend}>
               <IconPlus size={14} />
               Add friend&apos;s home station
@@ -396,21 +438,41 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           )}
           {friendOrigin && (
             <>
-              {/* Label row with dismiss button on hover */}
-              <div className="group mt-3 flex items-baseline justify-between">
+              {/* Label row with dropdown switcher and dismiss button */}
+              <div className="group mt-3 mb-2 flex items-baseline justify-between">
                 <span className="flex items-center gap-1 text-sm font-medium">
-                  Max time from {friendOrigin}
-                  {/* X button — visible on hover (or always on touch) */}
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="cursor-pointer text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={onDeactivateFriend}
-                  >
-                    <IconX size={12} />
-                  </Button>
+                  {/* relative so this text renders above the trigger's before: pseudo-element */}
+                  <span className="relative">Max time from</span>
+                  {/* Clicking the origin name or chevron opens the dropdown */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit hover:text-accent-foreground data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                        {originDisplayName(friendOrigin)}
+                        <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {friendOrigins.map((origin) => (
+                        <DropdownMenuCheckboxItem
+                          key={origin}
+                          checked={origin === friendOrigin}
+                          onCheckedChange={() => onFriendOriginChange(origin)}
+                        >
+                          {originDisplayName(origin)}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                      {/* Separator + "None" deactivates friend mode entirely */}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem
+                        checked={false}
+                        onCheckedChange={() => onDeactivateFriend()}
+                      >
+                        None
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </span>
-                <span className="text-sm font-extrabold text-primary">
+                <span className="whitespace-nowrap text-sm font-extrabold text-primary">
                   {formatDuration(friendMaxMinutes)}
                 </span>
               </div>

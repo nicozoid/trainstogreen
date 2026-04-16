@@ -314,6 +314,9 @@ async function main() {
     // Skip all origin stations — they're origins, not destinations
     if (originStations.has(name.toLowerCase())) return false
 
+    // Skip stations outside the geographic range
+    if (!feature.properties.inRange) return false
+
     // If --station is set, only include that specific station
     if (STATION_FILTER && name.toLowerCase() !== STATION_FILTER.toLowerCase()) {
       return false
@@ -359,25 +362,46 @@ async function main() {
 
     const [lng, lat] = feature.geometry.coordinates
 
-    // Query both dates and collect all route alternatives
-    let bestJourney = null
+    // Query both dates and track the best journey per date separately,
+    // so we can check whether the two dates give consistent results.
+    const bestPerDate = [null, null]
 
-    for (const departureTime of DEPARTURE_TIMES) {
-      const routes = await queryRoutes(lat, lng, departureTime)
+    for (let i = 0; i < DEPARTURE_TIMES.length; i++) {
+      const routes = await queryRoutes(lat, lng, DEPARTURE_TIMES[i])
 
       for (const route of routes) {
         const parsed = parseRoute(route)
         if (!parsed) continue
 
         if (
-          !bestJourney ||
-          parsed.durationMinutes < bestJourney.durationMinutes
+          !bestPerDate[i] ||
+          parsed.durationMinutes < bestPerDate[i].durationMinutes
         ) {
-          bestJourney = parsed
+          bestPerDate[i] = parsed
         }
       }
 
       await sleep(150) // rate limiting between queries
+    }
+
+    // Overall best journey across both dates
+    const bestJourney = bestPerDate.reduce((best, j) => {
+      if (!j) return best
+      if (!best || j.durationMinutes < best.durationMinutes) return j
+      return best
+    }, null)
+
+    // Record whether the fastest times on each date were consistent
+    // (≤5 min difference). Also store which dates were compared.
+    if (bestJourney) {
+      const mins0 = bestPerDate[0]?.durationMinutes ?? null
+      const mins1 = bestPerDate[1]?.durationMinutes ?? null
+      const bothFound = mins0 != null && mins1 != null
+
+      bestJourney.consistencyCheck = {
+        isConsistent: bothFound ? Math.abs(mins0 - mins1) <= 5 : null,
+        dates: DEPARTURE_DATES.map((d) => d.toISOString().slice(0, 10)),
+      }
     }
 
     // Compare with the previous result if one exists (only relevant with --recompute)
