@@ -110,6 +110,25 @@ function decodePolyline(encoded: string): [number, number][] {
   return coords
 }
 
+// Mapbox GL expression that formats a minutes property as "Xh Ym" or "Xm".
+// Reused across full-labels, hover-labels, and dual-origin labels.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function timeExpression(prop: string): any {
+  const mins = ["coalesce", ["get", prop], 0]
+  return ["case",
+    [">=", mins, 60],
+    ["concat",
+      ["to-string", ["floor", ["/", mins, 60]]], "h",
+      ["case",
+        [">", ["%", mins, 60], 0],
+        ["concat", " ", ["to-string", ["%", mins, 60]], "m"],
+        ""
+      ]
+    ],
+    ["concat", ["to-string", mins], "m"]
+  ]
+}
+
 // Farringdon Station — used as the centre of London for the London marker on the map
 const LONDON_CENTRE = { lat: 51.5203, lng: -0.1053 }
 
@@ -284,6 +303,9 @@ export default function HikeMap() {
   const [stations, setStations] = useState<StationCollection | null>(null)
   // Start at 180min (the max) so all stations are visible on load
   const [maxMinutes, setMaxMinutes] = useState(120)
+  // Friend origin mode — when non-null, a second origin filters stations
+  const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
@@ -402,11 +424,20 @@ export default function HikeMap() {
     return {
       ...stations,
       features: stations.features.filter((f) => {
+        // In admin mode, origin stations always pass all filters
+        if (f.properties.isOrigin && devExcludeActive) return true
+        // Origin stations are hidden in normal mode
+        if (f.properties.isOrigin) return false
+
         const mins = f.properties.londonMinutes as number | null
         if (mins == null || mins > maxMinutes) return false
-        // Origin stations (except Farringdon, which has its own London marker)
-        // are only visible in admin mode
-        if (f.properties.isOrigin && !devExcludeActive) return false
+        // When friend mode is active, also require the station to be reachable
+        // from the friend's origin within the friend's max travel time
+        if (friendOrigin) {
+          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
+          const friendMins = journeys?.[friendOrigin]?.durationMinutes
+          if (friendMins == null || friendMins > friendMaxMinutes) return false
+        }
         // In dev mode, also hide stations excluded this session (before hot-reload kicks in).
         // Read coordKey from properties — it was stamped in at load time from the original
         // coordinates, so it's guaranteed to match what the click handler stored.
@@ -414,7 +445,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, sessionExcluded, devExcludeActive])
+  }, [stations, maxMinutes, friendOrigin, friendMaxMinutes, sessionExcluded, devExcludeActive])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -438,11 +469,19 @@ export default function HikeMap() {
       ...displayedStations,
       features: displayedStations.features.map(f => {
         const r = ratings[f.properties.coordKey as string]
-        if (!r) return f
-        return { ...f, properties: { ...f.properties, rating: r } }
+        const extra: Record<string, unknown> = {}
+        if (r) extra.rating = r
+        // Flatten friend journey duration so Mapbox label expressions can read it
+        if (friendOrigin) {
+          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
+          const mins = journeys?.[friendOrigin]?.durationMinutes
+          if (mins != null) extra.friendMinutes = mins
+        }
+        if (Object.keys(extra).length === 0) return f
+        return { ...f, properties: { ...f.properties, ...extra } }
       }),
     }
-  }, [displayedStations, ratings])
+  }, [displayedStations, ratings, friendOrigin])
 
   // Categories just toggled on — their icons get isNew=1 and grow in.
   const newlyAddedRatings = useMemo(() => {
@@ -780,11 +819,23 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
-    if (!journeys) return null
-    const polyline = Object.values(journeys).find((j) => j?.polyline)?.polyline
+    // Explicitly use Farringdon polyline (not first-found) to avoid picking up friend origin's
+    const polyline = journeys?.["Farringdon"]?.polyline
     if (!polyline) return null
     return decodePolyline(polyline)
   }, [hovered, stations])
+
+  // Friend origin polyline — same logic but for the friend's journey
+  const hoveredFriendJourneyCoords = useMemo(() => {
+    if (!friendOrigin || !hovered || !stations) return null
+    const feature = stations.features.find(
+      (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
+    )
+    const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
+    const polyline = journeys?.[friendOrigin]?.polyline
+    if (!polyline) return null
+    return decodePolyline(polyline)
+  }, [friendOrigin, hovered, stations])
 
   // The animated journey line GeoJSON — grows from origin to destination over time.
   // Starts with 0 points, progressively adds more, ends with the full line.
@@ -868,6 +919,78 @@ export default function HikeMap() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hoveredJourneyCoords])
+
+  // --- Friend origin polyline animation (mirrors London polyline above) ---
+  const [friendJourneyLine, setFriendJourneyLine] = useState(emptyLine)
+  const [friendJourneyOpacity, setFriendJourneyOpacity] = useState(0)
+  const friendJourneyAnimRef = useRef<number | null>(null)
+  const friendJourneyFadeRef = useRef<number | null>(null)
+  const prevFriendJourneyKey = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!hoveredFriendJourneyCoords) {
+      prevFriendJourneyKey.current = null
+      return
+    }
+    if (friendJourneyFadeRef.current) {
+      cancelAnimationFrame(friendJourneyFadeRef.current)
+      friendJourneyFadeRef.current = null
+    }
+    const key = hovered?.coordKey ?? null
+    if (key === prevFriendJourneyKey.current) return
+
+    prevFriendJourneyKey.current = key
+    if (friendJourneyAnimRef.current) cancelAnimationFrame(friendJourneyAnimRef.current)
+    setFriendJourneyOpacity(0.5)
+
+    const coords = hoveredFriendJourneyCoords
+    const total = coords.length
+    const start = performance.now()
+
+    function step(now: number) {
+      const elapsed = now - start
+      const t = Math.min(elapsed / JOURNEY_ANIM_MS, 1)
+      const eased = 1 - Math.pow(1 - t, 3)
+      const count = Math.max(2, Math.round(eased * total))
+      setFriendJourneyLine({
+        type: "Feature" as const,
+        geometry: { type: "LineString" as const, coordinates: coords.slice(0, count) },
+        properties: {},
+      })
+      if (t < 1) friendJourneyAnimRef.current = requestAnimationFrame(step)
+    }
+    friendJourneyAnimRef.current = requestAnimationFrame(step)
+
+    return () => {
+      if (friendJourneyAnimRef.current) cancelAnimationFrame(friendJourneyAnimRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredFriendJourneyCoords, hovered])
+
+  useEffect(() => {
+    if (hoveredFriendJourneyCoords) return
+    if (friendJourneyOpacity === 0) return
+
+    const start = performance.now()
+    const startOpacity = friendJourneyOpacity
+
+    function fade(now: number) {
+      const t = Math.min((now - start) / JOURNEY_FADE_MS, 1)
+      setFriendJourneyOpacity(startOpacity * (1 - t))
+      if (t < 1) {
+        friendJourneyFadeRef.current = requestAnimationFrame(fade)
+      } else {
+        friendJourneyFadeRef.current = null
+        setFriendJourneyLine(emptyLine)
+      }
+    }
+    friendJourneyFadeRef.current = requestAnimationFrame(fade)
+
+    return () => {
+      if (friendJourneyFadeRef.current) cancelAnimationFrame(friendJourneyFadeRef.current)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hoveredFriendJourneyCoords])
 
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
@@ -1132,6 +1255,11 @@ export default function HikeMap() {
         onSearchChange={setSearchQuery}
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
+        friendOrigin={friendOrigin}
+        friendMaxMinutes={friendMaxMinutes}
+        onFriendMaxMinutesChange={setFriendMaxMinutes}
+        onActivateFriend={() => setFriendOrigin("Nottingham")}
+        onDeactivateFriend={() => setFriendOrigin(null)}
       />
 
       <WelcomeBanner
@@ -1252,6 +1380,19 @@ export default function HikeMap() {
               "line-color": "#2f6544",
               "line-width": 2.5,
               "line-opacity": journeyOpacity,
+            }}
+          />
+        </Source>
+
+        {/* Friend origin polyline — same as above but for the second origin */}
+        <Source id="friend-journey-line" type="geojson" data={friendJourneyLine}>
+          <Layer
+            id="friend-journey-line-stroke"
+            type="line"
+            paint={{
+              "line-color": "#2f6544",
+              "line-width": 2.5,
+              "line-opacity": friendJourneyOpacity,
             }}
           />
         </Source>
@@ -1617,19 +1758,11 @@ export default function HikeMap() {
                   "format",
                   ["get", "name"], { "font-scale": 1 },
                   "\n", {},
-                  ["case",
-                    [">=", ["coalesce", ["get", "londonMinutes"], 0], 60],
-                    ["concat",
-                      ["to-string", ["floor", ["/", ["coalesce", ["get", "londonMinutes"], 0], 60]]], "h",
-                      ["case",
-                        [">", ["%", ["coalesce", ["get", "londonMinutes"], 0], 60], 0],
-                        ["concat", " ", ["to-string", ["%", ["coalesce", ["get", "londonMinutes"], 0], 60]], "m"],
-                        ""
-                      ]
-                    ],
-                    ["concat", ["to-string", ["coalesce", ["get", "londonMinutes"], 0]], "m"]
-                  ],
-                  { "font-scale": 0.8 },
+                  // When friend mode is active, show both times separated by " & "
+                  ...(friendOrigin
+                    ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
+                    : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
+                  ),
                 ],
                 "text-size": 11,
                 "text-offset": [0, 1.4],
@@ -1659,19 +1792,10 @@ export default function HikeMap() {
                     "format",
                     ["get", "name"], { "font-scale": 1 },
                     "\n", {},
-                    ["case",
-                      [">=", ["coalesce", ["get", "londonMinutes"], 0], 60],
-                      ["concat",
-                        ["to-string", ["floor", ["/", ["coalesce", ["get", "londonMinutes"], 0], 60]]], "h",
-                        ["case",
-                          [">", ["%", ["coalesce", ["get", "londonMinutes"], 0], 60], 0],
-                          ["concat", " ", ["to-string", ["%", ["coalesce", ["get", "londonMinutes"], 0], 60]], "m"],
-                          ""
-                        ]
-                      ],
-                      ["concat", ["to-string", ["coalesce", ["get", "londonMinutes"], 0]], "m"]
-                    ],
-                    { "font-scale": 0.8 },
+                    ...(friendOrigin
+                      ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
+                      : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
+                    ),
                   ],
                   "text-size": 11,
                   "text-offset": [0, 1.4],
@@ -1717,6 +1841,7 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             journeys={displayStation.journeys}
+            friendOrigin={friendOrigin}
           />
         )}
         </>}

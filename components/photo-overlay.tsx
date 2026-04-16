@@ -71,6 +71,8 @@ type StationModalProps = {
   onSaveNotes?: (publicNote: string, privateNote: string) => void
   /** Journey data keyed by origin station name (e.g. "Farringdon") */
   journeys?: Record<string, JourneyInfo>
+  /** Friend origin station name — when set, shows dual journey info */
+  friendOrigin?: string | null
 }
 
 // Formats minutes as "Xh Ym" or "Xm"
@@ -81,33 +83,42 @@ function formatMinutes(minutes: number): string {
   return m === 0 ? `${h} hour` : `${h} hour and ${m} minutes`
 }
 
-// Builds a travel description from journey data, e.g.
-// "1 hour from Farringdon. 2 changes: St Pancras and South Croydon"
-// Falls back to the simple "Xh Ym from central London." if no journey data.
-function journeyDescription(
-  minutes: number,
-  journeys?: Record<string, JourneyInfo>
-): string {
-  // Pick the first available origin's journey
-  const entry = journeys ? Object.entries(journeys).find(([, j]) => j) : undefined
-  if (!entry) return `${formatMinutes(minutes)} from central London.`
-
-  const [origin, journey] = entry
+// Formats a single origin's journey, e.g.
+// "1 hour from Farringdon. Two changes: St Pancras and South Croydon."
+function singleOriginDescription(origin: string, journey: JourneyInfo): string {
   const time = formatMinutes(journey.durationMinutes)
   const { changes, legs } = journey
 
   if (changes === 0) return `${time} from ${origin}. Direct train.`
 
-  // Change stations are where you get off one train and board the next —
-  // that's the arrivalStation of every leg except the last one
   const changeStations = legs.slice(0, -1).map((leg) => leg.arrivalStation)
   const changeList =
     changeStations.length <= 2
       ? changeStations.join(" and ")
       : changeStations.slice(0, -1).join(", ") + " and " + changeStations.at(-1)
 
+  const changeNumber = ["Zero", "One", "Two", "Three", "Four", "Five"][changes] ?? String(changes)
   const changeWord = changes === 1 ? "change" : "changes"
-  return `${time} from ${origin}. ${changes} ${changeWord}: ${changeList}.`
+  return `${time} from ${origin}. ${changeNumber} ${changeWord}: ${changeList}.`
+}
+
+// Builds travel description — shows both origins when friend mode is active.
+function journeyDescription(
+  minutes: number,
+  journeys?: Record<string, JourneyInfo>,
+  friendOrigin?: string | null
+): string {
+  const entry = journeys ? Object.entries(journeys).find(([, j]) => j) : undefined
+  if (!entry) return `${formatMinutes(minutes)} from central London.`
+
+  const [origin, journey] = entry
+  let desc = singleOriginDescription(origin, journey)
+
+  if (friendOrigin && journeys?.[friendOrigin]) {
+    desc += " " + singleOriginDescription(friendOrigin, journeys[friendOrigin])
+  }
+
+  return desc
 }
 
 // Builds a Komoot discover URL for hiking near a station.
@@ -179,6 +190,7 @@ export default function StationModal({
   privateNote = "",
   onSaveNotes,
   journeys,
+  friendOrigin,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -368,7 +380,7 @@ export default function StationModal({
                 {stationName} Station
               </DialogTitle>
               <DialogDescription className="text-sm">
-                {journeyDescription(minutes, journeys)}
+                {journeyDescription(minutes, journeys, friendOrigin)}
               </DialogDescription>
             </div>
 
