@@ -1,0 +1,1900 @@
+{
+  "Paddington": {
+    "Kings Cross": {
+      "minutes": 17,
+      "polyline": "yrlyHtha@j@jACFQZFHqAvBw@cBoN~LtAzAx@uBrCsEd@uAViB^qEAsAMoAu@mEcAyDgG{MoDiH{@yB_AwCsBgJk@}Dw@{H}@yJgG}l@q@_HW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPaKs]y@|@_EeGRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 16,
+      "polyline": "yrlyHtha@j@jACFQZFHqAvBw@cBoN~LtAzAx@uBrCsEd@uAViB^qEAsAMoAu@mEcAyDgG{MoDiH{@yB_AwCsBgJk@}Dw@{H}@yJgG}l@q@_HW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPaKs]y@|@Yo@DCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 18,
+      "polyline": "yrlyHtha@j@jACFQZFHqAvBw@cBoN~LtAzAx@uBrCsEd@uAViB^qEAsAMoAu@mEcAyDgG{MoDiH{@yB_AwCsBgJk@}Dw@{H}@yJgG}l@q@_HW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCYcCEB_@OJEc@aC}AgGBC@OKJCGABEQCBeAkDI[yAdBGAQ?g@p@[gA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 18,
+      "polyline": "urlyHhfa@]n@nHtOpBpEh@bBp@vCb@bDn@dHPbDf@fW`@pL`@tGl@dG\\`Cd@nCv@pDd@xAb@l@l@l@fAr@pAb@~ATd@@r@E~A[f]sIjEaA\\OfFwD|@u@fEeErB{Bl@{@vBiEb@k@fMwKl@u@|@gBx@_C^cBbC_SXmDLcDFgDIa`@Z}ZViM\\eZFkDVaE^sDj@sD|ByL|AmJPgBRqCF{ADyAEoDSoDSwBKs@u@yC]cAa@cA{AiC{@eA}C{CuEqDeAcAy@mA]w@SsAIwBGwDlCKGkB?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 21,
+      "polyline": "grlyHzga@[NgEPeDDCw@SkB_@sBgDiIsDoGqDkEoBwCu@aBw@aC_AkE_@qB_@kC_B{SqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Br@oH|@kIl@sEZqBf@sBTe@\\_@|AsAjCgCd@w@h@{ANs@vCoSNi@T_@TSKc@WaTUr@]lBEl@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 21,
+      "polyline": "grlyHzga@[NuDrLcAiCrJoMhCoEf@oAp@mCNuBNyFFgG]seASiRK}CyCkk@oCmd@mEo_AiA}Q_@qBwEyQyC}K_AgE_BiKe@aEc@}Fk@eKSwT?uPR}UCqDUcNUsJQoOBaCAPRiDVyBnDsVnDgTtAmNd@eFCAx@aVBI[QH]EEMNDJUjB",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 9,
+      "polyline": "grlyHzga@[NgEPeDDCw@SkB_@sBgDiIsDoGqDkEoBwCu@aBw@aC_AkE_@qB_@kC}@yLLCs@RDeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 19,
+      "polyline": "grlyHzga@[NgEPeDDCw@SkB_@sBgDiIsDoGqDkEoBwCu@aBw@aC_AkE_@qB_@kC_B{SqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Bj@{FKCgEsINPbArAHHF@FDVb@Zu@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 27,
+      "polyline": "grlyHzga@[NgEPeDDCw@SkB_@sBgDiIsDoGqDkEoBwCu@aBw@aC_AkE_@qB_@kC_B{SqBy`@w@LK_@FRhAkA`@q@Xw@Ls@LkB@uACk@}AmOW_J[_IDeAXqAn@yA\\m@^[h@Sr@MfADTDnJdGzF`EzBrApAn@pC~@tDn@lAJfA@dACzBUdKeB|HyApMkDt@g@~@cAZi@p@}An@mBb@oBR}AHoB@kDSoXFq@RcAv@sBd@y@~@qAt@_Av@s@pAgAtBsBt@gAh@_Ap@aBjMu`@d@wBNaA\\{Cb@_GRiDP}FB_FAsBQmHUsD]yCcAkFa@wB{F}U}@oEq@gE}@mH_ByOk@gFI}AAcBPaKJoHJ_IPaF_@qYGcGKqB_@eEUoAcBcGYkB_ByNC@bCoJ?SK?@m@CBIO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 24,
+      "polyline": "urlyHhfa@]n@nHtOpBpEh@bBp@vCb@bDn@dHPbDf@fW`@pL`@tGl@dG\\`Cd@nCv@pDd@xAb@l@l@l@fAr@pAb@~ATd@@r@E~A[f]sIjEaA\\OfFwD|@u@fEeErB{Bl@{@vBiEb@k@fMwKl@u@|@gBx@_C^cBbC_SXmDLcDFgDIa`@Z}ZViM\\eZFkDVaE^sDj@sD|ByL|AmJPgBRqCF{ADyAEoDSoDSwBKs@u@yC]cAa@cA{AiC{@eA}C{CuEqDeAcAy@mA]w@SsAIwBMmHQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 31,
+      "polyline": "yrlyHtha@j@jACFQZFHqAvBw@cBoN~LtAzAx@uBrCsEd@uAViB^qEAsAMoAu@mEcAyDgG{MoDiH{@yB_AwCsBgJk@}Dw@{H}@yJgG}l@q@_HW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPkLu`@aA}Ca@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTjEwWp@gGtCc\\`@iCpB}Jp@kCdB_GbBcE|@iBpAqBh@o@AGh@ILC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 27,
+      "polyline": "urlyHhfa@]n@nHtOpBpEh@bBp@vCb@bDn@dHPbDf@fW`@pL`@tGl@dG\\`Cd@nCv@pDd@xAb@l@l@l@fAr@pAb@~ATd@@r@E~A[f]sIjEaA\\OfFwD|@u@fEeErB{Bl@{@vBiEb@k@fMwKl@u@|@gBx@_C^cBbC_SXmDLcDFgDIa`@Z}ZViM\\eZFkDVaE^sDj@sD|ByL|AmJPgBRqCF{ADyAEoDSoDSwBKs@u@yC]cAa@cA{AiC{@eA}C{CuEqDeAcAy@mA]w@SsAIwBMmHQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Kings Cross": {
+    "Paddington": {
+      "minutes": 17,
+      "polyline": "oroyHvdWSBrEvFf@i@~Jl]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxH|u@rA~Nn@vF\\zBrBfJ~@vCz@xBnDhHfGzMbAxD|@vFFv@?hA_@hEWhBe@tAsCrEy@rBmAuAfNcMv@bBpAwBGITc@k@kA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 5,
+      "polyline": "sroyHvdW?b@a@~BIX?Ni@`@Ll@XYbAm@\\_@RKHOd@YJCHINr@Jt@f@|B",
+      "vehicleType": "WALK",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 6,
+      "polyline": "oroyHvdWSB{BnBlDkAlAtM`@lCPr@pM`c@FIU|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 15,
+      "polyline": "sroyHvdWCQ?{BA?][^MrBtT`@lCPr@xMtc@jCnHrBxGtAtDjAzBvC`E|ErFlBnBtBnBfBlAhDnB|Av@dBl@bBZhBPfABrAE`Gu@tIqAb@IpBOpBDbAFhDh@lAVtAf@rDnB|Aj@tB\\`BHbCEfCQrHuAnFQfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 22,
+      "polyline": "sroyHvdWCQ?{BA?][^MrBtT`@lCPr@xMtc@jCnHrBxGtAtDjAzBvC`E|ErFlBnBtBnBfBlAhDnB|Av@dBl@bBZhBPfABrAE`Gu@tIqAb@IpBOpBDbAFhDh@lAVtAf@rDnB|Aj@tB\\`BHbCEfCQrHuAb@CEeCh@gE_BF?aCNmA`@qAp@{ArAmBt@_Av@s@pAgAtBsBt@gAh@_Ap@aBjMu`@d@wBNaA\\{Cb@_GRiDP}FB_FAsBQmHUsD]yCcAkFa@wB{F}U}@oEq@gEk@qEC@[PAFDDU~ACX",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 16,
+      "polyline": "oroyHvdWSB~DdGp@s@aAaDa@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMzBeO|@iLx@mJRsCMECgNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 17,
+      "polyline": "oroyHvdWSBrEvFf@i@~Jl]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxCxYLGqBlEBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 21,
+      "polyline": "sroyHvdWCQ?{BA?][^MrBtT`@lCPr@xMtc@jCnHrBxGtAtDjAzBvC`E|ErFlBnBtBnBfBlAhDnB|Av@dBl@bBZhBPfABrAE`Gu@tIqA@F@?AEdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Bj@{FKCgEsINPbArAHHF@FDVb@Zu@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 17,
+      "polyline": "oroyHvdWSB_C~AdEaAqB{YgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{BrAcBtC_DxAsAdAy@rC}Ah@KtABxGl@zAJpANvCn@jAh@zFdH`@l@Q`@YaOABdAj@Ha@D?HY",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 12,
+      "polyline": "oroyHvdWSByEhU]aBfF{Dv@}@Zw@T}@ToBBw@A{@]cDQ_AUoBIoB@eCLwBz@_FZqAp@gBfLmVjA{BpG_LrBiEzBuDjAaB~CeFbDmDnBgCnAsAxEaE~EmD|@a@dKyBjAMfKS~HEdGUvEs@~BO|BJ@SkJfDLQ",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 20,
+      "polyline": "oroyHvdWSB~DdGp@s@aAaDa@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMzBeO|@iLx@mJVcDn@iElByJhBaHl@iBpB_FfB_DX_@f@k@HX^o@LC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 17,
+      "polyline": "oroyHvdWSB_C~AdEaAqB{YgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{B`@i@HRzKsEBAB@aBlOPFG^VJZFB@FK",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "St Pancras": {
+    "Paddington": {
+      "minutes": 17,
+      "polyline": "aloyHpoWa@iBSYEBl@`@f@i@~Jl]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxH|u@rA~Nn@vF\\zBrBfJ~@vCz@xBnDhHfGzMbAxD|@vFFv@?hA_@hEWhBe@tAsCrEy@rBmAuAfNcMv@bBpAwBGITc@k@kA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 5,
+      "polyline": "aloyHpoWi@cCQiAGYSLk@\\KPYPQRqAv@KNMm@h@a@?OLc@\\uB?c@",
+      "vehicleType": "WALK",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 7,
+      "polyline": "aloyHpoWa@iBSYEBaHeBlDkAlAtM`@lCPr@pM`c@FIU|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 16,
+      "polyline": "aloyHpoWa@iBSYEByDcK^MrBtT`@lCPr@xMtc@jCnHrBxGtAtDjAzBvC`E|ErFlBnBtBnBfBlAhDnB|Av@dBl@bBZhBPfABrAE`Gu@tIqAb@IpBOpBDbAFhDh@lAVtAf@rDnB|Aj@tB\\`BHbCEfCQrHuAnFQfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 24,
+      "polyline": "aloyHpoWR`AVJ`@S`@pAGFFVDEdAlDP|@JVBE~BtHD`@V|@mAfAMVBd@jAhEOFJ\\HKFPFI@P\\jA}AdBLXCXi@tE?@zAbFhBbGn@rBp@~B^v@\\`@dAl@|@Rz@BdAQdBw@`CwAdBoAlFyEvJcJjMwM`FyEv@m@d@S`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAnF{MjFsLX{@ZeBfFm]b@eB\\}@`@o@fAeAhGuEr@c@CUaBcD?BMDDg@Ja@X{B",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 16,
+      "polyline": "aloyHpoWa@iBSYEBXn@x@}@kB_Ga@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTjEwWp@gGfCwYMECgNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 17,
+      "polyline": "aloyHpoWa@iBSYEBl@`@f@i@~Jl]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxCxYLGqBlEBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 23,
+      "polyline": "aloyHpoWR`AVJ`@S`@pAGFFVDEdAlDP|@JVBE~BtHD`@V|@mAfAMVBd@jAhEOFJ\\HKFPFI@P\\jA}AdBLXCXi@tE?@zAbFhBbGn@rBp@~B^v@\\`@dAl@|@Rz@BdAQdBw@`CwAdBoAlFyEvJcJjMwM`FyEv@m@d@S`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAtEgLCEz@RC@A@GOKNl@zAv@iBDY|AuD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 18,
+      "polyline": "aloyHpoWa@iBSYEBeHuBdEaAqB{YgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{BrAcBtC_DxAsAdAy@rC}Ah@KtABxGl@zAJpANvCn@jAh@zFdH`@l@Q`@YaOABdAj@Ha@D?HY",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 13,
+      "polyline": "aloyHpoWa@iBSYEB_KrN]aBfF{Dv@}@Zw@T}@ToBBw@A{@]cDQ_AUoBIoB@eCLwBz@_FZqAp@gBfLmVjA{BpG_LrBiEzBuDjAaB~CeFbDmDnBgCnAsAxEaE~EmD|@a@dKyBjAMfKS~HEdGUvEs@~BO|BJ@SkJfDLQ",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 20,
+      "polyline": "aloyHpoWa@iBSYEBXn@p@s@aAaDa@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMzBeO|@iLx@mJVcDn@iElByJhBaHl@iBpB_FfB_DX_@f@k@HX^o@LC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 18,
+      "polyline": "aloyHpoWa@iBSYEBeHuBdEaAqB{YgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{B`@i@HRzKsEBAB@aBlOPFG^VJZFB@FK",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Euston": {
+    "Paddington": {
+      "minutes": 18,
+      "polyline": "c`oyHr~XZfAf@q@P?F@xAeBnAfEEHDHJIBFJKANCBbBzG\\lBKDt@?QFZfCnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxH|u@rA~Nn@vF\\zBrBfJ~@vCz@xBnDhHfGzMbAxD|@vFFv@?hA_@hEWhBe@tAsCrEy@rBmAuAfNcMv@bBpAwBGITc@k@kA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 7,
+      "polyline": "{boyHjaYnB]Iq@PQeMab@W_AKo@o@sH_@iGeE`A~B_BRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 7,
+      "polyline": "{boyHjaYnB]Iq@PQeMab@W_AKo@o@sH_@iGeE`AdHtBDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 13,
+      "polyline": "{boyHjaYnB]@{@DExCpIrBxGtAtDjAzBvC`E|ErFlBnBtBnBfBlAhDnB|Av@dBl@bBZhBPfABrAE`Gu@tIqAb@IpBOpBDbAFhDh@lAVtAf@rDnB|Aj@tB\\`BHbCEfCQrHuAnFQfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 14,
+      "polyline": "c`oyHr~Xh@fBSVkBV?@zAbFhBbGn@rBp@~B^v@\\`@dAl@|@Rz@BdAQdBw@`CwAdBoAlFyEvJcJjMwM`FyEv@m@d@S`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAnF{MjFsLX{@ZeBfFm]b@eB\\}@`@o@fAeAhGuEr@c@CUaBcD?BMDDg@Ja@X{B",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 21,
+      "polyline": "c`oyHr~XZfAf@q@P?F@xAeBnAfEEHDHJIBFJKANCBbBzG\\lBKD^NC?MmAk@yCgEkQqC{KkDoL_H{Ta@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMzBeO|@iLx@mJRsCMECgNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 18,
+      "polyline": "c`oyHr~XZfAf@q@P?F@xAeBnAfEEHDHJIBFJKANCBbBzG\\lBKDt@?QFZfCnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxCxYLGqBlEBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 13,
+      "polyline": "c`oyHr~Xh@fBSVkBV?@zAbFhBbGn@rBp@~B^v@\\`@dAl@|@Rz@BdAQdBw@`CwAdBoAlFyEvJcJjMwM`FyEv@m@d@S`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAtEgLCEz@RC@A@GOKNl@zAv@iBDY|AuD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 18,
+      "polyline": "{boyHjaYnB]Iq@PQeMab@W_AKo@o@sHq@yKcAkN[_FgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{BrAcBtC_DxAsAdAy@rC}Ah@KtABxGl@zAJpANvCn@jAh@zFdH`@l@Q`@YaOABdAj@Ha@D?HY",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 19,
+      "polyline": "c`oyHr~Xh@fBSVkBV?@zAbFhBbGn@rBp@~B^v@\\`@dAl@|@Rz@BdAQdBw@`CwAdBoAlFyEvJcJjMwM`FyEv@m@d@S`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAnF{MjFsLX{@ZeBDYEANG@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 26,
+      "polyline": "c`oyHr~XZfAf@q@P?F@xAeBnAfEEHDHJIBFJKANCBbBzG\\lBKD^NDC]wB}DqPaEaPkLu`@aA}Ca@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTjEwWp@gGtCc\\`@iCpB}Jp@kCdB_GbBcE|@iBpAqBh@o@AGh@ILC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 18,
+      "polyline": "{boyHjaYnB]Iq@PQeMab@W_AKo@o@sHq@yKcAkN[_FgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@rExAfCrAfAf@rAf@pKtC\\Ep@_@zC{B`@i@HRzKsEBAB@aBlOPFG^VJZFB@FK",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Victoria": {
+    "Paddington": {
+      "minutes": 22,
+      "polyline": "_thyHrc[sCk@cAAO@HxEHxAN|@h@jAbAnAn@l@tEpD|CzCz@dAzAhC`@bAx@pCXjATfBVvDFpBBxBExAGzA[dEe@dDqBhL}AlIe@fD_@|DM`CKbGYlW[hQW|VH``@GfDMbDYlDiCrSYnAy@~B}@fBm@t@sMdLe@r@iBrDm@z@sBzByEtEeBrAyDpCe@NoLnCiWnGe@Hs@DiAGsAWuAm@aAs@q@{@_@{@a@}Ae@_Ce@oC]aCm@eGa@uGg@gPa@qSQcDo@eHc@cDq@wCi@cBeDqH}FwLNW",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 15,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBiDNmHrAgCPcCDaBIuB]}Ak@sDoBuAg@qCk@eBU}BKw@AqBNeG`AgFt@mCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFFvDRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 16,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBiDNmHrAgCPcCDaBIuB]}Ak@sDoBuAg@qCk@eBU}BKw@AqBNeG`AgFt@mCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFlDlKDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 12,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBiDNmHrAgCPcCDaBIuB]}Ak@sDoBuAg@qCk@eBU}BKw@AqBNeG`AgFt@mCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIBCO|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 16,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCcK?@\\xA~@JB}@B_FAsBQmHUsD]yCcAkFa@wB{F}U}@oEq@gEk@qEC@[PAFDDU~ACX",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 29,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaD[aC_@mAg@eAu@cAw@u@{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CCPQmNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 20,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBiDNmHrAgCPcCDaBIuB]}Ak@sDoBuAg@qCk@eBU}BKw@AqBNg@H@BACoMzDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@V|C^K{@~ADeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 13,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAm@c@AFyAdA@CI\\RLJ?t@j@NRPLOtBQJwAbD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 20,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBqBHEoBZ}E_BF?aCNmA`@qAp@{ArAmBt@_Av@s@pAgAtBsBt@gAh@_Ap@aBjMu`@d@wBNaA\\{Cb@_GRiDP}FB_FAsBQmHUsD]yCcAkFa@wB{F}U}@oEq@gE}@mH_ByOk@gFI}AAcBPaKJoHJ_IPaF_@qYGcGKqB_@eEUoAcBcGYkB_ByNC@bCoJ?SK?@m@CBIO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 12,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 24,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 16,
+      "polyline": "_whyHbc[YCESFk@^qBE@EN?AFjBmCJEuBQ_BSkAi@qBw@gCQcAk@aHc@cDg@sBm@gB}CyH]_AuAqFa@qBKiAEgGAeDD_IEaAUoAiByHuCeKe@oAi@{@y@}@_As@sAk@wMmCuCq@wAk@{BmAyEkDoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Waterloo": {
+    "Paddington": {
+      "minutes": 20,
+      "polyline": "cijyHv`U]hCKd@ATLE?CzBrH?DURU^Qn@{C~SMh@o@~A[f@kDdDoAbAQXQb@e@lBi@lDc@pD_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@~AzS^jC^pB~@jEv@`Ct@`BnBvCpDjErDnGfDhI^rBRjBBv@hDAbEUZO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 19,
+      "polyline": "cijyHv`U]hCKd@ATLE?CzBrH?DURU^Qn@{C~SMh@o@~A[f@kDdDoAbAQXQb@e@lBi@lDc@pD_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@kDp@@BACeMlBmCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFFvDRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 22,
+      "polyline": "cijyHv`U]hCKd@ATLE?CzBrH?DURU^Qn@{C~SMh@o@~A[f@kDdDoAbAQXQb@e@lBi@lDc@pD_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@kDp@@BACeMlBmCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFlDlKDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 14,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxAsF~^Sv@u@fB_F|KqFzMOV_@Zy@`@oALwE?_APmF`CyChA{GnBgB`@eCb@w@f@{HrHiLrLuL~KkCzBkD`CaClAw@V}@JaAI{@Y}@m@a@o@Yw@}@aDsAcE{ByHOa@CBnB_@mBg@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 17,
+      "polyline": "cijyHv`UDm@PaAAWj@]KFj@rEnAnHfB|HrDfO`A|Eb@dC\\xCTrDPlH@rBC~EQ|Fg@bI]vDOhAa@|Bk@tB_JpXsAhEq@`Bi@~@u@fAuBrBqAfAw@r@u@~@sAlBq@zAa@pAOlA?jB`CGkA|EDdCjEMfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 26,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxAsF~^Sv@u@fB_F|KqFzMOV_@Zy@`@oALwE?_APmF`CyChA{GnBgB`@uB\\?Ex@bLB?a@iIiA}Q_@qBwEyQyC}K_AgE_BiKe@aEc@}Fk@eKSwT?uPR}UCqDUcNUsJQoOBaCAPRiDVyBnDsVnDgTtAmNd@eFCAx@aVBI[QH]EEMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 18,
+      "polyline": "cijyHv`U]hCKd@ATLE?CzBrH?DURU^Qn@{C~SMh@o@~A[f@kDdDoAbAQXQb@e@lBi@lDc@pD_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@V|C^K{@~ADeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 9,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxAsF~^Sv@u@fB_F|K@@t@LC@A@GOKNl@zAv@iBDY|AuD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 9,
+      "polyline": "cijyHv`UDm@PaAAWZQBA_AwIq@}Gk@gFI}AAcBPaKJoHJ_IPaF_@qYGcGKqB_@eEUoAcBcGYkB_ByNC@bCoJ?SK?@m@CBIO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 14,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxA{Ez[@@FK@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 25,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxA{Ez[@@FK@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 17,
+      "polyline": "cijyHv`U]hCKd@ATLE?CpBzDAG}@h@iGtEgAdAa@n@m@`BYxA{Ez[@@FK@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Liverpool Street": {
+    "Paddington": {
+      "minutes": 22,
+      "polyline": "yamyHryNTkBEKLODDI\\ZPCHo@dVEAiBfR_@bDiEtWyC|SUhDCh@@QCnDVnRVxKPzLCjEOnQ?lPRfTj@hKd@~Ff@hE~AlKtA`GdErO~CfMTxAdAdQxE|bAbC~`@`Dbn@JjGNfOX|dAOpIQxDQ`Au@nCw@zAaCzDuIhLrAjD~CmMZO",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 15,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@APlNgCvYq@fGkEvW}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBxAnEg@h@sEwFRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 14,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@APlNgCvYq@fGkEvW}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBxAnEg@h@m@a@DCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 20,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@APlNi@hHq@nHq@~IyBvNgDdR_A`Gs@fGQ~BMdE?fCJnGbB`QFlACr@SbBYpAOb@QZk@n@sAjBe@f@uBhByDvCc@j@aDbGuJ|OySv`@kGpMq@rBi@hCe@lDElCDjDXdBp@nD`@zAzIpYrBbH|DxOvCbMj@xCLhAXKu@?JEc@aC}AgGBC@OKJCGABEQCBeAkDI[yAdBGAQ?g@p@[gA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 26,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@ABfNLDZkCz@qEhAuFp@kCdB_GbBcE|@iBpAqBdAgAzAgAhAe@~Bq@hAOl@AvAJdA^z@d@bA`A~@zAh@xA\\pBPxBJdD@jCA`BUvFK~BiAzMkAnLg@pGUnEYtHQjB[`BeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBxEjDzBlAvAj@~KbClEz@rAj@tAdAx@fAb@`Al@jB|BfIzBpJHjA?`BEjFF`LHfATtAlA~ETz@hAzCpB|El@fBf@rBb@bDp@vHThAt@zBl@hCVlBFpB@j@NArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 26,
+      "polyline": "yamyHryNTkBEKLODDI\\ZPCHo@dVEAiBfR_@bDiEtWyC|SUhDCh@@QCnDVnRVxKPzLCjEOnQ?lPRfTj@hKd@~Ff@hE~AlKtA`GdErO~CfMTxAdAdQ`@fI@?{@wKAC`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAnF{MjFsLX{@ZeBfFm]b@eB\\}@`@o@fAeAhGuEr@c@CUaBcD?BMDDg@Ja@X{B",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 25,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@APlNgCvYq@fGkEvW}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBzAvE|Jd]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxCxYLGqBlEBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 23,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@ABfNLDZkCz@qEhAuFp@kCdB_GbBcE|@iBpAqBdAgAzAgAhAe@~Bq@hAOl@AvAJdA^z@d@bA`A~@zAh@xA\\pBPxBJdD@jCA`BUvFK~BiAzMkAnLg@pGUnEYtHQjB[`BeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBM_BzA@CI\\RLJ?t@j@NRPLOtBQJwAbD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 11,
+      "polyline": "yamyHryNTkBEKLOr@r@ZR|@z@?BNL@GvAjARNZp@WjD@@F@ZuELTvF|Fp@fA`@x@VTd@RrBj@lBv@dBdAnAz@`@@l@f@DPjBbALJ\\l@Nt@BfAdF~ApQnEBQB?lA\\PHFg@PBAPBBf@qAPUf@[nAwCHW",
+      "vehicleType": "BUS",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 14,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@ABfNLDZkCz@qEhAuFp@kCdB_GbBcE|@iBpAqBdAgAzAgAhAe@~Bq@hAOl@AvAJdA^z@d@bA`A~@zAh@xA\\pBPxBJdD@jCA`BUvFK~BiAzMkAnLg@pGUnEYtHQjB[`BeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWF`EM?",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 14,
+      "polyline": "yamyHryNTkBEKLOr@r@ZRx@v@No@VXJDFTVJ|@qCNG@FVQf@|@FBpAuCLULVpAuCXb@r@r@lAxAJAn@uBJi@dBb@FqCh@BHUPU`@dANWz@dCtAiA^a@",
+      "vehicleType": "WALK",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 12,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@AoAfEw@lFlIlEtD~Bz@z@\\r@h@pBh@r@nA|AZx@jCzMDEj@vE@?d@R@JPE@VxDjB^LHe@PFG^VJZFB@FK",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Marylebone": {
+    "Paddington": {
+      "minutes": 9,
+      "polyline": "s~myHn}^EdAz@_B_@JfA|N^jC^pB~@jEv@`Ct@`BnBvCpDjErDnGfDhI^rBRjBBv@hDAbEUZO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 17,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG|AkDHC}CoZW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPaKs]y@|@_EeGRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 16,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG|AkDHC}CoZW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPaKs]y@|@Yo@DCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 18,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG|AkDHC}CoZW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCYcCEB_@OJEc@aC}AgGBC@OKJCGABEQCBeAkDI[yAdBGAQ?g@p@[gA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 18,
+      "polyline": "s~myHn}^EdAr@SMBa@aFqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqD@DA?AGb@IpBOpBDbAFhDh@lAVtAf@rDnB|Aj@tB\\`BHbCEfCQrHuAnFQfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 19,
+      "polyline": "s~myHn}^EdAr@SMBa@aFqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Br@oH|@kIl@sEZqBf@sBTe@\\_@|AsAjCgCd@w@h@{ANs@vCoSNi@T_@TSKc@WaTUr@]lBEl@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 26,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG|AkDHC}CoZW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPkLu`@aA}Ca@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTjEwWp@gGfCwYMECgNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 17,
+      "polyline": "s~myHn}^EdAr@SMBa@aFqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Bj@{FKCgEsINPbArAHHF@FDVb@Zu@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 23,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG_CmAFRhAkA`@q@Xw@Ls@LkB@uACk@}AmOW_J[_IDeAXqAn@yA\\m@^[h@Sr@MfADTDnJdGzF`EzBrApAn@pC~@tDn@lAJfA@dACzBUdKeB|HyApMkDt@g@~@cAZi@p@}An@mBb@oBR}AHoB@kDSoXFq@RcAv@sBd@y@~@qAt@_Av@s@pAgAtBsBt@gAh@_Ap@aBjMu`@d@wBNaA\\{Cb@_GRiDP}FB_FAsBQmHUsD]yCcAkFa@wB{F}U}@oEq@gE}@mH_ByOk@gFI}AAcBPaKJoHJ_IPaF_@qYGcGKqB_@eEUoAcBcGYkB_ByNC@bCoJ?SK?@m@CBIO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 24,
+      "polyline": "s~myHn}^EdAr@SMBa@aFqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Br@oH|@kIl@sE_Ag@AwA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 31,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCGeAsBBFl@y@HM\\uAJm@Fm@?kAE{A{AiNGcAUuG]wI_@iF_BcPM{A@cBNsC@wAA_AYwCoBcLgCwMqAsKk@yCgEkQqC{KkDoL_H{Ta@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMzBeO|@iLx@mJVcDn@iElByJhBaHl@iBpB_FfB_DX_@f@k@HX^o@LC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 29,
+      "polyline": "s~myHn}^EdAr@SMBa@aFqCui@}@uOkAuLu@yHCcAFaBRoA\\{Ax@cCh@sAh@}@r@k@l[cL^YnAoDNW^Q`MqDdDs@nAe@pGgF|GuFzEkETg@Ro@Nu@NoABkA?mAKiBMiAIgAAkA@qC@yAD[JYjCuCrEaEh@m@\\w@T_AF_Af@aLFiBL}Br@oH|@kIl@sE_Ag@AwA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Charing Cross": {
+    "Paddington": {
+      "minutes": 19,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQxE|IGCi@xFM|BGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@~AzS^jC^pB~@jEv@`Ct@`BnBvCpDjErDnGfDhI^rBRjBBv@hDAbEUZO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 19,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQxE|IGCi@xFM|BGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@kDp@@BACeMlBmCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFFvDRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 20,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQxE|IGCi@xFM|BGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@kDp@@BACeMlBmCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFlDlKDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 14,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@DFCz@LtBE@}AbBsFxMOV_@Zy@`@oALwE?_APmF`CyChA{GnBgB`@eCb@w@f@{HrHiLrLuL~KkCzBkD`CaClAw@V}@JaAI{@Y}@m@a@o@Yw@}@aDsAcE{ByHOa@CBnB_@mBg@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 13,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[AB~A{ACLtA|@rAr@vAj@~KbClEz@rAj@tAdAx@fAb@`Al@jB|BfIzBpJHjA?`BEjFF`LHfATtAlA~ETz@hAzCpB|El@fBf@rBb@bDp@vHThAt@zBl@hCVlBFpB@j@NArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 11,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQzBi@v@mCv@mBl@mBnAkGb@{BfDyOxAkHfCoLf@uELmC@yDEiBWaD[eDIBlD|QUr@]lBEl@",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 25,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[ABxAeA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaD[aC_@mAg@eAu@cAw@u@{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CCPQmNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 17,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQxE|IGCi@xFM|BGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@V|C^K{@~ADeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 15,
+      "polyline": "a`kyHliW[t@Wc@GEMCk@y@[a@OQzBi@v@mCv@mBl@mBnAkGb@{BfDyOxAkHfCoLf@uELmC@yDEiBWaDo@yGIcBEyBDsCXqLLmLToGA_CKgHa@_WU}C]oCg@iCmAiEk@kCe@_DSwCa@aEAsALcDDi@ZcB`@}Al@wAfBaDh@y@Rj@wB|M?SK?@m@CBIO",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 8,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[ABxAeA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYCwCa@@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 19,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[ABxAeA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 12,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[ABxAeA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "London Bridge": {
+    "Paddington": {
+      "minutes": 25,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RyBjJE@hBbPX`BbB`GRvA\\nEJpEJtJTnQShGQlOQ~ICzCF|A`@bEZhCpAvM|@lHnAnHfB|HrDfO`A|Eb@dC\\xCTrDPlH@rBC~EQ|Fg@bI]vDOhAa@|Bk@tB_JpXsAhEq@`Bi@~@u@fAuBrBqAfAw@r@u@~@sAlBq@zAa@pAOlA?`DPlWGbCKpAWzAm@|Bq@`BYn@s@bAcA~@YPqMjDsNhCoEt@{BTeABgAAmCYuBa@qC_AqAo@{BsAuHkFuH{Ei@Is@AmAV]Ta@d@q@vA]nAKz@Ad@^fJRvH|AlOBtAErAIbAUhAe@`Aa@h@s@r@ANz@OpBv`@~AzS^jC^pB~@jEv@`Ct@`BnBvCpDjErDnGfDhI^rBRjBBv@hDAbEUZO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 17,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RsAzLCF}AsB_EkEq@]cEgAi@?sB\\k@@oG}Ao@Ak@L{@j@}MlKkDtBa@Lc@GwM}D}H}CaCaAcDq@uHcA}@DoEl@}DXqGLwA^oEnBa@V]`@c@~@a@bBeBvJeU`uAm@hEA`Ab@`TnCjkAdA`LmDjAzBoBRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 17,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RsAzLCF}AsB_EkEq@]cEgAi@?sB\\k@@oG}Ao@Ak@L{@j@}MlKkDtBa@Lc@GwM}D}H}CaCaAcDq@uHcA}@DoEl@}DXqGLwA^oEnBa@V]`@c@~@a@bBeBvJeU`uAm@hEA`Ab@`TnCjkAdA`LmDjA`HdBDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 18,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RsAzLCF}AsB_EkEq@]cEgAi@?sB\\k@@oG}Ao@Ak@L{@j@}MlKkDtBa@Lc@GwM}D}H}CaCaAcDq@uHcA}@DoEl@}DXqGLwA^oEnBa@V]`@c@~@a@bBeBvJeU`uAm@hEA`Ab@`TnCjkArCvZ`@lCPr@pM`c@FIU|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 21,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RyBjJE@hBbPX`BbB`GRvA\\nEJpEJtJTnQShGQlOQ~ICzCF|A`@bEZhCpAvM|@lHnAnHfB|HrDfO`A|Eb@dC\\xCTrDPlH@rBC~EQ|Fg@bI]vDOhAa@|Bk@tB_JpXsAhEq@`Bi@~@u@fAuBrBqAfAw@r@u@~@sAlBq@zAa@pAOlA?jB`CGkA|EDdCjEMfGDfOd@~]rADiDbCfGrCj@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 8,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RyBjJE@hBbPX`BbB`GRvA\\nEJpEJtJTnQShGQlOQ~ICzCF|A`@bEZhCpAvMPxAJGk@\\AFDDU~ACX",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 12,
+      "polyline": "wqjyH|{OEDGVuA|Ci@\\a@x@ENHJERMJANPRIPGIDPEBEL_@WeBg@G?BSsSmFkDkADu@O_Ac@qAgBcASA_Au@ACoCkBeBw@yBs@_AW[SSWi@kAw@cA_FcFMUgA}@WOSWiCyBGTA@m@m@MNDJUjB",
+      "vehicleType": "BUS",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 23,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RyBjJE@hBbPX`BbB`GRvA\\nEJpEJtJTnQShGQlOQ~ICzCF|A`@bEZhCpAvM|@lHnAnHfB|HrDfO`A|Eb@dC\\xCTrDPlH@rBC~EQ|Fg@bI]vDOhAa@|Bk@tB_JpXsAhEq@`Bi@~@u@fAuBrBqAfAw@r@u@~@sAlBq@zAa@pAOlA?`DPlWGbCKpAWzAm@|Bq@`BYn@s@bAcA~@YPqMjDsNhCoEt@{BTeABgAAmCYuBa@qC_AqAo@{BsAuHkFuH{Ei@Is@AmAV]Ta@d@q@vA]nAKz@Ad@^fJRvH|AlOBtAErAIbAUhAe@`Aa@h@s@r@tBx@BFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 16,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RzCkL]u@uDdG}@pBS`AMvAI~CBrA^pDHrBNrAr@xDt@zCxAfFVvA\\fELnDFjGNtKLrJSxFS|POtHArBDtBt@bJZnF?~CG~DQvBQtAs@rD}AfHk@fCm@hDyHh^qA~DgAvB{Bh@NPbArAHHF@FDVb@Zu@",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 11,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RtCsPEM}@lAgB~Cu@zAc@pA]fBO`AMtCAfBPjBVjCLlBd@~Ct@fDlAnEh@zCVxBHnABhFPxLHxJF`DGnAMz@YjAa@`Aq@|@s@j@wEzB}Ad@y@JuCAqDa@cGO?DmJlCLQ",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 18,
+      "polyline": "wqjyH|{OEDGVuA|Ci@\\a@x@Od@CC@QQCGf@o@WaRyEqAYkA]S?}@]BEC{DKCbAwJhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 10,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RbBkQEK}@pAm@tAkBhF[zA_@rCG`C@tAHhATjBJdB?nAKlBU|A[`Ak@dAg@j@}@b@w@Ju@AaAUyB{@kBcAuA_AgB_AuCmAsAc@G[wAzBL]",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Blackfriars": {
+    "Paddington": {
+      "minutes": 25,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBMd@xA^R{@tG_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@~AzS^jC^pB~@jEv@`Ct@`BnBvCpDjErDnGfDhI^rBRjBBv@hDAbEUZO",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 13,
+      "polyline": "ozkyHvgSMPlJmC?EaCK{CTsEp@oITeHD_INmBVcJnBeAf@wEfDiFpEeBpBuAfBwC~Cy@nAeBtCkA`B{BtDsBhEqG~KkAzBwLfWa@lA[pA{@~EMvBAdCHnBTnBP~@\\bD@z@Cv@UnBU|@[v@w@|@OLK_@j@yKRC",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 13,
+      "polyline": "ozkyHvgSMPlJmC?EaCK{CTsEp@oITeHD_INmBVcJnBeAf@wEfDiFpEeBpBuAfBwC~Cy@nAeBtCkA`B{BtDsBhEqG~KkAzBwLfWa@lA[pA{@~EMvBAdCHnBTnBP~@\\bD@z@Cv@UnBU|@[v@w@|@OLK_@pEcEDCRX`@hB",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 21,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBMM`@AAWbBSv@u@fB_F|KqFzMOV_@Zy@`@oALwE?_APmF`CyChA{GnBgB`@eCb@w@f@{HrHiLrLuL~KkCzBkD`CaClAw@V}@JaAI{@Y}@m@a@o@Yw@}@aDsAcE{ByHOa@CBnB_@mBg@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 12,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBxEjDzBlAvAj@~KbClEz@rAj@tAdAx@fAb@`Al@jB|BfIzBpJHjA?`BEjFF`LHfATtAlA~ETz@hAzCpB|El@fBf@rBb@bDp@vHThAt@zBl@hCVlBFpB@j@NArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 16,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBMU\\D@`Fs\\b@eB\\}@`@o@fAeAhGuEr@c@CUaBcD?BMDDg@Ja@X{B",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 17,
+      "polyline": "yzkyHjgS`@AUgLe@eQy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaD[aC_@mAg@eAu@cAw@u@{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CCPQmNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 24,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBMd@xA^R{@tG_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@V|C^K{@~ADeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 9,
+      "polyline": "gzkyHjfSL?DtDx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBM_BzA@CI\\RLJ?t@j@NRPLOtBQJwAbD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 10,
+      "polyline": "ozkyHvgSMPjJgDA^nFNjE^~B@`AItA]zDuBn@Yz@s@h@u@f@mA\\gBHeA@oAIyCU{TEcDAsCSgC]cCm@uCcAoDk@kCe@_DSwCa@{DCuBBwABq@d@uCj@sBj@DfCeEUg@gA|M?SK?@m@CBIO",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 11,
+      "polyline": "yzkyHjgS`@AUgLe@eQy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 4,
+      "polyline": "yzkyHjgS`@AUgLe@eQy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_ERaAy@c@r@tAL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Fenchurch Street": {
+    "Paddington": {
+      "minutes": 33,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]ZASH[gBi@yA_A{AcAaA{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CkChZq@fGkEvW}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBzAvE|Jd]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxH|u@rA~Nn@vF\\zBrBfJ~@vCz@xBnDhHfGzMbAxD|@vFFv@?hA_@hEWhBe@tAsCrEy@rBmAuAfNcMv@bBpAwBGITc@k@kA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 20,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@zDi@fHq@nHq@~IyBvNgDdR_A`Gs@fGQ~BMdE?fCJnGbB`QFlACr@SbBYpAOb@QZk@n@sAjBe@f@uBhByDvCc@j@aDbGuJ|OySv`@kGpMq@rBi@hCe@lDElCDjDXdBp@nD`@zAbAdD_@`@sEwFRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 19,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@zDi@fHq@nHq@~IyBvNgDdR_A`Gs@fGQ~BMdE?fCJnGbB`QFlACr@SbBYpAOb@QZk@n@sAjBe@f@uBhByDvCc@j@aDbGuJ|OySv`@kGpMq@rBi@hCe@lDElCDjDXdBp@nD`@zAbAdD_@`@m@a@DCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 24,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@zDi@fHq@nHq@~IyBvNgDdR_A`Gs@fGQ~BMdE?fCJnGbB`QFlACr@SbBYpAOb@QZk@n@sAjBe@f@uBhByDvCc@j@aDbGuJ|OySv`@kGpMq@rBi@hCe@lDElCDjDXdBp@nD`@zAzIpYrBbH|DxOvCbMj@xCLhAXKu@?JEc@aC}AgGBC@OKJCGABEQCBeAkDI[yAdBGAQ?g@p@[gA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 23,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]l@Qi@PXvCHnHa@nMiAzMaAzJkApMW~Da@dIOfA}@pESbBKtAIhDAtCDrFd@~Qp@lWLvJzAb_@EvE@lEJdERzEfA|Kf@rDpAbGr@dCv@vBpAhCrArBn@t@lDvC|DvCdBz@hA`@hNtC`Dp@v@`@pAfAf@h@h@z@v@~BbCtI|@xDl@bCPdADd@@tBEjFFjK@j@Fr@TrAlA~ETz@hAzCjAlC~@fCd@~A`@vBVnBp@vHT|@fAxDNn@RjANhAH~A@|@LArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 25,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]l@Qi@PXvCHnHa@nMiAzMaAzJkApMW~Da@dIOfA}@pESbBKtAIhDAtCDrFd@~Qp@lWLvJzAb_@EvE@lEJdERzEfA|Kf@rDpAbGr@dCv@vBpAhCrArBn@t@lDvClBtABMU\\D@`Fs\\b@eB\\}@`@o@fAeAhGuEr@c@CUaBcD?BMDDg@Ja@X{B",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 13,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@xDQmNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 30,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@zDi@fHq@nHq@~IyBvNgDdR_A`Gs@fGQ~BMdE?fCJnGbB`QFlACr@SbBYpAOb@QZk@n@sAjBe@f@uBhByDvCc@j@aDbGuJ|OySv`@kGpMq@rBi@hCe@lDElCDjDXdBp@nD`@zAzIpYrBbH|DxOvCbMj@xCzArL|BvLnBbLXvC@~@AvAOrCAbBVrCtAjNd@bH\\`JNpEFbAzAhNDzA?jAGl@YvAOj@g@r@ORGOhAzBBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 19,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]l@Qi@PXvCHnHa@nMiAzMaAzJkApMW~Da@dIOfA}@pESbBKtAIhDAtCDrFd@~Qp@lWLvJzAb_@EvE@lEJdERzEfA|Kf@rDpAbGr@dCv@vBpAhCrArBn@t@lDvClBtABM_BzA@CI\\RLJ?t@j@NRPLOtBQJwAbD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 11,
+      "polyline": "i{kyHrkNc@d@qAfAP^h@lCJv@b@xBHn@TjAPfBBv@CvASbE[jDOb@f@^TLTXJ?DBA@ERn@ZLJ\\l@Nt@BfAdF~AjQjEjBh@VTHi@f@uANSXM@YNg@j@iA^y@BH",
+      "vehicleType": "BUS",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 11,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]l@Qi@PXvCHnHa@nMiAzMaAzJkApMW~Da@dIOfA}@pESbBKtAIhDAtCDrFd@~Qp@lWF`EM?",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 9,
+      "polyline": "}zkyHnkNRITWHUj@QWqBY}@Oa@?QnA_@j@YZUn@Sd@CZRDCV?A]l@Qi@PXvCHnHa@nMiAzMaAzJkApMW~D[~Ge@Kb@bBL]",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Cannon Street": {
+    "Paddington": {
+      "minutes": 30,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QGId@}Ao@{BiAAWQDAKe@SA?k@wEEDLx@@p@GfAkDj`@e@~EYzAc@xA{@rBaCjM{DlSiDrPUrBaC~^KdE?vCx@dQn@vKL~JzFt`AxE|bAlD|k@|Hp~AbBt]~Bld@@?Sx@CDHCLdBDb@sAKGQWEIF}Bi@MCOHi@dAUV_@p@BLKJAGsCvEACQ_@}BaFBGMYADaAsB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 16,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QG`BmOCAC@}K|DACg@n@{CzB_Ab@]?cKsCsAg@gAg@gCsAsEyAyEk@oDm@uAGcA@_F`@wERqHGcB~@iAd@eAj@aAv@o@x@c@dAQv@qAtHsC`QsH~a@qAxFcBjGkErOOp@O`BCbCBfANnD`BxUjAxSVbFfAtX|@zMt@pKcE~@zBoBRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 17,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QG`BmOCAC@}K|DACg@n@{CzB_Ab@]?cKsCsAg@gAg@gCsAsEyAyEk@oDm@uAGcA@_F`@wERqHGcB~@iAd@eAj@aAv@o@x@c@dAQv@qAtHsC`QsH~a@qAxFcBjGkErOOp@O`BCbCBfANnD`BxUjAxSVbFfAtX|@zMt@pKcE~@`HdBDCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 18,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QG`BmOCAC@}K|DACg@n@{CzB_Ab@]?cKsCsAg@gAg@gCsAsEyAyEk@oDm@uAGcA@_F`@wERqHGcB~@iAd@eAj@aAv@o@x@c@dAQv@qAtHsC`QsH~a@qAxFcBjGkErOOp@O`BCbCBfANnD`BxUjAxSVbFfAtX|@zMt@pK\\vFn@rHJn@V~@vKr^t@zBDGU|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 16,
+      "polyline": "sxkyHfuPM\\c@cBl@\\WtAeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBxEjDzBlAvAj@~KbClEz@rAj@tAdAx@fAb@`Al@jB|BfIzBpJHjA?`BEjFF`LHfATtAlA~ETz@hAzCpB|El@fBf@rBb@bDp@vHThAt@zBl@hCVlBFpB@j@NArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 19,
+      "polyline": "sxkyHfuPM\\bFL@IvChA`CzA\\NtAZ`DjA~@Hr@Gr@Wh@[r@eA\\s@XmAToBDyAGiBEo@[wCE{@@mBDkA^sC`@kBzBeGb@w@CGpCn@g@uA_AlAgB~Cu@zAc@pA]fBO`AMtCAfBPjBVjCLlBd@~Ct@fDfBfGb@~CRpCJtCZhSFxFD~CE~BOrDWfRUbI@pCL`CRxB@?zCbRUr@]lBEl@",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 12,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QGId@}Ao@{BiAAWQDAKe@SA?y@qEDEmCaNWm@wBmC_@sA_@iAc@i@mA_AuFcDcFiCp@wEvA{EA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 28,
+      "polyline": "sxkyHfuPM\\c@cBl@\\WtAeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBMd@xA^R{@tG_B`OQ|BI~AGhBg@`LG~@U~@]v@i@l@sE`EkCtCKXEZAxAApC@jAHfALpAJ`B?lACjAOnAOt@Up@Sd@gGrFwMrKk@`@oAd@iDt@qMvDSTa@~@u@zB_@Xm[bLs@j@o@fAc@hAy@bCe@rBKv@G`BBbAnBfSPfB|ArXpBv`@V|C^K{@~ADeA",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 12,
+      "polyline": "sxkyHfuPM\\c@cBl@\\WtAeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBjDfCBM_BzA@CI\\RLJ?t@j@NRPLOtBQJwAbD",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 9,
+      "polyline": "sxkyHfuPM\\bFL@IvChA`CzA\\NtAZ`DjA~@Hr@Gr@Wh@[r@eA\\s@XmAToBDyAGiBEo@[wCE{@@mBDkA^sC`@kBzBeGb@w@CGg@zO?SK?@m@CBIO",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 3,
+      "polyline": "sxkyHfuPM\\c@cBl@\\WtAeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWF`EM?",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 10,
+      "polyline": "sxkyHfuPM\\s@uAx@b@PqAR_ETwGh@oHv@kI^mDhA{MVwFH_C@eDE_DSaDGo@RI[@@\\W?EB[Se@Bo@R[T{An@_@H?Ph@~AX|BILm@LYXOF",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    }
+  }
+}
