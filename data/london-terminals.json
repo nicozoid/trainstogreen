@@ -1,0 +1,80 @@
+[
+  {
+    "name": "Paddington",
+    "lat": 51.5154,
+    "lng": -0.1755,
+    "aliases": ["London Paddington", "Paddington Station"]
+  },
+  {
+    "name": "Kings Cross",
+    "lat": 51.5308,
+    "lng": -0.1238,
+    "aliases": ["King's Cross", "London Kings Cross", "London King's Cross", "Kings Cross St Pancras", "King's Cross St. Pancras", "Kings Cross St. Pancras"]
+  },
+  {
+    "name": "St Pancras",
+    "lat": 51.5301,
+    "lng": -0.1258,
+    "aliases": ["St. Pancras", "St Pancras International", "St. Pancras International", "London St Pancras"]
+  },
+  {
+    "name": "Euston",
+    "lat": 51.5283,
+    "lng": -0.1335,
+    "aliases": ["London Euston", "Euston Station", "Euston Square"]
+  },
+  {
+    "name": "Victoria",
+    "lat": 51.4952,
+    "lng": -0.1441,
+    "aliases": ["London Victoria", "Victoria Station"]
+  },
+  {
+    "name": "Waterloo",
+    "lat": 51.5031,
+    "lng": -0.1132,
+    "aliases": ["London Waterloo", "Waterloo Station", "Waterloo East"]
+  },
+  {
+    "name": "Liverpool Street",
+    "lat": 51.518,
+    "lng": -0.0813,
+    "aliases": ["London Liverpool Street", "Liverpool Street Station"]
+  },
+  {
+    "name": "Marylebone",
+    "lat": 51.5225,
+    "lng": -0.1636,
+    "aliases": ["London Marylebone", "Marylebone Station"]
+  },
+  {
+    "name": "Charing Cross",
+    "lat": 51.5074,
+    "lng": -0.1245,
+    "aliases": ["London Charing Cross", "Charing Cross Station"]
+  },
+  {
+    "name": "London Bridge",
+    "lat": 51.5051,
+    "lng": -0.0865,
+    "aliases": ["London Bridge Station"]
+  },
+  {
+    "name": "Blackfriars",
+    "lat": 51.5116,
+    "lng": -0.1038,
+    "aliases": ["London Blackfriars", "Blackfriars Station"]
+  },
+  {
+    "name": "Fenchurch Street",
+    "lat": 51.5117,
+    "lng": -0.0786,
+    "aliases": ["London Fenchurch Street", "Fenchurch Street Station"]
+  },
+  {
+    "name": "Cannon Street",
+    "lat": 51.5113,
+    "lng": -0.0906,
+    "aliases": ["London Cannon Street", "Cannon Street Station"]
+  }
+]

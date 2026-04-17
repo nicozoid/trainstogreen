@@ -139,9 +139,17 @@ const ORIGIN_COORDS: Record<string, { lat: number; lng: number }> = {
   "Kings Cross St Pancras": { lat: 51.5308, lng: -0.1238 },
 }
 
-// Extensible lists of origin stations available in each dropdown.
-// Add new entries here as more origins get journey data.
-const PRIMARY_ORIGINS = ["Kings Cross St Pancras", "Farringdon", "Stratford"]
+// Extensible list of primary origin stations available in the dropdown.
+// Wrapped in a string[][] so filter-panel's grouped-rendering API still works
+// — with one group no separator is drawn. Only origins with real per-destination
+// journey data (via scripts/fetch-journeys.mjs) belong here.
+const PRIMARY_ORIGIN_GROUPS: string[][] = [
+  [
+    "Farringdon",
+    "Kings Cross St Pancras",
+    "Stratford",
+  ],
+]
 const FRIEND_ORIGINS = ["Birmingham New Street", "Nottingham"]
 
 // Short display names for the filter UI trigger — full canonical names are
@@ -1442,7 +1450,7 @@ export default function HikeMap() {
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
         primaryOrigin={primaryOrigin}
-        primaryOrigins={PRIMARY_ORIGINS}
+        primaryOriginGroups={PRIMARY_ORIGIN_GROUPS}
         onPrimaryOriginChange={setPrimaryOrigin}
         originDisplayName={(name) => ORIGIN_DISPLAY_NAMES[name] ?? name}
         originMenuName={(name) => ORIGIN_MENU_NAMES[name] ?? name}

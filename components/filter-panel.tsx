@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
 
 // Wraps any inline content with a tooltip that works on both desktop (hover)
 // and touchscreens (tap toggles open/closed). Uses controlled `open` state
@@ -190,8 +190,10 @@ type FilterPanelProps = {
   bannerVisible: boolean
   /** Currently selected primary origin station name */
   primaryOrigin: string
-  /** All available primary origin options */
-  primaryOrigins: string[]
+  /** All available primary origin options, grouped for display.
+   *  Each sub-array is a group; a horizontal ruler is rendered between groups.
+   *  Pass `[allOrigins]` (one group) for a flat list with no separators. */
+  primaryOriginGroups: string[][]
   /** Switch the primary origin */
   onPrimaryOriginChange: (origin: string) => void
   /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
@@ -216,7 +218,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, originMenuName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMenuName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -383,29 +385,36 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               {/* relative so this text renders above the trigger's before: pseudo-element */}
               <span className="relative">Max time from</span>
               {/* Chevron dropdown — clicking the origin name or chevron opens it */}
-              {primaryOrigins.length > 1 ? (
+              {primaryOriginGroups.flat().length > 1 ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     {/* relative + before: pseudo-element creates the hover background
                         BEHIND adjacent text. -z-10 on the pseudo puts it below sibling
                         spans that have `relative`, while the button itself stays clickable. */}
-                    <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit hover:text-accent-foreground data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                    <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
                       {originDisplayName(primaryOrigin)}
                       <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start">
-                    {primaryOrigins.map((origin) => (
-                      <DropdownMenuCheckboxItem
-                        key={origin}
-                        checked={origin === primaryOrigin}
-                        onCheckedChange={() => onPrimaryOriginChange(origin)}
-                      >
-                        {/* Menu items use a longer, more descriptive label
-                            than the trigger (e.g. "Kings X, St Pancras, Euston"
-                            instead of the trigger's "Kings Cross"). */}
-                        {originMenuName(origin)}
-                      </DropdownMenuCheckboxItem>
+                    {/* Each group is rendered as a block; between groups we drop
+                        a DropdownMenuSeparator (a thin horizontal ruler). */}
+                    {primaryOriginGroups.map((group, groupIdx) => (
+                      <Fragment key={groupIdx}>
+                        {groupIdx > 0 && <DropdownMenuSeparator />}
+                        {group.map((origin) => (
+                          <DropdownMenuCheckboxItem
+                            key={origin}
+                            checked={origin === primaryOrigin}
+                            onCheckedChange={() => onPrimaryOriginChange(origin)}
+                          >
+                            {/* Menu items use a longer, more descriptive label
+                                than the trigger (e.g. "Kings X, St Pancras, Euston"
+                                instead of the trigger's "Kings Cross"). */}
+                            {originMenuName(origin)}
+                          </DropdownMenuCheckboxItem>
+                        ))}
+                      </Fragment>
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -550,7 +559,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                   {/* Clicking the origin name or chevron opens the dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit hover:text-accent-foreground data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                      <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
                         {originDisplayName(friendOrigin)}
                         <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
                       </button>
