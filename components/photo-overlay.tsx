@@ -50,11 +50,22 @@ export type { FlickrPhoto }
 
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
-/** Journey info for a single origin, as stored in the GeoJSON */
+/** Journey info for a single origin, as stored in the GeoJSON.
+ * `legs[]` fields are populated by scripts/fetch-journeys.mjs from Google's
+ * Routes API — vehicleType + timestamps are optional because older records
+ * (written before those fields were added to the field mask) won't have them. */
 export type JourneyInfo = {
   durationMinutes: number
   changes: number
-  legs: { departureStation: string; arrivalStation: string }[]
+  legs: {
+    departureStation: string
+    arrivalStation: string
+    /** "SUBWAY" | "WALK" | "HEAVY_RAIL" | "BUS" | etc. — from Routes API */
+    vehicleType?: string
+    /** ISO timestamps — used to compute effective durations when cluster logic strips a leg */
+    departureTime?: string
+    arrivalTime?: string
+  }[]
 }
 
 type StationModalProps = {
