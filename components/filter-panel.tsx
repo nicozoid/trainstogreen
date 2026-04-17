@@ -560,13 +560,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                           {originDisplayName(origin)}
                         </DropdownMenuCheckboxItem>
                       ))}
-                      {/* Separator + "None" deactivates friend mode entirely */}
+                      {/* Separator + "Remove" deactivates friend mode entirely */}
                       <DropdownMenuSeparator />
                       <DropdownMenuCheckboxItem
                         checked={false}
                         onCheckedChange={() => onDeactivateFriend()}
                       >
-                        None
+                        Remove
                       </DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
