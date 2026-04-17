@@ -10,6 +10,8 @@ import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/p
 import excludedStationsList from "@/data/excluded-stations.json"
 import originStationsList from "@/data/origin-stations.json"
 import { getColors } from "@/lib/tokens"
+import { usePersistedState, setSerializer } from "@/lib/use-persisted-state"
+import { getEffectiveJourney } from "@/lib/effective-journey"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -134,18 +136,28 @@ function timeExpression(prop: string): any {
 const ORIGIN_COORDS: Record<string, { lat: number; lng: number }> = {
   Farringdon: { lat: 51.5203, lng: -0.1053 },
   Stratford:  { lat: 51.541289, lng: -0.0035472 },
+  "Kings Cross St Pancras": { lat: 51.5308, lng: -0.1238 },
 }
 
 // Extensible lists of origin stations available in each dropdown.
 // Add new entries here as more origins get journey data.
-const PRIMARY_ORIGINS = ["Farringdon", "Stratford"]
+const PRIMARY_ORIGINS = ["Kings Cross St Pancras", "Farringdon", "Stratford"]
 const FRIEND_ORIGINS = ["Birmingham New Street", "Nottingham"]
 
-// Short display names for the filter UI — full canonical names are used
-// everywhere else (data lookups, property keys). Only add entries for
+// Short display names for the filter UI trigger — full canonical names are
+// used everywhere else (data lookups, property keys). Only add entries for
 // stations whose full name is too long for the panel.
 const ORIGIN_DISPLAY_NAMES: Record<string, string> = {
   "Birmingham New Street": "Birmingham",
+  "Kings Cross St Pancras": "Kings Cross",
+}
+
+// Long display names for the dropdown MENU items — when the canonical name
+// alone isn't user-friendly enough. For Kings Cross we want to communicate
+// that we treat it as a cluster with St Pancras and Euston.
+const ORIGIN_MENU_NAMES: Record<string, string> = {
+  "Birmingham New Street": "Birmingham New St",
+  "Kings Cross St Pancras": "Kings Cross, St Pancras, Euston",
 }
 
 // White outline thickness for station icons and dots — lower = thinner strokes
@@ -331,7 +343,10 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
 
 export default function HikeMap() {
   const { theme } = useTheme()
-  const [primaryOrigin, setPrimaryOrigin] = useState("Farringdon")
+  // Persisted across visits via localStorage — see lib/use-persisted-state.ts.
+  // Each filter setting lives under its own "ttg:*" key so adding/removing
+  // fields later doesn't require migrations.
+  const [primaryOrigin, setPrimaryOrigin] = usePersistedState("ttg:primaryOrigin", "Kings Cross St Pancras")
   const originCoords = ORIGIN_COORDS[primaryOrigin]
   // Ref keeps theme accessible inside the style.load callback (which is a stale
   // closure from handleMapLoad). Without this, registerIcons would always see
@@ -348,19 +363,32 @@ export default function HikeMap() {
   const [excludedStations, setExcludedStations] = useState<Set<string>>(() => new Set(INITIAL_EXCLUDED_STATIONS))
   // Default 150min (2h30m) — the non-admin slider cap. In admin mode the cap
   // extends to 600min ("Max" = no upper limit).
-  const [maxMinutes, setMaxMinutes] = useState(150)
+  const [maxMinutes, setMaxMinutes] = usePersistedState("ttg:maxMinutes", 150)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations
-  const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = useState(150)
+  const [friendOrigin, setFriendOrigin] = usePersistedState<string | null>("ttg:friendOrigin", null)
+  const [friendMaxMinutes, setFriendMaxMinutes] = usePersistedState("ttg:friendMaxMinutes", 150)
   // "Direct trains only" toggles — when true, only keep stations reachable
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
-  const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
-  const [friendDirectOnly, setFriendDirectOnly] = useState(false)
+  const [primaryDirectOnly, setPrimaryDirectOnly] = usePersistedState("ttg:primaryDirectOnly", false)
+  const [friendDirectOnly, setFriendDirectOnly] = usePersistedState("ttg:friendDirectOnly", false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
-  const [showTrails, setShowTrails] = useState(false)
+  const [showTrails, setShowTrails] = usePersistedState("ttg:showTrails", false)
+  // Start hidden by default — hydration from localStorage runs after mount,
+  // so the welcome banner briefly flashes on first return visit. That's a
+  // small price for never showing a wrongly-hidden banner to new users.
+  // See hasSeenWelcome hook below which handles first-visit logic.
   const [bannerVisible, setBannerVisible] = useState(true)
+  const [hasSeenWelcome, setHasSeenWelcome] = usePersistedState("ttg:hasSeenWelcome", false)
+  // Sync bannerVisible with hasSeenWelcome after localStorage hydrates on mount.
+  // We can't start `bannerVisible` as `!hasSeenWelcome` because the hook reads
+  // from localStorage in a useEffect (after first render), so on returning
+  // visits the banner is briefly visible then closes. An effect mirrors that
+  // hidden/visible flip back onto `bannerVisible`.
+  useEffect(() => {
+    if (hasSeenWelcome) setBannerVisible(false)
+  }, [hasSeenWelcome])
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
@@ -401,7 +429,9 @@ export default function HikeMap() {
   // Mobile defaults to "Heavenly" only for a curated first impression;
   // desktop shows the three positive ratings. 640px matches Tailwind's `sm` breakpoint.
   // Empty set = no filter = all stations visible
-  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set())
+  // Sets need the setSerializer because JSON.stringify doesn't know how to
+  // handle them — the serializer converts Set <-> Array on the way to/from storage.
+  const [visibleRatings, setVisibleRatings] = usePersistedState<Set<string>>("ttg:visibleRatings", new Set(), setSerializer)
 
   // Photo curations — per-station approved/rejected photo lists, loaded from
   // data/photo-curations.json via API. Only used in admin mode.
@@ -469,9 +499,13 @@ export default function HikeMap() {
         // Excluded set is coordKey-only now (ambiguous name entries were migrated)
         const shouldBeExcluded = excludedStations.has(f.properties.coordKey as string)
 
-        // Apply primaryOrigin-dependent minute override (skipped when Farringdon is primary)
-        const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
-        const originMins = primaryOrigin !== "Farringdon" ? journeys?.[primaryOrigin]?.durationMinutes : undefined
+        // Apply primaryOrigin-dependent minute override (skipped when Farringdon is primary).
+        // For cluster origins (Kings X / Euston / Euston Square) we also strip any
+        // initial tube hop so the shown time reflects "from where the real train leaves".
+        const journeys = f.properties.journeys as Record<string, JourneyInfo> | undefined
+        const primaryJourney = journeys?.[primaryOrigin]
+        const effective = primaryJourney ? getEffectiveJourney(primaryJourney, primaryOrigin) : null
+        const originMins = primaryOrigin !== "Farringdon" ? effective?.effectiveMinutes : undefined
 
         // Build next properties — flip isOrigin + isExcluded flags, and optionally override londonMinutes
         const next: Record<string, unknown> = { ...f.properties }
@@ -480,6 +514,9 @@ export default function HikeMap() {
         if (shouldBeExcluded) next.isExcluded = true
         else delete next.isExcluded
         if (originMins != null) next.londonMinutes = originMins
+        // Stash the effective-changes count so the direct-trains filter can use
+        // it without recomputing. Falsy (0/undefined) means "no effective changes".
+        if (effective) next.effectiveChanges = effective.effectiveChanges
 
         return { ...f, properties: next as StationFeature["properties"] }
       }),
@@ -526,11 +563,12 @@ export default function HikeMap() {
         if (mins == null) return false
         if (maxMinutes < 600 && mins > maxMinutes) return false
         if (minMinutes > 0 && mins < minMinutes) return false
-        // "Direct trains only" for the primary origin — require 0 changes.
-        // Pulls from the journeys record keyed by the currently selected primary origin.
+        // "Direct trains only" for the primary origin — require 0 EFFECTIVE changes.
+        // `effectiveChanges` is pre-computed above and already accounts for the
+        // Kings Cross cluster (so a tube hop to Euston doesn't count as a change).
+        // Falls back to raw `changes` for non-cluster origins.
         if (primaryDirectOnly) {
-          const journeys = f.properties.journeys as Record<string, { changes?: number }> | undefined
-          const primaryChanges = journeys?.[primaryOrigin]?.changes
+          const primaryChanges = f.properties.effectiveChanges as number | undefined
           if (primaryChanges == null || primaryChanges > 0) return false
         }
         // When friend mode is active, also require the station to be reachable
@@ -1270,8 +1308,10 @@ export default function HikeMap() {
       }
       return
     }
-    // London hexagon marker — open the welcome banner instead of station modal
-    if (feature.properties?.isLondon) {
+    // Primary origin — either the hexagon (isLondon) or the station icon itself
+    // (name matches primaryOrigin). Both open the welcome banner, never the modal.
+    const clickedName = feature.properties?.name as string | undefined
+    if (feature.properties?.isLondon || clickedName === primaryOrigin) {
       const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
       setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
       setBannerVisible(true)
@@ -1299,7 +1339,7 @@ export default function HikeMap() {
       screenY: screenPt?.y ?? window.innerHeight / 2,
       journeys,
     })
-  }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations])
+  }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords])
 
   // Called on initial map load and handles icon registration.
   // Also registers a style.load listener for theme swaps.
@@ -1405,6 +1445,7 @@ export default function HikeMap() {
         primaryOrigins={PRIMARY_ORIGINS}
         onPrimaryOriginChange={setPrimaryOrigin}
         originDisplayName={(name) => ORIGIN_DISPLAY_NAMES[name] ?? name}
+        originMenuName={(name) => ORIGIN_MENU_NAMES[name] ?? name}
         friendOrigin={friendOrigin}
         friendOrigins={FRIEND_ORIGINS}
         onFriendOriginChange={setFriendOrigin}
@@ -1420,7 +1461,12 @@ export default function HikeMap() {
 
       <WelcomeBanner
         open={bannerVisible}
-        onDismiss={() => setBannerVisible(false)}
+        onDismiss={() => {
+          setBannerVisible(false)
+          // Remember the user has seen it — subsequent visits skip the
+          // banner unless they explicitly click the hexagon again.
+          setHasSeenWelcome(true)
+        }}
         originX={bannerOrigin?.x}
         originY={bannerOrigin?.y}
       />
@@ -1663,16 +1709,17 @@ export default function HikeMap() {
               }}
             />
           )}
-          {/* Hover label — only appears when the London hexagon is hovered,
-              same pattern as station-label-hover */}
-          {hovered?.coordKey === "london" && (
+          {/* Label — always visible beneath the hexagon, showing the current
+              primary origin name plus a "time to escape" sublabel. Uses the
+              short display name if one is defined in ORIGIN_DISPLAY_NAMES. */}
+          {mapReady && (
             <Layer
               id="london-label"
               type="symbol"
               layout={{
                 "text-field": [
                   "format",
-                  primaryOrigin, { "font-scale": 1 },
+                  ORIGIN_DISPLAY_NAMES[primaryOrigin] ?? primaryOrigin, { "font-scale": 1 },
                   "\n", {},
                   "time to escape", { "font-scale": 0.8 },
                 ],
