@@ -4,6 +4,7 @@ import { IconTrainFilled, IconChevronDown, IconPlus } from "@tabler/icons-react"
 import SearchBar from "@/components/search-bar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -205,9 +206,15 @@ type FilterPanelProps = {
   onFriendMaxMinutesChange: (value: number) => void
   onActivateFriend: () => void
   onDeactivateFriend: () => void
+  /** "Direct trains only" toggle for the primary origin */
+  primaryDirectOnly: boolean
+  onPrimaryDirectOnlyChange: (value: boolean) => void
+  /** "Direct trains only" toggle for the friend origin */
+  friendDirectOnly: boolean
+  onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -471,6 +478,30 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             )}
           </div>
 
+          {/* "Direct trains only" toggle for the primary origin.
+              Placed directly under the slider so the constraint is visually associated with it.
+              Checkbox-first layout + text-xs makes this read as a secondary constraint, smaller than the main labels.
+              size-3 shrinks the checkbox to 12px (from default 16px) to match the smaller label.
+              gap-1.5 tightens the space between checkbox and label. */}
+          <div className="mt-3 flex items-center gap-[0.4rem]">
+            <Checkbox
+              id="primary-direct-only"
+              checked={primaryDirectOnly}
+              onCheckedChange={(checked) => onPrimaryDirectOnlyChange(checked === true)}
+              /* !bg-secondary + !border-secondary match the lighter fill used by
+                 the secondary rating checkboxes (Probably/Unworthy/Unknown).
+                 The ! (Tailwind !important) is needed to beat the base Checkbox's
+                 data-checked:bg-primary / data-checked:border-primary defaults. */
+              className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
+            />
+            {/* shadcn <Label> = Radix Label primitive (renders <label>) with select-none
+                + disabled-state handling. htmlFor is for screen-reader association.
+                onClick toggles state explicitly because Radix Label intentionally doesn't
+                forward clicks, and native <label>→<button> forwarding is unreliable.
+                Default is text-sm, so text-xs overrides the size down. */}
+            <Label htmlFor="primary-direct-only" className="cursor-pointer text-xs text-muted-foreground">Direct trains only</Label>
+          </div>
+
           {/* Admin-only: min travel time. Hides stations closer than this from the primary origin.
               Simpler styling than the max slider — no arrival animation, shares the train track visuals. */}
           {adminMode && (
@@ -557,6 +588,18 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                   <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
                 }
               />
+              {/* "Direct trains only" toggle for the friend origin — mirrors the primary one */}
+              <div className="mt-3 flex items-center gap-[0.4rem]">
+                <Checkbox
+                  id="friend-direct-only"
+                  checked={friendDirectOnly}
+                  onCheckedChange={(checked) => onFriendDirectOnlyChange(checked === true)}
+                  /* Same secondary-fill override as the primary direct-only checkbox */
+                  className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
+                />
+                {/* Shadcn Label — same pattern as the primary one */}
+                <Label htmlFor="friend-direct-only" className="cursor-pointer text-xs text-muted-foreground">Direct trains only</Label>
+              </div>
             </>
           )}
 

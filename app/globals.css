@@ -129,7 +129,7 @@
     --secondary: var(--tree-600); /* secondary icon set */
     --secondary-foreground: var(--abyss-900);
     --muted: var(--palm-400); /* slider */
-    --muted-foreground: var(--tree-700);
+    --muted-foreground: var(--tree-800);
     --accent: var(--seawater-500);
     --accent-foreground: var(--abyss-900);
     --destructive: var(--fire-500);      /* red */

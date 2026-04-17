@@ -36,7 +36,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm text-foreground outline-none",
+      "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm font-medium text-foreground outline-none",
       "transition-colors focus:bg-accent focus:text-accent-foreground",
       "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
@@ -46,7 +46,8 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   >
     <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
       <DropdownMenuPrimitive.ItemIndicator>
-        <IconCheck size={14} />
+        {/* stroke={2.5} bumps the tick from Tabler's default 2 to slightly thicker */}
+        <IconCheck size={14} stroke={2.5} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
     {children}
