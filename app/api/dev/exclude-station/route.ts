@@ -4,18 +4,21 @@ import { readDataFile, writeDataFile } from "@/lib/github-data"
 const FILE_PATH = "data/excluded-stations.json"
 
 export async function POST(req: NextRequest) {
-  const { name } = await req.json()
-  if (!name) return NextResponse.json({ error: "missing name" }, { status: 400 })
-
-  const entry = name
+  const { name, coordKey } = await req.json()
+  // coordKey is REQUIRED. Name entries cause duplicate-name cascades (e.g. excluding
+  // "Rainham" would hide both the Kent and London ones). `name` is accepted only for
+  // the commit message — the stored entry is always the coordKey.
+  if (!coordKey || typeof coordKey !== "string") {
+    return NextResponse.json({ error: "missing or invalid coordKey" }, { status: 400 })
+  }
 
   const { data: list, sha } = await readDataFile<string[]>(FILE_PATH)
 
-  if (list.includes(entry)) {
+  if (list.includes(coordKey)) {
     return NextResponse.json({ message: "already excluded" })
   }
 
-  list.push(entry)
-  await writeDataFile(FILE_PATH, list, `Exclude ${name}`, sha)
-  return NextResponse.json({ message: `excluded "${name}"` })
+  list.push(coordKey)
+  await writeDataFile(FILE_PATH, list, `Exclude ${name ?? coordKey}`, sha)
+  return NextResponse.json({ message: `excluded "${name ?? coordKey}"` })
 }

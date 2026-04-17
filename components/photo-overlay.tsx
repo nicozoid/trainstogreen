@@ -16,7 +16,31 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { fetchFlickrPhotos, type FlickrPhoto } from "@/lib/flickr"
+import { type FlickrPhoto } from "@/lib/flickr"
+
+// Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
+// Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
+// rate-limits, causing empty/failed responses. Same-origin requests bypass
+// Private Relay entirely — and our server reaches Flickr from a clean IP.
+async function fetchPhotosViaProxy(
+  lat: number,
+  lng: number,
+  hasCurations: boolean,
+  rejectedCount: number,
+  isOrigin: boolean,
+): Promise<FlickrPhoto[]> {
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lng: String(lng),
+    hasCurations: hasCurations ? "1" : "0",
+    isOrigin: isOrigin ? "1" : "0",
+    rejectedCount: String(rejectedCount),
+  })
+  const res = await fetch(`/api/flickr/photos?${params}`)
+  if (!res.ok) throw new Error(`photos proxy ${res.status}`)
+  const data = (await res.json()) as { photos?: FlickrPhoto[] }
+  return data.photos ?? []
+}
 import { Button } from "@/components/ui/button"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
@@ -51,6 +75,12 @@ type StationModalProps = {
   onRate?: (rating: Rating | null) => void
   /** Excludes (deletes) the station */
   onExclude?: () => void
+  /** True when this station is currently excluded (admin-only) */
+  isExcluded?: boolean
+  /** True when this station is in the origin-stations list (admin-only) */
+  isOrigin?: boolean
+  /** Toggles this station's origin-station status (admin-only) */
+  onToggleOrigin?: () => void
   /** Photos the admin has approved for this station (always displayed) */
   approvedPhotos?: FlickrPhoto[]
   /** Flickr IDs the admin has rejected for this station (never displayed) */
@@ -135,7 +165,8 @@ function komootUrl(name: string, lat: number, lng: number): string {
     `https://www.komoot.com/discover/${slug}/@${lat},${lng}/tours` +
     `?sport=hike&map=true` +
     `&startLocation=${lat}%2C${lng}` +
-    `&max_distance=5000&pageNumber=1`
+    // min_length is in metres — 10000 = 10 km minimum hike length
+    `&max_distance=5000&min_length=10000&pageNumber=1`
   )
 }
 
@@ -185,6 +216,9 @@ export default function StationModal({
   currentRating = null,
   onRate,
   onExclude,
+  isExcluded = false,
+  isOrigin = false,
+  onToggleOrigin,
   approvedPhotos = [],
   rejectedIds = new Set(),
   onApprovePhoto,
@@ -254,42 +288,58 @@ export default function StationModal({
   // The broader tag set and extra buffer pages only kick in the *next* time the overlay opens.
   const hasCurationsRef = useRef(false)
   const rejectedCountRef = useRef(0)
+  // Snapshot isOrigin too — changing the station's origin status mid-session
+  // shouldn't re-fetch with different params until the overlay is re-opened.
+  const isOriginRef = useRef(false)
   // Snapshot of approved photo IDs at open time — photos approved *before* this
   // session get promoted to the top; photos approved *during* this session stay
   // in their original grid position so the layout doesn't shift.
   const initialApprovedIdsRef = useRef<Set<string>>(new Set())
 
-  // Reset when a different station is selected
-  useEffect(() => {
-    setAllPhotos([])
-  }, [lat, lng])
+  // Tracks which station's photos are currently in `allPhotos` — used to decide
+  // whether opening the overlay is for a NEW station (reset + show skeleton) or
+  // the SAME station being re-opened (keep existing photos, refetch silently).
+  const lastFetchKeyRef = useRef<string | null>(null)
 
   // Capture fetch parameters each time the dialog opens (not on every edit)
   useEffect(() => {
     if (open) {
       hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
       rejectedCountRef.current = rejectedIds.size
+      isOriginRef.current = isOrigin
       initialApprovedIdsRef.current = new Set(approvedPhotos.map((p) => p.id))
     }
     // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lat, lng])
 
-  // Fetch photos once when the dialog opens. No re-fetches during the session —
-  // approvals/rejections are handled at display time by filtering allPhotos,
-  // so scroll position is preserved. Updated counts take effect on next open.
+  // Fetch photos when the dialog opens. Approvals/rejections during the session
+  // are handled at display time by filtering allPhotos (no re-fetch, preserves scroll).
+  //
+  // IMPORTANT: when the target station changes, we reset allPhotos and flip loading=true
+  // SYNCHRONOUSLY with kicking off the fetch. This matters because otherwise the "No
+  // photos found" text flashes during the render gap — stale allPhotos gets cleared
+  // but loading hasn't flipped yet, so the empty-state branch renders briefly.
   useEffect(() => {
     if (!open || !hasApiKey) return
 
-    // Only show the loading skeleton on the very first fetch for this station
-    if (allPhotos.length === 0) setLoading(true)
+    const key = `${lat},${lng}`
+    const isNewStation = lastFetchKeyRef.current !== key
+
+    // New station: show skeleton immediately. Same station re-opened: keep current
+    // photos visible and refresh silently in the background.
+    if (isNewStation) {
+      setAllPhotos([])
+      setLoading(true)
+    }
     setError(null)
 
     console.log(`[photos] fetching: hasCurations=${hasCurationsRef.current}, rejectedCount=${rejectedCountRef.current}, approvedCount=${approvedPhotos.length}`)
-    fetchFlickrPhotos(lat, lng, hasCurationsRef.current, rejectedCountRef.current)
+    fetchPhotosViaProxy(lat, lng, hasCurationsRef.current, rejectedCountRef.current, isOriginRef.current)
       .then((result) => {
         console.log(`[photos] fetched ${result.length} photos from Flickr`)
         setAllPhotos(result)
+        lastFetchKeyRef.current = key
       })
       .catch((err) => {
         console.error('[photos] fetch error:', err)
@@ -462,18 +512,36 @@ export default function StationModal({
         {devMode && (
           <div className="shrink-0 border-t px-6 py-3">
             <div className="flex items-center gap-1.5">
-              {/* Delete — adds station to excluded list */}
+              {/* Exclude toggle — active (primary-green plus) when the station is currently excluded.
+                  St George-style "+" cross matches the map marker for excluded stations. */}
               <DevActionButton
-                label="Delete"
-                active={false}
+                label={isExcluded ? "Un-exclude" : "Exclude"}
+                active={isExcluded}
                 onClick={() => onExclude?.()}
                 icon={
-                  /* Trash icon (Lucide) */
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    <line x1="10" y1="11" x2="10" y2="17" />
-                    <line x1="14" y1="11" x2="14" y2="17" />
+                  /* Latin/grave cross — horizontal raised to read as a headstone */
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke={isExcluded ? 'var(--primary)' : 'currentColor'}
+                    strokeWidth="3" strokeLinecap="butt">
+                    <line x1="4" y1="9" x2="20" y2="9" />
+                    <line x1="12" y1="4" x2="12" y2="20" />
+                  </svg>
+                }
+              />
+
+              {/* Toggle origin — adds/removes this station from the origin-stations list.
+                  Active (filled green square) when the station is already an origin. */}
+              <DevActionButton
+                label={isOrigin ? "Unmark as origin" : "Mark as origin"}
+                active={isOrigin}
+                onClick={() => onToggleOrigin?.()}
+                icon={
+                  /* Square — matches the square glyph origin stations use on the map */
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                    fill={isOrigin ? 'var(--primary)' : 'none'}
+                    stroke={isOrigin ? 'var(--primary)' : 'currentColor'}
+                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="4" y="4" width="16" height="16" />
                   </svg>
                 }
               />
@@ -512,17 +580,19 @@ export default function StationModal({
                 }
               />
 
-              {/* Unverified recommendation — triangle-up, grey-green */}
+              {/* Probably (unverified) — hexagon, grey-green. Shape matches the
+                  filter panel's "Probably" icon for design-system consistency. */}
               <DevActionButton
-                label="Unverified"
+                label="Probably"
                 active={currentRating === 'unverified'}
                 onClick={() => onRate?.(currentRating === 'unverified' ? null : 'unverified')}
                 icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="1 2 22 20"
                     fill={currentRating === 'unverified' ? '#aed0b8' : 'none'}
                     stroke={currentRating === 'unverified' ? '#aed0b8' : 'currentColor'}
                     strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 3, 22.39 21, 1.61 21" />
+                    {/* Hexagon — same 6 vertices as filter-panel.tsx */}
+                    <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
                   </svg>
                 }
               />
