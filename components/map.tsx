@@ -354,6 +354,10 @@ export default function HikeMap() {
   // Friend origin mode — when non-null, a second origin filters stations
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
   const [friendMaxMinutes, setFriendMaxMinutes] = useState(150)
+  // "Direct trains only" toggles — when true, only keep stations reachable
+  // from the matching origin with zero interchanges (journeys[origin].changes === 0)
+  const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
+  const [friendDirectOnly, setFriendDirectOnly] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
@@ -522,18 +526,30 @@ export default function HikeMap() {
         if (mins == null) return false
         if (maxMinutes < 600 && mins > maxMinutes) return false
         if (minMinutes > 0 && mins < minMinutes) return false
+        // "Direct trains only" for the primary origin — require 0 changes.
+        // Pulls from the journeys record keyed by the currently selected primary origin.
+        if (primaryDirectOnly) {
+          const journeys = f.properties.journeys as Record<string, { changes?: number }> | undefined
+          const primaryChanges = journeys?.[primaryOrigin]?.changes
+          if (primaryChanges == null || primaryChanges > 0) return false
+        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
-          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
+          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number; changes?: number }> | undefined
           const friendMins = journeys?.[friendOrigin]?.durationMinutes
           if (friendMins == null) return false
           if (friendMaxMinutes < 600 && friendMins > friendMaxMinutes) return false
+          // "Direct trains only" for the friend origin — require 0 changes
+          if (friendDirectOnly) {
+            const friendChanges = journeys?.[friendOrigin]?.changes
+            if (friendChanges == null || friendChanges > 0) return false
+          }
         }
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -1396,6 +1412,10 @@ export default function HikeMap() {
         onFriendMaxMinutesChange={setFriendMaxMinutes}
         onActivateFriend={() => setFriendOrigin(FRIEND_ORIGINS[0])}
         onDeactivateFriend={() => setFriendOrigin(null)}
+        primaryDirectOnly={primaryDirectOnly}
+        onPrimaryDirectOnlyChange={setPrimaryDirectOnly}
+        friendDirectOnly={friendDirectOnly}
+        onFriendDirectOnlyChange={setFriendDirectOnly}
       />
 
       <WelcomeBanner
