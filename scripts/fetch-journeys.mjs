@@ -6,7 +6,9 @@
 //
 // Flags:
 //   --origin "Station Name"  Origin station (looked up by name in stations.json). Required.
-//   --station "Station Name" Process a single destination station only.
+//   --station "Station Name" Process a single destination station only (by name).
+//   --coordKey "lng,lat"     Process only the destination at this exact coordinate —
+//                            use this instead of --station when two stations share a name.
 //   --filter highlight       Only process stations with this rating (from station-ratings.json).
 //                            Omit to process all non-excluded stations.
 //   --recompute              Re-fetch even if journey data already exists for this origin.
@@ -50,6 +52,10 @@ if (!ORIGIN_NAME) {
 
 // Optional: process a single destination station
 const STATION_FILTER = getFlag("--station")
+
+// Optional: process only the destination at this exact "lng,lat" coordKey.
+// Use this (instead of --station) when two stations share a name.
+const COORD_KEY_FILTER = getFlag("--coordKey")
 
 // Optional rating filter (e.g. "highlight", "verified")
 const RATING_FILTER = getFlag("--filter")
@@ -307,27 +313,28 @@ async function main() {
   // Build the list of stations to process
   const candidates = stationData.features.filter((feature) => {
     const name = feature.properties.name ?? "Unknown"
+    const [lng, lat] = feature.geometry.coordinates
+    const coordKey = `${lng},${lat}`
 
-    // Skip excluded stations (deliberately hidden from the map)
-    if (excluded.has(name)) return false
+    // Skip excluded stations (deliberately hidden from the map).
+    // excluded-stations.json is now coordKey-only — unambiguous for stations with shared names.
+    if (excluded.has(coordKey)) return false
 
     // Skip all origin stations — they're origins, not destinations
     if (originStations.has(name.toLowerCase())) return false
-
-    // Skip stations outside the geographic range
-    if (!feature.properties.inRange) return false
 
     // If --station is set, only include that specific station
     if (STATION_FILTER && name.toLowerCase() !== STATION_FILTER.toLowerCase()) {
       return false
     }
 
+    // If --coordKey is set, only include the feature at that exact "lng,lat".
+    // Needed when two stations share a name (e.g. three Whitchurches).
+    if (COORD_KEY_FILTER && coordKey !== COORD_KEY_FILTER) return false
+
     // If --filter is set, only include stations that match the rating
     if (RATING_FILTER) {
-      // Ratings are keyed by "lng,lat" coordinates
-      const [lng, lat] = feature.geometry.coordinates
-      const key = `${lng},${lat}`
-      const stationRating = ratings[key]?.rating
+      const stationRating = ratings[coordKey]?.rating
       if (stationRating !== RATING_FILTER) return false
     }
 

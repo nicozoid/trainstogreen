@@ -102,7 +102,8 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 
 // Each rating category with its display label, colour, and inline SVG icon
 // matching the map markers exactly: star, triangle-up, triangle-down, circle.
-const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean }[] = [
+// `adminOnly` entries only render when admin mode is active.
+const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
     key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
     icon: (
@@ -145,11 +146,38 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
       </svg>
     ),
   },
+  {
+    // Admin-only: shows origin stations (squares) that are normally hidden in the destination list.
+    key: "origin", label: "Origin stations", adminOnly: true,
+    tooltip: "Origin stations (squares) — visible only in admin mode",
+    icon: (
+      /* Square — matches the map's origin-station marker. Filled primary. */
+      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
+        <rect x="4" y="4" width="16" height="16" />
+      </svg>
+    ),
+  },
+  {
+    // Admin-only: shows stations that have been hidden from the destination list.
+    key: "excluded", label: "Excluded", adminOnly: true,
+    tooltip: "Stations removed from the list — visible only in admin mode",
+    icon: (
+      /* Latin/grave cross — horizontal raised to the upper third so it reads as a
+         headstone (appropriate for "excluded") rather than a generic "+" add icon. */
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="3" className="w-[1rem] h-[1rem]">
+        <line x1="4" y1="9" x2="20" y2="9" />
+        <line x1="12" y1="4" x2="12" y2="20" />
+      </svg>
+    ),
+  },
 ]
 
 type FilterPanelProps = {
   maxMinutes: number
   onChange: (value: number) => void
+  /** Admin-only minimum travel time — hides stations closer than this */
+  minMinutes: number
+  onMinChange: (value: number) => void
   showTrails: boolean
   onToggleTrails: (value: boolean) => void
   visibleRatings: Set<string>
@@ -179,7 +207,7 @@ type FilterPanelProps = {
   onDeactivateFriend: () => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -207,7 +235,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
     if (prevBannerRef.current && !bannerVisible) {
       // Read the real Radix thumb's actual left value so the animation
       // lands in exactly the same spot — avoids a 1px jump on handoff.
-      let targetPercent = ((maxMinutes - 45) / (180 - 45)) * 100
+      let targetPercent = ((maxMinutes - 45) / (sliderMax - 45)) * 100
       const realThumb = sliderWrapperRef.current?.querySelector<HTMLSpanElement>("[data-slot='slider-thumb']")
       if (realThumb) {
         // Radix wraps the thumb in a <span style="left: calc(X% + Ypx)">;
@@ -269,6 +297,20 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
     const h = Math.floor(mins / 60)
     const m = mins % 60
     return m === 0 ? `${h}h` : `${h}h ${m}m`
+  }
+
+  // Slider max constants. Non-admin users are capped at 2h30m. Admin mode
+  // extends to 10h — effectively unlimited for GB rail; the filter treats
+  // values at this cap as "no maximum".
+  const NON_ADMIN_MAX = 150
+  const ADMIN_MAX = 600
+  const sliderMax = adminMode ? ADMIN_MAX : NON_ADMIN_MAX
+
+  // Format the max-slider value label. In admin mode, show "Max" when the
+  // slider is pinned to its upper limit so it reads as "no limit" rather than "10h".
+  function formatMax(mins: number) {
+    if (adminMode && mins >= ADMIN_MAX) return "Max"
+    return formatDuration(mins)
   }
 
   return (
@@ -361,7 +403,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             </span>
             {/* Shows the current value, styled as secondary info */}
             <span className="text-sm font-extrabold text-primary">
-              {formatDuration(maxMinutes)}
+              {formatMax(maxMinutes)}
             </span>
           </div>
           {/* Wrapper gives position context for the fake animation overlay */}
@@ -371,7 +413,7 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             <div ref={sliderWrapperRef} className={trainArriving || (bannerVisible && !hasAnimatedRef.current) ? "invisible" : ""}>
               <Slider
                 min={45}
-                max={180}
+                max={sliderMax}
                 step={15}
                 value={[maxMinutes]}
                 // Slider returns an array (it supports multiple thumbs), so we take index 0
@@ -429,6 +471,32 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
             )}
           </div>
 
+          {/* Admin-only: min travel time. Hides stations closer than this from the primary origin.
+              Simpler styling than the max slider — no arrival animation, shares the train track visuals. */}
+          {adminMode && (
+            <div className="mt-3">
+              <div className="mb-2 flex items-baseline justify-between">
+                <span className="text-sm font-medium">Min time from {originDisplayName(primaryOrigin)}</span>
+                <span className="text-sm font-extrabold text-primary">
+                  {minMinutes === 0 ? "Off" : formatDuration(minMinutes)}
+                </span>
+              </div>
+              <Slider
+                min={0}
+                max={180}
+                step={15}
+                value={[minMinutes]}
+                onValueChange={([value]) => onMinChange(value)}
+                trackClassName="train-track-track"
+                rangeClassName="train-track-range bg-transparent"
+                thumbClassName="train-thumb"
+                thumbContent={
+                  <IconTrainFilled size={24} className="text-primary drop-shadow-sm" />
+                }
+              />
+            </div>
+          )}
+
           {/* Friend origin: show slider when active, button when not */}
           {!friendOrigin && (
             <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground" onClick={onActivateFriend}>
@@ -473,12 +541,12 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
                   </DropdownMenu>
                 </span>
                 <span className="whitespace-nowrap text-sm font-extrabold text-primary">
-                  {formatDuration(friendMaxMinutes)}
+                  {formatMax(friendMaxMinutes)}
                 </span>
               </div>
               <Slider
                 min={45}
-                max={180}
+                max={sliderMax}
                 step={15}
                 value={[friendMaxMinutes]}
                 onValueChange={([value]) => onFriendMaxMinutesChange(value)}
@@ -495,7 +563,10 @@ export default function FilterPanel({ maxMinutes, onChange, showTrails, onToggle
           {/* Rating visibility toggles — one checkbox per rating category */}
           <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
             {/* <span className="mb-2 block text-sm font-medium">Ratings</span> */}
-            {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
+            {RATING_FILTERS
+              // adminOnly rows (e.g. "Excluded") only render when the secret admin toggle is on
+              .filter(({ adminOnly }) => !adminOnly || adminMode)
+              .map(({ key, label, icon, tooltip, secondary }) => (
               <div key={key} className="mt-1.5 flex items-center justify-between">
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
                 <LabelTip text={tooltip} icon={icon}>

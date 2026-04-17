@@ -156,12 +156,14 @@ const INNER_RADIUS_KM = 7
 const OUTER_RADIUS_KM = 14
 
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
-// All entries are station names. If two stations share a name, add both (they'll both be excluded).
-const EXCLUDED_STATIONS = new Set(excludedStationsList)
+// Entries are either station names (legacy) or "lng,lat" coord keys (preferred — unambiguous when two stations share a name).
+// INITIAL_EXCLUDED_STATIONS seeds the state; admin toggling mutates the state set.
+const INITIAL_EXCLUDED_STATIONS = new Set(excludedStationsList)
 
 // Origin stations — shown as squares, only visible in admin mode (except London/Farringdon
 // which has its own dedicated marker). Lowercase for case-insensitive matching.
-const ORIGIN_STATIONS = new Set(originStationsList.map(n => n.toLowerCase()))
+// INITIAL_ORIGIN_STATIONS seeds the state; admin toggling mutates the state set.
+const INITIAL_ORIGIN_STATIONS = new Set(originStationsList.map(n => n.toLowerCase()))
 
 // Describes the shape of a single GeoJSON feature from our stations.json.
 // TypeScript uses this to check we're accessing valid properties later.
@@ -214,7 +216,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 // Using canvas (rather than SVG files) means no extra assets to load.
 // strokeColor switches between white (light mode) and black (dark mode) so
 // the outline stays visible against the map background.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon', color: string, strokeColor: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross', color: string, strokeColor: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -260,6 +262,24 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.fill()
     ctx.strokeStyle = strokeColor
     ctx.lineWidth = STATION_STROKE_WIDTH
+    ctx.stroke()
+  } else if (shape === 'cross') {
+    // Latin/grave cross — vertical is centred; horizontal sits in the upper third
+    // (not the middle) so it reads as a Christian cross / headstone rather than a "+".
+    // This is the intended semantic for excluded stations.
+    ctx.strokeStyle = color
+    ctx.lineWidth = 3
+    ctx.lineCap = 'butt'
+    const inset = 5 // distance from canvas edge
+    const cx = 12
+    const hBarY = 9 // horizontal arm's y — raised from centre (12) for the Latin cross look
+    ctx.beginPath()
+    // Horizontal arm — raised toward the top
+    ctx.moveTo(inset, hBarY)
+    ctx.lineTo(24 - inset, hBarY)
+    // Vertical arm — full top-to-bottom
+    ctx.moveTo(cx, inset)
+    ctx.lineTo(cx, 24 - inset)
     ctx.stroke()
   } else if (shape === 'hexagon') {
     // Regular hexagon — 6 vertices evenly spaced, flat top edge
@@ -320,11 +340,20 @@ export default function HikeMap() {
   themeRef.current = theme
   // Raw station data — loaded once, without primaryOrigin-dependent overrides
   const [baseStations, setBaseStations] = useState<StationCollection | null>(null)
-  // Start at 180min (the max) so all stations are visible on load
-  const [maxMinutes, setMaxMinutes] = useState(120)
+  // Origin stations (lowercase names). Seeded from data/origin-stations.json,
+  // mutated via the admin-mode square-icon toggle in the station overlay.
+  const [originStations, setOriginStations] = useState<Set<string>>(() => new Set(INITIAL_ORIGIN_STATIONS))
+  // Excluded stations (names + "lng,lat" coord keys — whichever the JSON stores).
+  // Seeded from data/excluded-stations.json, mutated via the admin cross toggle.
+  const [excludedStations, setExcludedStations] = useState<Set<string>>(() => new Set(INITIAL_EXCLUDED_STATIONS))
+  // Default 150min (2h30m) — the non-admin slider cap. In admin mode the cap
+  // extends to 600min ("Max" = no upper limit).
+  const [maxMinutes, setMaxMinutes] = useState(150)
+  // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
+  const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(150)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   const [bannerVisible, setBannerVisible] = useState(true)
@@ -351,15 +380,6 @@ export default function HikeMap() {
       setMapReady(false)
     }
   }, [mapStyle])
-  // Tracks stations excluded this session — keyed by OSM node ID so two stations
-  // with the same name (e.g. Newport Essex vs Newport Wales) are treated separately
-  const [sessionExcluded, setSessionExcluded] = useState<Set<string>>(new Set())
-  // Name of the last excluded station, shown in the undo toast (null = no toast)
-  const [undoName, setUndoName] = useState<string | null>(null)
-  // OSM node ID of the last excluded station — used by undo to re-include the right one
-  const [undoId, setUndoId] = useState<string | null>(null)
-  // Ref holds the auto-dismiss timer so we can cancel it if undo is clicked
-  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Dev tool — toggled on/off via the badge button; off by default
   const [devExcludeActive, setDevExcludeActive] = useState(false)
   // The station whose detail panel is open, or null if none
@@ -437,17 +457,30 @@ export default function HikeMap() {
   // Recomputes when the user switches origin via the dropdown, without re-fetching.
   const stations = useMemo(() => {
     if (!baseStations) return null
-    if (primaryOrigin === "Farringdon") return baseStations
     return {
       ...baseStations,
       features: baseStations.features.map((f) => {
+        const name = (f.properties.name as string ?? '').toLowerCase()
+        const shouldBeOrigin = originStations.has(name)
+        // Excluded set is coordKey-only now (ambiguous name entries were migrated)
+        const shouldBeExcluded = excludedStations.has(f.properties.coordKey as string)
+
+        // Apply primaryOrigin-dependent minute override (skipped when Farringdon is primary)
         const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
-        const originMins = journeys?.[primaryOrigin]?.durationMinutes
-        if (originMins == null) return f
-        return { ...f, properties: { ...f.properties, londonMinutes: originMins } as StationFeature["properties"] }
+        const originMins = primaryOrigin !== "Farringdon" ? journeys?.[primaryOrigin]?.durationMinutes : undefined
+
+        // Build next properties — flip isOrigin + isExcluded flags, and optionally override londonMinutes
+        const next: Record<string, unknown> = { ...f.properties }
+        if (shouldBeOrigin) next.isOrigin = true
+        else delete next.isOrigin
+        if (shouldBeExcluded) next.isExcluded = true
+        else delete next.isExcluded
+        if (originMins != null) next.londonMinutes = originMins
+
+        return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
-  }, [baseStations, primaryOrigin])
+  }, [baseStations, primaryOrigin, originStations, excludedStations])
 
   // Recompute filtered stations whenever the slider or raw data changes.
   // useMemo avoids re-filtering the whole array on every render.
@@ -456,34 +489,51 @@ export default function HikeMap() {
     return {
       ...stations,
       features: stations.features.filter((f) => {
-        // In admin mode, origin stations always pass all filters
-        if (f.properties.isOrigin && devExcludeActive) return true
-        // Origin stations are hidden in normal mode — except the active
-        // friend origin, which appears as a marker on the map
-        if (f.properties.isOrigin) {
-          // The friend origin always shows (it's the origin point, not a
-          // hiking destination, so travel-time filters don't apply to it)
-          if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
-          return false
+        const mins = f.properties.londonMinutes as number | null
+
+        // Shared helper — returns true if the travel time passes both sliders.
+        // Stations with no time data pass (they can't be filtered by time).
+        // When the max slider is at its admin ceiling (600), treat as unlimited.
+        const passesTimeFilter = () => {
+          if (mins == null) return true
+          if (maxMinutes < 600 && mins > maxMinutes) return false
+          if (minMinutes > 0 && mins < minMinutes) return false
+          return true
         }
 
-        const mins = f.properties.londonMinutes as number | null
-        if (mins == null || mins > maxMinutes) return false
+        // Excluded stations: admin-only, and now respect the time sliders so
+        // admins can narrow the view to excluded stations in a specific band.
+        if (f.properties.isExcluded) {
+          if (!devExcludeActive) return false
+          return passesTimeFilter()
+        }
+
+        // Origin stations: hidden in non-admin mode (except the active friend origin).
+        // In admin mode they now respect the time sliders too.
+        if (f.properties.isOrigin) {
+          if (!devExcludeActive) {
+            if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
+            return false
+          }
+          return passesTimeFilter()
+        }
+
+        // Regular destination stations — must have time data in range
+        if (mins == null) return false
+        if (maxMinutes < 600 && mins > maxMinutes) return false
+        if (minMinutes > 0 && mins < minMinutes) return false
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
           const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
           const friendMins = journeys?.[friendOrigin]?.durationMinutes
-          if (friendMins == null || friendMins > friendMaxMinutes) return false
+          if (friendMins == null) return false
+          if (friendMaxMinutes < 600 && friendMins > friendMaxMinutes) return false
         }
-        // In dev mode, also hide stations excluded this session (before hot-reload kicks in).
-        // Read coordKey from properties — it was stamped in at load time from the original
-        // coordinates, so it's guaranteed to match what the click handler stored.
-        if (devExcludeActive && sessionExcluded.has(f.properties.coordKey as string)) return false
         return true
       }),
     }
-  }, [stations, maxMinutes, friendOrigin, friendMaxMinutes, sessionExcluded, devExcludeActive])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -552,7 +602,18 @@ export default function HikeMap() {
         .filter(f => {
           // The active friend origin always shows regardless of rating filters
           if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
+          // No filters active → show everything that reached this layer.
+          // (Non-admin users never see excluded/origin — those are already removed
+          // upstream in filteredStations, so this branch is safe for them too.)
           if (visibleRatings.size === 0 && newlyRemovedRatings.size === 0) return true
+          // Excluded stations (admin-only) — gated on the "excluded" checkbox.
+          if (f.properties.isExcluded) {
+            return visibleRatings.has('excluded') || newlyRemovedRatings.has('excluded')
+          }
+          // Origin stations (admin-only) — gated on the "origin" checkbox.
+          if (f.properties.isOrigin) {
+            return visibleRatings.has('origin') || newlyRemovedRatings.has('origin')
+          }
           const category = (f.properties.rating as string | undefined) ?? 'unrated'
           return visibleRatings.has(category) || newlyRemovedRatings.has(category)
         })
@@ -622,19 +683,47 @@ export default function HikeMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, visibleRatings])
 
-  // Dev action: exclude a station (called from the modal's delete button)
-  const handleExcludeFromModal = useCallback(async (name: string, coordKey: string) => {
-    setSessionExcluded((prev) => new Set([...prev, coordKey]))
-    setSelectedStation(null)
-    // Show undo toast
-    if (undoTimer.current) clearTimeout(undoTimer.current)
-    setUndoName(name)
-    setUndoId(coordKey)
-    undoTimer.current = setTimeout(() => setUndoName(null), 5000)
-    await fetch("/api/dev/exclude-station", {
+  // Dev action: toggle a station's excluded status. Excluded stations are hidden
+  // from normal users; in admin mode they appear as crosses when the "Excluded"
+  // rating checkbox is on. Mirrors the origin-toggle flow.
+  const handleToggleExclusion = useCallback(async (name: string, coordKey: string) => {
+    let nowExcluded = false
+    setExcludedStations((prev) => {
+      const next = new Set(prev)
+      // The state set is keyed by coordKey only — legacy name entries were migrated
+      // to coordKeys in data/excluded-stations.json, so ambiguous names can no longer
+      // cascade across stations that share a display name.
+      if (next.has(coordKey)) {
+        next.delete(coordKey); nowExcluded = false
+      } else {
+        next.add(coordKey); nowExcluded = true
+      }
+      return next
+    })
+    // Use existing exclude/include routes so the JSON stays consistent
+    const endpoint = nowExcluded ? "/api/dev/exclude-station" : "/api/dev/include-station"
+    await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, coordKey }),
+    })
+  }, [])
+
+  // Dev action: toggle a station's origin-station status.
+  // Optimistic local update + POST to API which updates data/origin-stations.json.
+  const handleToggleOrigin = useCallback(async (name: string) => {
+    const lower = name.toLowerCase()
+    let nextIsOrigin = false
+    setOriginStations((prev) => {
+      const next = new Set(prev)
+      if (next.has(lower)) { next.delete(lower); nextIsOrigin = false }
+      else { next.add(lower); nextIsOrigin = true }
+      return next
+    })
+    await fetch("/api/dev/toggle-origin-station", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, isOrigin: nextIsOrigin }),
     })
   }, [])
 
@@ -782,12 +871,13 @@ export default function HikeMap() {
           const name = (f.properties.name as string ?? '').toLowerCase()
           // Stamp coordKey for consistent identity, and isOrigin for origin stations
           const extra: Record<string, unknown> = { coordKey: `${lng},${lat}` }
-          if (ORIGIN_STATIONS.has(name)) extra.isOrigin = true
+          if (INITIAL_ORIGIN_STATIONS.has(name)) extra.isOrigin = true
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
           return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
         })
 
-        // Filter out excluded stations
+        // Keep only stations of interest — we DON'T filter out excluded ones here;
+        // those are kept in data and hidden later in stationsForMap (so admin mode can show them).
         const outside = stamped.filter((f) => {
           return (
             // Keep National Rail/Overground/Elizabeth line stations (have a CRS code),
@@ -796,10 +886,7 @@ export default function HikeMap() {
             (f.properties["ref:crs"] != null ||
               f.properties["network"] === "London Underground" ||
               f.properties["network"] === "Docklands Light Railway") &&
-            f.properties["usage"] !== "tourism" &&
-            // Check both name (legacy exclusion entries) and coordKey (new entries)
-            !EXCLUDED_STATIONS.has(f.properties.name as string) &&
-            !EXCLUDED_STATIONS.has(f.properties.coordKey as string)
+            f.properties["usage"] !== "tourism"
           )
         })
         setBaseStations({ ...data, features: outside })
@@ -1134,8 +1221,9 @@ export default function HikeMap() {
     if (!feature || feature.properties?.isLondon) return
     const name = feature.properties?.name as string
     const coordKey = feature.properties?.coordKey as string
-    handleExcludeFromModal(name, coordKey)
-  }, [devExcludeActive, handleExcludeFromModal])
+    // Right-click in admin mode toggles exclusion — either hide or re-show the station.
+    handleToggleExclusion(name, coordKey)
+  }, [devExcludeActive, handleToggleExclusion])
 
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
   // Clicking empty map space closes the modal.
@@ -1155,8 +1243,14 @@ export default function HikeMap() {
       const next = !devExcludeActive
       setDevExcludeActive(next)
       if (next) {
-        setMaxMinutes(180)
+        // Admin on — max slider extends to 600; open wide so nothing is hidden
+        setMaxMinutes(600)
+        setFriendMaxMinutes(600)
         setVisibleRatings(new Set())
+      } else {
+        // Admin off — clamp sliders to the non-admin cap (150) so the thumb stays in range
+        setMaxMinutes((m) => Math.min(m, 150))
+        setFriendMaxMinutes((m) => Math.min(m, 150))
       }
       return
     }
@@ -1190,25 +1284,6 @@ export default function HikeMap() {
       journeys,
     })
   }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations])
-
-  // Dev only — reverses the last exclusion while the toast is still showing
-  const handleUndo = useCallback(async () => {
-    if (!undoName || !undoId) return
-    if (undoTimer.current) clearTimeout(undoTimer.current)
-    setUndoName(null)
-    setUndoId(null)
-    // Restore the station in local state immediately
-    setSessionExcluded((prev) => {
-      const next = new Set(prev)
-      next.delete(undoId) // keyed by coordKey, not name
-      return next
-    })
-    await fetch("/api/dev/include-station", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey: undoId }),
-    })
-  }, [undoName, undoId])
 
   // Called on initial map load and handles icon registration.
   // Also registers a style.load listener for theme swaps.
@@ -1281,6 +1356,9 @@ export default function HikeMap() {
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
     add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
     add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
+    // Excluded stations — only shown in admin mode. Uses --primary so the cross
+    // reads with the same visual weight as Heavenly/Good/Origin markers.
+    add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
   }
 
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
@@ -1291,6 +1369,8 @@ export default function HikeMap() {
       <FilterPanel
         maxMinutes={maxMinutes}
         onChange={setMaxMinutes}
+        minMinutes={minMinutes}
+        onMinChange={setMinMinutes}
         showTrails={showTrails}
         onToggleTrails={setShowTrails}
         visibleRatings={visibleRatings}
@@ -1336,9 +1416,13 @@ export default function HikeMap() {
               setDevExcludeActive(next)
               // Show all stations when entering dev mode so nothing is hidden while curating
               if (next) {
-                setMaxMinutes(180)
+                setMaxMinutes(600)
+                setFriendMaxMinutes(600)
                 // Clear all rating checkboxes — empty set means "show all" in the filter logic
                 setVisibleRatings(new Set())
+              } else {
+                setMaxMinutes((m) => Math.min(m, 150))
+                setFriendMaxMinutes((m) => Math.min(m, 150))
               }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
@@ -1353,23 +1437,6 @@ export default function HikeMap() {
               z {zoom.toFixed(1)}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Undo toast — appears for 5s after a station is excluded.
-          Centred horizontally, sits above the dev badge at the bottom. */}
-      {devExcludeActive && undoName && (
-        <div className="absolute bottom-16 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg bg-gray-900 px-4 py-2.5 shadow-lg">
-          <span className="text-sm text-white">
-            Excluded <span className="font-semibold">{undoName}</span>
-          </span>
-          {/* Undo button — styled as an inline text action, not a full button */}
-          <button
-            onClick={handleUndo}
-            className="text-sm font-semibold text-yellow-400 hover:text-yellow-300"
-          >
-            Undo
-          </button>
         </div>
       )}
 
@@ -1647,7 +1714,8 @@ export default function HikeMap() {
             <Layer
               id="station-dots"
               type="symbol"
-              filter={["!", ["has", "rating"]]}
+              // Exclude both rated stations AND excluded stations (the latter get their own cross layer)
+              filter={["all", ["!", ["has", "rating"]], ["!", ["has", "isExcluded"]]]}
               layout={{
                 "icon-image": "icon-unrated",
                 "icon-allow-overlap": true,
@@ -1673,10 +1741,11 @@ export default function HikeMap() {
               <Layer
                 id="station-rating-icons"
                 type="symbol"
-                filter={["any", ["has", "rating"], ["has", "isOrigin"]]}
+                filter={["any", ["has", "rating"], ["has", "isOrigin"], ["has", "isExcluded"]]}
                 layout={{
-                  // Origin stations always get the square icon; others use rating-based icons
+                  // Excluded (admin-only): cross. Origin: square. Others: rating-based.
                   "icon-image": ["case",
+                    ["has", "isExcluded"], "icon-excluded",
                     ["has", "isOrigin"], "icon-origin",
                     ["match", ["get", "rating"],
                       "highlight",       "icon-highlight",
@@ -1688,8 +1757,9 @@ export default function HikeMap() {
                   ],
                   "icon-allow-overlap": true,    // don't hide icons when they overlap labels
                   "icon-ignore-placement": true, // don't let icons block other symbols
-                  // Higher value = drawn on top — origin stations above all, then by rating
+                  // Higher value = drawn on top — origins above all, then rating, then excluded at the back
                   "symbol-sort-key": ["case",
+                    ["has", "isExcluded"], -1,
                     ["has", "isOrigin"], 5,
                     ["match", ["get", "rating"],
                       "highlight",       4,
@@ -1701,13 +1771,18 @@ export default function HikeMap() {
                   ],
                   // Slightly larger icon when hovered
                   // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
-                  "icon-size": hovered
-                    ? ["case",
-                        ["==", ["get", "coordKey"], hovered.coordKey],
-                          ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
-                          ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
-                      ]
-                    : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                  // Excluded stations render at half the normal size — multiplying the base
+                  // expression by 0.5 keeps hover and enter/leave animations working correctly.
+                  "icon-size": ["*",
+                    ["case", ["has", "isExcluded"], 0.5, 1],
+                    hovered
+                      ? ["case",
+                          ["==", ["get", "coordKey"], hovered.coordKey],
+                            ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
+                            ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                        ]
+                      : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                  ],
                 }}
                 paint={{
                   // Fade opacity in sync with scale so the icon's drop shadow
@@ -1725,9 +1800,12 @@ export default function HikeMap() {
               id="station-hit-area"
               type="circle"
               layout={{
-                // Sort key: higher value = drawn on top = returned first by queryRenderedFeatures
+                // Sort key: higher value = drawn on top = returned first by queryRenderedFeatures.
+                // Origin wins over everything; excluded is explicitly ranked below even
+                // unrated stations so overlapping origins/excluded always resolve to origin.
                 "circle-sort-key": ["case",
                   ["has", "isOrigin"], 5,
+                  ["has", "isExcluded"], -1,
                   ["match", ["get", "rating"],
                     "highlight",       4,
                     "verified",        3,
@@ -1738,11 +1816,17 @@ export default function HikeMap() {
                 ],
               }}
               paint={{
-                // Constant radius — NOT dependent on hover state. If this changed
-                // with `hovered`, every hover would trigger a Mapbox style repaint,
-                // and during that repaint queryRenderedFeatures can briefly return
-                // nothing — causing the hover to flicker on and off.
-                "circle-radius": 16,
+                // Per-station hit-area size.
+                // - Origin: enlarged (20px) so it's easier to click when overlapping other stations.
+                // - Excluded: shrunk (10px) so it loses hit-tests near any non-excluded station.
+                // - Others: default 16px.
+                // Radius depends only on feature properties (not hover state), so Mapbox
+                // doesn't repaint the layer on hover — that would cause hover flicker.
+                "circle-radius": ["case",
+                  ["has", "isOrigin"], 20,
+                  ["has", "isExcluded"], 10,
+                  16,
+                ],
                 "circle-color": "#000000",
                 // Near-invisible but still detected by Mapbox hit testing.
                 // Fades with the leave/enter animation so the faint circle
@@ -1765,7 +1849,9 @@ export default function HikeMap() {
               ["station-labels-highlight", isMobile ? 6 : 7, ["==", ["get", "rating"], "highlight"]],
               ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
               ["station-labels-not-recommended", 8, ["==", ["get", "rating"], "not-recommended"]],
-              ["station-labels-unrated", 10, ["!", ["has", "rating"]]],
+              // Unrated label tier — excludes "isExcluded" stations so their labels only
+              // start showing at zoom 11+ (via station-labels-full).
+              ["station-labels-unrated", 10, ["all", ["!", ["has", "rating"]], ["!", ["has", "isExcluded"]]]],
             ] as const).map(([id, minZ, filter]) => (
               <Layer
                 key={id}
@@ -1888,7 +1974,10 @@ export default function HikeMap() {
             devMode={devExcludeActive}
             currentRating={ratings[displayStation.coordKey] ?? null}
             onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
-            onExclude={() => handleExcludeFromModal(displayStation.name, displayStation.coordKey)}
+            onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}
+            isExcluded={excludedStations.has(displayStation.coordKey)}
+            isOrigin={originStations.has(displayStation.name.toLowerCase())}
+            onToggleOrigin={() => handleToggleOrigin(displayStation.name)}
             approvedPhotos={curations[displayStation.coordKey]?.approved ?? []}
             rejectedIds={new Set(curations[displayStation.coordKey]?.rejected ?? [])}
             onApprovePhoto={(photo) => handleApprovePhoto(displayStation.coordKey, displayStation.name, photo)}
