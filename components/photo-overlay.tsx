@@ -17,6 +17,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { type FlickrPhoto } from "@/lib/flickr"
+import { getEffectiveJourney, prettifyStationLabel } from "@/lib/effective-journey"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
 // Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
@@ -49,11 +50,22 @@ export type { FlickrPhoto }
 
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
-/** Journey info for a single origin, as stored in the GeoJSON */
+/** Journey info for a single origin, as stored in the GeoJSON.
+ * `legs[]` fields are populated by scripts/fetch-journeys.mjs from Google's
+ * Routes API — vehicleType + timestamps are optional because older records
+ * (written before those fields were added to the field mask) won't have them. */
 export type JourneyInfo = {
   durationMinutes: number
   changes: number
-  legs: { departureStation: string; arrivalStation: string }[]
+  legs: {
+    departureStation: string
+    arrivalStation: string
+    /** "SUBWAY" | "WALK" | "HEAVY_RAIL" | "BUS" | etc. — from Routes API */
+    vehicleType?: string
+    /** ISO timestamps — used to compute effective durations when cluster logic strips a leg */
+    departureTime?: string
+    arrivalTime?: string
+  }[]
 }
 
 type StationModalProps = {
@@ -119,13 +131,24 @@ function formatMinutes(minutes: number): string {
 
 // Formats a single origin's journey, e.g.
 // "1 hour from Farringdon. Two changes: St Pancras and South Croydon."
+// Cluster-aware: when the primary origin is Kings X / Euston / Euston Square,
+// strips the initial tube hop so the reported time and change count reflect
+// starting at the actual train's departure station (e.g. "1 hour from Euston"
+// rather than "1 hour and 10 minutes from Kings Cross, one change: Euston").
 function singleOriginDescription(origin: string, journey: JourneyInfo): string {
-  const time = formatMinutes(journey.durationMinutes)
-  const { changes, legs } = journey
+  const effective = getEffectiveJourney(journey, origin)
+  const time = formatMinutes(effective.effectiveMinutes)
+  const displayOrigin = effective.effectiveOrigin
+  const changes = effective.effectiveChanges
+  // When cluster adjustment fired, we only want the changes AFTER the stripped
+  // first leg — so we slice legs accordingly.
+  const legs = effective.isClusterHop ? journey.legs.slice(1) : journey.legs
 
-  if (changes === 0) return `${time} from ${origin}. Direct train.`
+  if (changes === 0) return `${time} from ${displayOrigin}. Direct train.`
 
-  const changeStations = legs.slice(0, -1).map((leg) => leg.arrivalStation)
+  // Pretty-print each intermediate station name so the rendered sentence
+  // reads naturally (no curly apostrophes, no "(COV)" codes, no "International").
+  const changeStations = legs.slice(0, -1).map((leg) => prettifyStationLabel(leg.arrivalStation))
   const changeList =
     changeStations.length <= 2
       ? changeStations.join(" and ")
@@ -133,7 +156,7 @@ function singleOriginDescription(origin: string, journey: JourneyInfo): string {
 
   const changeNumber = ["Zero", "One", "Two", "Three", "Four", "Five"][changes] ?? String(changes)
   const changeWord = changes === 1 ? "change" : "changes"
-  return `${time} from ${origin}. ${changeNumber} ${changeWord}: ${changeList}.`
+  return `${time} from ${displayOrigin}. ${changeNumber} ${changeWord}: ${changeList}.`
 }
 
 // Builds travel description — shows both origins when friend mode is active.

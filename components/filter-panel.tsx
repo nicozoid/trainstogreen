@@ -194,8 +194,10 @@ type FilterPanelProps = {
   primaryOrigins: string[]
   /** Switch the primary origin */
   onPrimaryOriginChange: (origin: string) => void
-  /** Maps a canonical station name to a shorter display name (e.g. "Birmingham New Street" → "Birmingham") */
+  /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
   originDisplayName: (name: string) => string
+  /** Maps a canonical name to a longer label for dropdown menu items (e.g. "Kings Cross St Pancras" → "Kings X, St Pancras, Euston") */
+  originMenuName: (name: string) => string
   /** Friend origin station name, or null if not active */
   friendOrigin: string | null
   /** All available friend origin options */
@@ -214,7 +216,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOrigins, onPrimaryOriginChange, originDisplayName, originMenuName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
 
@@ -399,7 +401,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         checked={origin === primaryOrigin}
                         onCheckedChange={() => onPrimaryOriginChange(origin)}
                       >
-                        {originDisplayName(origin)}
+                        {/* Menu items use a longer, more descriptive label
+                            than the trigger (e.g. "Kings X, St Pancras, Euston"
+                            instead of the trigger's "Kings Cross"). */}
+                        {originMenuName(origin)}
                       </DropdownMenuCheckboxItem>
                     ))}
                   </DropdownMenuContent>
@@ -557,7 +562,8 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                           checked={origin === friendOrigin}
                           onCheckedChange={() => onFriendOriginChange(origin)}
                         >
-                          {originDisplayName(origin)}
+                          {/* Menu label (e.g. "Birmingham New St"); trigger uses the shorter "Birmingham". */}
+                          {originMenuName(origin)}
                         </DropdownMenuCheckboxItem>
                       ))}
                       {/* Separator + "Remove" deactivates friend mode entirely */}
