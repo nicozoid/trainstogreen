@@ -4228,10 +4228,51 @@
   },
   "-1.1449555,52.9473037": {
     "name": "Nottingham",
-    "approved": [],
+    "approved": [
+      {
+        "id": "54997385690",
+        "title": "Nottingham Castle and Bluecoat Sixth Form",
+        "ownerName": "Lapsang Photos",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54997385690_9d76623176.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54997385690_9d76623176_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/124658822@N05/54997385690",
+        "dateTaken": "2025-12-01 12:03:38"
+      },
+      {
+        "id": "54934473088",
+        "title": "Nottingham city centre aerial view",
+        "ownerName": "John D Fielding",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54934473088_49084f82c1.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54934473088_49084f82c1_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/29372296@N00/54934473088",
+        "dateTaken": "2025-07-08 15:11:53"
+      },
+      {
+        "id": "54381731562",
+        "title": "Urban landscape",
+        "ownerName": "Donnchadh H",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54381731562_a56d9fda03.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54381731562_a56d9fda03_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/29057345@N04/54381731562",
+        "dateTaken": "2025-03-11 13:04:32"
+      },
+      {
+        "id": "25399889087",
+        "title": "Waiting in the Rain",
+        "ownerName": "EightBitTony",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/25399889087_a63e80f6fb.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/25399889087_a63e80f6fb_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/101587717@N06/25399889087",
+        "dateTaken": "2018-02-11 12:28:58"
+      }
+    ],
     "rejected": [
       "50202788061",
-      "42980602224"
+      "42980602224",
+      "48359409886",
+      "50075664543",
+      "50177065142",
+      "54996202637"
     ]
   },
   "-0.5398447,53.2261066": {
@@ -4449,6 +4490,123 @@
       "52710300164",
       "52628795481",
       "52629265653"
+    ]
+  },
+  "-0.1278,51.5075": {
+    "name": "London",
+    "approved": [
+      {
+        "id": "51244522170",
+        "title": "In Trafalgar Square",
+        "ownerName": "apostolis_giontzis",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/51244522170_78e59de258.jpg",
+        "largeUrl": null,
+        "flickrUrl": "https://www.flickr.com/photos/140137005@N02/51244522170",
+        "dateTaken": "2018-09-15 12:35:02"
+      },
+      {
+        "id": "47291906871",
+        "title": "London Grind",
+        "ownerName": "\"The Wanderer's Eye Photography\"",
+        "thumbnailUrl": "https://live.staticflickr.com/7884/47291906871_6c748451a7.jpg",
+        "largeUrl": "https://live.staticflickr.com/7884/47291906871_6c748451a7_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/8997331@N04/47291906871",
+        "dateTaken": "2019-02-24 22:20:36"
+      },
+      {
+        "id": "28455586968",
+        "title": "Royal Wedding Union Flags on Regent Street, London",
+        "ownerName": "The Phoenix Girl",
+        "thumbnailUrl": "https://live.staticflickr.com/881/28455586968_174c2a8873.jpg",
+        "largeUrl": "https://live.staticflickr.com/881/28455586968_174c2a8873_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/158363858@N03/28455586968",
+        "dateTaken": "2018-05-17 10:13:59"
+      },
+      {
+        "id": "32828273195",
+        "title": "The Palace of Westminster",
+        "ownerName": "Nadly Aizat",
+        "thumbnailUrl": "https://live.staticflickr.com/415/32828273195_c342b5b9eb.jpg",
+        "largeUrl": "https://live.staticflickr.com/415/32828273195_c342b5b9eb_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/40238800@N06/32828273195",
+        "dateTaken": "2017-01-28 17:18:50"
+      },
+      {
+        "id": "8445718833",
+        "title": "Buckingham Art",
+        "ownerName": "Dan Chui (on/off!)",
+        "thumbnailUrl": "https://live.staticflickr.com/8467/8445718833_e8473054c5.jpg",
+        "largeUrl": null,
+        "flickrUrl": "https://www.flickr.com/photos/43878642@N05/8445718833",
+        "dateTaken": "2012-04-30 00:07:30"
+      },
+      {
+        "id": "5127893712",
+        "title": "The Illuminated Arch",
+        "ownerName": "Dan Chui (on/off!)",
+        "thumbnailUrl": "https://live.staticflickr.com/4036/5127893712_a1896ff99c.jpg",
+        "largeUrl": null,
+        "flickrUrl": "https://www.flickr.com/photos/43878642@N05/5127893712",
+        "dateTaken": "2010-10-11 04:35:13"
+      },
+      {
+        "id": "51734696182",
+        "title": "A Famous Curve",
+        "ownerName": "apostolis_giontzis",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/51734696182_24f1c6cf1f.jpg",
+        "largeUrl": null,
+        "flickrUrl": "https://www.flickr.com/photos/140137005@N02/51734696182",
+        "dateTaken": "2018-09-15 15:17:48"
+      },
+      {
+        "id": "48935373822",
+        "title": "Traffic - Piccadilly Circus, London, UK",
+        "ownerName": "@davidgutierrez.co.uk",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/48935373822_c22890d54f.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/48935373822_c22890d54f_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/21775664@N07/48935373822",
+        "dateTaken": "2016-11-05 18:12:33"
+      },
+      {
+        "id": "52009044339",
+        "title": "Circus",
+        "ownerName": "Мaistora",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/52009044339_025558c040.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/52009044339_025558c040_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/14838182@N00/52009044339",
+        "dateTaken": "2022-04-13 16:34:49"
+      },
+      {
+        "id": "54817159621",
+        "title": "Whodunit",
+        "ownerName": "Dave Fieldhouse Photography",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54817159621_a5c9af5902.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54817159621_a5c9af5902_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/86712386@N05/54817159621",
+        "dateTaken": "2025-09-28 13:00:55"
+      }
+    ],
+    "rejected": [
+      "49742581707",
+      "54315545419",
+      "54776964346",
+      "54307362908",
+      "54144443614",
+      "53689020837",
+      "53652786552",
+      "53609858532",
+      "53530126244",
+      "53073735725",
+      "52999300095",
+      "52997106640",
+      "52803342960",
+      "52375619378",
+      "51635380477",
+      "51412499055",
+      "45391200255",
+      "24975942298",
+      "49813316291",
+      "49221647883"
     ]
   }
 }

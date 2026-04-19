@@ -10,13 +10,14 @@
 import type { JourneyInfo } from "@/components/photo-overlay"
 
 // Normalise a station name for cluster matching: lowercase, strip apostrophes
-// and periods, remove a leading "London " (Google prefixes mainline stations),
-// and trim parenthetical station codes like "(KGX)".
+// (both straight ' and curly ’ — Google Routes uses curly) and periods, remove
+// a leading "London " (Google prefixes mainline stations), and trim
+// parenthetical station codes like "(KGX)".
 function normaliseStation(name: string | undefined): string {
   if (!name) return ""
   return name
     .toLowerCase()
-    .replace(/[.']/g, "")                // "King's Cross St. Pancras" -> "kings cross st pancras"
+    .replace(/[.'\u2019]/g, "")          // "King's Cross St. Pancras" -> "kings cross st pancras"
     .replace(/^london\s+/, "")           // "London Euston" -> "euston"
     .replace(/\s*\([^)]*\)\s*$/, "")     // "Rugby (RUG)" -> "rugby"
     .trim()
@@ -89,13 +90,19 @@ export function getEffectiveJourney(
   journey: JourneyInfo,
   origin: string
 ): EffectiveJourney {
-  // Default for non-cluster origins — no rewrite at all. If the user picked
-  // Stratford or Farringdon as primary, the raw journey is reported as-is.
+  // Default for non-cluster origins — no time/change rewrite, but DO prefer
+  // the real departure station from the journey's first leg over the caller-
+  // supplied origin name. This matters for RTT cluster origins: "Liverpool
+  // Street" as primary can surface a train that actually departs from
+  // Moorgate, and the UI should attribute it to Moorgate. For Routes-API
+  // primaries (Farringdon, Stratford) leg[0].departureStation always equals
+  // the origin name so this is a no-op.
   if (!isInKingsCrossCluster(origin)) {
+    const legOrigin = journey.legs?.[0]?.departureStation
     return {
       effectiveMinutes: journey.durationMinutes,
       effectiveChanges: journey.changes,
-      effectiveOrigin: origin,
+      effectiveOrigin: legOrigin ? prettifyStationLabel(legOrigin) : origin,
       isClusterHop: false,
     }
   }

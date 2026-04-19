@@ -66,6 +66,46 @@ export type JourneyInfo = {
     departureTime?: string
     arrivalTime?: string
   }[]
+  /**
+   * Intermediate London-area calling points for RTT-sourced direct journeys.
+   * Lets the user see "I could board at Bromley South and save 18 min rather
+   * than go to Victoria first". Populated only when the journey is a direct
+   * train (changes === 0) AND came from RTT data with a resolvable calling
+   * sequence. Undefined for stitched or Routes-API-only journeys.
+   */
+  londonCallingPoints?: {
+    name: string
+    crs: string
+    /** Minutes from the journey's start (origin) to this calling point. */
+    minutesFromOrigin: number
+  }[]
+  /**
+   * London-area stations the winning direct train calls at BEFORE the origin.
+   * Lets a user say to a friend further out, "join me at Kentish Town, it's
+   * the same train". Hints show "(Nm longer)" since boarding earlier adds
+   * that many minutes to the total journey. Sourced from RTT, London-filtered
+   * at the map layer; undefined when not a direct/RTT journey or when no
+   * upstream London stations exist on the route.
+   */
+  londonUpstreamCallingPoints?: {
+    name: string
+    crs: string
+    /** Minutes ADDED to the total trip by boarding at this upstream station. */
+    minutesExtra: number
+  }[]
+  /**
+   * When set, the arrivalStation of the HEAVY_RAIL leg that the calling-points
+   * arrays describe. Map.tsx uses this to pin the calling-points to a specific
+   * leg of a multi-leg custom-primary journey (e.g. for a KT→Shoeburyness
+   * journey routed via [KT→Farringdon OTHER, Farringdon→Stratford HEAVY,
+   * Stratford→Shoeburyness HEAVY] we pin to the final leg's arrival
+   * "Shoeburyness" so the calling-points narrative describes LST/Barking/
+   * Upminster — the alternative boarding points for the Shoeburyness-bound
+   * train — rather than the first HEAVY_RAIL leg's change station.) Absent
+   * when the calling-points describe the journey's first HEAVY_RAIL leg
+   * (the existing behaviour for non-custom primaries).
+   */
+  callingPointsLegArrival?: string
 }
 
 type StationModalProps = {
@@ -119,14 +159,24 @@ type StationModalProps = {
   primaryOrigin?: string
   /** When true, this station is a friend origin — hides travel info and hike button */
   isFriendOrigin?: boolean
+  /** When true, this station is a primary origin (or a clustered sibling) — same
+   *  simplified view as isFriendOrigin: no journey info, no Hike button. Also
+   *  triggers the origin-specific Flickr search algorithm (smaller radius). */
+  isPrimaryOrigin?: boolean
+  /** When true, the station name represents a PLACE rather than a specific
+   *  station (e.g. "City of London"). Suppresses the " Station" title suffix. */
+  isSynthetic?: boolean
 }
 
-// Formats minutes as "Xh Ym" or "Xm"
+// Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
+// Edge cases handled: "1 minute", "1 hour", "2 hours", "1 hour and 1 minute".
 function formatMinutes(minutes: number): string {
-  if (minutes < 60) return `${minutes} minutes`
+  const pluralMin = (m: number) => `${m} ${m === 1 ? "minute" : "minutes"}`
+  const pluralHr = (h: number) => `${h} ${h === 1 ? "hour" : "hours"}`
+  if (minutes < 60) return pluralMin(minutes)
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  return m === 0 ? `${h} hour` : `${h} hour and ${m} minutes`
+  return m === 0 ? pluralHr(h) : `${pluralHr(h)} and ${pluralMin(m)}`
 }
 
 // Formats a single origin's journey, e.g.
@@ -144,7 +194,11 @@ function singleOriginDescription(origin: string, journey: JourneyInfo): string {
   // first leg — so we slice legs accordingly.
   const legs = effective.isClusterHop ? journey.legs.slice(1) : journey.legs
 
-  if (changes === 0) return `${time} from ${displayOrigin}. Direct train.`
+  // Direct-train phrasing: inline "direct" instead of a second sentence, so
+  // a tap on a direct-reachable destination reads like
+  //   "1 hour and 9 minutes direct from Kings Cross."
+  // rather than the previous two-sentence form.
+  if (changes === 0) return `${time} direct from ${displayOrigin}.`
 
   // Pretty-print each intermediate station name so the rendered sentence
   // reads naturally (no curly apostrophes, no "(COV)" codes, no "International").
@@ -255,6 +309,8 @@ export default function StationModal({
   friendOrigin,
   primaryOrigin = "Farringdon",
   isFriendOrigin = false,
+  isPrimaryOrigin = false,
+  isSynthetic = false,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -262,6 +318,42 @@ export default function StationModal({
   const [error, setError] = useState<string | null>(null)
 
   const hasApiKey = Boolean(process.env.NEXT_PUBLIC_FLICKR_API_KEY)
+
+  // Dev-only: suppress the automatic Flickr fetch on modal open. In
+  // production this is a no-op (photosLoadRequested starts true →
+  // fetch runs immediately, same as before). On `npm run dev`, a
+  // "Load photos" button appears where the grid would be; clicking
+  // flips the flag and kicks off the usual fetch. Purpose: stop
+  // burning Flickr API quota while iterating on UI locally.
+  //
+  // process.env.NODE_ENV is replaced at build time by Next.js, so
+  // `isLocalDev` becomes a literal `false` in the prod bundle —
+  // the button branch is tree-shaken out, zero runtime cost.
+  const isLocalDev = process.env.NODE_ENV === "development"
+  const [photosLoadRequested, setPhotosLoadRequested] = useState(!isLocalDev)
+  // Reset the request flag whenever the modal opens for a new station
+  // (dev only). Prod renders this effect as a no-op — setState with
+  // the same value doesn't re-render.
+  useEffect(() => {
+    if (isLocalDev) setPhotosLoadRequested(false)
+  }, [open, lat, lng, isLocalDev])
+
+  // Diagnostic log: when the modal opens for a station for which we have no
+  // journey data from the active primary, emit a console.warn. This makes it
+  // easy to spot (and grep) how often we land in the "NO CALLING POINT DATA"
+  // branch of the render below — which helps decide whether a fresh
+  // fetch-journeys.mjs run is needed or a code-path bug is at fault.
+  // Gated on `open` + `!isFriendOrigin && !isPrimaryOrigin` so we only log
+  // for stations that actually render the journey-narrative section.
+  useEffect(() => {
+    if (!open) return
+    if (isFriendOrigin || isPrimaryOrigin) return
+    if (journeys?.[primaryOrigin]) return
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[ttg:no-journey-data] ${stationName} — no journey from "${primaryOrigin}" in pre-fetched data`,
+    )
+  }, [open, isFriendOrigin, isPrimaryOrigin, journeys, primaryOrigin, stationName])
 
   // ── Local note editing state — synced from props when a new station opens ──
   const [localPublicNote, setLocalPublicNote] = useState(publicNote)
@@ -303,6 +395,50 @@ export default function StationModal({
     }, ANIM_DURATION * 0.65)
   }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote])
 
+  // Swipe-down-to-dismiss for the mobile sheet. Attached only to the drag
+  // handle bar (see <div className="mx-auto ... bg-muted" /> near the top
+  // of DialogContent) so panning/scrolling the photos below doesn't trigger
+  // dismissal. Commits the close when the drag exceeds 80px OR the velocity
+  // at release is a downward flick (≥0.4 px/ms). Otherwise snaps back.
+  // While dragging, the whole DialogContent translates with the finger 1:1
+  // for that "grab the bottom sheet" feel.
+  const dragStartY = useRef<number | null>(null)
+  const dragStartAt = useRef<number>(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  const handleDragPointerDown = useCallback((e: React.PointerEvent) => {
+    if (e.pointerType !== "touch" && e.pointerType !== "pen") return
+    dragStartY.current = e.clientY
+    dragStartAt.current = performance.now()
+    setDragOffset(0)
+  }, [])
+  const handleDragPointerMove = useCallback((e: React.PointerEvent) => {
+    if (dragStartY.current == null) return
+    const dy = e.clientY - dragStartY.current
+    // Clamp to 0 — upward pulls do nothing (don't want to let the user
+    // yank the sheet upward above its natural position).
+    setDragOffset(Math.max(0, dy))
+  }, [])
+  const handleDragPointerUp = useCallback((e: React.PointerEvent) => {
+    if (dragStartY.current == null) return
+    const dy = e.clientY - dragStartY.current
+    const dt = performance.now() - dragStartAt.current
+    const velocity = dt > 0 ? dy / dt : 0
+    dragStartY.current = null
+    if (dy > 80 || velocity > 0.4) {
+      // Commit dismiss. Use the existing animated-close path so the exit
+      // animation + note-save fire as normal. The residual dragOffset is
+      // cleared by handleAnimatedClose → parent → unmount.
+      setDragOffset(0)
+      handleAnimatedClose()
+    } else {
+      setDragOffset(0)  // snap back
+    }
+  }, [handleAnimatedClose])
+  const handleDragPointerCancel = useCallback(() => {
+    dragStartY.current = null
+    setDragOffset(0)
+  }, [])
+
   // How many Flickr photos to display (approved photos are added on top)
   const DISPLAY_COUNT = 30
 
@@ -329,7 +465,10 @@ export default function StationModal({
     if (open) {
       hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
       rejectedCountRef.current = rejectedIds.size
-      isOriginRef.current = isOrigin
+      // Friend AND primary origins use the origin-specific Flickr algorithm
+      // (smaller radius, different tag set). Only admin-marked stations hit
+      // the raw `isOrigin` path; the other two now share it.
+      isOriginRef.current = isOrigin || isFriendOrigin || isPrimaryOrigin
       initialApprovedIdsRef.current = new Set(approvedPhotos.map((p) => p.id))
     }
     // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
@@ -344,7 +483,10 @@ export default function StationModal({
   // photos found" text flashes during the render gap — stale allPhotos gets cleared
   // but loading hasn't flipped yet, so the empty-state branch renders briefly.
   useEffect(() => {
-    if (!open || !hasApiKey) return
+    // Extra gate: in dev, wait for the user to click the "Load photos"
+    // button before firing the fetch. In prod, photosLoadRequested is
+    // always true so this behaves exactly like before.
+    if (!open || !hasApiKey || !photosLoadRequested) return
 
     const key = `${lat},${lng}`
     const isNewStation = lastFetchKeyRef.current !== key
@@ -370,7 +512,7 @@ export default function StationModal({
       })
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, hasApiKey, lat, lng])
+  }, [open, hasApiKey, lat, lng, photosLoadRequested])
 
   // Build the display list. Photos approved *before* this session are promoted
   // to the top. Photos approved *during* this session stay in their original
@@ -442,56 +584,286 @@ export default function StationModal({
       {/* max-sm: overrides make the modal fullscreen on small viewports (no margins, no rounded corners).
           inset-0 replaces the top-1/2/left-1/2 centering from the base DialogContent. */}
       <DialogContent
-        style={animationStyle}
+        // While a drag is in progress, merge the translateY into the style
+        // object. Disable the transition so the sheet tracks the finger
+        // 1:1; once released, dragOffset resets to 0 and the base CSS
+        // transition handles the snap-back or the close animation takes
+        // over.
+        style={
+          dragOffset > 0
+            ? {
+                ...animationStyle,
+                transform: `translateY(${dragOffset}px)`,
+                transition: "none",
+              }
+            : animationStyle
+        }
         overlayStyle={isClosing ? {
           animation: "exit 300ms ease forwards",
           "--tw-exit-opacity": "0",
         } as React.CSSProperties : undefined}
-        className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col overflow-hidden p-0 max-sm:top-auto max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:h-[92dvh] max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none">
+        // max-sm:overflow-y-auto makes the whole modal scroll on mobile (vs the
+        // desktop behaviour where only the photo grid below scrolls). Combined
+        // with max-sm:sticky on the title and the photos section dropping its
+        // own scroll container on mobile, everything flows through one
+        // continuous scroll path and tapping the title jumps back to the top.
+        // gap-0 overrides DialogContent's default gap-6 (24px) from the shadcn
+        // base — that was adding a large unwanted gap between the title
+        // wrapper, DialogHeader, and the photos section. We want to manage
+        // inter-section spacing explicitly via padding inside each child.
+        className="flex h-[92dvh] w-[94dvw] max-w-none sm:max-w-none flex-col gap-0 overflow-hidden p-0 max-sm:overflow-y-auto max-sm:top-auto max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:h-[92dvh] max-sm:w-full max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none">
 
-        {/* ── Header: station info left, Komoot button right ── */}
-        <DialogHeader className="shrink-0 px-6 pt-6 pb-0">
-          {/* On mobile: single column stack. On sm+: row with title/subtitle left, button right. */}
-          <div id="TEXT_BTN_CONTAINER" className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
+        {/* Mobile-only drag handle + swipe-to-dismiss grip. Appears as a
+            small pill-shaped bar at the very top of the sheet — matches
+            the iOS sheet visual language and the mobile search sheet's
+            own handle. Attaches pointer handlers that slide the sheet
+            with the finger; release past 80px or at decent downward
+            velocity dismisses via the same handleAnimatedClose path
+            that the overlay tap / Escape key use.
+            touch-none prevents the browser from also interpreting the
+            drag as a scroll gesture; px-6 widens the grab target beyond
+            the visible 40px pill so the swipe is forgiving. sm:hidden
+            hides the whole thing on desktop (no sheet metaphor there). */}
+        <div
+          className="sm:hidden shrink-0 px-6 py-2 touch-none"
+          onPointerDown={handleDragPointerDown}
+          onPointerMove={handleDragPointerMove}
+          onPointerUp={handleDragPointerUp}
+          onPointerCancel={handleDragPointerCancel}
+          aria-hidden="true"
+        >
+          <div className="mx-auto h-1 w-10 rounded-full bg-muted" />
+        </div>
 
-            {/* Left group: title + description stacked together */}
-            <div id="STATION-NAME_DESCRIPTION" className="flex flex-col gap-2">
-              <DialogTitle className="text-2xl sm:text-3xl">
-                {stationName} Station
-              </DialogTitle>
-              {/* Friend origin stations don't show travel time — they're not hiking destinations */}
-              {!isFriendOrigin && (
-                <>
-                  {/* Primary origin journey info */}
-                  <DialogDescription className="text-sm">
-                    {journeys?.[primaryOrigin]
-                      ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
-                      : `${formatMinutes(minutes)} from central London.`}
-                  </DialogDescription>
-                  {/* Friend origin journey info — separate paragraph underneath */}
-                  {friendOrigin && journeys?.[friendOrigin] && (
-                    <p className="text-sm">
-                      {singleOriginDescription(friendOrigin, journeys[friendOrigin])}
-                    </p>
-                  )}
-                </>
+        {/* ── Header layout ──
+            Desktop ≥sm (per user spec):
+              1. Title row (full width)
+              2. Primary-journey-info on the left + Hike button on the right, top-aligned
+              3. Friend-journey row (full width)
+              4. Public note row (full width)
+              5. Private note row (admin only, full width)
+            Mobile: everything collapses to a single-column stack; the Hike button
+            renders as a separate block below the notes (see the <Button max-sm>
+            block after DialogHeader).
+            max-sm:pt-0 removes the top padding on mobile so the sticky title sits
+            flush at the top of the scroll area (title adds its own py-3). */}
+        {/* Row 1 — title on the left, Hike button on the right (desktop only),
+            vertically centred. On mobile the button is hidden here and renders
+            as a full-width button after the notes (see below).
+            The WRAPPER is the sticky element on mobile (not the DialogTitle) —
+            this way, on desktop, the title + button share a row while on
+            mobile the whole row sticks. Sticky is scoped to DialogContent
+            (the scroll container on mobile via max-sm:overflow-y-auto) so the
+            header pins through the entire scroll range including the photos.
+            onClick ignores taps on the button (e.target.closest("a")) so the
+            desktop Hike link still navigates normally; any other tap on the
+            row scrolls back to the top (iOS nav-bar convention). */}
+        <div
+          onClick={(e) => {
+            const target = e.target as HTMLElement | null
+            if (target?.closest("a,button")) return
+            if (typeof document === "undefined") return
+            const el = document.querySelector('[data-slot="dialog-content"]')
+            if (el instanceof HTMLElement) el.scrollTo({ top: 0, behavior: "smooth" })
+          }}
+          className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
+        >
+          <DialogTitle className="text-2xl sm:text-3xl">
+            {stationName}{isSynthetic ? "" : " Station"}
+          </DialogTitle>
+          {/* Desktop-only Hike button. Hidden for friend/primary origins
+              (they don't get a Hike action). min-w-0 isn't needed on the
+              title because the button has shrink-0 and the row has gap. */}
+          {!isFriendOrigin && !isPrimaryOrigin && (
+            <Button asChild className="hidden sm:inline-flex shrink-0">
+              <a
+                href={komootUrl(stationName, lat, lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <HugeiconsIcon icon={MapingIcon} />
+                Hikes from station
+              </a>
+            </Button>
+          )}
+        </div>
+
+        <DialogHeader className="shrink-0 px-6 pt-0 pb-0">
+          {!isFriendOrigin && !isPrimaryOrigin && (
+            <>
+              {/* Primary journey info — ALWAYS full width now (both desktop
+                  and mobile). The Hike button has moved up into the title
+                  row, freeing this paragraph to use the overlay's full width.
+                  [overflow-wrap:anywhere] on the outer <p> so long station names (e.g.
+                  "Stratford International" in the change list) always wrap
+                  within the dialog's content-box — the span-nested hint line
+                  has its own [overflow-wrap:anywhere], but the main line's text lives
+                  directly inside DialogDescription so it needs the class
+                  here too. */}
+              <DialogDescription className="text-sm [overflow-wrap:anywhere]">
+                {journeys?.[primaryOrigin]
+                  ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
+                  // No pre-stored journey for this primary → happens for
+                  // custom primaries (any NR station picked via the search
+                  // bar — e.g. Kentish Town). Fall back to the primary's
+                  // own name so the narrative reads "X from Kentish Town."
+                  // rather than "from central London" (which was misleading
+                  // when the user had explicitly chosen a non-London origin).
+                  : `${formatMinutes(minutes)} from ${primaryOrigin}.`}
+                {(() => {
+                  // Three distinct outcomes in this section, each getting
+                  // its own copy in the same visual slot beneath the main
+                  // journey line:
+                  //   A. No journey data at all for this primary → "NO
+                  //      CALLING POINT DATA". Emits a console.warn (see
+                  //      useEffect above) so the user can track how often
+                  //      we're missing data and why.
+                  //   B. Journey data exists but both upstream + downstream
+                  //      arrays are empty → "No London calling points."
+                  //      The train legitimately doesn't call at any other
+                  //      London station on the way (e.g. a non-stop
+                  //      Paddington → Swindon express).
+                  //   C. Journey data with ≥1 calling point → the standard
+                  //      "Can also start same route at: …" / "The X train
+                  //      also calls at: …" list with signed minute deltas.
+                  // Separation via <br /> + small muted copy matches the
+                  // style already used for case C so the three outcomes
+                  // feel like variants of one UI element.
+                  const j = journeys?.[primaryOrigin]
+                  const hintClass =
+                    "block [overflow-wrap:anywhere] text-xs text-muted-foreground"
+                  // Case A — we don't have the journey data. Admin-only
+                  // diagnostic: non-admin users would find "NO CALLING
+                  // POINT DATA" confusing (it looks like a bug, not an
+                  // information hint) so the message is gated on devMode.
+                  // The console.warn still fires regardless so missing-data
+                  // events are always auditable via DevTools.
+                  if (!j) {
+                    if (!devMode) return null
+                    return (
+                      <>
+                        <br />
+                        <span className={hintClass}>NO CALLING POINT DATA</span>
+                      </>
+                    )
+                  }
+                  const up = (j.londonUpstreamCallingPoints ?? [])
+                    .slice()
+                    .sort((a, b) => b.minutesExtra - a.minutesExtra)
+                    .map((s) => ({ key: s.crs, name: s.name, label: `+${s.minutesExtra}m` }))
+                  const down = (j.londonCallingPoints ?? [])
+                    .slice()
+                    .sort((a, b) => a.minutesFromOrigin - b.minutesFromOrigin)
+                    .map((s) => ({ key: s.crs, name: s.name, label: `-${s.minutesFromOrigin}m` }))
+                  const items = [...up, ...down]
+                  // Case B — we have the journey but it has no other London
+                  // stops. Distinct message so admins can trust that the
+                  // absence of a list is the real answer, not a data gap.
+                  // Also gated on devMode: for non-admin users an empty
+                  // state reads better than a tombstone "No London calling
+                  // points." message next to every express-service modal.
+                  if (items.length === 0) {
+                    if (!devMode) return null
+                    return (
+                      <>
+                        <br />
+                        <span className={hintClass}>No London calling points.</span>
+                      </>
+                    )
+                  }
+                  // Prefix choice:
+                  //   • If the described HEAVY_RAIL leg's arrival IS the
+                  //     feature's destination (i.e. the train goes DIRECTLY
+                  //     to where the user is travelling): "Alternative
+                  //     starts for the direct train to {destination}".
+                  //   • Otherwise (the described leg arrives at a change
+                  //     station, not the final destination): "The train to
+                  //     {change station} can also be boarded at". Anchors
+                  //     the sentence on where the train is heading rather
+                  //     than where it started — reads more naturally when
+                  //     talking about alternative boarding points.
+                  //
+                  // Which leg IS the described one? By default, the first
+                  // HEAVY_RAIL leg (matches the non-custom-primary flow).
+                  // For custom primaries with multi-leg synth journeys,
+                  // map.tsx sets callingPointsLegArrival explicitly — that
+                  // wins because map.tsx picked that leg specifically for
+                  // its richer calling-points list (e.g. for KT→Shoeburyness
+                  // we want the last leg Stratford→Shoeburyness, not the
+                  // first Farringdon→Stratford leg).
+                  const mainlineLeg = j.legs?.find((l) => l.vehicleType === "HEAVY_RAIL")
+                  const towardsStation = j.callingPointsLegArrival ?? mainlineLeg?.arrivalStation
+                  // Station display in photo-overlay always appends " Station"
+                  // via stationName, while legs strip it. Compare against the
+                  // raw property name to decide if the leg terminates at the
+                  // user's destination.
+                  const reachesDest =
+                    towardsStation != null &&
+                    towardsStation === stationName.replace(/ Station$/, "")
+                  const prefix = towardsStation
+                    ? reachesDest
+                      ? `Alternative starts for a direct train to ${towardsStation}: `
+                      : `The train to ${towardsStation} can also be boarded at: `
+                    : "Can also start same route at: "
+                  return (
+                    <>
+                      <br />
+                      {/* [overflow-wrap:anywhere] flips overflow-wrap to break-word so a
+                          long station name + label pair (e.g. "Stratford
+                          International (-7m)") wraps at every available
+                          boundary, preventing horizontal overflow of the
+                          containing dialog. Without this, some browsers
+                          treat a multi-word station + adjacent parenthesised
+                          label as a single unbreakable unit once the
+                          parentheses anchor themselves to the word — the
+                          inline-span wrapper seems to encourage that
+                          behaviour. block display guarantees the span forms
+                          its own wrappable line box rather than inheriting
+                          quirks from the inline flow. */}
+                      <span className="block [overflow-wrap:anywhere] text-xs text-muted-foreground">
+                        {prefix}
+                        {items.map((item, i) => {
+                          // Separator before item i>0: "," for middle
+                          // items, " & " before the LAST item of a 2-item
+                          // list, ", & " before the LAST of a 3+ list
+                          // (Oxford comma).
+                          let sep = ""
+                          if (i > 0) {
+                            if (i === items.length - 1) {
+                              sep = items.length > 2 ? ", & " : " & "
+                            } else {
+                              sep = ", "
+                            }
+                          }
+                          return (
+                            <span key={item.key}>
+                              {sep}{item.name} ({item.label})
+                            </span>
+                          )
+                        })}
+                        {/* Trailing full stop so the calling-points line
+                            reads as a complete sentence matching the style
+                            of the main journey line above ("1h 54m from
+                            Farringdon. Two changes: East Croydon and
+                            Lewes."). Both the 0-change ("Can also start
+                            same route at: …") and >0-change ("The train to
+                            X can also be boarded at: …") variants end
+                            here, so the period lives outside the items map. */}
+                        .
+                      </span>
+                    </>
+                  )
+                })()}
+              </DialogDescription>
+
+              {/* Friend journey info — full width, separate row below primary */}
+              {friendOrigin && journeys?.[friendOrigin] && (
+                <p className="text-sm">
+                  {singleOriginDescription(friendOrigin, journeys[friendOrigin])}
+                </p>
               )}
-            </div>
-
-            {/* Hike button hidden for friend origin stations — not relevant for origin points */}
-            {!isFriendOrigin && (
-              <Button asChild className="max-sm:w-full">
-                <a
-                  href={komootUrl(stationName, lat, lng)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <HugeiconsIcon icon={MapingIcon} />
-                  Hikes from station
-                </a>
-              </Button>
-            )}
-          </div>
+            </>
+          )}
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
@@ -509,9 +881,18 @@ export default function StationModal({
               rows={2}
             />
           ) : (
-            /* Only render the paragraph when there's something to show */
+            /* Split on any run of newlines into separate paragraphs. Users
+               author notes with a single Enter keypress (one \n), so we
+               treat each line as its own paragraph. `filter(Boolean)` drops
+               the empty strings that "\n\n" produces. `space-y-2.5` (10px)
+               is ≈ half the 20px text-sm line-height, giving each paragraph
+               visible breathing room without a full empty line. */
             localPublicNote && (
-              <p className="text-sm text-foreground">{renderWithLinks(localPublicNote)}</p>
+              <div className="text-sm text-foreground space-y-2.5">
+                {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
+                  <p key={i}>{renderWithLinks(para)}</p>
+                ))}
+              </div>
             )
           )}
 
@@ -528,6 +909,21 @@ export default function StationModal({
               className="w-full resize-none overflow-hidden rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:bg-orange-950/20"
               rows={2}
             />
+          )}
+
+          {/* Mobile-only Hike button, anchored at the bottom of all the text.
+              Desktop uses the inline button in the title row above instead. */}
+          {!isFriendOrigin && !isPrimaryOrigin && (
+            <Button asChild className="mt-1 w-full sm:hidden">
+              <a
+                href={komootUrl(stationName, lat, lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <HugeiconsIcon icon={MapingIcon} />
+                Hikes from station
+              </a>
+            </Button>
           )}
         </DialogHeader>
 
@@ -655,7 +1051,14 @@ export default function StationModal({
         )}
 
         {/* ── Scrollable photo area ── */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-">
+        {/* On mobile: drop flex-1 / overflow-y-auto so this flows inside the
+            DialogContent-level scroll (see max-sm:overflow-y-auto above).
+            Desktop keeps the original two-pane layout (static header, scrolling photos). */}
+        {/* pt-6 replaces the previously broken "pt-" class. Restores the
+            24px gap between the text area and the photo grid that used to
+            come from DialogContent's gap-6, now that we've reset that
+            parent gap to 0 to fix the title\u2194content spacing. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6 max-sm:flex-none max-sm:overflow-visible">
 
           {/* No API key */}
           {!hasApiKey && (
@@ -669,6 +1072,28 @@ export default function StationModal({
                 to <code className="rounded bg-background px-1 py-0.5 font-mono text-[11px]">.env.local</code>{" "}
                 to enable photos.
               </p>
+            </div>
+          )}
+
+          {/* Dev-only "Load photos" button. Rendered where the grid
+              would be so the user can request photos explicitly
+              rather than triggering an auto-fetch on every modal
+              open (saves Flickr API quota during local testing).
+              In prod, isLocalDev is compiled to `false` and this
+              entire branch is dead code. */}
+          {hasApiKey && isLocalDev && !photosLoadRequested && (
+            <div className="flex items-center justify-center rounded-lg bg-muted px-4 py-12">
+              <button
+                type="button"
+                onClick={() => setPhotosLoadRequested(true)}
+                // Matching shadcn Button's outline-variant vibe but
+                // inlined so we don't pull in another import for a
+                // dev-only widget. cursor-pointer is explicit because
+                // buttons without it feel unresponsive to mouse users.
+                className="cursor-pointer rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                Load photos
+              </button>
             </div>
           )}
 
@@ -698,8 +1123,9 @@ export default function StationModal({
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          {/* No photos found */}
-          {hasApiKey && !loading && !error && allPhotos.length === 0 && photos.length === 0 && (
+          {/* No photos found — gated on photosLoadRequested so dev
+              users don't see "no photos" before clicking the button. */}
+          {hasApiKey && photosLoadRequested && !loading && !error && allPhotos.length === 0 && photos.length === 0 && (
             <p className="text-sm text-muted-foreground">
               No hiking photos found near this station on Flickr.
             </p>

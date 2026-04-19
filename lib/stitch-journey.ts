@@ -1,6 +1,6 @@
 // Synthesises a "primary origin" JourneyInfo for a destination when we don't
-// have one explicitly fetched. Reuses the Kings Cross cluster journey (which
-// we have for every destination) plus a small terminal-to-terminal matrix
+// have one explicitly fetched. Reuses a pre-fetched source journey (KX cluster
+// by default, Farringdon as fallback) plus a small terminal-to-terminal matrix
 // (data/terminal-matrix.json) to construct journeys from any London terminal
 // without making new per-destination API calls.
 //
@@ -10,13 +10,20 @@
 //                                  stripped (transfer  kept as "mainline"
 //                                  to a terminal)
 //
-//   User picks "Victoria" as primary origin.
+//   User picks "Victoria" as primary origin (passed in as a Terminal object).
 //   → matrix["Victoria"]["Paddington"] = { minutes: 11, polyline, ... }
 //   → Stitched journey = [Victoria→Paddington tube hop] + [Paddington→Swindon mainline]
 //
-// We also handle Farringdon as a fallback source — its Elizabeth-Line leg to
-// Paddington is exactly the same shape (transfer landing at a terminal), just
-// with vehicleType=HEAVY_RAIL instead of SUBWAY.
+// The Farringdon fallback handles the same shape — its first-leg transfer to
+// Paddington is via Elizabeth line rather than tube, but the stitcher treats
+// any "first leg lands at a terminal" journey uniformly.
+//
+// IMPORTANT LIMITATION: this file ONLY synthesises via-central-London journeys.
+// If the new origin sits on a mainline (e.g. Feltham on the Waterloo-Reading
+// line), destinations that share that line could be reached DIRECTLY without
+// going into central London. Detecting those is out of scope here — the caller
+// should consult a curated per-origin "direct-reachable" list (or real journey
+// data from the Routes API) before falling back to this stitcher.
 
 import type { JourneyInfo } from "@/components/photo-overlay"
 
@@ -48,10 +55,12 @@ export type TerminalMatrix = Record<string, Record<string, MatrixEntry>>
 
 // Normalise a station label the same way effective-journey.ts does, so
 // "King's Cross St. Pancras (KGX)" and "Kings Cross" both match "kings cross".
+// Handles both straight apostrophe (') and curly apostrophe (\u2019) — Google
+// Routes returns the curly form, everything else uses straight.
 function normalise(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[.']/g, "")
+    .replace(/[.'\u2019]/g, "")
     .replace(/^london\s+/, "")
     .replace(/\s*\([^)]*\)\s*$/, "")
     .trim()
@@ -163,26 +172,62 @@ type FeatureLike = {
 
 export type StitchInputs = {
   feature: FeatureLike
-  /** The terminal we want to build a journey FROM. Must appear in `terminals`. */
-  newOrigin: string
+  /**
+   * The terminal the user is starting FROM. Carries both the coord (used for
+   * looking up an already-fetched journey in feature.properties.journeys) and
+   * the name (used as a key into the terminal matrix, which is name-based).
+   * Passing the whole Terminal avoids string-type ambiguity between the two.
+   */
+  newOrigin: Terminal
   matrix: TerminalMatrix
   terminals: Terminal[]
-  /** Which source journey to try first. Defaults to KX cluster. */
-  canonicalOrigin?: string
-  /** Fallback source if the canonical one is missing. */
-  fallbackOrigin?: string
+  /**
+   * Coord keys of pre-fetched source journeys to try, in order. The first one
+   * that both exists on the feature AND yields a successful stitch wins.
+   * Defaults to Kings Cross first (more coverage of national routes via Euston
+   * / KX / St Pancras), Farringdon as fallback (for destinations where the
+   * Thameslink / Elizabeth line route is what we have on file).
+   */
+  sourceJourneyKeys?: string[]
 }
-
-// The KX cluster origin name used in data/origin-stations.json and journey keys.
-const KX_CLUSTER_ORIGIN = "Kings Cross St Pancras"
-const FARRINGDON_ORIGIN = "Farringdon"
 
 // Minutes of platform-transfer buffer added when we prepend a tube hop.
 // Matches what Google Routes tends to add for station transfers.
 const INTERCHANGE_BUFFER_MIN = 3
 
+// Minimum realistic wait time between two consecutive HEAVY_RAIL legs in a
+// mid-journey change (e.g. change at Guildford from a Waterloo train to the
+// North Downs line). Google Routes sometimes picks itineraries with
+// impossibly-tight 3-4 minute connections ("miss that specific train and
+// your actual wait is 60 min"), which then flow through into our stitched
+// durations and mislead the user. Enforcing this minimum on the gap between
+// an arrival and the next departure gives a time closer to what a typical
+// traveller should plan for — still optimistic for less-frequent routes, but
+// realistic enough that users won't hit a connection they can't make.
+//
+// Why 15 and not 10? Tested against Trainline on several cases:
+// - Gomshall via Guildford (was 52m) with 10-min buffer gives 58m. Still
+//   under Trainline's shown fastest of 46m because the Guildford→Gomshall
+//   ride in our source data is longer than Trainline's fastest. 15m buffer
+//   gives 63m, which is the right side of optimistic.
+// - Eynsford via Swanley with 10-min buffer gives 36m (Trainline: 46m
+//   fastest). 15m buffer gives 41m, which then trips the direct-preference
+//   rule below (direct from Victoria/Blackfriars is ~54m, threshold 15 kicks
+//   in: 41 > 54-15=39, so direct wins). Matches reality: Eynsford IS best
+//   served direct from Victoria/BFR Thameslink, not stitched via LBG.
+const MIN_CHANGE_BUFFER_MIN = 15
+
 /**
- * Produce a synthesised JourneyInfo for `newOrigin`, or null if we can't.
+ * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
+ * null if we can't. Works by taking a pre-fetched "source" journey (KX or
+ * Farringdon), stripping its first-leg transfer into a London terminal, and
+ * prepending a different transfer from `newOrigin` to that terminal (taken
+ * from the terminal matrix).
+ *
+ * This only stitches VIA-CENTRAL journeys. It does NOT know whether a
+ * destination is directly reachable from `newOrigin` without going into
+ * central London first — that requires separate data (see data/origin-routes.json
+ * if implemented, or per-origin Routes API fetches).
  *
  * Returns null (not undefined) to make "unsupported destination" behave like
  * "journey data is missing" elsewhere in the codebase — those stations just
@@ -193,27 +238,137 @@ export function stitchJourney({
   newOrigin,
   matrix,
   terminals,
-  canonicalOrigin = KX_CLUSTER_ORIGIN,
-  fallbackOrigin = FARRINGDON_ORIGIN,
+  sourceJourneyKeys,
 }: StitchInputs): StitchedJourneyInfo | null {
   const journeys = feature.properties?.journeys
   if (!journeys) return null
 
-  // Case 0: we already have a real journey for this origin (e.g. for Farringdon,
-  // Stratford, or KX). Just return it unchanged.
-  const existing = journeys[newOrigin]
-  if (existing) return existing
+  // If we already have a real journey for this exact coord, just return it —
+  // no need to stitch.
+  const newOriginKey = `${newOrigin.lng},${newOrigin.lat}`
+  if (journeys[newOriginKey]) return journeys[newOriginKey]
 
-  // Try the canonical source (KX cluster) first, then fall back to Farringdon.
-  const candidates = [canonicalOrigin, fallbackOrigin]
-  for (const sourceOrigin of candidates) {
-    if (sourceOrigin === newOrigin) continue
-    const source = journeys[sourceOrigin]
-    if (!source) continue
-    const stitched = stitchFromSource(source, newOrigin, matrix, terminals)
-    if (stitched) return stitched
+  // Build the candidate source list. If the caller passed an explicit list,
+  // honour it exactly (backwards compatibility + testability). Otherwise try
+  // EVERY pre-fetched journey on the feature as a potential source.
+  //
+  // Why iterate every source instead of just KX + Farringdon? Because some
+  // destinations have a weird "fastest route" recorded from KX on the day
+  // of the fetch (e.g. Overton routes via Vauxhall + Clapham Junction when
+  // direct Waterloo services were disrupted). Meanwhile the same feature's
+  // Stratford journey might contain a clean "Stratford → Waterloo → Overton"
+  // — stitching that source for a Waterloo primary yields "Waterloo →
+  // Overton" direct after the transfer is stripped. We want to pick the
+  // best result, not just the first.
+  const candidateKeys = sourceJourneyKeys ?? Object.keys(journeys)
+
+  // Collect every successful stitch and pick the winner by (fewest changes,
+  // then shortest duration). Fewer changes is strongly preferred — a user
+  // would rather wait a few extra minutes than pointlessly change trains.
+  let best: StitchedJourneyInfo | null = null
+
+  // FIRST — scan each source journey for an "origin-leg subsequence": a
+  // contiguous run of HEAVY_RAIL legs starting with one whose departure
+  // matches newOrigin, continuing to the end of the source journey (which
+  // means it terminates at the feature's destination). Handles two cases
+  // in one pass:
+  //
+  //   (a) Single trailing HEAVY_RAIL leg (the original "direct-leg
+  //       shortcut"): e.g. Birmingham → Amberley stored as [Bham→Euston
+  //       HEAVY_RAIL, Euston→Victoria SUBWAY, Victoria→Amberley
+  //       HEAVY_RAIL] — for newOrigin=Victoria we extract the last leg
+  //       alone for a 0-change journey.
+  //
+  //   (b) Multiple trailing HEAVY_RAIL legs starting at newOrigin: e.g.
+  //       Nottingham → Southease stored as [Nott→StP HEAVY, StP→Vic
+  //       SUBWAY, Vic→Lewes HEAVY, Lewes→Southease HEAVY] — for
+  //       newOrigin=Victoria we extract legs[2..3], giving a 1-change
+  //       Victoria → Lewes → Southease journey. This matches the route
+  //       Trainline suggests as the realistic-fastest-change-at-Lewes,
+  //       as opposed to the via-Brighton route extractMainline would
+  //       produce by stripping only one leading leg.
+  //
+  // extractMainline's original logic doesn't pick up either case because
+  // it only strips ONE leading-transfer leg and assumes everything after
+  // is a single connected ride from that terminal.
+  for (const sourceKey of candidateKeys) {
+    if (sourceKey === newOriginKey) continue
+    const source = journeys[sourceKey]
+    if (!source?.legs || source.legs.length === 0) continue
+    // Find the first HEAVY_RAIL leg departing newOrigin (or a cluster
+    // equivalent). Scanning left-to-right so we always pick the earliest
+    // match — closest to the user's actual boarding point.
+    let startIdx = -1
+    for (let i = 0; i < source.legs.length; i++) {
+      const leg = source.legs[i]
+      if (leg.vehicleType !== "HEAVY_RAIL") continue
+      const legDepart = matchTerminal(leg.departureStation, terminals)
+      if (!legDepart) continue
+      if (sameTerminalOrCluster(legDepart, newOrigin.name)) {
+        startIdx = i
+        break
+      }
+    }
+    if (startIdx === -1) continue
+    // All legs from startIdx to end must be HEAVY_RAIL — if there's a
+    // tube/walk in between, this isn't a clean rail-only continuation.
+    const originLegs = source.legs.slice(startIdx)
+    if (originLegs.some((l) => l.vehicleType !== "HEAVY_RAIL")) continue
+    // Compute duration from timestamps with per-change buffer enforcement
+    // (MIN_CHANGE_BUFFER_MIN) so unrealistically-tight connections in the
+    // Google Routes source get padded to a realistic minimum. Single-leg
+    // journeys skip the buffer logic entirely.
+    let minutes = 0
+    let timestampsOk = true
+    for (let i = 0; i < originLegs.length; i++) {
+      const leg = originLegs[i]
+      if (!leg.departureTime || !leg.arrivalTime) { timestampsOk = false; break }
+      minutes += (new Date(leg.arrivalTime).getTime() - new Date(leg.departureTime).getTime()) / 60_000
+      if (i < originLegs.length - 1) {
+        const nextLeg = originLegs[i + 1]
+        if (!nextLeg.departureTime) { timestampsOk = false; break }
+        const gap = (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
+        minutes += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+      }
+    }
+    if (!timestampsOk || !Number.isFinite(minutes) || minutes <= 0) continue
+    const candidate: StitchedJourneyInfo = {
+      durationMinutes: Math.round(minutes),
+      // HEAVY_RAIL-only legs → (N legs = N-1 changes). Single leg = 0 changes.
+      changes: originLegs.length - 1,
+      legs: originLegs,
+    }
+    if (
+      best == null ||
+      candidate.changes < best.changes ||
+      (candidate.changes === best.changes &&
+        (candidate.durationMinutes ?? Infinity) < (best.durationMinutes ?? Infinity))
+    ) {
+      best = candidate
+    }
   }
-  return null
+
+  // THEN — the original full-stitch loop. Even if we found a direct leg
+  // above, stitched alternatives might beat it on duration (rare, but the
+  // comparison is cheap). stitchFromSource returns at most a 1-change
+  // journey post-strip, so a direct-leg result will usually win on changes.
+  for (const sourceKey of candidateKeys) {
+    if (sourceKey === newOriginKey) continue
+    const source = journeys[sourceKey]
+    if (!source) continue
+    // stitchFromSource takes the terminal NAME because the matrix is name-keyed.
+    const stitched = stitchFromSource(source, newOrigin.name, matrix, terminals)
+    if (!stitched || stitched.durationMinutes == null) continue
+    if (
+      best == null ||
+      stitched.changes < best.changes ||
+      (stitched.changes === best.changes &&
+        (stitched.durationMinutes ?? Infinity) < (best.durationMinutes ?? Infinity))
+    ) {
+      best = stitched
+    }
+  }
+  return best
 }
 
 // Kings Cross / St Pancras / Euston share an Underground interchange
@@ -331,22 +486,62 @@ function stitchFromSource(
 
 /** How long the mainline portion takes. Prefers timestamp math (accurate
  *  even when the source started with a stripped transfer), falls back to
- *  source.durationMinutes. */
+ *  source.durationMinutes.
+ *
+ *  Sums per-leg ride times from each leg's own start/end timestamps, plus
+ *  enforces MIN_CHANGE_BUFFER_MIN between consecutive legs — see the const's
+ *  comment for rationale. If timestamps are missing on any internal leg,
+ *  falls back to the start-to-end delta (which still includes whatever gaps
+ *  the source encoded, good or bad) and bails if that isn't available. */
 function computeMainlineMinutes(
   source: StitchedJourneyInfo,
   mainlineLegs: StitchedJourneyInfo["legs"],
   stripped: boolean,
 ): number | null {
-  const firstDeparture = mainlineLegs[0]?.departureTime
-  const lastArrival = mainlineLegs.at(-1)?.arrivalTime
-  if (firstDeparture && lastArrival) {
-    const mins = (new Date(lastArrival).getTime() - new Date(firstDeparture).getTime()) / 60_000
-    if (Number.isFinite(mins) && mins >= 0) return Math.round(mins)
+  if (mainlineLegs.length === 0) return null
+
+  // Fast path: single-leg mainline has no change to buffer — just the one
+  // ride's duration. Avoids allocating intermediate numbers for the common
+  // direct-train case.
+  if (mainlineLegs.length === 1) {
+    const leg = mainlineLegs[0]
+    if (leg.departureTime && leg.arrivalTime) {
+      const mins = (new Date(leg.arrivalTime).getTime() - new Date(leg.departureTime).getTime()) / 60_000
+      if (Number.isFinite(mins) && mins >= 0) return Math.round(mins)
+    }
+    if (stripped) return null
+    return source.durationMinutes
   }
-  // Without timestamps we can't isolate the mainline portion when the source
-  // included a transfer. Bail rather than report a misleading total.
-  if (stripped) return null
-  return source.durationMinutes
+
+  // Multi-leg path: accumulate ride times + enforced-minimum interchange gaps.
+  let total = 0
+  for (let i = 0; i < mainlineLegs.length; i++) {
+    const leg = mainlineLegs[i]
+    if (!leg.departureTime || !leg.arrivalTime) {
+      // A leg missing timestamps makes per-leg math unreliable — fall back
+      // to the raw start-to-end delta + no buffer enforcement.
+      const firstDep = mainlineLegs[0]?.departureTime
+      const lastArr = mainlineLegs.at(-1)?.arrivalTime
+      if (firstDep && lastArr) {
+        const mins = (new Date(lastArr).getTime() - new Date(firstDep).getTime()) / 60_000
+        if (Number.isFinite(mins) && mins >= 0) return Math.round(mins)
+      }
+      if (stripped) return null
+      return source.durationMinutes
+    }
+    total += (new Date(leg.arrivalTime).getTime() - new Date(leg.departureTime).getTime()) / 60_000
+    if (i < mainlineLegs.length - 1) {
+      const nextLeg = mainlineLegs[i + 1]
+      // Gap = time between this leg's arrival and the next leg's departure.
+      // Enforce MIN_CHANGE_BUFFER_MIN floor so a 3-minute platform-dash
+      // connection isn't inherited verbatim into the user-facing duration.
+      const gap = nextLeg.departureTime && nextLeg.arrivalTime
+        ? (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
+        : MIN_CHANGE_BUFFER_MIN
+      total += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+    }
+  }
+  return Math.round(total)
 }
 
 type BuildJourneyArgs = {
@@ -420,19 +615,23 @@ function buildJourney({
 // Convenience: augment a journeys dict with a stitched entry for primaryOrigin
 // ---------------------------------------------------------------------------
 
-/** Returns a journeys dict that is guaranteed to contain an entry for
- *  `primaryOrigin` (if one can be stitched). Original journeys are never
- *  mutated. If the stitcher returns null, the returned dict is unchanged. */
+/**
+ * Returns a journeys dict that is guaranteed to contain an entry for `newOrigin`
+ * (if one can be stitched). The entry is keyed by `newOrigin`'s "lng,lat" coord,
+ * matching how every other origin's journeys are keyed. Original journeys are
+ * never mutated. If the stitcher returns null, the returned dict is unchanged.
+ */
 export function augmentJourneys(
   feature: FeatureLike,
-  primaryOrigin: string,
+  newOrigin: Terminal,
   matrix: TerminalMatrix,
   terminals: Terminal[],
 ): Record<string, StitchedJourneyInfo> | undefined {
   const existing = feature.properties?.journeys
   if (!existing) return undefined
-  if (existing[primaryOrigin]) return existing
-  const stitched = stitchJourney({ feature, newOrigin: primaryOrigin, matrix, terminals })
+  const key = `${newOrigin.lng},${newOrigin.lat}`
+  if (existing[key]) return existing
+  const stitched = stitchJourney({ feature, newOrigin, matrix, terminals })
   if (!stitched) return existing
-  return { ...existing, [primaryOrigin]: stitched }
+  return { ...existing, [key]: stitched }
 }

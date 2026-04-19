@@ -1,6 +1,5 @@
 "use client"
 
-import { X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 type SearchBarProps = {
@@ -8,30 +7,20 @@ type SearchBarProps = {
   onChange: (value: string) => void
 }
 
+/**
+ * Thin wrapper around Input with a fixed "Search stations" placeholder and
+ * rounded corners matching the filter-panel's card style. The clear (X)
+ * button is now provided automatically by Input itself — SearchBar no
+ * longer needs its own wrapper div or X-button.
+ */
 export default function SearchBar({ value, onChange }: SearchBarProps) {
   return (
-    // relative so the clear button can be positioned inside the input area
-    <div className="relative">
-      <Input
-        type="text"
-        placeholder="Search stations"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        // pr-8 reserves space on the right so text doesn't slide under the X button
-        className="rounded-lg pr-8"
-      />
-      {/* Only render the button when there's something to clear */}
-      {value && (
-        <button
-          onClick={() => onChange("")}
-          // inset-y-0 + right-2 + my-auto centres the button vertically inside the input
-          // p-1 enlarges the clickable area beyond the icon; cursor-pointer makes it obvious it's clickable
-          className="absolute inset-y-0 right-1.5 my-auto flex items-center p-1 cursor-pointer text-muted-foreground hover:text-foreground"
-          aria-label="Clear search"
-        >
-          <X size={14} />
-        </button>
-      )}
-    </div>
+    <Input
+      type="text"
+      placeholder="Search stations"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="rounded-lg"
+    />
   )
 }

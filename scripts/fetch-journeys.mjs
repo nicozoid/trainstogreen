@@ -14,12 +14,12 @@
 //   --recompute              Re-fetch even if journey data already exists for this origin.
 //
 // Safe to interrupt and re-run — already-computed stations are skipped.
-// Journey data is stored per-origin, so running from different origins won't
-// overwrite each other:
+// Journey data is stored per-origin — keyed by "lng,lat" coord key so two
+// same-named origin stations stay independent:
 //
 //   feature.properties.journeys = {
-//     "Farringdon": { durationMinutes, departureTime, changes, legs, polyline },
-//     "Blackfriars": { ... }
+//     "-0.104555,51.519964": { durationMinutes, departureTime, changes, legs, polyline },
+//     "-0.1239491,51.530609": { ... }
 //   }
 
 import { readFileSync, writeFileSync } from "fs"
@@ -78,6 +78,9 @@ if (!originFeature) {
 }
 
 const [originLng, originLat] = originFeature.geometry.coordinates
+// The coord key under which we'll store this origin's journeys in each feature.
+// Matches the "lng,lat" format used elsewhere in the app.
+const ORIGIN_COORD_KEY = `${originLng},${originLat}`
 const ORIGIN = { latitude: originLat, longitude: originLng }
 console.log(
   `Origin: ${originFeature.properties.name} (${originLat}, ${originLng})`
@@ -358,7 +361,7 @@ async function main() {
       feature.properties.journeys = {}
     }
 
-    const existingJourney = feature.properties.journeys[ORIGIN_NAME] ?? null
+    const existingJourney = feature.properties.journeys[ORIGIN_COORD_KEY] ?? null
 
     // Skip stations that already have journey data for this origin (allows
     // resuming), unless --recompute was passed
@@ -422,7 +425,7 @@ async function main() {
         `[FLAGGED] ${name}: ${oldMins} → ${newMins} min (+${newMins - oldMins}) — will ask at the end`
       )
     } else {
-      feature.properties.journeys[ORIGIN_NAME] = bestJourney
+      feature.properties.journeys[ORIGIN_COORD_KEY] = bestJourney
     }
 
     processed++
@@ -450,7 +453,7 @@ async function main() {
       const useNew = await askYesNo(`  Use new data? (y = new, n = keep old) `)
 
       if (useNew) {
-        feature.properties.journeys[ORIGIN_NAME] = newJourney
+        feature.properties.journeys[ORIGIN_COORD_KEY] = newJourney
         console.log(`  → Updated to ${newMins} min\n`)
       } else {
         console.log(`  → Kept old (${oldMins} min)\n`)
