@@ -3071,7 +3071,11 @@ export default function HikeMap() {
     if (hoveredRef.current === coordKey) return
     hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
-    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties) })
+    // `feature.properties` on a GeoJSON Feature is `Record<string, unknown> | null`,
+    // but resolveStationIconImage takes `Record<string, unknown> | undefined`. Coerce
+    // a null properties bag to undefined so the call type-checks — the helper treats
+    // both the same way (no properties → "icon-unrated" default).
+    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties ?? undefined) })
     // Secret admin marker — ignore hover entirely (no cursor, no radius)
     if (feature.properties?.isSecretAdmin) {
       hoveredRef.current = null
@@ -3191,7 +3195,11 @@ export default function HikeMap() {
     touchFirstTapCoord.current = coordKey
     touchFirstTapAt.current = now
     hoveredRef.current = coordKey
-    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties) })
+    // `feature.properties` on a GeoJSON Feature is `Record<string, unknown> | null`,
+    // but resolveStationIconImage takes `Record<string, unknown> | undefined`. Coerce
+    // a null properties bag to undefined so the call type-checks — the helper treats
+    // both the same way (no properties → "icon-unrated" default).
+    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties ?? undefined) })
     setRadiusPos({ lng, lat })
     longPressFired.current = true
   }, [])
