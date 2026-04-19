@@ -332,11 +332,29 @@ export function stitchJourney({
       }
     }
     if (!timestampsOk || !Number.isFinite(minutes) || minutes <= 0) continue
+    // Carry the polyline through from the source journey, sliced to start
+    // at newOrigin's coord. Without this, origin-leg-subsequence matches
+    // (which is the path every London-cluster → via-cluster destination
+    // takes when the source journey departs from a cluster sibling)
+    // produce a stitched journey with NO polyline data — the map's hover
+    // polyline then draws nothing, even though the source journey had a
+    // perfectly good full-route polyline available.
+    //
+    // sliceFromTerminal finds the closest coord in the source polyline
+    // to newOrigin and keeps the tail. For startIdx=0 (same-terminal
+    // departure) that's effectively "keep everything"; for startIdx>0
+    // (user boards at an intermediate stop) it trims the upstream
+    // portion so the rendered polyline starts at the right place.
+    let polylineCoords: [number, number][] | undefined
+    if (source.polyline) {
+      polylineCoords = sliceFromTerminal(decodePolyline(source.polyline), newOrigin)
+    }
     const candidate: StitchedJourneyInfo = {
       durationMinutes: Math.round(minutes),
       // HEAVY_RAIL-only legs → (N legs = N-1 changes). Single leg = 0 changes.
       changes: originLegs.length - 1,
       legs: originLegs,
+      polylineCoords: polylineCoords && polylineCoords.length > 1 ? polylineCoords : undefined,
     }
     if (
       best == null ||
