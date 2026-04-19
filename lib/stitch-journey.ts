@@ -197,17 +197,17 @@ const INTERCHANGE_BUFFER_MIN = 3
 
 // Minimum realistic wait time between two consecutive HEAVY_RAIL legs in a
 // mid-journey change (e.g. change at Guildford from a Waterloo train to the
-// Fallback-only value: used when a leg in the source journey is missing
-// arrival/departure timestamps and we can't compute the real inter-leg gap
-// from the API data. In every other case we trust the API's own gap
-// verbatim — no artificial floor. This means e.g. Seaford via Lewes
-// picks up the realistic 4-minute change that Trainline shows, rather
-// than getting padded to 15 minutes and looking slower than it actually
-// is. Previously we enforced a 15-min floor here to protect users from
-// impossibly-tight Google Routes itineraries; dropping that floor trusts
-// the APIs for what they're designed to tell us and accepts the
-// occasional unreachable-in-practice tight connection.
-const MISSING_TIMESTAMP_FALLBACK_MIN = 15
+// Minimum inter-leg transfer time. Under 4 min basically never shows up
+// in Trainline's planned itineraries (even at stations with cross-
+// platform interchange), so we use 4 as a floor: any API-reported gap
+// below that gets padded up to 4. Values at or above 4 are trusted
+// verbatim — Seaford via Lewes's real 4-minute same-platform change
+// is preserved, while Google Routes's occasional sub-4-minute fantasy
+// connections get flattened to a more realistic 4.
+//
+// Also used as a fallback when a leg lacks arrival/departure timestamps
+// and we can't compute the real gap from API data.
+const MIN_CHANGE_BUFFER_MIN = 4
 
 /**
  * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
@@ -306,11 +306,10 @@ export function stitchJourney({
     // tube/walk in between, this isn't a clean rail-only continuation.
     const originLegs = source.legs.slice(startIdx)
     if (originLegs.some((l) => l.vehicleType !== "HEAVY_RAIL")) continue
-    // Compute duration purely from the API-provided timestamps — no
-    // artificial minimum buffer between legs. Trust whatever gap the
-    // source journey tells us (e.g. a 4-minute same-platform connection
-    // at Lewes for Victoria→Seaford). Single-leg journeys skip the gap
-    // logic entirely.
+    // Compute duration from the API-provided timestamps. Inter-leg
+    // gaps are trusted verbatim down to a 4-minute floor — see
+    // MIN_CHANGE_BUFFER_MIN for why. Single-leg journeys skip the
+    // gap logic entirely.
     let minutes = 0
     let timestampsOk = true
     for (let i = 0; i < originLegs.length; i++) {
@@ -321,7 +320,7 @@ export function stitchJourney({
         const nextLeg = originLegs[i + 1]
         if (!nextLeg.departureTime) { timestampsOk = false; break }
         const gap = (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        minutes += gap
+        minutes += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
       }
     }
     if (!timestampsOk || !Number.isFinite(minutes) || minutes <= 0) continue
@@ -499,12 +498,11 @@ function stitchFromSource(
  *  even when the source started with a stripped transfer), falls back to
  *  source.durationMinutes.
  *
- *  Sums per-leg ride times from each leg's own start/end timestamps, plus
- *  the actual gap between consecutive legs as given by the API (no
- *  artificial minimum). If timestamps are missing on any internal leg,
- *  uses MISSING_TIMESTAMP_FALLBACK_MIN for that gap and, if per-leg
- *  timestamps are missing entirely, falls back to the source journey's
- *  own start-to-end delta. */
+ *  Sums per-leg ride times from each leg's own start/end timestamps,
+ *  plus the API-reported gap between consecutive legs floored at
+ *  MIN_CHANGE_BUFFER_MIN (4 min — roughly the tightest interchange
+ *  Trainline ever quotes). Falls back to the source journey's own
+ *  start-to-end delta when per-leg timestamps are missing entirely. */
 function computeMainlineMinutes(
   source: StitchedJourneyInfo,
   mainlineLegs: StitchedJourneyInfo["legs"],
@@ -545,14 +543,13 @@ function computeMainlineMinutes(
     if (i < mainlineLegs.length - 1) {
       const nextLeg = mainlineLegs[i + 1]
       // Gap = time between this leg's arrival and the next leg's
-      // departure, taken verbatim from the API timestamps. No floor —
-      // a 4-minute same-platform connection gets counted as 4 minutes.
-      // Only falls back to a sensible default when the next leg
-      // doesn't have timestamps at all (rare in practice).
+      // departure. Trusted from the API down to a 4-min floor (see
+      // MIN_CHANGE_BUFFER_MIN). Falls back to the same 4-min default
+      // if the next leg lacks timestamps entirely.
       const gap = nextLeg.departureTime && nextLeg.arrivalTime
         ? (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        : MISSING_TIMESTAMP_FALLBACK_MIN
-      total += gap
+        : MIN_CHANGE_BUFFER_MIN
+      total += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
     }
   }
   return Math.round(total)
