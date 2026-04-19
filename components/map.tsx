@@ -1990,6 +1990,49 @@ export default function HikeMap() {
               const cp = sameTrainTerminalCoord != null && sameTrainXTimeRelativeToP != null
                 ? buildSameTrainCallingPoints(sameTrainTerminalCoord, coordKey, sameTrainXTimeRelativeToP)
                 : null
+
+              // Polyline for the same-train shortcut. Derived from the
+              // terminal's fastestCallingPoints (CRS sequence). Two cases:
+              //   • Intermediate: X sits inside fastCP between P and D. The
+              //     relevant sub-polyline is fastCP.slice(idxX…) — the CRS
+              //     chain from X forward.
+              //   • Upstream: X sits BEFORE P. fastCP only covers P→D, so
+              //     prepend X's own coord and the full P→D chain. Other
+              //     upstream stops between X and P are omitted because we
+              //     don't carry their CRS on the winner's route — a
+              //     straight segment from X to P is a reasonable hint.
+              // Without this step, every same-train-resolved destination
+              // (most CLJ/Kentish-Town/Vauxhall journeys, etc.) used to
+              // have NO polyline drawn on hover despite having an
+              // otherwise complete journey.
+              let stPolylineCoords: [number, number][] | undefined
+              if (sameTrainTerminalCoord != null) {
+                const winnerEntry = originRoutes[sameTrainTerminalCoord]?.directReachable?.[coordKey]
+                const fastCP = winnerEntry?.fastestCallingPoints ?? []
+                if ((sameTrainXTimeRelativeToP ?? 0) >= 0) {
+                  // Intermediate — slice fastCP from X forward.
+                  const idxX = fastCP.findIndex((crs) => {
+                    const c = crsToCoord[crs]
+                    return c && `${c[0]},${c[1]}` === primaryOrigin
+                  })
+                  if (idxX > -1) {
+                    const sliced = fastCP.slice(idxX)
+                      .map((crs) => crsToCoord[crs])
+                      .filter((c): c is [number, number] => !!c)
+                    if (sliced.length > 1) stPolylineCoords = sliced
+                  }
+                } else {
+                  // Upstream — prepend X's coord to the full P→D chain.
+                  const { lng: xLng, lat: xLat } = parseCoordKey(primaryOrigin)
+                  const pToDestCoords = fastCP
+                    .map((crs) => crsToCoord[crs])
+                    .filter((c): c is [number, number] => !!c)
+                  if (pToDestCoords.length > 0) {
+                    stPolylineCoords = [[xLng, xLat], ...pToDestCoords]
+                  }
+                }
+              }
+
               synthJourney = {
                 durationMinutes: sameTrainMins,
                 changes: 0,
@@ -2000,6 +2043,7 @@ export default function HikeMap() {
                     arrivalStation: destName,
                   },
                 ],
+                polylineCoords: stPolylineCoords,
                 londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
                 londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
               } as unknown as JourneyInfo
