@@ -199,7 +199,7 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // canonicalName "London" matches the entry we'll add to londonTerminals
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
-  "-0.1278,51.5075":       { canonicalName: "London",                  displayName: "London",           menuName: "Any London terminus", mobileDisplayName: "London", isSynthetic: true },
+  "-0.1278,51.5075":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
   // Kings Cross primary represents the KX/St Pancras/Euston group — they're
   // next-door and share a tube interchange, so most riders pick any of the
   // three interchangeably. Cluster members are declared below.
