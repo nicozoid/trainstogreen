@@ -499,6 +499,10 @@ function resolveStationIconImage(props: Record<string, unknown> | undefined): st
   // so if we resolve it as "icon-unrated" the pulse renders a circle
   // on top of the hexagon. Match the base layer's icon-image here too.
   if (hasProp("isLondon")) return "icon-london"
+  // Terminus diamond features carry isTerminus — match their base-layer
+  // icon so the hover pulse animates as a primary-colour diamond rather
+  // than defaulting to the unrated circle.
+  if (hasProp("isTerminus")) return "icon-london-terminus"
   if (hasProp("isOrigin")) return "icon-origin"
   switch (props.rating) {
     case "highlight": return "icon-highlight"
@@ -2599,8 +2603,6 @@ export default function HikeMap() {
       properties: Record<string, unknown>
     }
     const iconFeatures: PointFeature[] = []
-    const labelFeatures: PointFeature[] = []
-    const seenNames = new Set<string>()
     for (const coord of clusterCoords) {
       const [lngStr, latStr] = coord.split(",")
       const lng = parseFloat(lngStr)
@@ -2641,40 +2643,21 @@ export default function HikeMap() {
         // modal. coordKey matches the same-named property on
         // regular station features — lets the existing click-to-
         // modal plumbing reuse the cluster-member branch.
+        //
+        // isTerminus tells resolveStationIconImage to use the diamond
+        // icon for the hover pulse animation — without this, the
+        // pulse defaults to the unrated circle because the feature
+        // has no rating/isOrigin/isLondon properties.
         properties: {
           coord: coord,
           coordKey: coord,
           name: rawName ?? "",
+          isTerminus: true,
         },
-      })
-      if (!rawName) continue
-      // Label resolution: prefer the primary's displayName when the coord
-      // is itself a PRIMARY_ORIGINS key; otherwise use the baseStations
-      // OSM name. Then apply a few targeted normalisations so the
-      // terminus waypoint labels read consistently:
-      //   - "London King's Cross" → "Kings Cross" (drop "London" prefix,
-      //     apostrophe-free to match the other cluster labels)
-      //   - "London St. Pancras International" → "St Pancras International"
-      //   - "Liverpool Street" → "Liverpool St" (avoids running into the
-      //     adjacent Moorgate label)
-      const primaryDisplayName = PRIMARY_ORIGINS[coord]?.displayName
-      let label = primaryDisplayName ?? rawName
-      if (label === "London King's Cross") label = "Kings Cross"
-      if (label === "London St. Pancras International") label = "St Pancras"
-      if (label === "Liverpool Street") label = "Liverpool St"
-      if (label === "Cannon Street") label = "Cannon St"
-      if (label === "Fenchurch Street") label = "Fenchurch St"
-      if (seenNames.has(label)) continue
-      seenNames.add(label)
-      labelFeatures.push({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: [lng, lat] },
-        properties: { name: label },
       })
     }
     return {
       icons: { type: "FeatureCollection" as const, features: iconFeatures },
-      labels: { type: "FeatureCollection" as const, features: labelFeatures },
     }
   }, [baseStations])
 
@@ -4193,45 +4176,22 @@ export default function HikeMap() {
                 }}
               />
             </Source>
-            <Source id="london-termini-labels" type="geojson" data={londonTerminusFeatures.labels}>
-              <Layer
-                id="london-terminus-label"
-                type="symbol"
-                // Names only start showing in when you've zoomed in enough
-                // to distinguish individual termini from the cluster.
-                minzoom={11}
-                layout={{
-                  "text-field": ["get", "name"],
-                  "text-size": 11,
-                  // Nudge the label below the diamond so the icon stays visible.
-                  "text-offset": [0, 0.9],
-                  "text-anchor": "top",
-                  "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-                  "text-allow-overlap": false,
-                }}
-                paint={{
-                  "text-color": labelColor,
-                  "text-halo-color": haloColor,
-                  "text-halo-width": 1.5,
-                }}
-              />
-            </Source>
 
-            {/* Journey-origin overlay — the single diamond (+ label)
-                matching the currently-hovered journey's departure
-                terminus. No minzoom gating, so the user sees WHERE
-                their train starts even when zoomed out to a
-                country-wide view.
+            {/* Journey-origin overlay — the single diamond matching the
+                currently-hovered journey's departure terminus. No
+                minzoom gating, so the user sees WHERE their train
+                starts even when zoomed out to a country-wide view.
+                No label — the user explicitly didn't want terminus
+                names appearing on the map; only the diamond itself
+                reveals the origin-below-the-zoom-threshold.
 
                 CRITICAL: Source is ALWAYS mounted — toggling data
                 rather than conditionally mounting the Source. A
                 conditionally-mounted Source re-adds its layers to
                 Mapbox's style on every re-mount, which puts them on
                 TOP of later-declared sources (like london-marker).
-                The hexagon would then get buried under the diamond
-                every time a new journey was hovered. Always-mounting
-                keeps the layers at a fixed position in the style,
-                so they stay beneath london-icon / london-label
+                Always-mounting keeps the layers at a fixed position
+                in the style, so they stay beneath london-icon
                 regardless of hover churn. */}
             <Source
               id="london-termini-origin"
@@ -4245,26 +4205,7 @@ export default function HikeMap() {
                         type: "Point",
                         coordinates: journeyOriginClusterCoord,
                       },
-                      properties: {
-                        // Find matching label for the origin coord.
-                        // Label layer reads properties.name — empty
-                        // string when no matching label means the
-                        // label layer renders nothing.
-                        name: (() => {
-                          const [oLng, oLat] = journeyOriginClusterCoord
-                          let bestLabel: string | null = null
-                          let bestDist = Infinity
-                          for (const lf of londonTerminusFeatures.labels.features) {
-                            const [l, a] = lf.geometry.coordinates as [number, number]
-                            const d = (l - oLng) ** 2 + (a - oLat) ** 2
-                            if (d < bestDist) {
-                              bestDist = d
-                              bestLabel = lf.properties.name as string
-                            }
-                          }
-                          return bestDist < 1e-5 ? (bestLabel ?? "") : ""
-                        })(),
-                      },
+                      properties: { isTerminus: true },
                     }]
                   : [],
               }}
@@ -4277,28 +4218,6 @@ export default function HikeMap() {
                   "icon-size": 0.6,
                   "icon-allow-overlap": true,
                   "icon-ignore-placement": true,
-                }}
-              />
-              <Layer
-                id="london-terminus-origin-label"
-                type="symbol"
-                // Don't render when the data feature has empty name
-                // (i.e. there's no journey hovered, or the polyline
-                // doesn't originate at a known terminus). Cleaner
-                // than conditionally rendering the <Layer>.
-                filter={["!=", ["get", "name"], ""]}
-                layout={{
-                  "text-field": ["get", "name"],
-                  "text-size": 11,
-                  "text-offset": [0, 0.9],
-                  "text-anchor": "top",
-                  "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-                  "text-allow-overlap": true,
-                }}
-                paint={{
-                  "text-color": labelColor,
-                  "text-halo-color": haloColor,
-                  "text-halo-width": 1.5,
                 }}
               />
             </Source>
