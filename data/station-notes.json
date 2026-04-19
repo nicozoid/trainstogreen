@@ -17,7 +17,7 @@
   "-1.0356438,51.3720595": {
     "name": "Mortimer",
     "publicNote": "Perhaps an idiosyncratic love of mine, as this isn't a popular hiking spot, but I find it exceptionally charming. I recommend walking from Mortimer Station to Bramley Station, by way of the Roman ruins of Sylchester. This takes you through what little remains of of Calleva Atrebatum — once a thriving Roman city — including the original walls, and a large amphitheatre where gladiatorial combats entertained up to 7,000 people at a time. The Cavella Arms in Silchester is a perfect stop for lunch, but note that the menu is limited on Sundays.",
-    "privateNote": "tested"
+    "privateNote": "Trainline says 47m — Paddington via Reading"
   },
   "-1.3726319,51.8247081": {
     "name": "Hanborough",
@@ -62,7 +62,7 @@
   "-0.4422487,51.2192418": {
     "name": "Gomshall",
     "publicNote": "High concentration of charming medieval villages.",
-    "privateNote": "tested"
+    "privateNote": "Trainline says 1h7m — Waterloo via Guildford\nBlackfriars is actually another option."
   },
   "-0.09193,51.51586": {
     "name": "City of London",
@@ -79,15 +79,20 @@
     "publicNote": "Waterloo and Waterloo East stations are within 5 minutes walk of one another. Trains to Green measures your travel-time from whichever is quickest.",
     "privateNote": ""
   },
+  "-0.1269,51.5196": {
+    "name": "London",
+    "publicNote": "By default, Trains to Green assumes you’ll start your journey at one of London’s 18 termini (Charing Cross, Kings Cross, St Pancras, Euston, Liverpool Street, London Bridge, Waterloo, Waterloo East, Victoria, Paddington, Marylebone, Blackfriars, Moorgate, Cannon St, or Fenchurch St). When you select a rural destination station, the travel-time you see is from whichever London terminus provides the quickest journey. Over time, alternative London starting stations will be added to give you a more tailored experience.\n\nWherever you start from, journey times are always based on the regular Saturday schedule. If it's Sunday, bank holiday or weekday, or there are works going on, travel times may differ.\n\nSend any comments any questions to [nicolas@niczap.design](mailto:nicolas@niczap.design).",
+    "privateNote": " Obviously your real journey depends on where you live! Choose your closest London National Rail station for a more tailored experience."
+  },
   "0.9760562,51.2444245": {
     "name": "Chilham",
     "publicNote": "",
-    "privateNote": "tested"
+    "privateNote": "Trainline says: 1h6m — St Pancras via Ashford International"
   },
   "0.7025193,50.9339128": {
     "name": "Winchelsea",
     "publicNote": "",
-    "privateNote": "tested"
+    "privateNote": "Trainline says 1h12m — St Pancras via Ashford International"
   },
   "0.2042149,51.3623288": {
     "name": "Eynsford",
@@ -97,7 +102,7 @@
   "0.1731809,51.1972733": {
     "name": "Penshurst",
     "publicNote": "",
-    "privateNote": "tested. actually better than trainline here!"
+    "privateNote": "Trainline says 56m — London Bridge via Tonbridge"
   },
   "-0.6105638,51.4832744": {
     "name": "Windsor and Eton Central",
@@ -112,7 +117,7 @@
   "0.1000064,50.7729203": {
     "name": "Seaford",
     "publicNote": "",
-    "privateNote": "BUG: trainline has faster router chaning at lewes. 1h25m"
+    "privateNote": "Trainline says 1h25m - Victoria via Lewes"
   },
   "-0.6326933,52.0212048": {
     "name": "Aspley Guise",
@@ -122,7 +127,7 @@
   "0.0306729,50.83111": {
     "name": "Southease",
     "publicNote": "",
-    "privateNote": "bug: trainline has faster 1h12m. same route. apparently the RTT data might fix this."
+    "privateNote": "Trainline says 1h12m — Victoria via Lewes. Supposedly the RTT data should fix this."
   },
   "-0.0035472,51.541289": {
     "name": "Stratford",
@@ -133,5 +138,10 @@
     "name": "Farringdon",
     "publicNote": "Fun fact: Farringdon is where the creator of Trains to Green lives.",
     "privateNote": ""
+  },
+  "0.7468492,51.3889653": {
+    "name": "Swale",
+    "publicNote": "",
+    "privateNote": "Trainline says 1h 12m st pancras via sittingbourne"
   }
 }
