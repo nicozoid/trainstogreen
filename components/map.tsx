@@ -2631,12 +2631,22 @@ export default function HikeMap() {
         return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
       })
       if (nearPrevious) continue
+      const rawName = bf?.properties?.name as string | undefined
       iconFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
-        properties: {},
+        // Stamp coord + coordKey + name so the click handler can
+        // resolve a diamond tap back to its station feature (via
+        // baseStations) and open the stripped-down active-primary
+        // modal. coordKey matches the same-named property on
+        // regular station features — lets the existing click-to-
+        // modal plumbing reuse the cluster-member branch.
+        properties: {
+          coord: coord,
+          coordKey: coord,
+          name: rawName ?? "",
+        },
       })
-      const rawName = bf?.properties?.name as string | undefined
       if (!rawName) continue
       // Label resolution: prefer the primary's displayName when the coord
       // is itself a PRIMARY_ORIGINS key; otherwise use the baseStations
@@ -3397,7 +3407,13 @@ export default function HikeMap() {
       [point.x - TAP_SLOP, point.y - TAP_SLOP],
       [point.x + TAP_SLOP, point.y + TAP_SLOP],
     ]
-    const candidateLayers = ["hovered-station-hit", "station-hit-area", "london-hit-area"]
+    const candidateLayers = [
+      "hovered-station-hit", "station-hit-area", "london-hit-area",
+      // Terminus diamonds are tappable on mobile too — include them in
+      // the candidate set so first-tap detection fires for diamonds
+      // the same way it does for regular station hit areas.
+      "london-terminus-icon", "london-terminus-origin-icon",
+    ]
       .filter((id) => !!map.getLayer(id))
     const features = candidateLayers.length
       ? map.queryRenderedFeatures(bbox, { layers: candidateLayers })
@@ -3527,6 +3543,27 @@ export default function HikeMap() {
       setSelectedStation(null)
       return
     }
+    // Terminus diamond click — resolve to the real station feature so
+    // the usual modal opens. The diamond's properties carry coordKey
+    // already, so we can look up the baseStations feature directly.
+    // No `getActivePrimaryCoords` short-circuit needed: since London
+    // synthetic IS the active primary whenever these layers are
+    // interactive, and every diamond's coord is in the cluster, the
+    // stripped-down modal branch fires on its own via the existing
+    // isPrimaryOrigin plumbing.
+    if (
+      feature.layer?.id === "london-terminus-icon" ||
+      feature.layer?.id === "london-terminus-origin-icon"
+    ) {
+      const diamondCoord = feature.properties?.coordKey as string | undefined
+      if (diamondCoord) {
+        const real = stations?.features.find(
+          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === diamondCoord
+        )
+        if (real) feature = real as unknown as typeof feature
+      }
+    }
+
     // If the click landed on the enlarged hovered-hit layer, its feature only
     // carries { coordKey }. Resolve to the real station feature (with name,
     // journeys, etc.) so all downstream logic works normally.
@@ -3920,7 +3957,15 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit"]}
+        interactiveLayerIds={[
+          "hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit",
+          // Terminus diamonds open the same stripped-down station modal
+          // that other active-primary cluster members get (title + photos
+          // only, no journey info, no Hike button). Both main (zoom 9+)
+          // and origin-overlay layers are interactive so the diamond
+          // works at every zoom level where it's visible.
+          "london-terminus-icon", "london-terminus-origin-icon",
+        ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -4171,78 +4216,87 @@ export default function HikeMap() {
                 matching the currently-hovered journey's departure
                 terminus. No minzoom gating, so the user sees WHERE
                 their train starts even when zoomed out to a
-                country-wide view of the destination region. Rendered
-                on top of the main diamonds source, so at zoom 9+ it
-                just draws the same pixel twice at the same coord
-                (visually identical). */}
-            {journeyOriginClusterCoord && (() => {
-              // Find the matching label (if any) for this origin coord.
-              // Labels are name-deduped, so the origin might match a
-              // label with a different coord than the icon — look up
-              // by name via the raw cluster-member name.
-              const originLabel = (() => {
-                const [oLng, oLat] = journeyOriginClusterCoord
-                // Find closest label feature within tiny tolerance.
-                let bestLabel: string | null = null
-                let bestDist = Infinity
-                for (const lf of londonTerminusFeatures.labels.features) {
-                  const [l, a] = lf.geometry.coordinates as [number, number]
-                  const d = (l - oLng) ** 2 + (a - oLat) ** 2
-                  if (d < bestDist) {
-                    bestDist = d
-                    bestLabel = lf.properties.name as string
-                  }
-                }
-                return bestDist < 1e-5 ? bestLabel : null
-              })()
-              return (
-                <Source
-                  id="london-termini-origin"
-                  type="geojson"
-                  data={{
-                    type: "FeatureCollection",
-                    features: [{
+                country-wide view.
+
+                CRITICAL: Source is ALWAYS mounted — toggling data
+                rather than conditionally mounting the Source. A
+                conditionally-mounted Source re-adds its layers to
+                Mapbox's style on every re-mount, which puts them on
+                TOP of later-declared sources (like london-marker).
+                The hexagon would then get buried under the diamond
+                every time a new journey was hovered. Always-mounting
+                keeps the layers at a fixed position in the style,
+                so they stay beneath london-icon / london-label
+                regardless of hover churn. */}
+            <Source
+              id="london-termini-origin"
+              type="geojson"
+              data={{
+                type: "FeatureCollection",
+                features: journeyOriginClusterCoord
+                  ? [{
                       type: "Feature",
-                      geometry: { type: "Point", coordinates: journeyOriginClusterCoord },
-                      properties: { name: originLabel ?? "" },
-                    }],
-                  }}
-                >
-                  <Layer
-                    id="london-terminus-origin-icon"
-                    type="symbol"
-                    layout={{
-                      "icon-image": "icon-london-terminus",
-                      "icon-size": 0.6,
-                      "icon-allow-overlap": true,
-                      "icon-ignore-placement": true,
-                    }}
-                  />
-                  {originLabel && (
-                    <Layer
-                      id="london-terminus-origin-label"
-                      type="symbol"
-                      // Origin label tracks the origin icon — always
-                      // visible alongside it, even when the main
-                      // label layer (minzoom=11) is off.
-                      layout={{
-                        "text-field": ["get", "name"],
-                        "text-size": 11,
-                        "text-offset": [0, 0.9],
-                        "text-anchor": "top",
-                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-                        "text-allow-overlap": true,
-                      }}
-                      paint={{
-                        "text-color": labelColor,
-                        "text-halo-color": haloColor,
-                        "text-halo-width": 1.5,
-                      }}
-                    />
-                  )}
-                </Source>
-              )
-            })()}
+                      geometry: {
+                        type: "Point",
+                        coordinates: journeyOriginClusterCoord,
+                      },
+                      properties: {
+                        // Find matching label for the origin coord.
+                        // Label layer reads properties.name — empty
+                        // string when no matching label means the
+                        // label layer renders nothing.
+                        name: (() => {
+                          const [oLng, oLat] = journeyOriginClusterCoord
+                          let bestLabel: string | null = null
+                          let bestDist = Infinity
+                          for (const lf of londonTerminusFeatures.labels.features) {
+                            const [l, a] = lf.geometry.coordinates as [number, number]
+                            const d = (l - oLng) ** 2 + (a - oLat) ** 2
+                            if (d < bestDist) {
+                              bestDist = d
+                              bestLabel = lf.properties.name as string
+                            }
+                          }
+                          return bestDist < 1e-5 ? (bestLabel ?? "") : ""
+                        })(),
+                      },
+                    }]
+                  : [],
+              }}
+            >
+              <Layer
+                id="london-terminus-origin-icon"
+                type="symbol"
+                layout={{
+                  "icon-image": "icon-london-terminus",
+                  "icon-size": 0.6,
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                }}
+              />
+              <Layer
+                id="london-terminus-origin-label"
+                type="symbol"
+                // Don't render when the data feature has empty name
+                // (i.e. there's no journey hovered, or the polyline
+                // doesn't originate at a known terminus). Cleaner
+                // than conditionally rendering the <Layer>.
+                filter={["!=", ["get", "name"], ""]}
+                layout={{
+                  "text-field": ["get", "name"],
+                  "text-size": 11,
+                  "text-offset": [0, 0.9],
+                  "text-anchor": "top",
+                  "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                  "text-allow-overlap": true,
+                }}
+                paint={{
+                  "text-color": labelColor,
+                  "text-halo-color": haloColor,
+                  "text-halo-width": 1.5,
+                }}
+              />
+            </Source>
           </>
         )}
 
