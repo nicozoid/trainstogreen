@@ -192,14 +192,20 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // London NR station. If someone wants either as a primary, they can
   // search for it via the "Other stations" field; it then lives in the
   // recents list like any other custom pick.
-  // London synthetic mega-cluster — primary coord is the equestrian statue
-  // of Charles I at Charing Cross (historically the "centre of London" used
-  // for measuring distances from). NOT Charing Cross station. The cluster
-  // members below are what drive direct-reachable + stitching lookups.
+  // London synthetic mega-cluster — primary coord sits at the British
+  // Museum in Bloomsbury. Originally at the Charles I statue in
+  // Trafalgar Square, but that's 300m from Charing Cross and the
+  // "London" hexagon + terminus diamond were visually fighting each
+  // other for attention at mid-zoom levels. British Museum is centrally-
+  // located, far enough from every NR terminus that there's no overlap,
+  // and reads as a universally-recognised "middle of London" anchor.
+  // The cluster members below are what drive direct-reachable +
+  // stitching lookups (the coord of the synthetic itself is not in
+  // origin-routes.json — it's just a map-label anchor).
   // canonicalName "London" matches the entry we'll add to londonTerminals
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
-  "-0.1278,51.5075":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
+  "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
   // Kings Cross primary represents the KX/St Pancras/Euston group — they're
   // next-door and share a tube interchange, so most riders pick any of the
   // three interchangeably. Cluster members are declared below.
@@ -291,7 +297,7 @@ const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
   // terminus). When London is the active primary, direct-reachable and
   // stitched journeys are computed across all 18 termini and the quickest
   // route wins (with the 15-min direct-preference + 2h30m cutoff rules).
-  "-0.1278,51.5075": [
+  "-0.1269,51.5196": [
     "-0.1239491,51.530609",   // Kings Cross (Underground)
     "-0.1230224,51.5323954",  // Kings Cross (National Rail / KGX)
     "-0.1270027,51.5327196",  // St Pancras International (STP, main concourse)
@@ -670,7 +676,7 @@ export default function HikeMap() {
   // mega-cluster (synthetic coord at Guildhall) — gives new users broad
   // access to the City's 7 terminals without needing to pick one manually.
   // Users with the old name string in localStorage get translated below via migrateOriginKey.
-  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1278,51.5075")
+  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1269,51.5196")
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
   // pick items beneath the main origin list so they can hop back easily.
@@ -697,10 +703,10 @@ export default function HikeMap() {
   useEffect(() => {
     if (!primaryOrigin) return
     if (!primaryOrigin.includes(",")) {
-      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1278,51.5075"))
+      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1269,51.5196"))
     } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
       // Stored coord isn't a valid primary anymore — reset to default.
-      setPrimaryOriginRaw("-0.1278,51.5075")
+      setPrimaryOriginRaw("-0.1269,51.5196")
     }
   }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
   // useTransition lets us defer the heavy stations-recompute that happens
