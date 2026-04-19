@@ -210,6 +210,9 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "-0.1445802,51.4947328": { canonicalName: "Victoria",                displayName: "Victoria",         menuName: "Victoria" },
   // Waterloo primary — clustered with Waterloo East (cross-platform walk).
   "-0.112801,51.5028379":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo & Waterloo East" },
+  // Stratford primary — clustered with Stratford International (a short
+  // walk across the plaza). Cluster member declared below.
+  "-0.0035472,51.541289":  { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford & Stratford International" },
   // Remaining standalone termini — each has RTT direct-reachable data
   // (see data/origin-routes.json) and matches a london-terminals.json entry
   // by canonicalName or alias, so stitching works too.
@@ -267,6 +270,10 @@ const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
   // Waterloo primary ← Waterloo East. Cross-platform walkway makes them a
   // single practical interchange.
   "-0.112801,51.5028379": ["-0.1082027,51.5042171"],
+  // Stratford primary ← Stratford International. Separate-but-near (a few
+  // minutes' walk across the plaza), historically treated as one logical
+  // origin — tapping either maps back to the Stratford primary.
+  "-0.0035472,51.541289": ["-0.0087494,51.5447954"],
   // Kings Cross primary ← all NR/Underground variants of KX, St Pancras,
   // and Euston. Underground + NR coords appear at slightly different OSM
   // nodes, so listing each ensures a tap on any of them maps back to the
@@ -1561,6 +1568,31 @@ export default function HikeMap() {
         let synthJourney: JourneyInfo | null = null
 
         if (isRttPrimary) {
+          // Priority check: if this feature already has a pre-fetched Google
+          // Routes journey keyed by the active primary's coord, use it as-is.
+          // Applies to primaries that have been through the fetch-journeys.mjs
+          // pipeline (Stratford, Farringdon, Kings Cross). Those journeys are
+          // comprehensive — multi-modal, with real leg timings — so they give
+          // us 1000+ destinations instead of just the RTT direct subset
+          // (~100-200 per primary).
+          //
+          // Without this, Stratford-as-a-cluster-primary would fall into the
+          // RTT-direct/stitched logic and silently drop ~987 destinations
+          // that aren't on any of Stratford's own direct lines. KX-as-primary
+          // gets a parallel upgrade for its ~854 pre-fetched destinations.
+          //
+          // When there's no pre-fetched journey for this feature, the branch
+          // below runs as before and uses RTT data.
+          const prefetchedPrimaryJourney = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+          if (prefetchedPrimaryJourney) {
+            const effective = getEffectiveJourney(prefetchedPrimaryJourney, primaryName)
+            originMins = effective?.effectiveMinutes
+            effectiveChanges = effective?.effectiveChanges
+            // No synthJourney to build — the journey already lives at
+            // feature.journeys[primaryOrigin], so the modal + hover polyline
+            // pick it up natively. The rest of the isRttPrimary block
+            // (RTT-direct + stitched candidates) is skipped for this feature.
+          } else {
           // Build both candidate journeys then apply passenger-preference rules
           // when choosing between a direct (0-change) train and a stitched
           // alternative (with a change through a London terminal):
@@ -1779,6 +1811,7 @@ export default function HikeMap() {
             effectiveChanges = (best.journey.changes ?? 0)
             synthJourney = best.journey
           }
+          } // end else — pre-fetched-primary-journey priority branch above
         } else if (isCustomPrimary) {
           // Custom primary (any NR station picked via the search bar). No
           // pre-fetched data for it, but we can reach destinations two ways:
