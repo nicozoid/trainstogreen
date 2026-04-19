@@ -197,17 +197,15 @@ const INTERCHANGE_BUFFER_MIN = 3
 
 // Minimum realistic wait time between two consecutive HEAVY_RAIL legs in a
 // mid-journey change (e.g. change at Guildford from a Waterloo train to the
-// Minimum inter-leg transfer time. Under 4 min basically never shows up
-// in Trainline's planned itineraries (even at stations with cross-
-// platform interchange), so we use 4 as a floor: any API-reported gap
-// below that gets padded up to 4. Values at or above 4 are trusted
-// verbatim — Seaford via Lewes's real 4-minute same-platform change
-// is preserved, while Google Routes's occasional sub-4-minute fantasy
-// connections get flattened to a more realistic 4.
+// Minimum inter-leg transfer time. API-reported gaps below this get
+// padded up; values at or above are trusted verbatim. 3 min matches
+// the floor of what's physically plausible for a same-platform
+// cross-platform change and lets tight real-world connections (Lewes,
+// Guildford cross-platform etc.) come through as the APIs report them.
 //
 // Also used as a fallback when a leg lacks arrival/departure timestamps
 // and we can't compute the real gap from API data.
-const MIN_CHANGE_BUFFER_MIN = 4
+const MIN_CHANGE_BUFFER_MIN = 3
 
 /**
  * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
