@@ -3042,27 +3042,7 @@ export default function HikeMap() {
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
     // Use the primary origin's journey (not first-found) to avoid picking up friend origin's
-    const coords = resolveJourneyCoords(journeys?.[primaryOrigin])
-    // DIAG — remove after debugging the "Paddington diamond missing for
-    // Mortimer" issue. Logs the hovered station, whether a journey was
-    // found, and the first polyline coord (the "origin" we try to match
-    // to a cluster diamond).
-    if (process.env.NODE_ENV === "development" && hovered) {
-      const name = feature?.properties?.name as string | undefined
-      const journey = journeys?.[primaryOrigin]
-      // eslint-disable-next-line no-console
-      console.log("[origin-diag]", {
-        hovered: name ?? hovered.coordKey,
-        hasJourney: !!journey,
-        journeyDuration: (journey as { durationMinutes?: number } | undefined)?.durationMinutes,
-        journeyChanges: (journey as { changes?: number } | undefined)?.changes,
-        legs: (journey as { legs?: Array<{ vehicleType?: string; departureStation?: string; arrivalStation?: string }> } | undefined)
-          ?.legs?.map((l) => `${l.vehicleType} ${l.departureStation}→${l.arrivalStation}`),
-        polylineCoordCount: coords?.length,
-        polylineFirst: coords?.[0],
-      })
-    }
-    return coords
+    return resolveJourneyCoords(journeys?.[primaryOrigin])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
 
@@ -3093,22 +3073,16 @@ export default function HikeMap() {
         best = [l, a]
       }
     }
-    // ~250m² tolerance in squared lng/lat. Journeys whose polyline doesn't
-    // begin at a London terminus (e.g. when a non-London primary is
-    // somehow active — shouldn't happen since we gate on isSynthetic, but
-    // defensive) return null so no "origin" diamond renders.
-    const matched = bestDist < 1e-5 ? best : null
-    // DIAG — see companion log in hoveredJourneyCoords.
-    if (process.env.NODE_ENV === "development" && hoveredJourneyCoords && hoveredJourneyCoords.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log("[origin-diag] resolve", {
-        polylineFirst: hoveredJourneyCoords[0],
-        closestCluster: best,
-        distSq: bestDist,
-        matched,
-      })
-    }
-    return matched
+    // Tolerance of 5e-5 squared-deg ≈ 700m at London's latitude. Large
+    // enough to absorb the 200m drift between a cluster member's OSM
+    // coord (what the diamond is drawn at) and the terminal coord used
+    // by sliceFromTerminal (from london-terminals.json) — that drift
+    // alone plus any wobble on the closest-polyline-point match pushed
+    // a Mortimer/Paddington case over an older 1e-5 threshold and the
+    // diamond silently failed to show. Still tight enough that journeys
+    // starting far from any London terminus (non-London primary edge
+    // cases) don't accidentally match.
+    return bestDist < 5e-5 ? best : null
   }, [hoveredJourneyCoords, londonTerminusFeatures, primaryOrigin])
 
   // Friend origin polyline — same logic but for the friend's journey
