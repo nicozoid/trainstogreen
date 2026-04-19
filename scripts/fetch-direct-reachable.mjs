@@ -164,6 +164,20 @@ function parseDate(s) { return new Date(`${s}T00:00:00`) }
 const iso = (d, h, m) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:00`
 
+// UK-local minutes since midnight for a given epoch-ms. Intl handles BST/GMT
+// transitions, so Saturday-morning fetches across the March clock change are
+// stored consistently. Used for the serviceDepMinutes field so the app can
+// find "latest service arriving by 11:31" without TZ ambiguity.
+const UK_TIME_FMT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false,
+})
+function msToMinutesOfDayUK(ms) {
+  const parts = UK_TIME_FMT.formatToParts(new Date(ms))
+  const h = +parts.find((p) => p.type === "hour").value
+  const m = +parts.find((p) => p.type === "minute").value
+  return h * 60 + m
+}
+
 // Default: Saturday morning 07:00–12:00, which covers the realistic window a
 // day-hiker would leave London. Override with --hours HH,HH for testing.
 const hoursArg = process.argv.find((a) => a.startsWith("--hours="))
@@ -236,6 +250,10 @@ async function fetchForDate(dateStr) {
 
     const originDepartMs = calling[idx].depMs ?? calling[idx].arrMs
     if (originDepartMs == null) { skipped++; continue }
+    // UK-local minutes of day for the origin departure — stored per observation
+    // in the per-destination `observations` array so downstream Option-2 splice
+    // logic can find "latest service arriving at X before time T".
+    const originDepartMin = msToMinutesOfDayUK(originDepartMs)
 
     // Pre-compute the upstream calling points for this service — stations the
     // train calls at BEFORE the origin. Used by the "can also board earlier"
@@ -295,6 +313,12 @@ async function fetchForDate(dateStr) {
       })
 
       const prev = reachable.get(crs)
+      // Per-observation record — captures this one service's dep time at the
+      // origin and its duration to this destination. Accumulated across all
+      // services on this date, then unioned across dates in the merge step.
+      // Drives Option-2 hybrid splice in the app: "does a real service reach
+      // X by time T?".
+      const observation = { depMin: originDepartMin, durationMin: mins }
       if (!prev) {
         reachable.set(crs, {
           ...station,
@@ -306,9 +330,11 @@ async function fetchForDate(dateStr) {
           // Upstream is pinned to the WINNING service — when a faster service
           // displaces the current winner below, upstream gets replaced too.
           upstreamCallingPoints: upstream,
+          observations: [observation],
         })
       } else {
         prev.services++
+        prev.observations.push(observation)
         if (mins < prev.minMinutes) {
           prev.minMinutes = mins
           prev.fastestCallingPoints = fastestCallingPoints
@@ -356,11 +382,30 @@ if (perDateMaps.length === 0) {
 // inner key), not CRS, so the merge handles the same-name / different-coord
 // edge case cleanly.
 const merged = new Map()
+// Union two observation arrays, deduping by (depMin, durationMin). Two
+// Saturdays with identical services should only contribute one entry each.
+// Services that run on one date but not another still appear in the union,
+// which is what we want: the app is looking for "is there a service at time
+// T?" across typical-Saturday patterns, not "is there a service on the
+// specific date we sampled?".
+function unionObservations(a, b) {
+  const seen = new Set()
+  const out = []
+  for (const o of [...(a ?? []), ...(b ?? [])]) {
+    if (o == null || o.depMin == null || o.durationMin == null) continue
+    const key = `${o.depMin}:${o.durationMin}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(o)
+  }
+  return out
+}
 function takeBetter(existing, candidate) {
   // Returns the entry with the smaller minMinutes, falling back to existing
   // when times are tied so we preserve the earlier-sampled metadata. services
   // count is max across all sources (see comment at top of file).
   if (!existing) return { ...candidate }
+  const mergedObservations = unionObservations(existing.observations, candidate.observations)
   if (candidate.minMinutes < existing.minMinutes) {
     return {
       name: candidate.name,
@@ -377,13 +422,16 @@ function takeBetter(existing, candidate) {
       // invent numbers.
       fastestCallingPointTimes: candidate.fastestCallingPointTimes,
       upstreamCallingPoints: candidate.upstreamCallingPoints ?? [],
+      observations: mergedObservations,
     }
   }
   // Keep existing time/calling-points, but still allow services count to
-  // grow if the candidate saw more services on a different date.
+  // grow if the candidate saw more services on a different date. Observations
+  // still union so downstream Option-2 splice sees the fuller service list.
   return {
     ...existing,
     services: Math.max(existing.services ?? 0, candidate.services ?? 0),
+    observations: mergedObservations,
   }
 }
 
@@ -392,7 +440,18 @@ const current = existsSync(ROUTES_PATH) ? JSON.parse(readFileSync(ROUTES_PATH, "
 const existingEntry = current[originStation.coord]
 if (existingEntry?.directReachable) {
   for (const [coord, entry] of Object.entries(existingEntry.directReachable)) {
-    merged.set(coord, { ...entry })
+    // Rehydrate observations[] from the serialised parallel arrays so the
+    // union in takeBetter keeps services seen on prior fetch runs. Old
+    // entries that pre-date the schema have no arrays — degrade to empty
+    // rather than invent data.
+    const depArr = entry.serviceDepMinutes ?? []
+    const durArr = entry.serviceDurationsMinutes ?? []
+    const n = Math.min(depArr.length, durArr.length)
+    const observations = Array.from({ length: n }, (_, i) => ({
+      depMin: depArr[i],
+      durationMin: durArr[i],
+    }))
+    merged.set(coord, { ...entry, observations })
   }
 }
 // Then fold each date's per-CRS map in.
@@ -421,22 +480,39 @@ current[originStation.coord] = {
   directReachable: Object.fromEntries(
     [...merged.entries()]
       .sort((a, b) => a[1].minMinutes - b[1].minMinutes)
-      .map(([coord, r]) => [coord, {
-        name: r.name,
-        crs: r.crs,
-        minMinutes: r.minMinutes,
-        services: r.services,
-        fastestCallingPoints: r.fastestCallingPoints,
-        // Parallel to fastestCallingPoints (same length): arrival time
-        // from the service's origin in minutes. Drives calling-point-
-        // as-hub routing downstream. Omitted from the output JSON
-        // when undefined (older pre-schema entries) to keep the diff
-        // clean — don't write a null field just to be explicit.
-        ...(r.fastestCallingPointTimes !== undefined && {
-          fastestCallingPointTimes: r.fastestCallingPointTimes,
-        }),
-        upstreamCallingPoints: r.upstreamCallingPoints ?? [],
-      }])
+      .map(([coord, r]) => {
+        // Sort observations by departure time for stable diffs and to let the
+        // app do "first service ≥ T" searches with linear scan (or binary).
+        const sortedObs = (r.observations ?? [])
+          .slice()
+          .sort((a, b) => a.depMin - b.depMin)
+        return [coord, {
+          name: r.name,
+          crs: r.crs,
+          minMinutes: r.minMinutes,
+          services: r.services,
+          fastestCallingPoints: r.fastestCallingPoints,
+          // Parallel to fastestCallingPoints (same length): arrival time
+          // from the service's origin in minutes. Drives calling-point-
+          // as-hub routing downstream. Omitted from the output JSON
+          // when undefined (older pre-schema entries) to keep the diff
+          // clean — don't write a null field just to be explicit.
+          ...(r.fastestCallingPointTimes !== undefined && {
+            fastestCallingPointTimes: r.fastestCallingPointTimes,
+          }),
+          upstreamCallingPoints: r.upstreamCallingPoints ?? [],
+          // Per-service timings — parallel arrays of length `services`.
+          // serviceDepMinutes[i] is the ith service's departure time at
+          // the origin (UK-local minutes since midnight); adding
+          // serviceDurationsMinutes[i] gives its arrival at this
+          // destination. Powers the Option-2 hybrid-splice logic in
+          // map.tsx: "find a service arriving at X ≤ T-buffer".
+          ...(sortedObs.length > 0 && {
+            serviceDepMinutes: sortedObs.map((o) => o.depMin),
+            serviceDurationsMinutes: sortedObs.map((o) => o.durationMin),
+          }),
+        }]
+      })
   ),
   sampledDates,
   generatedAt: new Date().toISOString(),

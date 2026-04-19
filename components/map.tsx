@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
-import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { stitchJourney, matchTerminal, MIN_CHANGE_BUFFER_MIN, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -424,6 +424,22 @@ type DirectReachable = {
     /** Minutes before the origin's departure time (always positive). */
     minutesBeforeOrigin: number
   }[]
+  /**
+   * Per-service timings — parallel arrays, same length, sorted by
+   * serviceDepMinutes ascending. Each index represents one observed service:
+   *   serviceDepMinutes[i]       — departure at this origin, UK-local minutes
+   *                                since midnight
+   *   serviceDurationsMinutes[i] — that service's journey time to THIS
+   *                                destination in minutes
+   * Arrival at the destination is serviceDepMinutes[i] + serviceDurationsMinutes[i].
+   * Populated by the V2 schema extension in fetch-direct-reachable.mjs.
+   * Powers the Option 2 hybrid-splice: "find the latest service arriving
+   * at interchange X by time T-buffer". Older entries written before the
+   * V2 schema lack both fields — tryHybridSplice treats them as "no data,
+   * skip splice for this primary/interchange pair".
+   */
+  serviceDepMinutes?: number[]
+  serviceDurationsMinutes?: number[]
 }
 type OriginRoutes = Record<string, {
   name: string
@@ -442,6 +458,147 @@ const originRoutes = originRoutesData as OriginRoutes
 // Charing Cross — get the better time.
 const londonTerminals = londonTerminalsData as Terminal[]
 const terminalMatrix = terminalMatrixData as TerminalMatrix
+
+// ---------------------------------------------------------------------------
+// Option 2 — hybrid splice
+// ---------------------------------------------------------------------------
+// Google Routes sometimes picks a SLOW first leg to align with an infrequent
+// continuation service. Example: Paddington→Marlow, Google returns a 38-min
+// P→Maidenhead stopping train so the 11:34 Maidenhead→Marlow branch connects
+// tightly. RTT knows P→Maidenhead can be done in 22 min on the Elizabeth
+// line / GWR express — so if ANY 22-min service arrives at Maidenhead at
+// (11:34 − 3min buffer) or earlier, we can splice it in:
+//
+//   P -[RTT fastest]-> X [BUFFER] -[Google continuation]-> D
+//
+// Result: same arrival at D, later departure from P, shorter journey time.
+// All using authoritative data (real RTT service + real Google continuation).
+// No interpolation or guessing.
+//
+// Returns a modified JourneyInfo when a better splice exists, else null.
+// Requires the V2 schema fields (serviceDepMinutes + serviceDurationsMinutes)
+// on the primary's direct-reachable entry for the interchange. Older entries
+// degrade gracefully (we just return null and the original journey stands).
+
+// UK-local minutes of day (00:00 = 0, 23:59 = 1439) for a given epoch ms.
+// Intl handles BST/GMT transitions — Saturday-morning splices across the
+// March DST change resolve correctly without hardcoding offsets.
+const UK_TIME_FMT_CLIENT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false,
+})
+function msToUKMinutesOfDay(ms: number): number {
+  const parts = UK_TIME_FMT_CLIENT.formatToParts(new Date(ms))
+  const h = +(parts.find((p) => p.type === "hour")?.value ?? 0)
+  const m = +(parts.find((p) => p.type === "minute")?.value ?? 0)
+  return h * 60 + m
+}
+
+/**
+ * Try to splice a faster RTT-direct first leg into a Google-sourced journey.
+ *
+ * Returns null when:
+ *   - journey has no HEAVY_RAIL first leg (pure walk/subway journey)
+ *   - the first HEAVY_RAIL leg isn't at leg 0 (pre-rail walk/subway exists —
+ *     we'd need to shift those too, which is out-of-scope for MVP)
+ *   - leg timestamps are missing (older Routes-API records pre-date the
+ *     departureTime/arrivalTime field-mask)
+ *   - primary has no origin-routes entry, OR the interchange station name
+ *     doesn't match any entry in directReachable by exact name
+ *   - the interchange entry lacks V2 schema arrays (pre-schema fetch)
+ *   - no RTT service arrives at the interchange by (continuationDep − buffer)
+ *   - the best candidate saves 0 or negative minutes vs original
+ */
+function tryHybridSplice(journey: JourneyInfo, primaryCoord: string): JourneyInfo | null {
+  const legs = journey.legs ?? []
+  if (legs.length < 2) return null
+
+  // Only splice when HEAVY_RAIL is literally the first leg. A pre-rail walk
+  // or tube hop would need its timings re-shifted to match the new rail
+  // departure — correct but fiddly. Skip for MVP; revisit if needed.
+  const firstLeg = legs[0]
+  if (firstLeg.vehicleType !== "HEAVY_RAIL") return null
+  if (!firstLeg.departureTime || !firstLeg.arrivalTime) return null
+
+  const drMap = originRoutes[primaryCoord]?.directReachable
+  if (!drMap) return null
+
+  // Find the interchange entry by exact name match against firstLeg.arrivalStation.
+  // Name normalisation could help (e.g. "London Paddington" vs "Paddington") but
+  // in practice Google Routes and RTT both use the short form for interchange
+  // stations like Maidenhead / Lewes / Haywards Heath, so exact match suffices.
+  const interchangeName = firstLeg.arrivalStation
+  let interchangeEntry: DirectReachable | null = null
+  for (const entry of Object.values(drMap)) {
+    if (entry.name === interchangeName) {
+      interchangeEntry = entry
+      break
+    }
+  }
+  if (!interchangeEntry) return null
+
+  const deps = interchangeEntry.serviceDepMinutes
+  const durs = interchangeEntry.serviceDurationsMinutes
+  if (!deps || !durs || deps.length === 0 || durs.length !== deps.length) return null
+
+  // First-leg duration from authoritative Google timestamps.
+  const firstDepMs = new Date(firstLeg.departureTime).getTime()
+  const firstArrMs = new Date(firstLeg.arrivalTime).getTime()
+  const firstDurationMin = Math.round((firstArrMs - firstDepMs) / 60000)
+  // Skip if RTT isn't meaningfully faster (1-2 min noise isn't worth the
+  // splice — keep Google's leg unchanged).
+  if (interchangeEntry.minMinutes >= firstDurationMin - 1) return null
+
+  // Continuation leg's departure is the constraint. Use the IMMEDIATE next
+  // leg (leg[1]) since firstLeg is leg[0]. If leg[1] has no departureTime
+  // (legacy record), bail — we need it to compute the latest RTT arrival.
+  const nextLeg = legs[1]
+  if (!nextLeg?.departureTime) return null
+  const nextDepMs = new Date(nextLeg.departureTime).getTime()
+  const continuationDepMin = msToUKMinutesOfDay(nextDepMs)
+  const originalDepMin = msToUKMinutesOfDay(firstDepMs)
+  const latestArrMin = continuationDepMin - MIN_CHANGE_BUFFER_MIN
+
+  // Pick the LATEST-arriving service with arr ≤ latestArrMin. This minimises
+  // wait at the interchange (wait = BUFFER exactly) and maximises the hybrid
+  // departure time from P, which equals maximum time saved.
+  let bestDepMin = -1
+  let bestDurMin = -1
+  let bestArrMin = -1
+  for (let i = 0; i < deps.length; i++) {
+    const arr = deps[i] + durs[i]
+    if (arr > latestArrMin) continue
+    if (arr > bestArrMin) {
+      bestArrMin = arr
+      bestDepMin = deps[i]
+      bestDurMin = durs[i]
+    }
+  }
+  if (bestArrMin < 0) return null
+
+  // Time saved = how much later we can depart P (final arrival at D is unchanged).
+  const savedMin = bestDepMin - originalDepMin
+  if (savedMin <= 0) return null
+
+  // Rebuild: same final arrival, later first-leg departure, SHORTER first-leg
+  // duration. `durationMinutes` reduces by exactly savedMin.
+  const newFirstDepMs = firstDepMs + savedMin * 60_000
+  const newFirstArrMs = newFirstDepMs + bestDurMin * 60_000
+  const newLegs = legs.map((leg, idx) =>
+    idx === 0
+      ? {
+          ...leg,
+          departureTime: new Date(newFirstDepMs).toISOString(),
+          arrivalTime: new Date(newFirstArrMs).toISOString(),
+        }
+      : leg,
+  )
+
+  return {
+    ...journey,
+    durationMinutes: journey.durationMinutes - savedMin,
+    legs: newLegs,
+  }
+}
 
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
 // Entries are either station names (legacy) or "lng,lat" coord keys (preferred — unambiguous when two stations share a name).
@@ -1605,6 +1762,12 @@ export default function HikeMap() {
         // and stash it under the primary's coord key, so the modal + hover
         // polyline code can treat RTT-sourced primaries identically to Routes-sourced ones.
         let synthJourney: JourneyInfo | null = null
+        // Option 2 hybrid-splice override — when tryHybridSplice produces a
+        // faster variant of a Google-sourced journey, this holds the rebuilt
+        // JourneyInfo. Written to next.journeys[primaryOrigin] at feature
+        // return time so the modal + polyline reflect the spliced timings.
+        // Null when no splice fired (either no data or no improvement).
+        let spliceOverride: JourneyInfo | null = null
 
         if (isRttPrimary) {
           // Priority check: if this feature already has a pre-fetched Google
@@ -1624,7 +1787,17 @@ export default function HikeMap() {
           // below runs as before and uses RTT data.
           const prefetchedPrimaryJourney = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
           if (prefetchedPrimaryJourney) {
-            const effective = getEffectiveJourney(prefetchedPrimaryJourney, primaryName)
+            // Option 2 splice — try replacing a slow Google-sourced first leg
+            // with a faster RTT-direct service. Returns the same journey
+            // unchanged when no improvement is possible, or a hybrid copy
+            // with a later departureTime + shorter durationMinutes. Either
+            // way the result lives in `effectiveSourceJourney` and downstream
+            // code (effective-minutes + feature.journeys modal/polyline read)
+            // sees the splice consistently.
+            const spliced = tryHybridSplice(prefetchedPrimaryJourney, primaryOrigin)
+            const effectiveSourceJourney = spliced ?? prefetchedPrimaryJourney
+            if (spliced) spliceOverride = spliced
+            const effective = getEffectiveJourney(effectiveSourceJourney, primaryName)
             originMins = effective?.effectiveMinutes
             effectiveChanges = effective?.effectiveChanges
             // No synthJourney to build — the journey already lives at
@@ -1891,12 +2064,23 @@ export default function HikeMap() {
             // pre-fetched Stratford→D journey sitting right there.
             const journeys = f.properties.journeys as Record<string, JourneyInfo>
             const primaryJourney = journeys[primaryOrigin]
-            const effective = getEffectiveJourney(primaryJourney, primaryName)
+            // Option 2 splice — if the custom primary itself has RTT direct-
+            // reachable data (Stratford + Farringdon do; ClapJ after its
+            // recent fetch does), try replacing the Google first leg with a
+            // faster RTT service. When the splice fires, spliceOverride is
+            // written back into next.journeys so the modal displays the
+            // hybrid timings.
+            const spliced = tryHybridSplice(primaryJourney, primaryOrigin)
+            const effectiveSourceJourney = spliced ?? primaryJourney
+            if (spliced) spliceOverride = spliced
+            const effective = getEffectiveJourney(effectiveSourceJourney, primaryName)
             originMins = effective?.effectiveMinutes
             effectiveChanges = effective?.effectiveChanges
             // No synthJourney to build — the journey already lives
             // under f.properties.journeys[primaryOrigin], so the
-            // modal + hover polyline read it natively.
+            // modal + hover polyline read it natively. The spliceOverride
+            // case above writes the hybrid variant back into next.journeys
+            // at feature-return time.
           } else if (originRoutes[primaryOrigin]?.directReachable?.[coordKey]?.minMinutes != null) {
             // --- Step 0: Self-direct lookup ---
             // The custom primary has itself been RTT-fetched (its coord
@@ -2434,6 +2618,13 @@ export default function HikeMap() {
         if (synthJourney) {
           const existing = f.properties.journeys as Record<string, JourneyInfo> | undefined
           next.journeys = { ...(existing ?? {}), [primaryOrigin]: synthJourney }
+        } else if (spliceOverride) {
+          // Option 2 splice replaced the prefetched/custom Google journey with
+          // a faster hybrid. Write it back onto the feature so the modal's
+          // leg breakdown + hover polyline code read the hybrid timings
+          // rather than the original Google-sourced journey.
+          const existing = f.properties.journeys as Record<string, JourneyInfo> | undefined
+          next.journeys = { ...(existing ?? {}), [primaryOrigin]: spliceOverride }
         }
 
         return { ...f, properties: next as StationFeature["properties"] }

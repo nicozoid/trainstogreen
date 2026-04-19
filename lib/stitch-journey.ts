@@ -205,7 +205,10 @@ const INTERCHANGE_BUFFER_MIN = 3
 //
 // Also used as a fallback when a leg lacks arrival/departure timestamps
 // and we can't compute the real gap from API data.
-const MIN_CHANGE_BUFFER_MIN = 3
+// Exported so map.tsx's Option 2 hybrid-splice uses the same floor — keeping
+// stitchJourney and tryHybridSplice consistent means a hybrid can never
+// advertise a tighter connection than a stitched equivalent.
+export const MIN_CHANGE_BUFFER_MIN = 3
 
 /**
  * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
