@@ -24,7 +24,7 @@ import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
-import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { stitchJourney, matchTerminal, MIN_CHANGE_BUFFER_MIN, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -192,14 +192,20 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // London NR station. If someone wants either as a primary, they can
   // search for it via the "Other stations" field; it then lives in the
   // recents list like any other custom pick.
-  // London synthetic mega-cluster — primary coord is the equestrian statue
-  // of Charles I at Charing Cross (historically the "centre of London" used
-  // for measuring distances from). NOT Charing Cross station. The cluster
-  // members below are what drive direct-reachable + stitching lookups.
+  // London synthetic mega-cluster — primary coord sits at the British
+  // Museum in Bloomsbury. Originally at the Charles I statue in
+  // Trafalgar Square, but that's 300m from Charing Cross and the
+  // "London" hexagon + terminus diamond were visually fighting each
+  // other for attention at mid-zoom levels. British Museum is centrally-
+  // located, far enough from every NR terminus that there's no overlap,
+  // and reads as a universally-recognised "middle of London" anchor.
+  // The cluster members below are what drive direct-reachable +
+  // stitching lookups (the coord of the synthetic itself is not in
+  // origin-routes.json — it's just a map-label anchor).
   // canonicalName "London" matches the entry we'll add to londonTerminals
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
-  "-0.1278,51.5075":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
+  "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
   // Kings Cross primary represents the KX/St Pancras/Euston group — they're
   // next-door and share a tube interchange, so most riders pick any of the
   // three interchangeably. Cluster members are declared below.
@@ -291,7 +297,7 @@ const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
   // terminus). When London is the active primary, direct-reachable and
   // stitched journeys are computed across all 18 termini and the quickest
   // route wins (with the 15-min direct-preference + 2h30m cutoff rules).
-  "-0.1278,51.5075": [
+  "-0.1269,51.5196": [
     "-0.1239491,51.530609",   // Kings Cross (Underground)
     "-0.1230224,51.5323954",  // Kings Cross (National Rail / KGX)
     "-0.1270027,51.5327196",  // St Pancras International (STP, main concourse)
@@ -392,6 +398,18 @@ type DirectReachable = {
   services: number
   fastestCallingPoints: string[]
   /**
+   * Parallel to fastestCallingPoints (same length): arrival time in minutes
+   * from the service's origin departure. Index 0 is always 0 (origin itself).
+   * Entries may be null when the RTT response omitted an arrival timestamp
+   * for a given stop (rare). Added in the Phase 4 schema extension to unlock
+   * calling-point-as-hub routing: the app can compute "from X to any
+   * intermediate C" or "from any intermediate C to D" using the same
+   * service's timings. Older rows written before this extension lack the
+   * field entirely — consumers must treat `undefined` as "no per-stop
+   * timing available; fall back to whatever the old path does".
+   */
+  fastestCallingPointTimes?: Array<number | null>
+  /**
    * Stations this service calls at BEFORE the origin, captured so a passenger
    * who lives further out (e.g. Kentish Town for a Farringdon-bound
    * Thameslink) can be told to board earlier on the same train. Recorded
@@ -406,6 +424,22 @@ type DirectReachable = {
     /** Minutes before the origin's departure time (always positive). */
     minutesBeforeOrigin: number
   }[]
+  /**
+   * Per-service timings — parallel arrays, same length, sorted by
+   * serviceDepMinutes ascending. Each index represents one observed service:
+   *   serviceDepMinutes[i]       — departure at this origin, UK-local minutes
+   *                                since midnight
+   *   serviceDurationsMinutes[i] — that service's journey time to THIS
+   *                                destination in minutes
+   * Arrival at the destination is serviceDepMinutes[i] + serviceDurationsMinutes[i].
+   * Populated by the V2 schema extension in fetch-direct-reachable.mjs.
+   * Powers the Option 2 hybrid-splice: "find the latest service arriving
+   * at interchange X by time T-buffer". Older entries written before the
+   * V2 schema lack both fields — tryHybridSplice treats them as "no data,
+   * skip splice for this primary/interchange pair".
+   */
+  serviceDepMinutes?: number[]
+  serviceDurationsMinutes?: number[]
 }
 type OriginRoutes = Record<string, {
   name: string
@@ -424,6 +458,147 @@ const originRoutes = originRoutesData as OriginRoutes
 // Charing Cross — get the better time.
 const londonTerminals = londonTerminalsData as Terminal[]
 const terminalMatrix = terminalMatrixData as TerminalMatrix
+
+// ---------------------------------------------------------------------------
+// Option 2 — hybrid splice
+// ---------------------------------------------------------------------------
+// Google Routes sometimes picks a SLOW first leg to align with an infrequent
+// continuation service. Example: Paddington→Marlow, Google returns a 38-min
+// P→Maidenhead stopping train so the 11:34 Maidenhead→Marlow branch connects
+// tightly. RTT knows P→Maidenhead can be done in 22 min on the Elizabeth
+// line / GWR express — so if ANY 22-min service arrives at Maidenhead at
+// (11:34 − 3min buffer) or earlier, we can splice it in:
+//
+//   P -[RTT fastest]-> X [BUFFER] -[Google continuation]-> D
+//
+// Result: same arrival at D, later departure from P, shorter journey time.
+// All using authoritative data (real RTT service + real Google continuation).
+// No interpolation or guessing.
+//
+// Returns a modified JourneyInfo when a better splice exists, else null.
+// Requires the V2 schema fields (serviceDepMinutes + serviceDurationsMinutes)
+// on the primary's direct-reachable entry for the interchange. Older entries
+// degrade gracefully (we just return null and the original journey stands).
+
+// UK-local minutes of day (00:00 = 0, 23:59 = 1439) for a given epoch ms.
+// Intl handles BST/GMT transitions — Saturday-morning splices across the
+// March DST change resolve correctly without hardcoding offsets.
+const UK_TIME_FMT_CLIENT = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false,
+})
+function msToUKMinutesOfDay(ms: number): number {
+  const parts = UK_TIME_FMT_CLIENT.formatToParts(new Date(ms))
+  const h = +(parts.find((p) => p.type === "hour")?.value ?? 0)
+  const m = +(parts.find((p) => p.type === "minute")?.value ?? 0)
+  return h * 60 + m
+}
+
+/**
+ * Try to splice a faster RTT-direct first leg into a Google-sourced journey.
+ *
+ * Returns null when:
+ *   - journey has no HEAVY_RAIL first leg (pure walk/subway journey)
+ *   - the first HEAVY_RAIL leg isn't at leg 0 (pre-rail walk/subway exists —
+ *     we'd need to shift those too, which is out-of-scope for MVP)
+ *   - leg timestamps are missing (older Routes-API records pre-date the
+ *     departureTime/arrivalTime field-mask)
+ *   - primary has no origin-routes entry, OR the interchange station name
+ *     doesn't match any entry in directReachable by exact name
+ *   - the interchange entry lacks V2 schema arrays (pre-schema fetch)
+ *   - no RTT service arrives at the interchange by (continuationDep − buffer)
+ *   - the best candidate saves 0 or negative minutes vs original
+ */
+function tryHybridSplice(journey: JourneyInfo, primaryCoord: string): JourneyInfo | null {
+  const legs = journey.legs ?? []
+  if (legs.length < 2) return null
+
+  // Only splice when HEAVY_RAIL is literally the first leg. A pre-rail walk
+  // or tube hop would need its timings re-shifted to match the new rail
+  // departure — correct but fiddly. Skip for MVP; revisit if needed.
+  const firstLeg = legs[0]
+  if (firstLeg.vehicleType !== "HEAVY_RAIL") return null
+  if (!firstLeg.departureTime || !firstLeg.arrivalTime) return null
+
+  const drMap = originRoutes[primaryCoord]?.directReachable
+  if (!drMap) return null
+
+  // Find the interchange entry by exact name match against firstLeg.arrivalStation.
+  // Name normalisation could help (e.g. "London Paddington" vs "Paddington") but
+  // in practice Google Routes and RTT both use the short form for interchange
+  // stations like Maidenhead / Lewes / Haywards Heath, so exact match suffices.
+  const interchangeName = firstLeg.arrivalStation
+  let interchangeEntry: DirectReachable | null = null
+  for (const entry of Object.values(drMap)) {
+    if (entry.name === interchangeName) {
+      interchangeEntry = entry
+      break
+    }
+  }
+  if (!interchangeEntry) return null
+
+  const deps = interchangeEntry.serviceDepMinutes
+  const durs = interchangeEntry.serviceDurationsMinutes
+  if (!deps || !durs || deps.length === 0 || durs.length !== deps.length) return null
+
+  // First-leg duration from authoritative Google timestamps.
+  const firstDepMs = new Date(firstLeg.departureTime).getTime()
+  const firstArrMs = new Date(firstLeg.arrivalTime).getTime()
+  const firstDurationMin = Math.round((firstArrMs - firstDepMs) / 60000)
+  // Skip if RTT isn't meaningfully faster (1-2 min noise isn't worth the
+  // splice — keep Google's leg unchanged).
+  if (interchangeEntry.minMinutes >= firstDurationMin - 1) return null
+
+  // Continuation leg's departure is the constraint. Use the IMMEDIATE next
+  // leg (leg[1]) since firstLeg is leg[0]. If leg[1] has no departureTime
+  // (legacy record), bail — we need it to compute the latest RTT arrival.
+  const nextLeg = legs[1]
+  if (!nextLeg?.departureTime) return null
+  const nextDepMs = new Date(nextLeg.departureTime).getTime()
+  const continuationDepMin = msToUKMinutesOfDay(nextDepMs)
+  const originalDepMin = msToUKMinutesOfDay(firstDepMs)
+  const latestArrMin = continuationDepMin - MIN_CHANGE_BUFFER_MIN
+
+  // Pick the LATEST-arriving service with arr ≤ latestArrMin. This minimises
+  // wait at the interchange (wait = BUFFER exactly) and maximises the hybrid
+  // departure time from P, which equals maximum time saved.
+  let bestDepMin = -1
+  let bestDurMin = -1
+  let bestArrMin = -1
+  for (let i = 0; i < deps.length; i++) {
+    const arr = deps[i] + durs[i]
+    if (arr > latestArrMin) continue
+    if (arr > bestArrMin) {
+      bestArrMin = arr
+      bestDepMin = deps[i]
+      bestDurMin = durs[i]
+    }
+  }
+  if (bestArrMin < 0) return null
+
+  // Time saved = how much later we can depart P (final arrival at D is unchanged).
+  const savedMin = bestDepMin - originalDepMin
+  if (savedMin <= 0) return null
+
+  // Rebuild: same final arrival, later first-leg departure, SHORTER first-leg
+  // duration. `durationMinutes` reduces by exactly savedMin.
+  const newFirstDepMs = firstDepMs + savedMin * 60_000
+  const newFirstArrMs = newFirstDepMs + bestDurMin * 60_000
+  const newLegs = legs.map((leg, idx) =>
+    idx === 0
+      ? {
+          ...leg,
+          departureTime: new Date(newFirstDepMs).toISOString(),
+          arrivalTime: new Date(newFirstArrMs).toISOString(),
+        }
+      : leg,
+  )
+
+  return {
+    ...journey,
+    durationMinutes: journey.durationMinutes - savedMin,
+    legs: newLegs,
+  }
+}
 
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
 // Entries are either station names (legacy) or "lng,lat" coord keys (preferred — unambiguous when two stations share a name).
@@ -481,6 +656,10 @@ function resolveStationIconImage(props: Record<string, unknown> | undefined): st
   // so if we resolve it as "icon-unrated" the pulse renders a circle
   // on top of the hexagon. Match the base layer's icon-image here too.
   if (hasProp("isLondon")) return "icon-london"
+  // Terminus diamond features carry isTerminus — match their base-layer
+  // icon so the hover pulse animates as a primary-colour diamond rather
+  // than defaulting to the unrated circle.
+  if (hasProp("isTerminus")) return "icon-london-terminus"
   if (hasProp("isOrigin")) return "icon-origin"
   switch (props.rating) {
     case "highlight": return "icon-highlight"
@@ -520,7 +699,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 // Using canvas (rather than SVG files) means no extra assets to load.
 // strokeColor switches between white (light mode) and black (dark mode) so
 // the outline stays visible against the map background.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross', color: string, strokeColor: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross' | 'diamond', color: string, strokeColor: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -585,6 +764,22 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.moveTo(cx, inset)
     ctx.lineTo(cx, 24 - inset)
     ctx.stroke()
+  } else if (shape === 'diamond') {
+    // Square rotated 45° — four vertices at top, right, bottom, left
+    // centres. Used for London-terminus markers. Radius of ~7 keeps it
+    // visually matched to the other small rating icons (circle r=7).
+    ctx.beginPath()
+    const cx = 12, cy = 12, r = 7
+    ctx.moveTo(cx, cy - r)  // top
+    ctx.lineTo(cx + r, cy)  // right
+    ctx.lineTo(cx, cy + r)  // bottom
+    ctx.lineTo(cx - r, cy)  // left
+    ctx.closePath()
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = strokeColor
+    ctx.lineWidth = STATION_STROKE_WIDTH
+    ctx.stroke()
   } else if (shape === 'hexagon') {
     // Regular hexagon — 6 vertices evenly spaced, flat top edge
     // Smaller radius (7) so it reads as a more compact shape
@@ -642,7 +837,7 @@ export default function HikeMap() {
   // mega-cluster (synthetic coord at Guildhall) — gives new users broad
   // access to the City's 7 terminals without needing to pick one manually.
   // Users with the old name string in localStorage get translated below via migrateOriginKey.
-  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1278,51.5075")
+  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1269,51.5196")
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
   // pick items beneath the main origin list so they can hop back easily.
@@ -656,6 +851,7 @@ export default function HikeMap() {
       "-0.0035472,51.541289",   // Stratford
       "-0.104555,51.519964",    // Farringdon
       "-0.1239491,51.530609",   // Kings Cross (primary coord; renders as the full "Kings Cross, St Pancras, & Euston" menuName)
+      "-0.1705184,51.4644589",  // Clapham Junction — first suburban hub released under conservative admin-only search gating
     ],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
@@ -668,10 +864,10 @@ export default function HikeMap() {
   useEffect(() => {
     if (!primaryOrigin) return
     if (!primaryOrigin.includes(",")) {
-      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1278,51.5075"))
+      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1269,51.5196"))
     } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
       // Stored coord isn't a valid primary anymore — reset to default.
-      setPrimaryOriginRaw("-0.1278,51.5075")
+      setPrimaryOriginRaw("-0.1269,51.5196")
     }
   }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
   // useTransition lets us defer the heavy stations-recompute that happens
@@ -1566,6 +1762,12 @@ export default function HikeMap() {
         // and stash it under the primary's coord key, so the modal + hover
         // polyline code can treat RTT-sourced primaries identically to Routes-sourced ones.
         let synthJourney: JourneyInfo | null = null
+        // Option 2 hybrid-splice override — when tryHybridSplice produces a
+        // faster variant of a Google-sourced journey, this holds the rebuilt
+        // JourneyInfo. Written to next.journeys[primaryOrigin] at feature
+        // return time so the modal + polyline reflect the spliced timings.
+        // Null when no splice fired (either no data or no improvement).
+        let spliceOverride: JourneyInfo | null = null
 
         if (isRttPrimary) {
           // Priority check: if this feature already has a pre-fetched Google
@@ -1585,7 +1787,17 @@ export default function HikeMap() {
           // below runs as before and uses RTT data.
           const prefetchedPrimaryJourney = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
           if (prefetchedPrimaryJourney) {
-            const effective = getEffectiveJourney(prefetchedPrimaryJourney, primaryName)
+            // Option 2 splice — try replacing a slow Google-sourced first leg
+            // with a faster RTT-direct service. Returns the same journey
+            // unchanged when no improvement is possible, or a hybrid copy
+            // with a later departureTime + shorter durationMinutes. Either
+            // way the result lives in `effectiveSourceJourney` and downstream
+            // code (effective-minutes + feature.journeys modal/polyline read)
+            // sees the splice consistently.
+            const spliced = tryHybridSplice(prefetchedPrimaryJourney, primaryOrigin)
+            const effectiveSourceJourney = spliced ?? prefetchedPrimaryJourney
+            if (spliced) spliceOverride = spliced
+            const effective = getEffectiveJourney(effectiveSourceJourney, primaryName)
             originMins = effective?.effectiveMinutes
             effectiveChanges = effective?.effectiveChanges
             // No synthJourney to build — the journey already lives at
@@ -1852,12 +2064,23 @@ export default function HikeMap() {
             // pre-fetched Stratford→D journey sitting right there.
             const journeys = f.properties.journeys as Record<string, JourneyInfo>
             const primaryJourney = journeys[primaryOrigin]
-            const effective = getEffectiveJourney(primaryJourney, primaryName)
+            // Option 2 splice — if the custom primary itself has RTT direct-
+            // reachable data (Stratford + Farringdon do; ClapJ after its
+            // recent fetch does), try replacing the Google first leg with a
+            // faster RTT service. When the splice fires, spliceOverride is
+            // written back into next.journeys so the modal displays the
+            // hybrid timings.
+            const spliced = tryHybridSplice(primaryJourney, primaryOrigin)
+            const effectiveSourceJourney = spliced ?? primaryJourney
+            if (spliced) spliceOverride = spliced
+            const effective = getEffectiveJourney(effectiveSourceJourney, primaryName)
             originMins = effective?.effectiveMinutes
             effectiveChanges = effective?.effectiveChanges
             // No synthJourney to build — the journey already lives
             // under f.properties.journeys[primaryOrigin], so the
-            // modal + hover polyline read it natively.
+            // modal + hover polyline read it natively. The spliceOverride
+            // case above writes the hybrid variant back into next.journeys
+            // at feature-return time.
           } else if (originRoutes[primaryOrigin]?.directReachable?.[coordKey]?.minMinutes != null) {
             // --- Step 0: Self-direct lookup ---
             // The custom primary has itself been RTT-fetched (its coord
@@ -1990,6 +2213,49 @@ export default function HikeMap() {
               const cp = sameTrainTerminalCoord != null && sameTrainXTimeRelativeToP != null
                 ? buildSameTrainCallingPoints(sameTrainTerminalCoord, coordKey, sameTrainXTimeRelativeToP)
                 : null
+
+              // Polyline for the same-train shortcut. Derived from the
+              // terminal's fastestCallingPoints (CRS sequence). Two cases:
+              //   • Intermediate: X sits inside fastCP between P and D. The
+              //     relevant sub-polyline is fastCP.slice(idxX…) — the CRS
+              //     chain from X forward.
+              //   • Upstream: X sits BEFORE P. fastCP only covers P→D, so
+              //     prepend X's own coord and the full P→D chain. Other
+              //     upstream stops between X and P are omitted because we
+              //     don't carry their CRS on the winner's route — a
+              //     straight segment from X to P is a reasonable hint.
+              // Without this step, every same-train-resolved destination
+              // (most CLJ/Kentish-Town/Vauxhall journeys, etc.) used to
+              // have NO polyline drawn on hover despite having an
+              // otherwise complete journey.
+              let stPolylineCoords: [number, number][] | undefined
+              if (sameTrainTerminalCoord != null) {
+                const winnerEntry = originRoutes[sameTrainTerminalCoord]?.directReachable?.[coordKey]
+                const fastCP = winnerEntry?.fastestCallingPoints ?? []
+                if ((sameTrainXTimeRelativeToP ?? 0) >= 0) {
+                  // Intermediate — slice fastCP from X forward.
+                  const idxX = fastCP.findIndex((crs) => {
+                    const c = crsToCoord[crs]
+                    return c && `${c[0]},${c[1]}` === primaryOrigin
+                  })
+                  if (idxX > -1) {
+                    const sliced = fastCP.slice(idxX)
+                      .map((crs) => crsToCoord[crs])
+                      .filter((c): c is [number, number] => !!c)
+                    if (sliced.length > 1) stPolylineCoords = sliced
+                  }
+                } else {
+                  // Upstream — prepend X's coord to the full P→D chain.
+                  const { lng: xLng, lat: xLat } = parseCoordKey(primaryOrigin)
+                  const pToDestCoords = fastCP
+                    .map((crs) => crsToCoord[crs])
+                    .filter((c): c is [number, number] => !!c)
+                  if (pToDestCoords.length > 0) {
+                    stPolylineCoords = [[xLng, xLat], ...pToDestCoords]
+                  }
+                }
+              }
+
               synthJourney = {
                 durationMinutes: sameTrainMins,
                 changes: 0,
@@ -2000,6 +2266,7 @@ export default function HikeMap() {
                     arrivalStation: destName,
                   },
                 ],
+                polylineCoords: stPolylineCoords,
                 londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
                 londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
               } as unknown as JourneyInfo
@@ -2351,6 +2618,13 @@ export default function HikeMap() {
         if (synthJourney) {
           const existing = f.properties.journeys as Record<string, JourneyInfo> | undefined
           next.journeys = { ...(existing ?? {}), [primaryOrigin]: synthJourney }
+        } else if (spliceOverride) {
+          // Option 2 splice replaced the prefetched/custom Google journey with
+          // a faster hybrid. Write it back onto the feature so the modal's
+          // leg breakdown + hover polyline code read the hybrid timings
+          // rather than the original Google-sourced journey.
+          const existing = f.properties.journeys as Record<string, JourneyInfo> | undefined
+          next.journeys = { ...(existing ?? {}), [primaryOrigin]: spliceOverride }
         }
 
         return { ...f, properties: next as StationFeature["properties"] }
@@ -2499,6 +2773,85 @@ export default function HikeMap() {
   }, [visibleRatings, prevVisibleRatings])
 
   // Filters by visibleRatings + keeps leaving features during their shrink animation.
+  // London-terminus reference markers — only shown when the Central London
+  // synthetic primary is active. Renders a small diamond at each of the 18
+  // cluster members (KX/StP/Euston multi-coord variants included, they
+  // visually overlap in practice). Labels are deduped by station name so
+  // KX NR + KX Underground don't get two "Kings Cross" texts stacked on
+  // top of each other. Labels appear at zoom 11+. Non-interactive — the
+  // Source and Layers aren't wired into interactiveLayerIds so clicks
+  // pass through to whatever's underneath.
+  const londonTerminusFeatures = useMemo(() => {
+    if (!baseStations) return null
+    const syntheticCoord = Object.keys(PRIMARY_ORIGINS).find(
+      (k) => PRIMARY_ORIGINS[k]?.isSynthetic,
+    )
+    if (!syntheticCoord) return null
+    const clusterCoords = PRIMARY_ORIGIN_CLUSTER[syntheticCoord] ?? []
+    type PointFeature = {
+      type: "Feature"
+      geometry: { type: "Point"; coordinates: [number, number] }
+      properties: Record<string, unknown>
+    }
+    const iconFeatures: PointFeature[] = []
+    for (const coord of clusterCoords) {
+      const [lngStr, latStr] = coord.split(",")
+      const lng = parseFloat(lngStr)
+      const lat = parseFloat(latStr)
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+      // Skip tube-only coords — the cluster includes Underground entrances
+      // for Kings Cross and Euston as satellite coords so cluster-member
+      // taps resolve to the parent primary, but visually we only want the
+      // National Rail stations shown as waypoint diamonds. Identify tube-
+      // only coords by their network tag.
+      const bf = baseStations.features.find((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return `${l},${a}` === coord
+      })
+      const network = (bf?.properties?.network as string | undefined) ?? ""
+      const isNR = /National Rail|Elizabeth line/.test(network)
+      if (!isNR) continue
+      // Proximity dedupe: if a previously-added diamond is within ~70m
+      // (squared-deg < 1e-6 at London's latitude) of this one, skip.
+      // Collapses the double StP entry (main concourse vs HS1/SPL
+      // concourse, ~80m apart) and any future near-duplicates into a
+      // single icon + label. Waterloo / Waterloo East are 400m apart
+      // so both survive; KX NR / KX Underground would ordinarily
+      // survive too if the tube filter above hadn't already dropped
+      // Underground.
+      const nearPrevious = iconFeatures.some((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
+      })
+      if (nearPrevious) continue
+      const rawName = bf?.properties?.name as string | undefined
+      iconFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        // Stamp coord + coordKey + name so the click handler can
+        // resolve a diamond tap back to its station feature (via
+        // baseStations) and open the stripped-down active-primary
+        // modal. coordKey matches the same-named property on
+        // regular station features — lets the existing click-to-
+        // modal plumbing reuse the cluster-member branch.
+        //
+        // isTerminus tells resolveStationIconImage to use the diamond
+        // icon for the hover pulse animation — without this, the
+        // pulse defaults to the unrated circle because the feature
+        // has no rating/isOrigin/isLondon properties.
+        properties: {
+          coord: coord,
+          coordKey: coord,
+          name: rawName ?? "",
+          isTerminus: true,
+        },
+      })
+    }
+    return {
+      icons: { type: "FeatureCollection" as const, features: iconFeatures },
+    }
+  }, [baseStations])
+
   // Stamps boolean flags (isNew / isLeaving) — NOT the scale values themselves.
   // Scale values live in the Layer expressions so stationsForMap doesn't recompute
   // on every animation frame, and avoids stale-value flashes on the first render.
@@ -2867,6 +3220,45 @@ export default function HikeMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
 
+  // When the Central London synthetic is the active primary AND a journey
+  // is being hovered, identify which of the 16 terminus diamonds matches
+  // the journey's origin — i.e. the London station where the polyline
+  // starts. That one diamond should remain visible at all zoom levels
+  // (below the main-layer's minzoom=9) so the user sees where the
+  // highlighted train actually departs from, even zoomed out to a
+  // country-wide view.
+  //
+  // Matched by proximity: take the polyline's first coord and find the
+  // closest cluster member within ~250m (squared-deg threshold).
+  // Squared-deg keeps the comparison cheap and accurate enough at
+  // London's latitude.
+  const journeyOriginClusterCoord = useMemo(() => {
+    if (!hoveredJourneyCoords || hoveredJourneyCoords.length === 0) return null
+    if (!londonTerminusFeatures) return null
+    if (!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic) return null
+    const [firstLng, firstLat] = hoveredJourneyCoords[0]
+    let best: [number, number] | null = null
+    let bestDist = Infinity
+    for (const f of londonTerminusFeatures.icons.features) {
+      const [l, a] = f.geometry.coordinates as [number, number]
+      const d = (l - firstLng) ** 2 + (a - firstLat) ** 2
+      if (d < bestDist) {
+        bestDist = d
+        best = [l, a]
+      }
+    }
+    // Tolerance of 5e-5 squared-deg ≈ 700m at London's latitude. Large
+    // enough to absorb the 200m drift between a cluster member's OSM
+    // coord (what the diamond is drawn at) and the terminal coord used
+    // by sliceFromTerminal (from london-terminals.json) — that drift
+    // alone plus any wobble on the closest-polyline-point match pushed
+    // a Mortimer/Paddington case over an older 1e-5 threshold and the
+    // diamond silently failed to show. Still tight enough that journeys
+    // starting far from any London terminus (non-London primary edge
+    // cases) don't accidentally match.
+    return bestDist < 5e-5 ? best : null
+  }, [hoveredJourneyCoords, londonTerminusFeatures, primaryOrigin])
+
   // Friend origin polyline — same logic but for the friend's journey
   const hoveredFriendJourneyCoords = useMemo(() => {
     if (!friendOrigin || !hovered || !stations) return null
@@ -3194,7 +3586,13 @@ export default function HikeMap() {
       [point.x - TAP_SLOP, point.y - TAP_SLOP],
       [point.x + TAP_SLOP, point.y + TAP_SLOP],
     ]
-    const candidateLayers = ["hovered-station-hit", "station-hit-area", "london-hit-area"]
+    const candidateLayers = [
+      "hovered-station-hit", "station-hit-area", "london-hit-area",
+      // Terminus diamonds are tappable on mobile too — include them in
+      // the candidate set so first-tap detection fires for diamonds
+      // the same way it does for regular station hit areas.
+      "london-terminus-icon", "london-terminus-origin-icon",
+    ]
       .filter((id) => !!map.getLayer(id))
     const features = candidateLayers.length
       ? map.queryRenderedFeatures(bbox, { layers: candidateLayers })
@@ -3324,6 +3722,27 @@ export default function HikeMap() {
       setSelectedStation(null)
       return
     }
+    // Terminus diamond click — resolve to the real station feature so
+    // the usual modal opens. The diamond's properties carry coordKey
+    // already, so we can look up the baseStations feature directly.
+    // No `getActivePrimaryCoords` short-circuit needed: since London
+    // synthetic IS the active primary whenever these layers are
+    // interactive, and every diamond's coord is in the cluster, the
+    // stripped-down modal branch fires on its own via the existing
+    // isPrimaryOrigin plumbing.
+    if (
+      feature.layer?.id === "london-terminus-icon" ||
+      feature.layer?.id === "london-terminus-origin-icon"
+    ) {
+      const diamondCoord = feature.properties?.coordKey as string | undefined
+      if (diamondCoord) {
+        const real = stations?.features.find(
+          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === diamondCoord
+        )
+        if (real) feature = real as unknown as typeof feature
+      }
+    }
+
     // If the click landed on the enlarged hovered-hit layer, its feature only
     // carries { coordKey }. Resolve to the real station feature (with name,
     // journeys, etc.) so all downstream logic works normally.
@@ -3553,6 +3972,14 @@ export default function HikeMap() {
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
     add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
     add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
+    // Small diamond used for the 18 London-terminus reference markers when
+    // the Central London synthetic is the active primary. Rendered at ~0.6×
+    // icon-size in the layer below so it reads as a compact waypoint.
+    // Uses the SAME hardcoded #2f6544 (--tree-800) as the journey polyline
+    // layers so the diamonds visually match the route lines drawn on top
+    // — a visual "here's a terminus" anchor consistent with the polyline
+    // that threads between them.
+    add('icon-london-terminus', createRatingIcon('diamond',       "#2f6544",        stroke))
     // Excluded stations — only shown in admin mode. Uses --primary so the cross
     // reads with the same visual weight as Heavenly/Good/Origin markers.
     add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
@@ -3709,7 +4136,15 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit"]}
+        interactiveLayerIds={[
+          "hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit",
+          // Terminus diamonds open the same stripped-down station modal
+          // that other active-primary cluster members get (title + photos
+          // only, no journey info, no Hike button). Both main (zoom 9+)
+          // and origin-overlay layers are interactive so the diamond
+          // works at every zoom level where it's visible.
+          "london-terminus-icon", "london-terminus-origin-icon",
+        ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -3900,6 +4335,85 @@ export default function HikeMap() {
             }}
           />
         </Source>
+
+        {/* London-terminus reference markers — only when Central London is
+            the active primary. Placed BEFORE the stations Source so they
+            render beneath every station icon / label (bottom-most z-index —
+            the user's rule: "they should not obscure anything"). Neither
+            layer is wired into interactiveLayerIds, so clicks pass straight
+            through to whatever's underneath. */}
+        {PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic && londonTerminusFeatures && (
+          <>
+            <Source id="london-termini-icons" type="geojson" data={londonTerminusFeatures.icons}>
+              <Layer
+                id="london-terminus-icon"
+                type="symbol"
+                // Diamonds cluster tightly in central London — only start
+                // showing from zoom 9 so they don't form a single
+                // unreadable blob at nationwide zoom. Exception for the
+                // journey-origin diamond below, which stays visible at
+                // all zooms to anchor the polyline.
+                minzoom={9}
+                layout={{
+                  "icon-image": "icon-london-terminus",
+                  // ~0.6× of the standard rating-icon size — reads as a
+                  // compact waypoint at all zooms without competing with
+                  // the hiking-destination icons.
+                  "icon-size": 0.6,
+                  // Always render even if another symbol is in the way
+                  // (e.g. Mapbox's own base-style station symbols).
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                }}
+              />
+            </Source>
+
+            {/* Journey-origin overlay — the single diamond matching the
+                currently-hovered journey's departure terminus. No
+                minzoom gating, so the user sees WHERE their train
+                starts even when zoomed out to a country-wide view.
+                No label — the user explicitly didn't want terminus
+                names appearing on the map; only the diamond itself
+                reveals the origin-below-the-zoom-threshold.
+
+                CRITICAL: Source is ALWAYS mounted — toggling data
+                rather than conditionally mounting the Source. A
+                conditionally-mounted Source re-adds its layers to
+                Mapbox's style on every re-mount, which puts them on
+                TOP of later-declared sources (like london-marker).
+                Always-mounting keeps the layers at a fixed position
+                in the style, so they stay beneath london-icon
+                regardless of hover churn. */}
+            <Source
+              id="london-termini-origin"
+              type="geojson"
+              data={{
+                type: "FeatureCollection",
+                features: journeyOriginClusterCoord
+                  ? [{
+                      type: "Feature",
+                      geometry: {
+                        type: "Point",
+                        coordinates: journeyOriginClusterCoord,
+                      },
+                      properties: { isTerminus: true },
+                    }]
+                  : [],
+              }}
+            >
+              <Layer
+                id="london-terminus-origin-icon"
+                type="symbol"
+                layout={{
+                  "icon-image": "icon-london-terminus",
+                  "icon-size": 0.6,
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                }}
+              />
+            </Source>
+          </>
+        )}
 
         {stationsForMap && (
           <Source id="stations" type="geojson" data={stationsForMap}>
@@ -4212,7 +4726,16 @@ export default function HikeMap() {
                 "text-offset": [0, 1.4],
                 "text-anchor": "top",
                 "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                // allow-overlap: this label renders even if it collides
+                // with one placed earlier. ignore-placement: this label
+                // doesn't "steal" a slot from others, and crucially
+                // is NOT itself culled by earlier labels that already
+                // claimed the area — Charing Cross's diamond label
+                // sits 300m east and was occasionally demoting the
+                // "London" label visually at mid-zooms before this
+                // setting was explicit.
                 "text-allow-overlap": true,
+                "text-ignore-placement": true,
               }}
               paint={{
                 "text-color": labelColor,
@@ -4306,7 +4829,8 @@ export default function HikeMap() {
               id="hovered-station-hit"
               type="circle"
               paint={{
-                // Desktop: ~2x the default 16px station-hit-area radius.
+                // Desktop: same as the default 16px station-hit-area —
+                // cursor precision makes an enlarged target unnecessary.
                 // Mobile: 4x the default (64px) — once a station is already
                 // in the pulsing "preview" state, we want a huge, unmissable
                 // tap target so the second tap reliably opens the modal
@@ -4316,7 +4840,7 @@ export default function HikeMap() {
                 // preference (see below) means the hovered station always
                 // wins taps within this enlarged zone — regardless of
                 // whether a neighbouring station is highlight/verified/etc.
-                "circle-radius": isMobile ? 64 : 32,
+                "circle-radius": isMobile ? 64 : 16,
                 "circle-color": "transparent",
                 "circle-opacity": 0.01,
               }}

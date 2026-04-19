@@ -79,7 +79,7 @@
     "publicNote": "Waterloo and Waterloo East stations are within 5 minutes walk of one another. Trains to Green measures your travel-time from whichever is quickest.",
     "privateNote": ""
   },
-  "-0.1278,51.5075": {
+  "-0.1269,51.5196": {
     "name": "London",
     "publicNote": "By default, Trains to Green assumes you’ll start your journey at one of London’s 18 termini: Charing Cross, Kings Cross, St Pancras, Euston, Liverpool Street, London Bridge, Waterloo, Waterloo East, Victoria, Paddington, Marylebone, Blackfriars, Moorgate, Cannon St, or Fenchurch St. When you select a rural hiking station, the travel-time you see is from whichever London terminus provides the quickest journey. Over time, alternative London starting stations will be added to give you a more tailored experience.\n\nWherever you start from, journey times are always based on the Saturday schedule. Travel times on Sundays and weekdays may differ.\n\nSend any comments any questions to [nicolas@niczap.design](mailto:nicolas@niczap.design).",
     "privateNote": " Obviously your real journey depends on where you live! Choose your closest London National Rail station for a more tailored experience."
@@ -136,7 +136,7 @@
   },
   "-0.104555,51.519964": {
     "name": "Farringdon",
-    "publicNote": "Fun fact: Farringdon is where the creator of Trains to Green lives. It's also roughly in the middle of London's 18 terminus stations.",
+    "publicNote": "Fun fact: Farringdon is where the creator of Trains to Green lives.",
     "privateNote": ""
   }
 }
