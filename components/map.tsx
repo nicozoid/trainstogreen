@@ -4349,15 +4349,22 @@ export default function HikeMap() {
             lat={displayStation.lat}
             lng={displayStation.lng}
             // When the click is on the PRIMARY station itself AND that
-            // primary has a cluster (KX or Waterloo in practice, since
-            // City is handled via the synthetic branch), show the
-            // cluster's menuName as the title — "Kings Cross, St Pancras,
-            // & Euston" rather than just "Kings Cross". No " Station"
-            // suffix in this case (handled via isSynthetic below).
+            // primary has a cluster (KX, Waterloo, Stratford, or the
+            // London synthetic), show the cluster's menuName as the
+            // overlay title — "Kings Cross, St Pancras, & Euston" /
+            // "Waterloo & Waterloo East" / "Stratford & Stratford
+            // International" / "Central London" — rather than just the
+            // shorthand displayName. The map label stays shorthand via
+            // displayName on the hexagon's own text-field; this affects
+            // the modal/overlay only.
+            //
+            // No " Station" suffix in any of these cases (handled via
+            // the isSynthetic prop below — set true for both true
+            // synthetics AND primaries-with-clusters, so the title reads
+            // as a place, not a single station).
             stationName={
               displayStation.coordKey === primaryOrigin &&
-              !!PRIMARY_ORIGIN_CLUSTER[primaryOrigin] &&
-              !PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
+              !!PRIMARY_ORIGIN_CLUSTER[primaryOrigin]
                 ? (PRIMARY_ORIGINS[primaryOrigin]?.menuName ?? displayStation.name)
                 : displayStation.name
             }
