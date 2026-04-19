@@ -3042,7 +3042,27 @@ export default function HikeMap() {
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
     // Use the primary origin's journey (not first-found) to avoid picking up friend origin's
-    return resolveJourneyCoords(journeys?.[primaryOrigin])
+    const coords = resolveJourneyCoords(journeys?.[primaryOrigin])
+    // DIAG — remove after debugging the "Paddington diamond missing for
+    // Mortimer" issue. Logs the hovered station, whether a journey was
+    // found, and the first polyline coord (the "origin" we try to match
+    // to a cluster diamond).
+    if (process.env.NODE_ENV === "development" && hovered) {
+      const name = feature?.properties?.name as string | undefined
+      const journey = journeys?.[primaryOrigin]
+      // eslint-disable-next-line no-console
+      console.log("[origin-diag]", {
+        hovered: name ?? hovered.coordKey,
+        hasJourney: !!journey,
+        journeyDuration: (journey as { durationMinutes?: number } | undefined)?.durationMinutes,
+        journeyChanges: (journey as { changes?: number } | undefined)?.changes,
+        legs: (journey as { legs?: Array<{ vehicleType?: string; departureStation?: string; arrivalStation?: string }> } | undefined)
+          ?.legs?.map((l) => `${l.vehicleType} ${l.departureStation}→${l.arrivalStation}`),
+        polylineCoordCount: coords?.length,
+        polylineFirst: coords?.[0],
+      })
+    }
+    return coords
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
 
@@ -3077,7 +3097,18 @@ export default function HikeMap() {
     // begin at a London terminus (e.g. when a non-London primary is
     // somehow active — shouldn't happen since we gate on isSynthetic, but
     // defensive) return null so no "origin" diamond renders.
-    return bestDist < 1e-5 ? best : null
+    const matched = bestDist < 1e-5 ? best : null
+    // DIAG — see companion log in hoveredJourneyCoords.
+    if (process.env.NODE_ENV === "development" && hoveredJourneyCoords && hoveredJourneyCoords.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log("[origin-diag] resolve", {
+        polylineFirst: hoveredJourneyCoords[0],
+        closestCluster: best,
+        distSq: bestDist,
+        matched,
+      })
+    }
+    return matched
   }, [hoveredJourneyCoords, londonTerminusFeatures, primaryOrigin])
 
   // Friend origin polyline — same logic but for the friend's journey
