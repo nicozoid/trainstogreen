@@ -4638,7 +4638,8 @@ export default function HikeMap() {
               id="hovered-station-hit"
               type="circle"
               paint={{
-                // Desktop: ~2x the default 16px station-hit-area radius.
+                // Desktop: same as the default 16px station-hit-area —
+                // cursor precision makes an enlarged target unnecessary.
                 // Mobile: 4x the default (64px) — once a station is already
                 // in the pulsing "preview" state, we want a huge, unmissable
                 // tap target so the second tap reliably opens the modal
@@ -4648,7 +4649,7 @@ export default function HikeMap() {
                 // preference (see below) means the hovered station always
                 // wins taps within this enlarged zone — regardless of
                 // whether a neighbouring station is highlight/verified/etc.
-                "circle-radius": isMobile ? 64 : 32,
+                "circle-radius": isMobile ? 64 : 16,
                 "circle-color": "transparent",
                 "circle-opacity": 0.01,
               }}
