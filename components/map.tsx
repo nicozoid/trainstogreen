@@ -1786,6 +1786,36 @@ export default function HikeMap() {
           if (primaryOrigin === coordKey) {
             // User's own station — drop it from the destination map.
             rttClearLondonMinutes = true
+          } else if ((f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]) {
+            // --- Step 0a: Pre-fetched Google Routes journey ---
+            // The feature ALREADY has a journey keyed by this custom
+            // primary's coord. This happens when the primary was
+            // previously a curated one whose per-destination journeys
+            // were baked into stations.json via scripts/fetch-journeys.mjs
+            // (Stratford, Farringdon, and the Kings Cross cluster).
+            //
+            // Those journeys are comprehensive Google Routes results —
+            // multi-modal, already routed, more accurate than anything
+            // we can stitch from RTT directReachable. Use them as-is,
+            // same code path the old curated-primary branch uses
+            // (see the `else` block below around "Calling-points
+            // enrichment for curated primaries without their own RTT
+            // data" for the logic being mirrored here).
+            //
+            // Without this, Stratford-as-custom-primary silently lost
+            // most of its destinations — the stitcher only had RTT
+            // direct (105 stations) + hub routes through Liverpool
+            // Street, and many hike destinations weren't reachable
+            // either way despite the feature having a perfectly good
+            // pre-fetched Stratford→D journey sitting right there.
+            const journeys = f.properties.journeys as Record<string, JourneyInfo>
+            const primaryJourney = journeys[primaryOrigin]
+            const effective = getEffectiveJourney(primaryJourney, primaryName)
+            originMins = effective?.effectiveMinutes
+            effectiveChanges = effective?.effectiveChanges
+            // No synthJourney to build — the journey already lives
+            // under f.properties.journeys[primaryOrigin], so the
+            // modal + hover polyline read it natively.
           } else if (originRoutes[primaryOrigin]?.directReachable?.[coordKey]?.minMinutes != null) {
             // --- Step 0: Self-direct lookup ---
             // The custom primary has itself been RTT-fetched (its coord
