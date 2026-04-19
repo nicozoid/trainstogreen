@@ -129,7 +129,7 @@
     --secondary: var(--tree-600); /* secondary icon set */
     --secondary-foreground: var(--abyss-900);
     --muted: var(--palm-400); /* slider */
-    --muted-foreground: var(--tree-800);
+    --muted-foreground: var(--tree-900);
     --accent: var(--seawater-500);
     --accent-foreground: var(--abyss-900);
     --destructive: var(--fire-500);      /* red */
@@ -227,9 +227,14 @@
 }
 
 
-@media (max-width: 768px) {
+/* Scale up Tailwind's spacing unit on phones so padding/gaps/icon sizes feel
+   proportional on small screens. Threshold matches the sm breakpoint (640px)
+   — same point at which the station overlay collapses from two columns (title
+   + Hike button side-by-side) to a single-column stack. Above this, the
+   default Tailwind spacing (0.25rem) is used. */
+@media (max-width: 639.98px) {
     :root {
-        --spacing: 0.6rem;      
+        --spacing: 0.6rem;
     }
 }
 

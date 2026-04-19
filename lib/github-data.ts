@@ -12,7 +12,17 @@ import path from "path"
 
 const OWNER = "nicozoid"
 const REPO = "trainstogreen"
-const BRANCH = "main"
+// Branch to read data files from (and commit writes to) when running on the
+// deployed site. Defaults to "main" in production and local dev; Vercel
+// preview deploys populate VERCEL_GIT_COMMIT_REF with the deploy's branch
+// name, so previews read branch-local data (e.g. station-notes.json edits
+// in a PR branch show up on that PR's preview deploy, rather than the
+// preview reading main's copy).
+//
+// Writes from a preview go to the SAME branch the preview reads from, so
+// admin edits made inside a preview deploy stick with that branch until
+// the PR merges. Writes from a production main deploy still land on main.
+const BRANCH = process.env.VERCEL_GIT_COMMIT_REF ?? "main"
 
 // When GITHUB_TOKEN is set, we use the GitHub API instead of the filesystem
 function getToken(): string | undefined {

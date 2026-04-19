@@ -14,8 +14,10 @@ export default function Page() {
       <HikeMap />
       {/* Theme toggle floats over the map in the top-right corner.
           hidden md:block = hidden on mobile, visible from md (768px) up.
-          On mobile, we always use light mode (enforced in ThemeToggle). */}
-      <div className="hidden md:block absolute top-4 right-4 z-50">
+          On mobile, we always use light mode (enforced in ThemeToggle).
+          Sits at right-14 (not right-4) so the help button — rendered inside
+          the map at right-4 — gets the outermost slot. */}
+      <div className="hidden md:block absolute top-4 right-14 z-50">
         <ThemeToggle />
       </div>
     </main>

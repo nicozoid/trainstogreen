@@ -1,17 +1,30 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useTheme } from "next-themes"
 import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner } from "@/components/welcome-banner"
+import { HelpButton } from "@/components/help-button"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
+// Stations that are TECHNICALLY a London NR station (so they match the
+// searchableStations criteria) but produce no useful data when picked as
+// a home station — because they have no RTT-reachable hub in any of our
+// origin-routes.json primaries. Currently: Kensington (Olympia), whose NR
+// service is sparse and event-driven. Coord-keyed, same shape as
+// data/excluded-stations.json.
+import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originStationsList from "@/data/origin-stations.json"
+import originRoutesData from "@/data/origin-routes.json"
+import londonTerminalsData from "@/data/london-terminals.json"
+import terminalMatrixData from "@/data/terminal-matrix.json"
+import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
-import { usePersistedState, setSerializer } from "@/lib/use-persisted-state"
+import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
+import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -131,41 +144,233 @@ function timeExpression(prop: string): any {
   ]
 }
 
-// Coordinates for each supported primary origin — the active one drives the
-// origin marker position, polyline lookups, and londonMinutes override.
-const ORIGIN_COORDS: Record<string, { lat: number; lng: number }> = {
-  Farringdon: { lat: 51.5203, lng: -0.1053 },
-  Stratford:  { lat: 51.541289, lng: -0.0035472 },
-  "Kings Cross St Pancras": { lat: 51.5308, lng: -0.1238 },
+// One table per origin role — keyed by "lng,lat" coord key (longitude-first,
+// matching the rest of the app). The coord IS the key, which means we no
+// longer need a separate ORIGIN_COORDS lookup; the lat/lng is parsed from the
+// key when needed. Each entry carries the canonical name (for look-up in
+// stations.json if ever needed) and the short/long display strings shown in
+// the filter panel and map label.
+type OriginDef = {
+  canonicalName: string   // matches .properties.name in public/stations.json
+  displayName: string     // short label for the filter panel trigger and the London-label
+  menuName: string        // longer label for the dropdown menu items
+  /**
+   * Extra-short "super-shorthand" used ONLY on mobile (below the sm
+   * breakpoint). Lets long names like "Charing Cross" shrink to "Charing X"
+   * on narrow viewports without visible truncation. Falls back to displayName
+   * when undefined.
+   */
+  mobileDisplayName?: string
+  /**
+   * If true, only visible in the dropdown when admin mode is active. Used for
+   * origins whose journey data is partial (e.g. RTT-only origins where stations
+   * off the origin's own lines have no journey data yet).
+   */
+  adminOnly?: boolean
+  /**
+   * True when the primary's coord doesn't correspond to a real train station
+   * — e.g. "City of London" lives at Guildhall so the hexagon can sit at the
+   * geographic centre of its cluster. Triggers modal-title/lookup differences
+   * so the overlay shows "City of London" (no "Station" suffix, no
+   * stations-collection lookup).
+   */
+  isSynthetic?: boolean
 }
 
-// Extensible list of primary origin stations available in the dropdown.
-// Wrapped in a string[][] so filter-panel's grouped-rendering API still works
-// — with one group no separator is drawn. Only origins with real per-destination
-// journey data (via scripts/fetch-journeys.mjs) belong here.
-const PRIMARY_ORIGIN_GROUPS: string[][] = [
-  [
-    "Farringdon",
-    "Kings Cross St Pancras",
-    "Stratford",
+// Primary origins — the station that drives the "from" filter, the polyline
+// animation, and the londonMinutes override.
+//  - Farringdon, Kings Cross, Stratford: full Google Routes journey data per
+//    destination (fetched via scripts/fetch-journeys.mjs).
+//  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT+WAE):
+//    hybrid — RTT direct times for destinations on their own lines, stitched
+//    via terminal-matrix + existing KX/Farringdon journeys for everywhere else.
+const PRIMARY_ORIGINS: Record<string, OriginDef> = {
+  // Farringdon and Stratford are deliberately ABSENT from PRIMARY_ORIGINS.
+  // They're non-termini that happen to have full per-station Google Routes
+  // data (because they're our stitcher sources) — but from a user's point
+  // of view they deserve no special treatment vs any other intermediate
+  // London NR station. If someone wants either as a primary, they can
+  // search for it via the "Other stations" field; it then lives in the
+  // recents list like any other custom pick.
+  // London synthetic mega-cluster — primary coord is the equestrian statue
+  // of Charles I at Charing Cross (historically the "centre of London" used
+  // for measuring distances from). NOT Charing Cross station. The cluster
+  // members below are what drive direct-reachable + stitching lookups.
+  // canonicalName "London" matches the entry we'll add to londonTerminals
+  // later if we want to treat the whole cluster as a stitch source; for now
+  // it's just a label.
+  "-0.1278,51.5075":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
+  // Kings Cross primary represents the KX/St Pancras/Euston group — they're
+  // next-door and share a tube interchange, so most riders pick any of the
+  // three interchangeably. Cluster members are declared below.
+  "-0.1239491,51.530609":  { canonicalName: "Kings Cross St Pancras", displayName: "Kings Cross",      menuName: "Kings Cross, St Pancras, & Euston" },
+  "-0.1236888,51.5074975": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
+  "-0.163592,51.5243712":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
+  "-0.177317,51.5170952":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
+  "-0.1445802,51.4947328": { canonicalName: "Victoria",                displayName: "Victoria",         menuName: "Victoria" },
+  // Waterloo primary — clustered with Waterloo East (cross-platform walk).
+  "-0.112801,51.5028379":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo & Waterloo East" },
+  // Stratford primary — clustered with Stratford International (a short
+  // walk across the plaza). Cluster member declared below.
+  "-0.0035472,51.541289":  { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford & Stratford International" },
+  // Remaining standalone termini — each has RTT direct-reachable data
+  // (see data/origin-routes.json) and matches a london-terminals.json entry
+  // by canonicalName or alias, so stitching works too.
+  "-0.0890625,51.5182516": { canonicalName: "Moorgate",                 displayName: "Moorgate",         menuName: "Moorgate" },
+  "-0.0814269,51.5182105": { canonicalName: "Liverpool Street",         displayName: "Liverpool Street", menuName: "Liverpool Street", mobileDisplayName: "Liverpool St" },
+  // Cannon Street — a real weekend terminus. An earlier RTT fetch landed on
+  // a Saturday with limited service and recorded zero direct hiking
+  // destinations, which got CST demoted to adminOnly. Confirmed on a later
+  // Saturday (25 July) that direct services do run from CST (e.g. to
+  // Gravesend), so restored as a public primary. A future multi-date RTT
+  // merge will pick up the missing direct services permanently.
+  "-0.0906046,51.5106685": { canonicalName: "Cannon Street",            displayName: "Cannon Street",    menuName: "Cannon Street", mobileDisplayName: "Cannon St" },
+  "-0.0774191,51.5113281": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
+  "-0.1032417,51.5104871": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
+  "-0.0851473,51.5048764": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
+}
+
+// Group layout for the filter-panel dropdown. string[][] is kept so filter-
+// panel's grouped-rendering API still works; each inner array renders as one
+// alphabetically-sorted block, with a horizontal rule between groups.
+// Group order:
+//   1. Synthetic primaries (e.g. the "Any London terminus" cluster) — these
+//      represent a place, not a single station, so they head the list and
+//      are visually separated from the single-station options below.
+//   2. Public single-station primaries (Charing Cross, Kings Cross, …).
+//   3. Admin-only primaries (hidden from non-admin users).
+const byDisplayName = (a: string, b: string) =>
+  (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
+// ONLY the synthetic primary (currently just "Any London terminus") is shown
+// as a permanent curated dropdown item. Individual London termini (Charing
+// Cross, Victoria, Waterloo, …) are treated like any other London NR station
+// — reachable via search + promoted into the "recents" list when picked.
+// Admin mode still gets to see admin-only entries as an extra group below
+// the synthetic so they remain one-click accessible for dev work.
+const PRIMARY_ORIGIN_GROUPS_ALL: string[][] = [
+  Object.keys(PRIMARY_ORIGINS)
+    .filter((k) => !PRIMARY_ORIGINS[k]?.adminOnly && PRIMARY_ORIGINS[k]?.isSynthetic)
+    .sort(byDisplayName),
+  Object.keys(PRIMARY_ORIGINS)
+    .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
+    .sort(byDisplayName),
+].filter((group) => group.length > 0)
+const PRIMARY_ORIGIN_GROUPS_PUBLIC: string[][] = PRIMARY_ORIGIN_GROUPS_ALL
+  .map((group) => group.filter((key) => !PRIMARY_ORIGINS[key]?.adminOnly))
+  .filter((group) => group.length > 0)
+
+// Clustered satellite stations — when a primary is active, these extra coord
+// keys are also consulted for direct-reachable lookups AND stitching attempts,
+// and the fastest train from any cluster member wins.
+//  - Liverpool Street ← Moorgate: short walk, MOG has distinct GN suburban pattern.
+//  - City cluster ← six City-area stations (synthetic primary coord at Bank).
+//    Admin-only while we validate whether aggregating 6 origins into one is
+//    useful UX.
+const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
+  // Waterloo primary ← Waterloo East. Cross-platform walkway makes them a
+  // single practical interchange.
+  "-0.112801,51.5028379": ["-0.1082027,51.5042171"],
+  // Stratford primary ← Stratford International. Separate-but-near (a few
+  // minutes' walk across the plaza), historically treated as one logical
+  // origin — tapping either maps back to the Stratford primary.
+  "-0.0035472,51.541289": ["-0.0087494,51.5447954"],
+  // Kings Cross primary ← all NR/Underground variants of KX, St Pancras,
+  // and Euston. Underground + NR coords appear at slightly different OSM
+  // nodes, so listing each ensures a tap on any of them maps back to the
+  // one primary.
+  "-0.1239491,51.530609": [
+    "-0.1230224,51.5323954",   // Kings Cross (National Rail / KGX)
+    "-0.1270027,51.5327196",   // St Pancras International (STP, main concourse)
+    "-0.1276185,51.5322106",   // St Pancras International (SPL, HS1/domestic concourse)
+    "-0.1341909,51.5288526",   // Euston (National Rail / EUS)
+    "-0.1338745,51.5282865",   // Euston (Underground)
   ],
-]
-const FRIEND_ORIGINS = ["Birmingham New Street", "Nottingham"]
-
-// Short display names for the filter UI trigger — full canonical names are
-// used everywhere else (data lookups, property keys). Only add entries for
-// stations whose full name is too long for the panel.
-const ORIGIN_DISPLAY_NAMES: Record<string, string> = {
-  "Birmingham New Street": "Birmingham",
-  "Kings Cross St Pancras": "Kings Cross",
+  // London — the 18 true termini. Primary coord is the Charles I statue
+  // (synthetic, no station there). Every cluster member is a real terminus;
+  // Farringdon is intentionally EXCLUDED (it's a through-station, not a
+  // terminus). When London is the active primary, direct-reachable and
+  // stitched journeys are computed across all 18 termini and the quickest
+  // route wins (with the 15-min direct-preference + 2h30m cutoff rules).
+  "-0.1278,51.5075": [
+    "-0.1239491,51.530609",   // Kings Cross (Underground)
+    "-0.1230224,51.5323954",  // Kings Cross (National Rail / KGX)
+    "-0.1270027,51.5327196",  // St Pancras International (STP, main concourse)
+    "-0.1276185,51.5322106",  // St Pancras International (SPL, HS1/domestic concourse)
+    "-0.1341909,51.5288526",  // Euston (National Rail / EUS)
+    "-0.1338745,51.5282865",  // Euston (Underground)
+    "-0.1236888,51.5074975",  // Charing Cross
+    "-0.1445802,51.4947328",  // Victoria
+    "-0.112801,51.5028379",   // Waterloo
+    "-0.1082027,51.5042171",  // Waterloo East
+    "-0.163592,51.5243712",   // Marylebone
+    "-0.177317,51.5170952",   // Paddington
+    "-0.0890625,51.5182516",  // Moorgate
+    "-0.0814269,51.5182105",  // Liverpool Street
+    "-0.0906046,51.5106685",  // Cannon Street
+    "-0.0774191,51.5113281",  // Fenchurch Street
+    "-0.1032417,51.5104871",  // Blackfriars
+    "-0.0851473,51.5048764",  // London Bridge
+  ],
 }
 
-// Long display names for the dropdown MENU items — when the canonical name
-// alone isn't user-friendly enough. For Kings Cross we want to communicate
-// that we treat it as a cluster with St Pancras and Euston.
-const ORIGIN_MENU_NAMES: Record<string, string> = {
-  "Birmingham New Street": "Birmingham New St",
-  "Kings Cross St Pancras": "Kings Cross, St Pancras, Euston",
+// Farringdon coord / CRS — used by the City cluster's Thameslink-Farringdon
+// preference: when any other cluster member would have been the RTT winner
+// but is on the same Thameslink through-service as Farringdon, override back
+// to Farringdon as the departure point.
+const FARRINGDON_COORD = "-0.104555,51.519964"
+const FARRINGDON_CRS = "ZFD"
+
+// Compute the set of coord keys that "belong" to a given primary — the primary
+// itself plus any cluster members. Used by the modal-render site to decide
+// whether a station click should use the simplified origin-style overlay.
+// Passed-in helper so the check is ACTIVE-primary-scoped: with only one
+// clustered primary (London) today, we don't want clicks on cluster members
+// to trigger the simplified overlay when a DIFFERENT primary is active.
+function getActivePrimaryCoords(primaryOrigin: string): string[] {
+  return [primaryOrigin, ...(PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])]
+}
+
+// Feature flag — controls what happens when the user clicks a primary station
+// on the map. The two options, both of which are known-good behaviours:
+//   "modal"  → opens the photo modal with the same simplified view as friend
+//              stations (title + photos only; no journey text, no Hike button;
+//              uses the origin-tuned Flickr search). CURRENT DEFAULT.
+//   "banner" → opens the welcome banner (the rotating info popup that also
+//              appears when the user clicks the London hexagon).
+// To revert to the banner behaviour, flip this constant to "banner". Both
+// code paths still exist below — the banner path is the same one the
+// hexagon uses, so there's no dead code to clean up on either side.
+const PRIMARY_CLICK_BEHAVIOUR: "modal" | "banner" = "modal"
+
+// Friend origins — the secondary station used for filtering in "meet a friend"
+// mode. Same shape as PRIMARY_ORIGINS.
+const FRIEND_ORIGINS: Record<string, OriginDef> = {
+  "-1.898694,52.4776459":  { canonicalName: "Birmingham New Street", displayName: "Birmingham", menuName: "Birmingham New St" },
+  "-1.1449555,52.9473037": { canonicalName: "Nottingham",            displayName: "Nottingham", menuName: "Nottingham" },
+}
+
+// Flat arrays of keys for filter-panel's "list of origins to render" props.
+const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
+
+// Unified lookup for display/menu strings — used by the single callback we
+// pass into filter-panel (which renders labels for both primary AND friend origins).
+const ALL_ORIGINS: Record<string, OriginDef> = { ...PRIMARY_ORIGINS, ...FRIEND_ORIGINS }
+
+// Parse "-0.12,51.53" → { lng, lat }. Coord keys are longitude-first because
+// that matches GeoJSON [lng, lat] ordering we use elsewhere.
+function parseCoordKey(key: string): { lng: number; lat: number } {
+  const [lng, lat] = key.split(",").map(Number)
+  return { lng, lat }
+}
+
+// Legacy→coord migration for localStorage. If the stored value is an old
+// name string (no comma), resolve it via canonicalName. Unknown values fall
+// back to `fallback`. Comma-containing values are assumed to already be coord keys.
+function migrateOriginKey(stored: string | null | undefined, table: Record<string, OriginDef>, fallback: string): string {
+  if (!stored) return fallback
+  if (stored.includes(",")) return stored
+  const entry = Object.entries(table).find(([, v]) => v.canonicalName === stored)
+  return entry?.[0] ?? fallback
 }
 
 // White outline thickness for station icons and dots — lower = thinner strokes
@@ -175,15 +380,61 @@ const STATION_STROKE_WIDTH = 1.0
 const INNER_RADIUS_KM = 7
 const OUTER_RADIUS_KM = 14
 
+// Direct-reachable data from RTT (scripts/fetch-direct-reachable.mjs) — keyed
+// by origin coord key. For primaries whose journey data is RTT-sourced rather
+// than Routes-sourced (currently: Charing Cross), this table supplies the per-
+// destination minutes and calling-point sequence. Each inner key is a
+// destination coord key.
+type DirectReachable = {
+  name: string
+  crs: string
+  minMinutes: number
+  services: number
+  fastestCallingPoints: string[]
+  /**
+   * Stations this service calls at BEFORE the origin, captured so a passenger
+   * who lives further out (e.g. Kentish Town for a Farringdon-bound
+   * Thameslink) can be told to board earlier on the same train. Recorded
+   * per-destination because different destinations win via different services,
+   * each with their own upstream. Empty array if we haven't backfilled this
+   * primary yet — older rows missing the field are treated as empty.
+   */
+  upstreamCallingPoints?: {
+    crs: string
+    name: string
+    coord: string
+    /** Minutes before the origin's departure time (always positive). */
+    minutesBeforeOrigin: number
+  }[]
+}
+type OriginRoutes = Record<string, {
+  name: string
+  crs: string
+  directReachable: Record<string, DirectReachable>
+  generatedAt: string
+}>
+const originRoutes = originRoutesData as OriginRoutes
+
+// Terminals list + terminal-to-terminal matrix — used by stitchJourney to
+// synthesise "start at primary origin, tube to a terminal, take that terminal's
+// existing Routes-API journey" estimates. RTT-based primaries (currently just
+// Charing Cross) use this alongside their direct-reachable set so that
+// destinations where the stitched route is faster than the direct one — e.g.
+// Ramsgate via HS1 from St Pancras beats the direct SE mainline route from
+// Charing Cross — get the better time.
+const londonTerminals = londonTerminalsData as Terminal[]
+const terminalMatrix = terminalMatrixData as TerminalMatrix
+
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
 // Entries are either station names (legacy) or "lng,lat" coord keys (preferred — unambiguous when two stations share a name).
 // INITIAL_EXCLUDED_STATIONS seeds the state; admin toggling mutates the state set.
 const INITIAL_EXCLUDED_STATIONS = new Set(excludedStationsList)
 
 // Origin stations — shown as squares, only visible in admin mode (except London/Farringdon
-// which has its own dedicated marker). Lowercase for case-insensitive matching.
+// which has its own dedicated marker). Keyed by "lng,lat" coord key so that
+// same-named stations (e.g. London vs Glasgow Charing Cross) stay independent.
 // INITIAL_ORIGIN_STATIONS seeds the state; admin toggling mutates the state set.
-const INITIAL_ORIGIN_STATIONS = new Set(originStationsList.map(n => n.toLowerCase()))
+const INITIAL_ORIGIN_STATIONS = new Set(originStationsList)
 
 // Describes the shape of a single GeoJSON feature from our stations.json.
 // TypeScript uses this to check we're accessing valid properties later.
@@ -205,6 +456,39 @@ type HoveredStation = {
   lat: number
   // Unique key — used to filter the hover label layer to this station only
   coordKey: string
+  // Which icon image to render on the pulsing hovered-station-icon overlay
+  // layer. Resolved from the station's rating / isOrigin / isExcluded at
+  // hover-set time so the overlay matches the base station's visual.
+  iconImage: string
+}
+
+// Maps a station feature's properties to the matching registered icon image
+// name. Kept in sync with the `icon-image` expressions used in the base
+// station-dots and station-rating-icons layers.
+// Uses the same property-existence semantics as the Mapbox `["has", ...]`
+// expressions in those layers (not strict truthiness) so origin + excluded
+// stations ALWAYS resolve to their special icon even if the flag lands as
+// something weird (number, string) through the Mapbox source pipeline.
+function resolveStationIconImage(props: Record<string, unknown> | undefined): string {
+  if (!props) return "icon-unrated"
+  const hasProp = (k: string) => {
+    const v = props[k]
+    return v !== undefined && v !== null && v !== false
+  }
+  if (hasProp("isExcluded")) return "icon-excluded"
+  // The London hexagon marker uses icon-london (also a square shape). It's
+  // tapped often — the primary-selection hexagon sits on top of the map —
+  // so if we resolve it as "icon-unrated" the pulse renders a circle
+  // on top of the hexagon. Match the base layer's icon-image here too.
+  if (hasProp("isLondon")) return "icon-london"
+  if (hasProp("isOrigin")) return "icon-origin"
+  switch (props.rating) {
+    case "highlight": return "icon-highlight"
+    case "verified": return "icon-verified"
+    case "unverified": return "icon-unverified"
+    case "not-recommended": return "icon-not-recommended"
+    default: return "icon-unrated"
+  }
 }
 
 // Approximates a geographic circle as a closed polygon by stepping around the
@@ -354,8 +638,200 @@ export default function HikeMap() {
   // Persisted across visits via localStorage — see lib/use-persisted-state.ts.
   // Each filter setting lives under its own "ttg:*" key so adding/removing
   // fields later doesn't require migrations.
-  const [primaryOrigin, setPrimaryOrigin] = usePersistedState("ttg:primaryOrigin", "Kings Cross St Pancras")
-  const originCoords = ORIGIN_COORDS[primaryOrigin]
+  // Primary origin is a "lng,lat" coord key. Default is the City of London
+  // mega-cluster (synthetic coord at Guildhall) — gives new users broad
+  // access to the City's 7 terminals without needing to pick one manually.
+  // Users with the old name string in localStorage get translated below via migrateOriginKey.
+  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1278,51.5075")
+  // Phase 2: admin-mode-only list of custom-primary coord keys the user has
+  // previously selected via the dropdown's search bar. Surfaces them as quick-
+  // pick items beneath the main origin list so they can hop back easily.
+  // Seeded on first load (when localStorage is empty) with three commonly-
+  // used picks: the Kings Cross cluster primary, Farringdon, and Stratford.
+  // Gives new users something to click immediately rather than an empty
+  // recents section. Existing users keep whatever's in their localStorage.
+  const [recentCustomPrimaries, setRecentCustomPrimaries] = usePersistedState<string[]>(
+    "ttg:recentCustomPrimaries",
+    [
+      "-0.0035472,51.541289",   // Stratford
+      "-0.104555,51.519964",    // Farringdon
+      "-0.1239491,51.530609",   // Kings Cross (primary coord; renders as the full "Kings Cross, St Pancras, & Euston" menuName)
+    ],
+  )
+  // One-shot localStorage migration: name → coord key, and reset if the stored
+  // coord isn't a current primary option (e.g. we removed the Liverpool Street
+  // standalone primary — users who had LST selected should fall back to default).
+  // A custom-primary coord (from the search bar) is also valid: recognised by
+  // being present in recentCustomPrimaries, which persists independently.
+  // useEffect (rather than useState lazy init) because usePersistedState hydrates
+  // from localStorage asynchronously via its own effect.
+  useEffect(() => {
+    if (!primaryOrigin) return
+    if (!primaryOrigin.includes(",")) {
+      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1278,51.5075"))
+    } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
+      // Stored coord isn't a valid primary anymore — reset to default.
+      setPrimaryOriginRaw("-0.1278,51.5075")
+    }
+  }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
+  // useTransition lets us defer the heavy stations-recompute that happens
+  // when primaryOrigin changes. startTransition wraps the state setter;
+  // React paints the dropdown close + loading spinner IMMEDIATELY (those
+  // happen outside the transition), then runs the heavy memo work in the
+  // background while `isPending` stays true. When the new state is ready
+  // React swaps in the new stations and flips isPending back to false.
+  //
+  // Without this wrapper, selecting a new home station freezes the main
+  // thread for ~0.5–1.5s while the big useMemo over every station reruns
+  // — the dropdown looks stuck, and nothing tells the user anything is
+  // happening.
+  const [isPending, startTransition] = useTransition()
+  // pendingPrimaryCoord holds the coord key of the home station the
+  // transition is fetching journeys for — used to drive the spinner's
+  // "Fetching [name] train journeys" label. Set SYNCHRONOUSLY (outside
+  // startTransition) when a new primary is picked so the spinner text
+  // updates in the same frame as the transition starting. Stored as a
+  // COORD rather than a pre-resolved name because the coord-to-name
+  // resolution (PRIMARY_ORIGINS + coordToName) isn't in scope where
+  // setPrimaryOrigin/selectCustomPrimary are defined; the actual name
+  // resolution happens at render time instead (see the spinner JSX
+  // below).
+  //
+  // Why capture the coord at all — during a useTransition, React keeps
+  // the OLD primaryOrigin committed until the new one finishes. So
+  // reading primaryOrigin in the spinner would show the station we're
+  // moving AWAY FROM, not the one we're moving TO. pendingPrimaryCoord
+  // is committed outside the transition and always reflects the target.
+  const [pendingPrimaryCoord, setPendingPrimaryCoord] = useState<string | null>(null)
+  // Three-phase lifecycle for the home-station notification pill:
+  //   - "idle"    : pill hidden (opacity 0, aria-hidden).
+  //   - "loading" : spinner + "Looking up trains from X".
+  //   - "success" : green tick + same label, shown for 2.5s as
+  //                 visual confirmation AFTER the transition
+  //                 commits, then auto-dismisses back to idle.
+  // The success phase holds pendingPrimaryCoord so the label keeps
+  // reading correctly during the confirmation window.
+  type NotificationPhase = "idle" | "loading" | "success"
+  const [notificationPhase, setNotificationPhase] = useState<NotificationPhase>("idle")
+  // Ref to the auto-dismiss timer so a fast double-selection can
+  // cancel the previous cycle's pending idle-flip. Without this,
+  // picking station B while station A's success pill is still
+  // visible would see A's setTimeout fire mid-loading-of-B and
+  // wipe the new spinner back to idle.
+  const dismissTimerRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (isPending) {
+      setNotificationPhase("loading")
+      if (dismissTimerRef.current != null) {
+        clearTimeout(dismissTimerRef.current)
+        dismissTimerRef.current = null
+      }
+    } else {
+      // Only transition to "success" if we were actually in the
+      // middle of loading — don't flash a tick on the initial mount
+      // (phase starts "idle" while isPending is also already false).
+      setNotificationPhase((prev) => {
+        if (prev !== "loading") return prev
+        dismissTimerRef.current = window.setTimeout(() => {
+          setNotificationPhase("idle")
+          // Deliberately do NOT clear pendingPrimaryCoord here.
+          // Clearing it would flip the label's "Looking up trains
+          // from X" back to the "new home" fallback while the pill
+          // is still in its 200ms opacity fade-out — the user
+          // sees the text briefly change to "new home" right
+          // before it vanishes. Leaving the coord populated means
+          // the label keeps reading correctly through the fade.
+          // It'll be overwritten naturally the next time the
+          // user picks a primary.
+          dismissTimerRef.current = null
+        }, 400)
+        return "success"
+      })
+    }
+  }, [isPending])
+  const setPrimaryOrigin = useCallback((next: string) => {
+    setPendingPrimaryCoord(next)
+    startTransition(() => setPrimaryOriginRaw(next))
+  }, [setPrimaryOriginRaw])
+  // Reverse lookup: cluster-member coord → parent primary coord. Lets the
+  // search-based picker redirect a tap on (e.g.) Waterloo East to the
+  // Waterloo primary, or St Pancras to the Kings Cross primary, instead of
+  // stranding the user on an orphan coord in the recents list. Synthetic
+  // primaries (London) are EXCLUDED — their cluster members are meaningful
+  // selections on their own (a user searching for "Cannon Street" wants
+  // Cannon Street, not London).
+  // Plain Record<string,string> rather than a native Map — "Map" is shadowed
+  // at the module level by the react-map-gl import at the top of the file,
+  // so `new Map()` here resolves to the React component and blows up.
+  const clusterMemberToPrimary = useMemo(() => {
+    const out: Record<string, string> = {}
+    for (const [primary, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
+      if (PRIMARY_ORIGINS[primary]?.isSynthetic) continue
+      for (const m of members) out[m] = primary
+    }
+    return out
+  }, [])
+  // Set of coords inside the LONDON SYNTHETIC cluster (the 18 true termini
+  // plus the synthetic coord itself). Used to decide whether a search-picked
+  // coord should bypass the "recents" list. Only London-terminus coords
+  // bypass recents — Stratford, Farringdon, Kentish Town, East Croydon etc.
+  // all go to recents even if they happen to be in PRIMARY_ORIGINS.
+  const londonClusterCoords = useMemo(() => {
+    const syntheticCoord = Object.keys(PRIMARY_ORIGINS).find(
+      (k) => PRIMARY_ORIGINS[k]?.isSynthetic,
+    )
+    const set = new Set<string>()
+    if (syntheticCoord) {
+      set.add(syntheticCoord)
+      for (const m of PRIMARY_ORIGIN_CLUSTER[syntheticCoord] ?? []) set.add(m)
+    }
+    return set
+  }, [])
+  // Select a primary coord chosen via the dropdown's search bar OR a recents
+  // click. Two cases:
+  //   1. Cluster variant of a London terminus (Waterloo East, St Pancras NR,
+  //      Euston Underground, …) — the coord isn't itself in PRIMARY_ORIGINS
+  //      but maps to a parent that is. Redirect to the parent so the trigger
+  //      shows a meaningful name, and push the parent to recents.
+  //   2. Everything else — standalone primaries (Charing Cross, Waterloo, …),
+  //      non-primary London NR stations (Farringdon, Kentish Town, East
+  //      Croydon, …): select the coord as-is and push to recents.
+  // The ONLY exclusion is the synthetic "Any London terminus" primary,
+  // which has a permanent curated slot at the top of the dropdown and so
+  // doesn't need to live in the recents list too — selecting it just
+  // switches the active primary, nothing else.
+  const selectCustomPrimary = useCallback((coord: string) => {
+    // Resolve the final destination coord BEFORE starting the transition
+    // — the same canonicalisation logic runs both inside the transition
+    // (to update primaryOrigin) and outside (to set pendingPrimaryCoord
+    // so the spinner label reads correctly). Keeping one source of truth
+    // avoids a flicker where the spinner briefly says "Fetching
+    // St Pancras train journeys" before the coord gets redirected to
+    // Kings Cross.
+    const resolved = PRIMARY_ORIGINS[coord]?.isSynthetic
+      ? coord
+      : (clusterMemberToPrimary[coord] ?? coord)
+    setPendingPrimaryCoord(resolved)
+    // Same transition wrapper as setPrimaryOrigin — the stations memo
+    // recomputation is equally expensive whichever route you took to
+    // pick a primary. Both state updates are inside the transition
+    // callback so they commit together and the spinner covers the
+    // entire gap.
+    startTransition(() => {
+      // Synthetic primary — no recents entry, just select.
+      if (PRIMARY_ORIGINS[coord]?.isSynthetic) {
+        setPrimaryOriginRaw(coord)
+        return
+      }
+      setPrimaryOriginRaw(resolved)
+      setRecentCustomPrimaries((prev) => {
+        const filtered = prev.filter((c) => c !== resolved)
+        // Last-10 slice: user-facing recents cap is 10 (was 5 previously).
+        return [resolved, ...filtered].slice(0, 10)
+      })
+    })
+  }, [setPrimaryOriginRaw, setRecentCustomPrimaries, clusterMemberToPrimary])
+  const originCoords = parseCoordKey(primaryOrigin)
   // Ref keeps theme accessible inside the style.load callback (which is a stale
   // closure from handleMapLoad). Without this, registerIcons would always see
   // whatever theme was active when the map first loaded.
@@ -371,18 +847,28 @@ export default function HikeMap() {
   const [excludedStations, setExcludedStations] = useState<Set<string>>(() => new Set(INITIAL_EXCLUDED_STATIONS))
   // Default 150min (2h30m) — the non-admin slider cap. In admin mode the cap
   // extends to 600min ("Max" = no upper limit).
-  const [maxMinutes, setMaxMinutes] = usePersistedState("ttg:maxMinutes", 150)
+  // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
+  // does NOT persist across reloads — every visit starts from a clean slate.
+  const [maxMinutes, setMaxMinutes] = useState(150)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
-  // Friend origin mode — when non-null, a second origin filters stations
-  const [friendOrigin, setFriendOrigin] = usePersistedState<string | null>("ttg:friendOrigin", null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = usePersistedState("ttg:friendMaxMinutes", 150)
+  // Friend origin mode — when non-null, a second origin filters stations.
+  // Not persisted — every reload starts with no friend (same as the other
+  // filter state). Value is a "lng,lat" coord key.
+  const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(150)
   // "Direct trains only" toggles — when true, only keep stations reachable
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
-  const [primaryDirectOnly, setPrimaryDirectOnly] = usePersistedState("ttg:primaryDirectOnly", false)
-  const [friendDirectOnly, setFriendDirectOnly] = usePersistedState("ttg:friendDirectOnly", false)
+  const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
+  const [friendDirectOnly, setFriendDirectOnly] = useState(false)
+  // "Indirect trains only" — admin-only inverse of the above. Shows stations
+  // that require ≥1 change from the primary. Useful for debugging the
+  // stitcher: the union of this and "Direct trains only" equals the full
+  // destination set, and any visual oddity (missing station, weird time)
+  // is easier to spot when only one cohort renders at a time.
+  const [primaryIndirectOnly, setPrimaryIndirectOnly] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
-  const [showTrails, setShowTrails] = usePersistedState("ttg:showTrails", false)
+  const [showTrails, setShowTrails] = useState(false)
   // Start hidden by default — hydration from localStorage runs after mount,
   // so the welcome banner briefly flashes on first return visit. That's a
   // small price for never showing a wrongly-hidden banner to new users.
@@ -434,12 +920,10 @@ export default function HikeMap() {
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
-  // Mobile defaults to "Heavenly" only for a curated first impression;
-  // desktop shows the three positive ratings. 640px matches Tailwind's `sm` breakpoint.
-  // Empty set = no filter = all stations visible
-  // Sets need the setSerializer because JSON.stringify doesn't know how to
-  // handle them — the serializer converts Set <-> Array on the way to/from storage.
-  const [visibleRatings, setVisibleRatings] = usePersistedState<Set<string>>("ttg:visibleRatings", new Set(), setSerializer)
+  // Empty set = no filter = all stations visible. Not persisted — rating
+  // filters reset to "show everything" on every reload, matching the rest
+  // of the filter state.
+  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set())
 
   // Photo curations — per-station approved/rejected photo lists, loaded from
   // data/photo-curations.json via API. Only used in admin mode.
@@ -494,26 +978,1362 @@ export default function HikeMap() {
     return () => mq.removeEventListener("change", update)
   }, [])
 
+  // Searchable list of LONDON NATIONAL RAIL stations — used by the dropdown's
+  // search bar to let users pick their own home station as the custom primary.
+  // Restricted to:
+  //   1. Stations inside the greater-London bounding box (lat 51.28-51.70,
+  //      lng -0.55-0.30), so hits are always "a London home station".
+  //   2. Stations whose OSM `network` tag lists "National Rail" or
+  //      "Elizabeth line". Tube-only and Overground-only stations (e.g.
+  //      Hampstead Heath, which is London Overground but not NR) are
+  //      EXCLUDED — they'd produce no usable journey data as primaries.
+  //   3. Stations with a CRS code, mirroring the condition on origin-routes
+  //      RTT fetches (no CRS = no timetable data).
+  //   4. Stations NOT listed in data/excluded-primaries.json — a separate
+  //      curated list of London NR stations that technically qualify but
+  //      have no RTT-reachable hub (e.g. Kensington Olympia's sparse
+  //      event-day-only service). Distinct from data/excluded-stations.json,
+  //      which excludes stations as DESTINATIONS; this list excludes them
+  //      as HOME stations.
+  // Memoized on baseStations so it's rebuilt once per data load.
+  const excludedPrimariesSet = useMemo(
+    () => new Set(excludedPrimariesList as string[]),
+    [],
+  )
+  const searchableStations = useMemo(() => {
+    if (!baseStations) return []
+    // Each entry now carries:
+    //   - coord: the station's own coord (what gets selected when tapped).
+    //   - name: the station's own OSM name (what the user searches against).
+    //   - crs: 3-letter CRS code.
+    //   - primaryCoord: the effective primary origin this station maps to.
+    //       For cluster members (St Pancras, Euston, Waterloo East, KX NR)
+    //       this is the PARENT primary coord. For isolated stations, it's
+    //       the same as coord. Used by the filter-panel to dedupe matches
+    //       from the same cluster.
+    //   - displayLabel: what to render in the dropdown results. For
+    //       cluster primaries, it's the cluster's menuName ("Kings Cross,
+    //       St Pancras, & Euston"). For isolated stations, just the
+    //       station name.
+    type SearchableStation = {
+      coord: string
+      name: string
+      crs: string
+      primaryCoord: string
+      displayLabel: string
+    }
+    const out: SearchableStation[] = []
+    const isLondonBox = (lat: number, lng: number) =>
+      lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
+    for (const f of baseStations.features) {
+      const crs = f.properties?.["ref:crs"] as string | undefined
+      if (!crs) continue
+      const [lng, lat] = f.geometry.coordinates
+      if (!isLondonBox(lat, lng)) continue
+      const network = f.properties?.["network"] as string | undefined
+      if (!network || !/National Rail|Elizabeth line/.test(network)) continue
+      const coord = `${lng},${lat}`
+      if (excludedPrimariesSet.has(coord)) continue
+      const stationName = f.properties.name as string
+      // Resolve to the parent cluster primary if this coord is a cluster
+      // member. clusterMemberToPrimary deliberately excludes synthetic
+      // clusters (London "Any London terminus") so a search for "kings
+      // cross" maps to the KX primary, not the London-synthetic.
+      const primaryCoord = clusterMemberToPrimary[coord] ?? coord
+      const hasCluster = !!PRIMARY_ORIGIN_CLUSTER[primaryCoord]
+      const displayLabel = hasCluster
+        ? (PRIMARY_ORIGINS[primaryCoord]?.menuName ?? stationName)
+        : stationName
+      out.push({
+        coord,
+        name: stationName,
+        crs,
+        primaryCoord,
+        displayLabel,
+      })
+    }
+    return out
+  }, [baseStations, excludedPrimariesSet, clusterMemberToPrimary])
+  // Coord → display name lookup — used to render the recents list in the
+  // filter-panel dropdown, and to show the custom primary's name in the
+  // trigger / map label. Same source data as searchableStations.
+  const coordToName = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const s of searchableStations) map[s.coord] = s.name
+    return map
+  }, [searchableStations])
+
+  // StationModal's internals (getEffectiveJourney + display text) still speak
+  // in station NAMES. Our journeys are coord-keyed now, so we re-key them to
+  // canonical names just for the modal's benefit. Re-keying is cheap (max 5 keys).
+  // Fallback chain: curated-primary canonicalName → custom-primary's own
+  // station name (coordToName) → raw coord key. The custom-primary fallback
+  // is what makes synthJourneys keyed on e.g. Kentish Town's coord show up
+  // under the name "Kentish Town" in the modal's journey lookup.
+  // Declared AFTER coordToName so the closure resolves cleanly — useMemo
+  // captures its deps at call time and coordToName needs to be in scope.
+  const modalJourneys = useMemo(() => {
+    if (!displayStation?.journeys) return undefined
+    const out: Record<string, JourneyInfo> = {}
+    for (const [key, value] of Object.entries(displayStation.journeys)) {
+      const name = ALL_ORIGINS[key]?.canonicalName ?? coordToName[key] ?? key
+      out[name] = value
+    }
+    return out
+  }, [displayStation?.journeys, coordToName])
+
   // Derived stations — overrides londonMinutes when primaryOrigin isn't Farringdon,
   // so slider filtering and Mapbox labels show the selected origin's travel times.
   // Recomputes when the user switches origin via the dropdown, without re-fetching.
   const stations = useMemo(() => {
     if (!baseStations) return null
+    // Build a CRS → { coord, name, coordKey, isLondon } lookup once per
+    // baseStations load. RTT's direct-reachable data stores calling points as
+    // CRS codes; we need each calling point's coordinate (for polyline
+    // synthesis), name (for the modal's calling-point list), coordKey (for
+    // cross-referencing primary RTT data), and a London-area flag (for
+    // filtering the calling-points list to stations a Londoner would recognise).
+    // Plain object rather than Map<> because `Map` is shadowed by the
+    // react-map-gl import at the top of this file.
+    // Greater-London bounding box: lat 51.28–51.70, lng -0.55–0.30.
+    const isLondonBox = (lat: number, lng: number) =>
+      lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
+    const crsToCoord: Record<string, [number, number]> = {}
+    const crsToStation: Record<string, { name: string; coord: [number, number]; coordKey: string; isLondon: boolean }> = {}
+    for (const f of baseStations.features) {
+      const crs = f.properties?.["ref:crs"] as string | undefined
+      if (!crs) continue
+      const [lng, lat] = f.geometry.coordinates as [number, number]
+      crsToCoord[crs] = [lng, lat]
+      crsToStation[crs] = {
+        name: f.properties.name as string,
+        coord: [lng, lat],
+        coordKey: `${lng},${lat}`,
+        isLondon: isLondonBox(lat, lng),
+      }
+    }
+
+    // Builds the "London calling points" + "upstream calling points" list
+    // for a single (board-here, destination) pair, pulled from origin-routes
+    // RTT data. Returns null when the board-here terminal has no direct-reach
+    // entry for the destination.
+    //
+    // Both lists are filtered to London-only stops — the raw RTT data has
+    // every calling point on the route (including non-London), but the modal
+    // only surfaces London boarding options since the user is picking a
+    // London terminus to start from.
+    //
+    // The primary origin is also excluded — when the user has picked e.g.
+    // Stratford International as primary and same-train-shortcuts them to
+    // Gravesend via a StP train, that StP train calls AT Stratford
+    // International as an intermediate stop. Listing SFA as a "can also start
+    // same route at" option is absurd (the user IS already at SFA).
+    //
+    // - downstream: stations the train calls AFTER the board-here terminal,
+    //   labelled with minutes-from-board (sub.minMinutes on each intermediate
+    //   station's OWN directReachable entry — filters stops the board-here
+    //   terminal has no data for).
+    // - upstream: stations the train calls BEFORE the board-here terminal,
+    //   labelled with minutes-before-board. Comes straight from the
+    //   pre-computed upstreamCallingPoints array (RTT provides it).
+    const buildCallingPoints = (
+      boardHereTerminalCoord: string,
+      destCoord: string,
+    ): { downstream: { name: string; crs: string; minutesFromOrigin: number }[]
+       ; upstream: { name: string; crs: string; minutesExtra: number }[] } | null => {
+      const winnerRoutes = originRoutes[boardHereTerminalCoord]
+      const entry = winnerRoutes?.directReachable?.[destCoord]
+      if (!entry) return null
+      const downstream = entry.fastestCallingPoints
+        .slice(1, -1)
+        .map((crs) => {
+          const station = crsToStation[crs]
+          if (!station || !station.isLondon) return null
+          // Skip the primary origin itself — see header comment.
+          if (station.coordKey === primaryOrigin) return null
+          const sub = winnerRoutes?.directReachable?.[station.coordKey]
+          if (!sub) return null
+          return { name: station.name, crs, minutesFromOrigin: sub.minMinutes }
+        })
+        .filter((p): p is { name: string; crs: string; minutesFromOrigin: number } => !!p)
+      const upstream = (entry.upstreamCallingPoints ?? [])
+        .map((u) => {
+          const station = crsToStation[u.crs]
+          if (!station || !station.isLondon) return null
+          // Same reason as downstream — skip the primary origin.
+          if (station.coordKey === primaryOrigin) return null
+          return { name: u.name, crs: u.crs, minutesExtra: u.minutesBeforeOrigin }
+        })
+        .filter((p): p is { name: string; crs: string; minutesExtra: number } => !!p)
+      return { downstream, upstream }
+    }
+
+    // CROSS-TERMINAL fallback used when a terminal X's own RTT data is
+    // missing a destination D that is nonetheless reachable on a train
+    // calling at X. Example: StP's fetch didn't capture southbound
+    // Thameslink to East Croydon, but BFR's fetch DID record the same
+    // train (StP appears in BFR's upstreamCallingPoints for East Croydon
+    // at 9 min before BFR). We can reconstruct X → D and its calling
+    // points by borrowing data from the donor terminal and re-baselining
+    // times relative to X.
+    //
+    // Parameters:
+    //   boardAtCoord — X's coord (the station the user boards at)
+    //   destCoord    — D's coord (the station the user alights at)
+    //
+    // Returns downstream/upstream lists with times relative to X, or null
+    // if no donor terminal has BOTH X and D on the same train.
+    const buildCallingPointsViaDonor = (
+      boardAtCoord: string,
+      destCoord: string,
+    ): { downstream: { name: string; crs: string; minutesFromOrigin: number }[]
+       ; upstream: { name: string; crs: string; minutesExtra: number }[] } | null => {
+      for (const donorCoord of Object.keys(originRoutes)) {
+        const donor = originRoutes[donorCoord]
+        const entry = donor?.directReachable?.[destCoord]
+        if (!entry) continue
+        // Check if boardAt is represented somewhere on this train's route.
+        // The train relative to the donor D looks like:
+        //   [ ...upstream (negative times) ..., D (t=0), ...fastestCP[1:-1] (positive), dest ]
+        // Where D's donor directReachable entry gives us t for each station.
+        //
+        // For a station S at time t_S relative to D:
+        //   - if S is in entry.upstreamCallingPoints, t_S = -minutesBeforeOrigin
+        //   - if S is in entry.fastestCallingPoints, t_S = donor.directReachable[S].minMinutes
+        //   - if S is the donor itself, t_S = 0
+        const boardAtInUpstream = entry.upstreamCallingPoints?.find((u) => u.coord === boardAtCoord)
+        let boardAtT: number | null = null
+        if (boardAtInUpstream) {
+          boardAtT = -boardAtInUpstream.minutesBeforeOrigin
+        } else if (donorCoord === boardAtCoord) {
+          boardAtT = 0
+        } else {
+          // Check fastestCallingPoints — see if boardAt coord appears as an
+          // intermediate stop on the train from donor to destination.
+          for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
+            const station = crsToStation[crs]
+            if (station && station.coordKey === boardAtCoord) {
+              const sub = donor?.directReachable?.[boardAtCoord]
+              if (sub?.minMinutes != null) boardAtT = sub.minMinutes
+              break
+            }
+          }
+        }
+        if (boardAtT == null) continue  // this donor's train doesn't pass through boardAt
+
+        // Now compute times for every station on the train relative to
+        // boardAt. A station S's time relative to boardAt is t_S - t_boardAt.
+        // - dest is at t = entry.minMinutes
+        const destT = entry.minMinutes
+        // Gather all stations on the route with their time relative to donor.
+        const routeStations: Array<{ name: string; crs: string; coordKey: string; tDonor: number }> = []
+        // Upstream of donor (negative tDonor).
+        for (const u of entry.upstreamCallingPoints ?? []) {
+          const station = crsToStation[u.crs]
+          if (!station) continue
+          routeStations.push({ name: u.name, crs: u.crs, coordKey: station.coordKey, tDonor: -u.minutesBeforeOrigin })
+        }
+        // Donor itself at tDonor = 0.
+        routeStations.push({
+          name: donor?.name ?? "",
+          crs: donor?.crs ?? "",
+          coordKey: donorCoord,
+          tDonor: 0,
+        })
+        // Intermediate stops between donor and destination.
+        for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
+          const station = crsToStation[crs]
+          if (!station) continue
+          const sub = donor?.directReachable?.[station.coordKey]
+          if (!sub) continue
+          routeStations.push({ name: station.name, crs, coordKey: station.coordKey, tDonor: sub.minMinutes })
+        }
+        // Destination itself (will be filtered out below — it IS the target).
+        // routeStations.push({ ..., tDonor: destT })
+
+        // Classify each station relative to boardAt.
+        const downstream: { name: string; crs: string; minutesFromOrigin: number }[] = []
+        const upstream: { name: string; crs: string; minutesExtra: number }[] = []
+        for (const s of routeStations) {
+          // Skip boardAt, destination, and primary-origin.
+          if (s.coordKey === boardAtCoord) continue
+          if (s.coordKey === destCoord) continue
+          if (s.coordKey === primaryOrigin) continue
+          const station = crsToStation[s.crs]
+          if (!station || !station.isLondon) continue
+          // Skip stations outside the [boardAt, dest] window — they're on
+          // the train but before boardAt or after destination. Those are
+          // genuinely "can also board earlier" (before boardAt) or "can
+          // also alight later" — but the hint is about this specific
+          // journey, so we want stations strictly between boardAt and dest.
+          if (s.tDonor <= boardAtT) {
+            // Before boardAt on the train — user could board even earlier.
+            // Mark as upstream (extra time).
+            upstream.push({ name: s.name, crs: s.crs, minutesExtra: boardAtT - s.tDonor })
+          } else if (s.tDonor < destT) {
+            // Between boardAt and dest. Downstream (time from boardAt).
+            downstream.push({ name: s.name, crs: s.crs, minutesFromOrigin: s.tDonor - boardAtT })
+          }
+          // Past dest: skip (user has alighted).
+        }
+        return { downstream, upstream }
+      }
+      return null
+    }
+
+    // Enriches a multi-leg synth journey (typically custom-primary) with
+    // calling-points for a selected HEAVY_RAIL leg. Selection rule, in
+    // priority order:
+    //
+    //   1. A leg whose arrivalStation IS the feature's destination — i.e.
+    //      a leg that takes the user directly to where they're going.
+    //      That "direct train to {destination}" framing is what the user
+    //      cares about most ("LST, Barking, Upminster as alternative starts
+    //      for the train to Shoeburyness"). Among such legs, pick the one
+    //      with the richest London calling-points list.
+    //   2. If no destination-reaching leg yields calling points, fall back
+    //      to the leg with the richest list overall. For Berwick, the last
+    //      leg (Lewes→Berwick) has no London stops, so this falls through
+    //      to the first HEAVY_RAIL leg (Farringdon→East Croydon) which
+    //      captures the Thameslink London stops.
+    //
+    // Mutates synthJourney in place. If no leg has any London calling
+    // points, leaves synthJourney unchanged.
+    const enrichSynthJourneyCallingPoints = (
+      synth: JourneyInfo,
+      featureDestinationName: string,
+    ): void => {
+      type Picked = {
+        cp: {
+          downstream: { name: string; crs: string; minutesFromOrigin: number }[]
+          upstream: { name: string; crs: string; minutesExtra: number }[]
+        }
+        arrivalName: string
+        rank: number
+        reachesDestination: boolean
+      }
+      let best: Picked | null = null
+      for (const leg of synth.legs) {
+        if (leg.vehicleType !== "HEAVY_RAIL") continue
+        const depName = leg.departureStation
+        const arrName = leg.arrivalStation
+        if (!depName || !arrName) continue
+        // Resolve coords via baseStations — the source-journey / RTT data
+        // uses display names, and we need coord keys to look up calling
+        // points. Same-name edge cases would only bite for destinations
+        // with duplicated names nationally, not for mainline junctions.
+        const depFeat = baseStations.features.find((x) => x.properties?.name === depName)
+        const arrFeat = baseStations.features.find((x) => x.properties?.name === arrName)
+        if (!depFeat || !arrFeat) continue
+        const depCoord = `${depFeat.geometry.coordinates[0]},${depFeat.geometry.coordinates[1]}`
+        const arrCoord = `${arrFeat.geometry.coordinates[0]},${arrFeat.geometry.coordinates[1]}`
+        // Try the leg's departure terminal's own RTT data first; if the
+        // departure isn't a terminal (e.g. Stratford) or has no entry for
+        // the leg's arrival, fall back to donor-terminal derivation which
+        // finds a terminal whose train calls at BOTH endpoints.
+        const cp = buildCallingPoints(depCoord, arrCoord)
+          ?? buildCallingPointsViaDonor(depCoord, arrCoord)
+        if (!cp) continue
+        const rank = cp.downstream.length + cp.upstream.length
+        if (rank === 0) continue
+        const reachesDestination = arrName === featureDestinationName
+        const candidate: Picked = { cp, arrivalName: arrName, rank, reachesDestination }
+        // Destination-reaching legs always beat non-destination-reaching
+        // legs regardless of rank. Within the same "reaches" category,
+        // prefer richer calling-points lists.
+        if (
+          best == null ||
+          (candidate.reachesDestination && !best.reachesDestination) ||
+          (candidate.reachesDestination === best.reachesDestination && candidate.rank > best.rank)
+        ) {
+          best = candidate
+        }
+      }
+      if (best) {
+        synth.londonCallingPoints = best.cp.downstream.length > 0 ? best.cp.downstream : undefined
+        synth.londonUpstreamCallingPoints = best.cp.upstream.length > 0 ? best.cp.upstream : undefined
+        synth.callingPointsLegArrival = best.arrivalName
+      }
+    }
+
+    // SAME-TRAIN variant of buildCallingPoints. When the user's origin X is
+    // itself on a through-train running P → … → D, we want a calling-points
+    // list computed RELATIVE TO X (not P) and INCLUDING the terminal P
+    // itself as a boarding option (earlier start). buildCallingPoints can't
+    // do this because (a) it omits the terminal [fastestCallingPoints[0] is
+    // sliced off] and (b) it labels times relative to P, not X.
+    //
+    // Parameters:
+    //   terminalCoord      — the train's terminal P
+    //   destCoord          — destination D
+    //   xTimeRelativeToP   — X's time relative to P (negative if X is
+    //                        upstream of P, positive if X is intermediate).
+    //                        Caller computes this during the match loop.
+    //
+    // Output:
+    //   upstream   — stations BEFORE X on the train (earlier-boarding
+    //                options). Labelled with minutesExtra = extra travel time.
+    //   downstream — stations AFTER X on the train (later-boarding options).
+    //                Labelled with minutesFromOrigin = time saved.
+    //
+    // Both lists are filtered to London stops and exclude X itself.
+    const buildSameTrainCallingPoints = (
+      terminalCoord: string,
+      destCoord: string,
+      xTimeRelativeToP: number,
+    ): { downstream: { name: string; crs: string; minutesFromOrigin: number }[]
+       ; upstream: { name: string; crs: string; minutesExtra: number }[] } | null => {
+      const winnerRoutes = originRoutes[terminalCoord]
+      const entry = winnerRoutes?.directReachable?.[destCoord]
+      if (!entry) return null
+
+      // Build a flat list: every station on the train (except D) with its
+      // time relative to P. Positive = after P, negative = before P.
+      const route: Array<{ name: string; coord: string; crs: string; tP: number }> = []
+
+      // P itself (the terminal). Resolve to the CANONICAL short name via
+      // matchTerminal ("St Pancras" rather than "London St. Pancras
+      // International" — cleaner in the calling-points line). Falls back
+      // to the RTT name, then to crsToStation if present.
+      const terminalCrs = winnerRoutes.crs
+      const terminalStation = crsToStation[terminalCrs]
+      const canonicalTerminalName =
+        matchTerminal(winnerRoutes.name, londonTerminals)
+        ?? terminalStation?.name
+        ?? winnerRoutes.name
+      route.push({
+        name: canonicalTerminalName,
+        coord: terminalCoord,
+        crs: terminalCrs,
+        tP: 0,
+      })
+
+      // Upstream of P — stations the train calls at BEFORE reaching P.
+      // tP is NEGATIVE (the earlier the stop, the more negative).
+      for (const u of entry.upstreamCallingPoints ?? []) {
+        const station = crsToStation[u.crs]
+        if (!station) continue
+        route.push({
+          name: u.name,
+          coord: station.coordKey,
+          crs: u.crs,
+          tP: -u.minutesBeforeOrigin,
+        })
+      }
+
+      // Intermediate stops (between P and D). fastestCallingPoints[0] is P
+      // (already pushed above); last entry is D (skip). tP is POSITIVE and
+      // comes from the terminal's own directReachable[intermediate coord].
+      for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
+        const station = crsToStation[crs]
+        if (!station) continue
+        const sub = winnerRoutes.directReachable?.[station.coordKey]
+        if (!sub) continue
+        route.push({ name: station.name, coord: station.coordKey, crs, tP: sub.minMinutes })
+      }
+
+      // Reclassify each station relative to X. delta = tP - xTimeRelativeToP:
+      //   delta < 0 → station is BEFORE X on the train → upstream (earlier
+      //               boarding costs +|delta| minutes)
+      //   delta > 0 → station is AFTER X → downstream (later boarding saves
+      //               delta minutes)
+      //   delta == 0 → station IS X → skip (trivially the user's own stop)
+      // Also filter to London stops.
+      const downstream: { name: string; crs: string; minutesFromOrigin: number }[] = []
+      const upstream: { name: string; crs: string; minutesExtra: number }[] = []
+      for (const s of route) {
+        if (s.coord === primaryOrigin) continue
+        const [lngStr, latStr] = s.coord.split(",")
+        const sLng = parseFloat(lngStr)
+        const sLat = parseFloat(latStr)
+        if (!isLondonBox(sLat, sLng)) continue
+        const delta = s.tP - xTimeRelativeToP
+        if (delta < 0) upstream.push({ name: s.name, crs: s.crs, minutesExtra: -delta })
+        else if (delta > 0) downstream.push({ name: s.name, crs: s.crs, minutesFromOrigin: delta })
+      }
+      return { downstream, upstream }
+    }
+
+    // Custom-primary prep. When the user picks an NR station that isn't in
+    // PRIMARY_ORIGINS (via the dropdown search), there are no pre-fetched
+    // journeys for it. We derive approximate times using RTT data from the
+    // curated primaries as a transfer hub:
+    //   total(custom → D) ≈ P→custom + P→D + interchange
+    //   where P is the fastest curated primary that direct-reaches both.
+    // P→custom and P→D both come from originRoutes[P].directReachable.
+    // Train times on the NR are roughly symmetric so reversing P→custom to
+    // get custom→P is a safe approximation. The interchange buffer covers
+    // the walk + wait at P.
+    const isCustomPrimary = !PRIMARY_ORIGINS[primaryOrigin]
+    const CUSTOM_INTERCHANGE_MIN = 5
+    // Pre-filter origin-routes entries that direct-reach the custom station,
+    // so the inner loop over destinations only iterates the relevant primaries.
+    // Each entry gets the P→custom time cached for quick use below.
+    type CustomHub = { pCoord: string; pToCustomMins: number; routes: typeof originRoutes[string] }
+    const customHubs: CustomHub[] = []
+    if (isCustomPrimary) {
+      for (const [pCoord, routes] of Object.entries(originRoutes)) {
+        const entry = routes?.directReachable?.[primaryOrigin]
+        if (entry?.minMinutes != null) {
+          customHubs.push({ pCoord, pToCustomMins: entry.minMinutes, routes })
+        }
+      }
+    }
+
     return {
       ...baseStations,
       features: baseStations.features.map((f) => {
-        const name = (f.properties.name as string ?? '').toLowerCase()
-        const shouldBeOrigin = originStations.has(name)
-        // Excluded set is coordKey-only now (ambiguous name entries were migrated)
-        const shouldBeExcluded = excludedStations.has(f.properties.coordKey as string)
+        // Origin + exclusion sets are both coord-keyed now, so same-named stations
+        // (Glasgow vs London Charing Cross) stay independent.
+        const coordKey = f.properties.coordKey as string
+        const shouldBeOrigin = originStations.has(coordKey)
+        const shouldBeExcluded = excludedStations.has(coordKey)
 
-        // Apply primaryOrigin-dependent minute override (skipped when Farringdon is primary).
-        // For cluster origins (Kings X / Euston / Euston Square) we also strip any
-        // initial tube hop so the shown time reflects "from where the real train leaves".
-        const journeys = f.properties.journeys as Record<string, JourneyInfo> | undefined
-        const primaryJourney = journeys?.[primaryOrigin]
-        const effective = primaryJourney ? getEffectiveJourney(primaryJourney, primaryOrigin) : null
-        const originMins = primaryOrigin !== "Farringdon" ? effective?.effectiveMinutes : undefined
+        // Apply primaryOrigin-dependent minute override.
+        // Two data paths:
+        //   1. RTT-based primaries (e.g. Charing Cross): look up the destination
+        //      in origin-routes.json. If present it's directly reachable — use
+        //      the timetable minutes + 0 changes. If absent, this primary has no
+        //      data for that destination and the station should drop out of
+        //      results (we set londonMinutes = null to achieve that).
+        //   2. Routes-API primaries (Farringdon / KX / Stratford): use the
+        //      per-destination journey stored in stations.json. For cluster
+        //      origins (KX) we also strip any initial tube hop via
+        //      getEffectiveJourney so the shown time reflects the real train's
+        //      departure terminal.
+        const primaryName = PRIMARY_ORIGINS[primaryOrigin]?.canonicalName ?? primaryOrigin
+        const clusterCoords = [primaryOrigin, ...(PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])]
+        // A primary is RTT-based if EITHER the primary itself has direct-reachable
+        // data OR any of its cluster satellites do. The City mega-cluster's
+        // synthetic primary coord (Bank station) has no RTT data of its own —
+        // its cluster members supply all the direct coverage.
+        //
+        // Custom primaries (anything not in PRIMARY_ORIGINS — Stratford,
+        // Farringdon, Richmond once we fetch it, etc.) are EXCLUDED from
+        // this check even when they have their own RTT data. They go down
+        // the isCustomPrimary branch instead, where Step 0a can use the
+        // pre-fetched Google Routes journey under feature.journeys[primary]
+        // for comprehensive coverage (1092 destinations for Stratford)
+        // — the RTT-primary branch would only give us the RTT direct
+        // subset (~105 for Stratford) and silently drop everything else.
+        const isRttPrimary = !isCustomPrimary && clusterCoords.some((c) => originRoutes[c] != null)
+        // Gather direct-reachable entries from every cluster member (including
+        // the primary) and pick the fastest. We remember which cluster member
+        // served the winner so the modal/journey can attribute it correctly
+        // (e.g. "from Moorgate" when MOG's train beats LST's).
+        let rttReachable: DirectReachable | undefined
+        let rttReachableOriginName: string | undefined
+        // Coord key of whichever cluster member served the winning direct train.
+        // Needed for looking up intermediate calling-point times from that
+        // origin's RTT data (so the "you could board here" list in the modal
+        // shows minutes derived from the same origin as the primary journey).
+        let rttReachableOriginCoord: string | undefined
+        if (isRttPrimary) {
+          for (const ck of clusterCoords) {
+            const entry = originRoutes[ck]
+            const candidate = entry?.directReachable?.[coordKey]
+            if (candidate && (!rttReachable || candidate.minMinutes < rttReachable.minMinutes)) {
+              rttReachable = candidate
+              rttReachableOriginName = entry?.name
+              rttReachableOriginCoord = ck
+            }
+          }
+          // Thameslink-Farringdon preference: when Farringdon has its own direct
+          // entry for this destination AND the current winner is on the same
+          // through-service (the two stations appear in each other's calling
+          // sequences — Thameslink trains call at Farringdon, Blackfriars and
+          // London Bridge in sequence), always surface Farringdon as the start
+          // point even if another cluster member nominally edges it on minutes.
+          if (clusterCoords.includes(FARRINGDON_COORD) && rttReachable && rttReachableOriginName !== "Farringdon") {
+            const frn = originRoutes[FARRINGDON_COORD]?.directReachable?.[coordKey]
+            if (frn) {
+              const winnerStartCrs = rttReachable.fastestCallingPoints[0]
+              const sameService = frn.fastestCallingPoints.includes(winnerStartCrs)
+                || rttReachable.fastestCallingPoints.includes(FARRINGDON_CRS)
+              if (sameService) {
+                rttReachable = frn
+                rttReachableOriginName = originRoutes[FARRINGDON_COORD]?.name
+                rttReachableOriginCoord = FARRINGDON_COORD
+              }
+            }
+          }
+        }
+
+        let originMins: number | undefined
+        let effectiveChanges: number | undefined
+        let rttClearLondonMinutes = false
+        // When an RTT primary matches a destination we synthesise a JourneyInfo
+        // and stash it under the primary's coord key, so the modal + hover
+        // polyline code can treat RTT-sourced primaries identically to Routes-sourced ones.
+        let synthJourney: JourneyInfo | null = null
+
+        if (isRttPrimary) {
+          // Priority check: if this feature already has a pre-fetched Google
+          // Routes journey keyed by the active primary's coord, use it as-is.
+          // Applies to primaries that have been through the fetch-journeys.mjs
+          // pipeline (Stratford, Farringdon, Kings Cross). Those journeys are
+          // comprehensive — multi-modal, with real leg timings — so they give
+          // us 1000+ destinations instead of just the RTT direct subset
+          // (~100-200 per primary).
+          //
+          // Without this, Stratford-as-a-cluster-primary would fall into the
+          // RTT-direct/stitched logic and silently drop ~987 destinations
+          // that aren't on any of Stratford's own direct lines. KX-as-primary
+          // gets a parallel upgrade for its ~854 pre-fetched destinations.
+          //
+          // When there's no pre-fetched journey for this feature, the branch
+          // below runs as before and uses RTT data.
+          const prefetchedPrimaryJourney = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+          if (prefetchedPrimaryJourney) {
+            const effective = getEffectiveJourney(prefetchedPrimaryJourney, primaryName)
+            originMins = effective?.effectiveMinutes
+            effectiveChanges = effective?.effectiveChanges
+            // No synthJourney to build — the journey already lives at
+            // feature.journeys[primaryOrigin], so the modal + hover polyline
+            // pick it up natively. The rest of the isRttPrimary block
+            // (RTT-direct + stitched candidates) is skipped for this feature.
+          } else {
+          // Build both candidate journeys then apply passenger-preference rules
+          // when choosing between a direct (0-change) train and a stitched
+          // alternative (with a change through a London terminal):
+          //   1. "2h30m cutoff": if direct would be > 2h30m but stitched is ≤
+          //      2h30m, always use stitched. This keeps the destination inside
+          //      the default time window instead of dropping it off the map.
+          //   2. Otherwise, prefer direct unless stitched is ≥15 min faster.
+          //      A small time saving doesn't justify the hassle of a change,
+          //      but a large saving does.
+          const DIRECT_PREFERENCE_THRESHOLD_MIN = 15
+          const DAY_TRIP_MAX_MIN = 150  // matches the default non-admin slider cap
+
+          // Candidate A — direct train from RTT data (destination on one of the
+          // primary origin's own lines, or a clustered satellite like Moorgate).
+          let directCandidate: { mins: number; journey: JourneyInfo } | null = null
+          if (rttReachable) {
+            const coords = rttReachable.fastestCallingPoints
+              .map((crs) => crsToCoord[crs])
+              .filter((c): c is [number, number] => !!c)
+            // London calling-points: delegated to buildCallingPoints so the
+            // same logic is shared across direct / stitched / custom-primary
+            // code paths. For direct trains, "boardHere" is the winning
+            // cluster member (rttReachableOriginCoord).
+            const cp = rttReachableOriginCoord
+              ? buildCallingPoints(rttReachableOriginCoord, coordKey)
+              : null
+            const londonCallingPoints = cp?.downstream ?? []
+            const londonUpstreamCallingPoints = cp?.upstream ?? []
+            const directJourney = {
+              durationMinutes: rttReachable.minMinutes,
+              changes: 0,
+              legs: [
+                {
+                  vehicleType: "HEAVY_RAIL",
+                  // Attribution: if the cluster satellite (e.g. Moorgate) served
+                  // the fastest train, display that as the departure station
+                  // rather than the primary origin name.
+                  departureStation: rttReachableOriginName ?? primaryName,
+                  arrivalStation: rttReachable.name,
+                  stopCount: Math.max(0, rttReachable.fastestCallingPoints.length - 2),
+                },
+              ],
+              polylineCoords: coords.length > 1 ? coords : undefined,
+              londonCallingPoints: londonCallingPoints.length > 0 ? londonCallingPoints : undefined,
+              londonUpstreamCallingPoints: londonUpstreamCallingPoints.length > 0 ? londonUpstreamCallingPoints : undefined,
+            } as unknown as JourneyInfo
+            directCandidate = { mins: rttReachable.minMinutes, journey: directJourney }
+          }
+
+          // Candidate B — stitched via another London terminal + an existing
+          // Routes-API journey (KX first, Farringdon as fallback inside stitchJourney).
+          // For clusters, we try each member that has a matching Terminal record
+          // and pick the fastest. Members without a Terminal entry in
+          // london-terminals.json are skipped silently.
+          let stitchedCandidate: { mins: number; journey: JourneyInfo } | null = null
+          for (const ck of clusterCoords) {
+            // Resolve the cluster member's coord to a terminal. Two cases:
+            //   1. The coord IS a standalone primary (KX, CHX, VIC, …) —
+            //      grab its canonicalName straight from PRIMARY_ORIGINS.
+            //   2. The coord is ONLY a cluster member (St Pancras, Euston,
+            //      Waterloo East, the NR KX main-line coord, …) — not in
+            //      PRIMARY_ORIGINS at all. Look up the station's own name
+            //      via baseStations and normalise through matchTerminal.
+            //      Without this fallback, case 2 used to continue-skip, so
+            //      London-synth primary would never try stitching via St
+            //      Pancras, Euston, or Waterloo East — it only tried
+            //      cluster members with their own primary entry. That's why
+            //      "London → Swale" was stitching via Kings Cross and
+            //      prepending an extra KX→StP tube hop, when using St
+            //      Pancras as the newOrigin directly gives a shorter result
+            //      with the correct "from St Pancras" narrative.
+            let canonical = PRIMARY_ORIGINS[ck]?.canonicalName
+            if (!canonical) {
+              const feat = baseStations.features.find(
+                (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === ck,
+              )
+              const matched = matchTerminal(feat?.properties?.name, londonTerminals)
+              if (matched) canonical = matched
+            }
+            if (!canonical) continue
+            // Match by terminal name OR alias. KX's PRIMARY_ORIGINS entry has
+            // canonicalName "Kings Cross St Pancras", which appears in the
+            // "Kings Cross" terminal's aliases list — without the alias check
+            // KX wouldn't participate in stitching, and north-England
+            // destinations via KX would drop off the map.
+            const term = londonTerminals.find(
+              (t) => t.name === canonical || t.aliases.includes(canonical),
+            )
+            if (!term) continue
+            const stitched = stitchJourney({
+              feature: f as unknown as Parameters<typeof stitchJourney>[0]["feature"],
+              newOrigin: term,
+              matrix: terminalMatrix,
+              terminals: londonTerminals,
+            })
+            if (stitched && stitched.durationMinutes != null) {
+              // Enrich with London calling-points FROM THE SPECIFIC MAINLINE
+              // TERMINAL the stitched journey departs from. The "can also
+              // board at" hint must reflect the ACTUAL train the user is on
+              // after changing at the stitch terminal — not a different
+              // train that happens to reach the same destination. If the
+              // mainline terminal's RTT data is empty for this destination
+              // (e.g. KX → Royston has no London intermediate stops), the
+              // list stays empty rather than risking misleading cross-train
+              // suggestions.
+              // Find the mainline terminal: first HEAVY_RAIL leg's departure.
+              // Two-step name resolution:
+              //   1. matchTerminal normalises the leg's departureStation (e.g.
+              //      "St Pancras") against the terminals list's aliases to
+              //      get a canonical terminal name (e.g. "St Pancras").
+              //   2. Scan origin-routes.json for a terminal whose name also
+              //      normalises to that canonical — handles the inverse case
+              //      ("London St. Pancras International" → "St Pancras").
+              // Both sides need alias resolution because the origin-routes
+              // names weren't normalised when the RTT fetch script wrote them.
+              const mainlineLeg = stitched.legs?.find((l) => l.vehicleType === "HEAVY_RAIL")
+              const canonical = matchTerminal(mainlineLeg?.departureStation, londonTerminals)
+              let mainlineCoord: string | undefined
+              if (canonical) {
+                for (const [coord, data] of Object.entries(originRoutes)) {
+                  if (matchTerminal(data?.name, londonTerminals) === canonical) {
+                    mainlineCoord = coord
+                    break
+                  }
+                }
+              }
+              // Figure out what TARGET COORD to look up under the mainline
+              // terminal's directReachable. Two cases:
+              //   • Single HEAVY_RAIL leg (mainline goes straight to D):
+              //     target = D. e.g. Cannon Street → StP → Gravesend. The
+              //     StP→Gravesend train's fastestCallingPoints describe the
+              //     whole route to D.
+              //   • Multiple HEAVY_RAIL legs (user changes mid-journey):
+              //     target = FIRST heavy-rail leg's arrivalStation, i.e. the
+              //     CHANGE station, not D. e.g. London → Amberley routes as
+              //     StP→East Croydon (Thameslink, leg 1) + East Croydon→
+              //     Amberley (Southern, leg 2). The calling-points hint
+              //     should describe the Thameslink train — its London stops
+              //     between StP and East Croydon (Farringdon, Blackfriars,
+              //     London Bridge). Looking up StP→Amberley would return
+              //     null because Amberley isn't served by the Thameslink
+              //     train (the user changes at East Croydon). Looking up
+              //     StP→East Croydon returns the rich Thameslink list.
+              const heavyRailLegs = stitched.legs?.filter((l) => l.vehicleType === "HEAVY_RAIL") ?? []
+              let targetCoord: string = coordKey
+              if (heavyRailLegs.length > 1) {
+                const changeStationName = heavyRailLegs[0]?.arrivalStation
+                if (changeStationName) {
+                  // baseStations is the source of truth for station coords.
+                  // Look for an exact name match. Station names in
+                  // stations.json are unique for the ones we care about
+                  // (London terminals + major interchange stations like
+                  // East Croydon, Clapham Junction). Same-name edge cases
+                  // would only trigger here if two stations share exact
+                  // names — extremely rare for interchange stations.
+                  const match = baseStations.features.find(
+                    (x) => x.properties?.name === changeStationName,
+                  )
+                  if (match) {
+                    const [lng, lat] = match.geometry.coordinates
+                    targetCoord = `${lng},${lat}`
+                  }
+                }
+              }
+              // First try the mainline terminal's own directReachable. When
+              // that terminal's RTT fetch captured the relevant train, this
+              // gives the cleanest answer with minimal processing. When it
+              // didn't (e.g. StP's own data is missing southbound Thameslink
+              // to East Croydon despite the train physically calling at both),
+              // fall back to buildCallingPointsViaDonor which borrows data
+              // from a terminal that DID capture the same train (e.g. BFR).
+              let cp = mainlineCoord ? buildCallingPoints(mainlineCoord, targetCoord) : null
+              if ((!cp || (cp.downstream.length === 0 && cp.upstream.length === 0)) && mainlineCoord) {
+                cp = buildCallingPointsViaDonor(mainlineCoord, targetCoord)
+              }
+              const enriched = cp
+                ? {
+                    ...stitched,
+                    londonCallingPoints: cp.downstream.length > 0 ? cp.downstream : undefined,
+                    londonUpstreamCallingPoints: cp.upstream.length > 0 ? cp.upstream : undefined,
+                  }
+                : stitched
+              if (!stitchedCandidate || enriched.durationMinutes! < stitchedCandidate.mins) {
+                stitchedCandidate = { mins: enriched.durationMinutes!, journey: enriched as unknown as JourneyInfo }
+              }
+            }
+          }
+
+          // Apply the preference rules.
+          let best: { mins: number; journey: JourneyInfo } | null = null
+          if (directCandidate && stitchedCandidate) {
+            const directMin = directCandidate.mins
+            const stitchedMin = stitchedCandidate.mins
+            // Rule 1 — 2h30m cutoff: direct would be out of range but stitched
+            // is still in range, so use stitched regardless of the 15-min rule.
+            if (directMin > DAY_TRIP_MAX_MIN && stitchedMin <= DAY_TRIP_MAX_MIN) {
+              best = stitchedCandidate
+            }
+            // Rule 2 — 15-min preference: only switch to stitched if it saves
+            // at least that much. Otherwise the direct train wins.
+            else if (stitchedMin <= directMin - DIRECT_PREFERENCE_THRESHOLD_MIN) {
+              best = stitchedCandidate
+            } else {
+              best = directCandidate
+            }
+          } else {
+            // At most one candidate exists — use whichever we have.
+            best = directCandidate ?? stitchedCandidate
+          }
+
+          if (!best) {
+            // No data at all for this destination → clear londonMinutes so it's filtered out.
+            rttClearLondonMinutes = true
+          } else {
+            originMins = best.mins
+            effectiveChanges = (best.journey.changes ?? 0)
+            synthJourney = best.journey
+          }
+          } // end else — pre-fetched-primary-journey priority branch above
+        } else if (isCustomPrimary) {
+          // Custom primary (any NR station picked via the search bar). No
+          // pre-fetched data for it, but we can reach destinations two ways:
+          //   1. SAME-TRAIN SHORTCUT — when the custom primary X is on a
+          //      through-train from some terminal P to destination D, the
+          //      user just boards at X and stays on. 0 changes. Happens for
+          //      every MOG destination if X = Old Street (trains call at
+          //      OLD between MOG and Stevenage/Hertford/etc), and similarly
+          //      for BFR Thameslink (ZFD/STP/FPK as upstream calls).
+          //   2. HUB ROUTING — fallback when no same-train option exists:
+          //        time(custom → D via P) = P→custom + P→D + interchange
+          //      where P is the fastest curated primary that direct-reaches
+          //      both. 1 change at P.
+          if (primaryOrigin === coordKey) {
+            // User's own station — drop it from the destination map.
+            rttClearLondonMinutes = true
+          } else if ((f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]) {
+            // --- Step 0a: Pre-fetched Google Routes journey ---
+            // The feature ALREADY has a journey keyed by this custom
+            // primary's coord. This happens when the primary was
+            // previously a curated one whose per-destination journeys
+            // were baked into stations.json via scripts/fetch-journeys.mjs
+            // (Stratford, Farringdon, and the Kings Cross cluster).
+            //
+            // Those journeys are comprehensive Google Routes results —
+            // multi-modal, already routed, more accurate than anything
+            // we can stitch from RTT directReachable. Use them as-is,
+            // same code path the old curated-primary branch uses
+            // (see the `else` block below around "Calling-points
+            // enrichment for curated primaries without their own RTT
+            // data" for the logic being mirrored here).
+            //
+            // Without this, Stratford-as-custom-primary silently lost
+            // most of its destinations — the stitcher only had RTT
+            // direct (105 stations) + hub routes through Liverpool
+            // Street, and many hike destinations weren't reachable
+            // either way despite the feature having a perfectly good
+            // pre-fetched Stratford→D journey sitting right there.
+            const journeys = f.properties.journeys as Record<string, JourneyInfo>
+            const primaryJourney = journeys[primaryOrigin]
+            const effective = getEffectiveJourney(primaryJourney, primaryName)
+            originMins = effective?.effectiveMinutes
+            effectiveChanges = effective?.effectiveChanges
+            // No synthJourney to build — the journey already lives
+            // under f.properties.journeys[primaryOrigin], so the
+            // modal + hover polyline read it natively.
+          } else if (originRoutes[primaryOrigin]?.directReachable?.[coordKey]?.minMinutes != null) {
+            // --- Step 0: Self-direct lookup ---
+            // The custom primary has itself been RTT-fetched (its coord
+            // is a key in origin-routes.json). Its own directReachable
+            // entries give us a native 0-change route to every station
+            // on its own lines — strictly better than the Step 1 same-
+            // train inference or the Step 2 hub detour.
+            //
+            // Example: Richmond → Ascot. Without self-fetch the app
+            // routes via Waterloo (RMD→WAT 18m + WAT→ACT 54m + 5m
+            // change = 77m). With Richmond RTT-fetched, whichever
+            // Reading-line service actually runs Richmond→Ascot
+            // directly appears in RMD.directReachable[Ascot] at its
+            // real timetabled time, and the user sees a single leg
+            // with no change.
+            //
+            // Whether this branch fires depends entirely on the fetch
+            // coverage. For custom primaries NOT in origin-routes.json
+            // (the majority before we extend the fetch scope), we
+            // fall through to the existing Steps 1 & 2 unchanged.
+            const selfEntry = originRoutes[primaryOrigin]!.directReachable[coordKey]
+            originMins = selfEntry.minMinutes
+            effectiveChanges = 0
+            const customName = coordToName[primaryOrigin] ?? primaryOrigin
+            const destName = (f.properties.name as string) ?? ""
+            // Polyline: the self-direct service's calling-point chain,
+            // starting at the custom primary itself.
+            const coords = selfEntry.fastestCallingPoints
+              .map((crs) => crsToCoord[crs])
+              .filter((c): c is [number, number] => !!c)
+            // London calling-points hint — same helper used on other
+            // single-leg branches.
+            const cp = buildCallingPoints(primaryOrigin, coordKey)
+            synthJourney = {
+              durationMinutes: selfEntry.minMinutes,
+              changes: 0,
+              legs: [
+                {
+                  vehicleType: "HEAVY_RAIL",
+                  departureStation: customName,
+                  arrivalStation: destName,
+                  stopCount: Math.max(0, selfEntry.fastestCallingPoints.length - 2),
+                },
+              ],
+              polylineCoords: coords.length > 1 ? coords : undefined,
+              londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+              londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+            } as unknown as JourneyInfo
+          } else {
+            // --- Step 1: same-train shortcut search ---
+            // For each terminal P that directly reaches D, see if X is on
+            // the train — either as an UPSTREAM stop (train goes X → … → P
+            // → … → D) or as an INTERMEDIATE stop (train goes P → … → X
+            // → … → D). In both cases X → D is direct, 0 changes.
+            // Track which terminal provided the winning match + X's time
+            // relative to P — the calling-points builder needs the latter
+            // to classify each stop as earlier-boarding (upstream) or
+            // later-boarding (downstream) relative to X.
+            let sameTrainMins: number | undefined
+            let sameTrainTerminalCoord: string | undefined
+            // X's time relative to P: negative if X is upstream of P (train
+            // passes through X before reaching P), positive if X is
+            // intermediate (between P and D).
+            let sameTrainXTimeRelativeToP: number | undefined
+            for (const terminalCoord of Object.keys(originRoutes)) {
+              const entry = originRoutes[terminalCoord]?.directReachable?.[coordKey]
+              if (!entry) continue
+              const pToDestMins = entry.minMinutes
+
+              // Upstream: X is before P. Match by coord (upstreamCallingPoints
+              // carries a pre-formatted "lng,lat" string).
+              const upstreamMatch = entry.upstreamCallingPoints?.find(
+                (u) => u.coord === primaryOrigin,
+              )
+              if (upstreamMatch) {
+                const mins = pToDestMins + upstreamMatch.minutesBeforeOrigin
+                if (sameTrainMins == null || mins < sameTrainMins) {
+                  sameTrainMins = mins
+                  sameTrainTerminalCoord = terminalCoord
+                  // X is BEFORE P → negative tP.
+                  sameTrainXTimeRelativeToP = -upstreamMatch.minutesBeforeOrigin
+                }
+                continue
+              }
+
+              // Intermediate: X is between P and D on fastestCallingPoints.
+              // Excludes first (= P) and last (= D) entries; either of those
+              // would mean X is the terminal or the destination, neither
+              // gives us a new same-train shortcut.
+              const fastCP = entry.fastestCallingPoints
+              const isIntermediate = fastCP.slice(1, -1).some((crs) => {
+                const c = crsToCoord[crs]
+                return c && `${c[0]},${c[1]}` === primaryOrigin
+              })
+              if (isIntermediate) {
+                // P→X time comes from P's OWN directReachable[X] entry,
+                // which every intermediate stop on P's line should have
+                // (Old Street gets its own MOG→OLD entry with minMins=2).
+                const pToX = originRoutes[terminalCoord]?.directReachable?.[primaryOrigin]?.minMinutes
+                if (pToX != null) {
+                  const mins = pToDestMins - pToX
+                  if (mins > 0 && (sameTrainMins == null || mins < sameTrainMins)) {
+                    sameTrainMins = mins
+                    sameTrainTerminalCoord = terminalCoord
+                    // X is AFTER P → positive tP.
+                    sameTrainXTimeRelativeToP = pToX
+                  }
+                }
+              }
+            }
+
+            // Same-train shortcut found — user boards at X and stays on the
+            // train all the way to D. Build a single-leg journey + enrich
+            // with richest calling-points, then skip hub routing below by
+            // marking the branch done (origin/effectiveChanges are set).
+            if (sameTrainMins != null) {
+              originMins = sameTrainMins
+              effectiveChanges = 0
+              const customName = coordToName[primaryOrigin] ?? primaryOrigin
+              const destName = (f.properties.name as string) ?? ""
+              // Calling points come from the SPECIFIC terminal whose train
+              // matched the same-train shortcut. Using a different terminal
+              // that happens to also reach D would surface stops from a
+              // DIFFERENT train that doesn't call at the user's origin X —
+              // which would be misleading.
+              // buildSameTrainCallingPoints (not buildCallingPoints) is used
+              // here so the list (a) INCLUDES the terminal P itself as an
+              // "also start same route at" option and (b) labels times
+              // relative to X, not P.
+              const cp = sameTrainTerminalCoord != null && sameTrainXTimeRelativeToP != null
+                ? buildSameTrainCallingPoints(sameTrainTerminalCoord, coordKey, sameTrainXTimeRelativeToP)
+                : null
+              synthJourney = {
+                durationMinutes: sameTrainMins,
+                changes: 0,
+                legs: [
+                  {
+                    vehicleType: "HEAVY_RAIL",
+                    departureStation: customName,
+                    arrivalStation: destName,
+                  },
+                ],
+                londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+                londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+              } as unknown as JourneyInfo
+              // Skip hub routing fallback — same-train is strictly better.
+              // Fall through to the outer next-property builder below.
+            } else {
+
+            // --- Step 2: hub routing fallback ---
+            // Each hub P in customHubs is a terminal whose RTT data tells us
+            // how to get from the custom primary X to P. From P, we can
+            // reach the destination D two ways:
+            //   (A) RTT-DIRECT — P has D in its directReachable: one train
+            //       from P. total = X→P + interchange + P→D, 1 change.
+            //   (B) SOURCE-STITCHED — the destination feature has a pre-
+            //       fetched Google Routes journey keyed by P's coord (e.g.
+            //       every feature has a Farringdon-origin journey because
+            //       Farringdon is our baseline Routes API fetch). We pipe
+            //       through THAT journey: total = X→P + interchange + the
+            //       source journey's duration, changes = 1 + source's own
+            //       changes.
+            // Option B is crucial for destinations OUTSIDE any Thameslink
+            // hub's own RTT network — e.g. Kentish Town (reachable only via
+            // Thameslink hubs: ZFD, BFR, STP) to Oxford (GWR from Paddington,
+            // not in any Thameslink hub's RTT data). Without B, those
+            // destinations used to disappear entirely.
+            type RouteCandidate = {
+              mins: number
+              changes: number
+              hub: CustomHub
+              kind: "rtt-direct" | "source-stitched" | "double-hop"
+              sourceJourney?: JourneyInfo
+              // Only set for double-hop: the intermediate terminal name the
+              // user interchanges at (after arriving from X's hub).
+              doubleHopVia?: string
+              doubleHopMins?: number
+            }
+            const isBetter = (c: RouteCandidate, best: RouteCandidate | undefined) =>
+              best == null ||
+              c.changes < best.changes ||
+              (c.changes === best.changes && c.mins < best.mins)
+            let winner: RouteCandidate | undefined
+            const featureJourneys = f.properties.journeys as Record<string, JourneyInfo> | undefined
+            for (const hub of customHubs) {
+              // Option A: P.directReachable[D] exists → 1-change RTT path.
+              const pToD = hub.routes.directReachable?.[coordKey]?.minMinutes
+              if (pToD != null) {
+                const candidate: RouteCandidate = {
+                  mins: hub.pToCustomMins + pToD + CUSTOM_INTERCHANGE_MIN,
+                  changes: 1,
+                  hub,
+                  kind: "rtt-direct",
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+              // Option B: feature.journeys[hub.pCoord] exists → pipe through
+              // a Google Routes journey from the hub. The hub's RTT coord
+              // must match a key in the feature's journeys dict — true for
+              // Farringdon (same coord in both RTT and stations.json) but
+              // not e.g. for Kings Cross (whose RTT coord differs from its
+              // stations.json Underground coord). Farringdon alone gives us
+              // broad coverage via the baseline journeys.
+              const srcJourney = featureJourneys?.[hub.pCoord]
+              if (srcJourney?.durationMinutes != null) {
+                const candidate: RouteCandidate = {
+                  mins: hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + srcJourney.durationMinutes,
+                  // Changes through the hub (1) plus whatever the source
+                  // journey already had. A Farringdon→Oxford journey with 1
+                  // internal change (Farringdon→Paddington→Oxford) becomes
+                  // 2 changes total for the X→hub→...→Oxford composition.
+                  changes: 1 + (srcJourney.changes ?? 0),
+                  hub,
+                  kind: "source-stitched",
+                  sourceJourney: srcJourney,
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+              // Option C: Double-hop — X→hub (RTT) → hop via terminal-matrix
+              // to another terminal T whose coord IS a source journey key.
+              // Covers cases where the custom primary's ONLY reachable hub
+              // isn't also one of our baseline Google Routes origins.
+              // Vauxhall is the archetype: its only RTT-reachable hub is
+              // Waterloo (3 min), but stations.json doesn't have Waterloo-
+              // keyed source journeys — only Farringdon, KX, etc. Without
+              // this path, VXH users lose every destination not on
+              // Waterloo's own RTT network (Oxford, Cambridge via different
+              // lines, most of the non-SWR network).
+              const hubCanonical = matchTerminal(hub.routes.name, londonTerminals)
+              if (hubCanonical && featureJourneys) {
+                for (const [sourceCoord, journey] of Object.entries(featureJourneys)) {
+                  if (!journey?.durationMinutes) continue
+                  if (sourceCoord === hub.pCoord) continue  // already covered by Option B
+                  // Find the terminal name of this source-journey origin.
+                  // Source coords come from stations.json entries we fetched
+                  // Google Routes from (Farringdon, KX NR, Stratford, …).
+                  const srcStationFeat = baseStations.features.find(
+                    (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === sourceCoord,
+                  )
+                  const srcCanonical = matchTerminal(srcStationFeat?.properties?.name, londonTerminals)
+                  if (!srcCanonical || srcCanonical === hubCanonical) continue
+                  // terminal-matrix gives hub→srcTerminal hop time.
+                  const matrixHop = terminalMatrix[hubCanonical]?.[srcCanonical]
+                  if (!matrixHop?.minutes) continue
+                  const candidate: RouteCandidate = {
+                    mins:
+                      hub.pToCustomMins +
+                      matrixHop.minutes +
+                      CUSTOM_INTERCHANGE_MIN * 2 +
+                      journey.durationMinutes,
+                    // Two changes (X→hub, hub→src) on top of the source
+                    // journey's own changes. For VXH→Oxford via Waterloo
+                    // +Farringdon: 2 + 1 (Farringdon→Paddington→Oxford) = 3.
+                    changes: 2 + (journey.changes ?? 0),
+                    hub,
+                    kind: "double-hop",
+                    sourceJourney: journey,
+                    doubleHopVia: srcCanonical,
+                    doubleHopMins: matrixHop.minutes,
+                  }
+                  if (isBetter(candidate, winner)) winner = candidate
+                }
+              }
+            }
+            if (winner != null) {
+              originMins = winner.mins
+              effectiveChanges = winner.changes
+              const hubName = winner.hub.routes.name ?? ""
+              const customName = coordToName[primaryOrigin] ?? primaryOrigin
+
+              // Helpers for building the hover polyline on custom primaries.
+              // Primary-owned (RTT / Routes-API) journeys already get a
+              // polylineCoords at fetch time; custom-primary synth-journeys
+              // didn't, which is why hovering a reachable destination from a
+              // non-terminus home station used to show no line on the map.
+              // We build one here by prepending the custom-primary coord to
+              // whatever coords the backbone of the journey already has.
+              const { lng: pLng, lat: pLat } = parseCoordKey(primaryOrigin)
+              // Pull coords out of a pre-existing journey: polylineCoords if
+              // present (RTT path), else decode the `polyline` string
+              // (Google Routes path).
+              const sourceCoordsFromJourney = (j: JourneyInfo | undefined): [number, number][] | null => {
+                if (!j) return null
+                const g = j as unknown as { polyline?: string; polylineCoords?: [number, number][] }
+                if (g.polylineCoords && g.polylineCoords.length > 1) return g.polylineCoords
+                if (g.polyline) return decodePolyline(g.polyline)
+                return null
+              }
+
+              if (winner.kind === "rtt-direct") {
+                // Legs: [custom→hub interchange, hub→dest mainline].
+                // Calling points use the hub's own RTT data for this dest,
+                // so the "…can also be boarded at" hint reflects the actual
+                // train the user boards after changing. callingPointsLegArrival
+                // is set to the destination's name so photo-overlay renders
+                // the "Alternative starts for the direct train to {dest}"
+                // variant (since the HEAVY_RAIL leg's arrival IS the dest).
+                const hubEntry = winner.hub.routes.directReachable?.[coordKey]
+                const hubEntryName = hubEntry?.name ?? ""
+                const cp = buildCallingPoints(winner.hub.pCoord, coordKey)
+                // Polyline: [custom home] → [hub calling points → dest].
+                // fastestCallingPoints[0] IS the hub, so we just stick the
+                // home-station coord on the front. One straight line then
+                // tracks the actual calling-point sequence.
+                const hubToDestCoords = (hubEntry?.fastestCallingPoints ?? [])
+                  .map((crs) => crsToCoord[crs])
+                  .filter((c): c is [number, number] => !!c)
+                const polylineCoords = hubToDestCoords.length > 1
+                  ? [[pLng, pLat] as [number, number], ...hubToDestCoords]
+                  : undefined
+                synthJourney = {
+                  durationMinutes: winner.mins,
+                  changes: winner.changes,
+                  legs: [
+                    {
+                      vehicleType: "OTHER",
+                      departureStation: customName,
+                      arrivalStation: hubName,
+                    },
+                    {
+                      vehicleType: "HEAVY_RAIL",
+                      departureStation: hubName,
+                      arrivalStation: hubEntryName,
+                      stopCount: hubEntry
+                        ? Math.max(0, hubEntry.fastestCallingPoints.length - 2)
+                        : 0,
+                    },
+                  ],
+                  polylineCoords,
+                  londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+                  londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+                  callingPointsLegArrival: hubEntryName,
+                } as unknown as JourneyInfo
+              } else if (winner.kind === "source-stitched") {
+                // Prepend the custom→hub interchange to the full source-
+                // journey legs array. The source journey already describes
+                // hub→...→destination, with whatever internal structure
+                // (possibly multiple legs + changes).
+                const prepended = [
+                  {
+                    vehicleType: "OTHER",
+                    departureStation: customName,
+                    arrivalStation: hubName,
+                  },
+                  ...(winner.sourceJourney?.legs ?? []),
+                ]
+                // Polyline: [custom home] + source journey's own polyline.
+                // The source journey starts at the hub, so the home→hub
+                // segment is a single straight prepend.
+                const srcCoords = sourceCoordsFromJourney(winner.sourceJourney)
+                const polylineCoords = srcCoords
+                  ? [[pLng, pLat] as [number, number], ...srcCoords]
+                  : undefined
+                synthJourney = {
+                  durationMinutes: winner.mins,
+                  changes: winner.changes,
+                  legs: prepended,
+                  polylineCoords,
+                } as unknown as JourneyInfo
+                // Populate calling points by picking the richest HEAVY_RAIL
+                // leg of the synth (via donor-terminal fallback when needed).
+                // See enrichSynthJourneyCallingPoints header comment.
+                enrichSynthJourneyCallingPoints(synthJourney, f.properties.name as string)
+              } else {
+                // double-hop: [X→hub interchange, hub→viaTerminal matrix
+                // hop, ...sourceJourney.legs]. Two synthesised "OTHER" legs
+                // at the front because neither the RTT hub nor the matrix
+                // hop fits cleanly into HEAVY_RAIL / SUBWAY (the matrix
+                // hop is tube/walk but recorded as "OTHER" for narrative
+                // consistency with the existing interchange leg style).
+                const prepended = [
+                  {
+                    vehicleType: "OTHER",
+                    departureStation: customName,
+                    arrivalStation: hubName,
+                  },
+                  {
+                    vehicleType: "OTHER",
+                    departureStation: hubName,
+                    arrivalStation: winner.doubleHopVia ?? "",
+                  },
+                  ...(winner.sourceJourney?.legs ?? []),
+                ]
+                // Polyline: [custom home] → [hub] → [source journey].
+                // The source journey starts at the via-terminal (which is
+                // where the matrix hop lands); the hub→via-terminal hop
+                // is drawn as a single straight segment. Home→hub is
+                // another straight segment on the front.
+                const { lng: hLng, lat: hLat } = parseCoordKey(winner.hub.pCoord)
+                const srcCoords = sourceCoordsFromJourney(winner.sourceJourney)
+                const polylineCoords = srcCoords
+                  ? [[pLng, pLat] as [number, number], [hLng, hLat] as [number, number], ...srcCoords]
+                  : undefined
+                synthJourney = {
+                  durationMinutes: winner.mins,
+                  changes: winner.changes,
+                  legs: prepended,
+                  polylineCoords,
+                } as unknown as JourneyInfo
+                enrichSynthJourneyCallingPoints(synthJourney, f.properties.name as string)
+              }
+            } else {
+              // Both options failed — destination isn't reachable via any
+              // customHubs (either as direct RTT destination or as a pre-
+              // fetched source-journey key). Drop from the map.
+              rttClearLondonMinutes = true
+            }
+            }
+          }
+        } else {
+          const journeys = f.properties.journeys as Record<string, JourneyInfo> | undefined
+          const primaryJourney = journeys?.[primaryOrigin]
+          // getEffectiveJourney still uses canonical names internally (e.g. to detect
+          // "Kings Cross" cluster and strip initial tube hops), so pass the name.
+          const effective = primaryJourney ? getEffectiveJourney(primaryJourney, primaryName) : null
+          // Farringdon is the baseline origin — londonMinutes already matches, no override.
+          originMins = primaryName !== "Farringdon" ? effective?.effectiveMinutes : undefined
+          effectiveChanges = effective?.effectiveChanges
+
+          // Calling-points enrichment for curated primaries WITHOUT their
+          // own RTT data (currently only Stratford). The pre-fetched Google
+          // Routes journey has accurate timing but no calling-point info,
+          // so trains like LST→Shoeburyness that call at Stratford never
+          // surface Liverpool Street as an earlier-boarding option. Run
+          // the same-train search here — if some London terminal's train
+          // calls at both the primary AND the destination, build calling
+          // points from that terminal's data relative to the primary. The
+          // existing journey's duration/legs stay intact; we only ADD the
+          // calling-point arrays to it.
+          if (
+            !isRttPrimary &&
+            primaryJourney &&
+            (effective?.effectiveChanges ?? 0) === 0
+          ) {
+            let terminalCoord: string | undefined
+            let xTimeRelativeToP: number | undefined
+            for (const tc of Object.keys(originRoutes)) {
+              const entry = originRoutes[tc]?.directReachable?.[coordKey]
+              if (!entry) continue
+              const upstreamMatch = entry.upstreamCallingPoints?.find(
+                (u) => u.coord === primaryOrigin,
+              )
+              if (upstreamMatch) {
+                terminalCoord = tc
+                xTimeRelativeToP = -upstreamMatch.minutesBeforeOrigin
+                break
+              }
+              const isIntermediate = entry.fastestCallingPoints.slice(1, -1).some((crs) => {
+                const c = crsToCoord[crs]
+                return c && `${c[0]},${c[1]}` === primaryOrigin
+              })
+              if (isIntermediate) {
+                const pToX = originRoutes[tc]?.directReachable?.[primaryOrigin]?.minMinutes
+                if (pToX != null) {
+                  terminalCoord = tc
+                  xTimeRelativeToP = pToX
+                  break
+                }
+              }
+            }
+            if (terminalCoord != null && xTimeRelativeToP != null) {
+              const cp = buildSameTrainCallingPoints(terminalCoord, coordKey, xTimeRelativeToP)
+              if (cp && (cp.downstream.length > 0 || cp.upstream.length > 0)) {
+                // Shallow-clone the existing journey and attach calling
+                // points. Cast through unknown because the base JourneyInfo
+                // type used by StationFeature's properties may not declare
+                // these optional fields explicitly.
+                synthJourney = {
+                  ...primaryJourney,
+                  londonCallingPoints: cp.downstream.length > 0 ? cp.downstream : undefined,
+                  londonUpstreamCallingPoints: cp.upstream.length > 0 ? cp.upstream : undefined,
+                } as unknown as JourneyInfo
+              }
+            }
+          }
+        }
 
         // Build next properties — flip isOrigin + isExcluded flags, and optionally override londonMinutes
         const next: Record<string, unknown> = { ...f.properties }
@@ -522,14 +2342,21 @@ export default function HikeMap() {
         if (shouldBeExcluded) next.isExcluded = true
         else delete next.isExcluded
         if (originMins != null) next.londonMinutes = originMins
+        else if (rttClearLondonMinutes) next.londonMinutes = null
         // Stash the effective-changes count so the direct-trains filter can use
         // it without recomputing. Falsy (0/undefined) means "no effective changes".
-        if (effective) next.effectiveChanges = effective.effectiveChanges
+        if (effectiveChanges != null) next.effectiveChanges = effectiveChanges
+        // Merge the synthesised CHX journey into the journeys dict so modal +
+        // hover-polyline code paths find it by coord key like any other primary.
+        if (synthJourney) {
+          const existing = f.properties.journeys as Record<string, JourneyInfo> | undefined
+          next.journeys = { ...(existing ?? {}), [primaryOrigin]: synthJourney }
+        }
 
         return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
-  }, [baseStations, primaryOrigin, originStations, excludedStations])
+  }, [baseStations, primaryOrigin, originStations, excludedStations, coordToName])
 
   // Recompute filtered stations whenever the slider or raw data changes.
   // useMemo avoids re-filtering the whole array on every render.
@@ -552,16 +2379,25 @@ export default function HikeMap() {
 
         // Excluded stations: admin-only, and now respect the time sliders so
         // admins can narrow the view to excluded stations in a specific band.
+        // The direct-only checkbox applies here too — an excluded station with
+        // no direct-train data from the primary origin shouldn't appear even
+        // in admin mode when "Direct trains only" is ticked.
         if (f.properties.isExcluded) {
           if (!devExcludeActive) return false
-          return passesTimeFilter()
+          if (!passesTimeFilter()) return false
+          if (primaryDirectOnly) {
+            const primaryChanges = f.properties.effectiveChanges as number | undefined
+            if (primaryChanges == null || primaryChanges > 0) return false
+          }
+          return true
         }
 
         // Origin stations: hidden in non-admin mode (except the active friend origin).
         // In admin mode they now respect the time sliders too.
         if (f.properties.isOrigin) {
           if (!devExcludeActive) {
-            if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
+            // friendOrigin is a coord key now, matched against each feature's coordKey
+            if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
             return false
           }
           return passesTimeFilter()
@@ -579,6 +2415,16 @@ export default function HikeMap() {
           const primaryChanges = f.properties.effectiveChanges as number | undefined
           if (primaryChanges == null || primaryChanges > 0) return false
         }
+        // "Indirect trains only" (admin-only inverse) — require ≥1 effective
+        // change. Stations without journey data are dropped (no way to know
+        // if they'd be direct or not). UI toggle is exclusive with
+        // primaryDirectOnly — the filter-panel unchecks one when the other
+        // is checked, so both flags shouldn't be true simultaneously, but we
+        // still evaluate them as independent conditions for safety.
+        if (primaryIndirectOnly) {
+          const primaryChanges = f.properties.effectiveChanges as number | undefined
+          if (primaryChanges == null || primaryChanges === 0) return false
+        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
@@ -595,7 +2441,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryIndirectOnly, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -662,8 +2508,8 @@ export default function HikeMap() {
       ...allStationsWithRatings,
       features: allStationsWithRatings.features
         .filter(f => {
-          // The active friend origin always shows regardless of rating filters
-          if (friendOrigin && (f.properties.name as string) === friendOrigin) return true
+          // The active friend origin always shows regardless of rating filters (coord-keyed)
+          if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
           // No filters active → show everything that reached this layer.
           // (Non-admin users never see excluded/origin — those are already removed
           // upstream in filteredStations, so this branch is safe for them too.)
@@ -691,7 +2537,6 @@ export default function HikeMap() {
         }),
     }
   }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin])
-
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
   // no state delay, so icons don't flash before the shrink starts.
@@ -773,19 +2618,19 @@ export default function HikeMap() {
 
   // Dev action: toggle a station's origin-station status.
   // Optimistic local update + POST to API which updates data/origin-stations.json.
-  const handleToggleOrigin = useCallback(async (name: string) => {
-    const lower = name.toLowerCase()
+  // `name` is sent alongside the coord key purely so the git commit message is readable.
+  const handleToggleOrigin = useCallback(async (coordKey: string, name: string) => {
     let nextIsOrigin = false
     setOriginStations((prev) => {
       const next = new Set(prev)
-      if (next.has(lower)) { next.delete(lower); nextIsOrigin = false }
-      else { next.add(lower); nextIsOrigin = true }
+      if (next.has(coordKey)) { next.delete(coordKey); nextIsOrigin = false }
+      else { next.add(coordKey); nextIsOrigin = true }
       return next
     })
     await fetch("/api/dev/toggle-origin-station", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, isOrigin: nextIsOrigin }),
+      body: JSON.stringify({ coordKey, name, isOrigin: nextIsOrigin }),
     })
   }, [])
 
@@ -930,10 +2775,10 @@ export default function HikeMap() {
         // returning geometry from click events, but string properties always pass through intact.
         const stamped = data.features.map((f) => {
           const [lng, lat] = f.geometry.coordinates
-          const name = (f.properties.name as string ?? '').toLowerCase()
+          const coordKey = `${lng},${lat}`
           // Stamp coordKey for consistent identity, and isOrigin for origin stations
-          const extra: Record<string, unknown> = { coordKey: `${lng},${lat}` }
-          if (INITIAL_ORIGIN_STATIONS.has(name)) extra.isOrigin = true
+          const extra: Record<string, unknown> = { coordKey }
+          if (INITIAL_ORIGIN_STATIONS.has(coordKey)) extra.isOrigin = true
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
           return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
         })
@@ -1002,16 +2847,24 @@ export default function HikeMap() {
 
   // Decodes the full set of coordinates for the hovered station's journey.
   // Returns the array (not GeoJSON) so the animation can slice it progressively.
+  // Handles two sources: `polyline` (encoded string from Google Routes) and
+  // `polylineCoords` (pre-decoded [lng,lat][] from RTT-synthesised journeys).
+  type JourneyWithGeom = { polyline?: string; polylineCoords?: [number, number][] }
+  const resolveJourneyCoords = (j: JourneyWithGeom | undefined): [number, number][] | null => {
+    if (!j) return null
+    if (j.polylineCoords && j.polylineCoords.length > 1) return j.polylineCoords
+    if (j.polyline) return decodePolyline(j.polyline)
+    return null
+  }
   const hoveredJourneyCoords = useMemo(() => {
     if (!hovered || !stations) return null
     const feature = stations.features.find(
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
-    const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
-    // Use the primary origin's polyline (not first-found) to avoid picking up friend origin's
-    const polyline = journeys?.[primaryOrigin]?.polyline
-    if (!polyline) return null
-    return decodePolyline(polyline)
+    const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
+    // Use the primary origin's journey (not first-found) to avoid picking up friend origin's
+    return resolveJourneyCoords(journeys?.[primaryOrigin])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
 
   // Friend origin polyline — same logic but for the friend's journey
@@ -1020,10 +2873,9 @@ export default function HikeMap() {
     const feature = stations.features.find(
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
-    const journeys = feature?.properties?.journeys as Record<string, { polyline?: string }> | undefined
-    const polyline = journeys?.[friendOrigin]?.polyline
-    if (!polyline) return null
-    return decodePolyline(polyline)
+    const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
+    return resolveJourneyCoords(journeys?.[friendOrigin])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [friendOrigin, hovered, stations])
 
   // Whether the currently hovered station is the active friend origin —
@@ -1033,7 +2885,8 @@ export default function HikeMap() {
     const feature = stationsForMap?.features.find(
       f => (f.properties.coordKey as string) === hovered.coordKey
     )
-    return (feature?.properties.name as string) === friendOrigin
+    // friendOrigin is a coord key — compare against the feature's coordKey
+    return (feature?.properties.coordKey as string) === friendOrigin
   }, [friendOrigin, hovered, stationsForMap])
 
   // The animated journey line GeoJSON — grows from origin to destination over time.
@@ -1201,6 +3054,75 @@ export default function HikeMap() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Set to true when a long press fires — suppresses the click that follows touchend
   const longPressFired = useRef(false)
+  // DEDICATED ref for the two-tap touch sequence. DO NOT use hoveredRef here —
+  // hoveredRef is also mutated by mouse events (including iOS Safari's
+  // synthesised mousemove right before a tap's click), which can erroneously
+  // make the first touch look like a second tap. Keeping this isolated means
+  // only real touchstart events decide whether the next click opens the modal.
+  const touchFirstTapCoord = useRef<string | null>(null)
+  // Timestamp of the most recent first-tap. If the second tap doesn't arrive
+  // within this window, we treat the next tap on that station as a FRESH
+  // first-tap again — prevents stale "second-tap" state from accidentally
+  // matching much later (e.g. user tap-previews a station, gets distracted,
+  // taps the same station minutes later expecting a preview, not the modal).
+  const touchFirstTapAt = useRef<number>(0)
+  const SECOND_TAP_WINDOW_MS = 8_000
+  // Click-based second-layer gate for touch devices. Purely defensive —
+  // if handleTouchStart somehow doesn't run (an iOS quirk reported where
+  // the first tap after closing a modal opens the modal immediately),
+  // handleClick uses THIS ref to enforce the two-tap requirement. Only
+  // consulted when running on a touch device (hover: none).
+  const clickFirstTapCoord = useRef<string | null>(null)
+  const clickFirstTapAt = useRef<number>(0)
+  // Timestamp of the last handleTouchStart run. When the click fires within
+  // ~500ms after a touchstart, we KNOW touchstart ran and its two-tap gate
+  // is handling the sequence — so we skip the click-based fallback (which
+  // would otherwise double-gate and require 3 taps instead of 2 to open a
+  // modal). The click-based fallback only activates for "naked" clicks
+  // (mouse, or iOS quirk where touchstart didn't fire).
+  const touchStartFiredAt = useRef<number>(0)
+  // True on phones/tablets where the only input is taps (no hover).
+  // Hybrid desktops with a touchscreen report hover:none = false and get
+  // single-click-opens-modal behaviour — that's intentional.
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(hover: none)")
+    setIsTouchDevice(mq.matches)
+    const listener = () => setIsTouchDevice(mq.matches)
+    mq.addEventListener("change", listener)
+    return () => mq.removeEventListener("change", listener)
+  }, [])
+
+  // Breathing animation on the hovered station: halo ring + icon pulse.
+  // Single rAF sine wave drives both so they read as one heartbeat. The
+  // icon pulse lives on a DEDICATED single-feature layer (hovered-station-
+  // icon) — that's what makes per-frame `setLayoutProperty("icon-size")`
+  // cheap: Mapbox only has to re-layout one symbol instead of the ~500
+  // on the main station layers, so there's no judder even on mobile.
+  useEffect(() => {
+    if (!hovered || !mapRef.current) return
+    const map = mapRef.current.getMap()
+    let frame: number | null = null
+    const loop = () => {
+      // sine wave mapped to 0..1, period 1.6s
+      const s = 0.5 + 0.5 * Math.sin((Date.now() / 1600) * Math.PI * 2)
+      // Halo ring (paint, GPU-cheap): radius 22→34, opacity 0.35→0.75
+      if (map.getLayer("hovered-station-glow")) {
+        map.setPaintProperty("hovered-station-glow", "circle-radius", 22 + s * 12)
+        map.setPaintProperty("hovered-station-glow", "circle-opacity", 0.35 + s * 0.4)
+      }
+      // Icon pulse (layout, one feature): 1.3× at trough → 1.5× at peak.
+      // Never goes below the base layer's 1.3× hover scale so the static
+      // icon is always covered and the pulse reads as a single icon
+      // gently breathing rather than two stacked icons.
+      if (map.getLayer("hovered-station-icon")) {
+        map.setLayoutProperty("hovered-station-icon", "icon-size", 1.3 + s * 0.2)
+      }
+      frame = requestAnimationFrame(loop)
+    }
+    frame = requestAnimationFrame(loop)
+    return () => { if (frame != null) cancelAnimationFrame(frame) }
+  }, [hovered])
 
 
   // Fires on every cursor movement over the map.
@@ -1221,7 +3143,11 @@ export default function HikeMap() {
     if (hoveredRef.current === coordKey) return
     hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
-    setHovered({ lng, lat, coordKey })
+    // `feature.properties` on a GeoJSON Feature is `Record<string, unknown> | null`,
+    // but resolveStationIconImage takes `Record<string, unknown> | undefined`. Coerce
+    // a null properties bag to undefined so the call type-checks — the helper treats
+    // both the same way (no properties → "icon-unrated" default).
+    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties ?? undefined) })
     // Secret admin marker — ignore hover entirely (no cursor, no radius)
     if (feature.properties?.isSecretAdmin) {
       hoveredRef.current = null
@@ -1239,41 +3165,123 @@ export default function HikeMap() {
     setHovered(null)
   }, [])
 
-  // Long-press on touch: after 400ms hold on a station, show radius circles.
+  // Mobile two-tap behaviour (replaces old long-press):
+  //   1st tap on a station → show radius circles + pulse (like desktop hover).
+  //   2nd tap on the SAME station → open the modal.
+  //   Tap anywhere else / another station → move the hover there.
+  //   Desktop (non-touch) still opens the modal on a single click — this
+  //   handler is only wired to the touchstart event.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleTouchStart = useCallback((e: any) => {
-    const point = e.point // {x, y} pixel coords on the map canvas
+    // Stamp every touchstart immediately, even if we bail early — that way
+    // handleClick knows a real touchstart fired for this tap (relevant for
+    // the click-based fallback gate below).
+    touchStartFiredAt.current = Date.now()
+    const point = e.point
     const map = mapRef.current?.getMap()
     if (!map || !point) return
-
-    // Query which station (if any) is under the finger
-    const features = map.queryRenderedFeatures([point.x, point.y], {
-      layers: ["station-hit-area", "london-hit-area"],
-    })
+    // Include the larger hovered-station-hit layer so that when a station is
+    // already in the hover/preview state, the second tap's hit target is the
+    // generously-sized invisible circle — easier to land with a fingertip.
+    // CRITICAL: filter the layer list to ones that currently exist on the
+    // map. queryRenderedFeatures returns EMPTY for the whole call if ANY
+    // named layer is missing — and hovered-station-hit only exists while
+    // something is hovered. Before this fix, first-tap queries silently
+    // returned 0 features, making touchstart bail and never set
+    // longPressFired → first-tap opened the modal instead of previewing.
+    const TAP_SLOP = 25
+    const bbox: [[number, number], [number, number]] = [
+      [point.x - TAP_SLOP, point.y - TAP_SLOP],
+      [point.x + TAP_SLOP, point.y + TAP_SLOP],
+    ]
+    const candidateLayers = ["hovered-station-hit", "station-hit-area", "london-hit-area"]
+      .filter((id) => !!map.getLayer(id))
+    const features = candidateLayers.length
+      ? map.queryRenderedFeatures(bbox, { layers: candidateLayers })
+      : []
     if (!features.length) return
 
-    const feature = features[0]
-    longPressTimer.current = setTimeout(() => {
-      const coordKey = feature.properties?.coordKey as string
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const [lng, lat] = (feature.geometry as any).coordinates as [number, number]
-      hoveredRef.current = coordKey
-      setHovered({ lng, lat, coordKey })
-      setRadiusPos({ lng, lat })
-      longPressTimer.current = null
-      longPressFired.current = true
-    }, 400)
+    // Pick the best feature rather than just features[0]. With a 25px tap-
+    // slop bbox, multiple stations can be inside, and Mapbox doesn't always
+    // return them strictly in circle-sort-key order. We prefer features that
+    // have a specific type (origin / excluded / rated) over unrated ones so
+    // the pulse icon + modal routing reflect what the user most likely
+    // intended to tap. Ties are broken by the source order (features[i]).
+    //
+    // HIGHEST PRIORITY: features from hovered-station-hit (the enlarged
+    // preview-state layer). Without this boost, a station in preview state
+    // loses taps to any neighbouring highlight/verified station inside the
+    // 25px slop, because hovered-station-hit's feature carries only coordKey
+    // and scores 0 in the rating-based tie-break. Giving it a score of 10
+    // guarantees the enlarged hit area wins, regardless of what rating the
+    // station has — which is what makes the 64px "unmissable" zone on
+    // mobile actually unmissable.
+    const priority = (
+      p: Record<string, unknown> | undefined,
+      layerId: string | undefined,
+    ): number => {
+      if (layerId === "hovered-station-hit") return 10
+      if (!p) return 0
+      if (p.isOrigin) return 3
+      if (p.isExcluded) return 1
+      switch (p.rating) {
+        case "highlight":
+        case "verified":
+        case "unverified":
+        case "not-recommended":
+          return 2
+        default:
+          return 0
+      }
+    }
+    const feature = [...features].sort(
+      (a, b) =>
+        priority(b.properties as Record<string, unknown>, b.layer?.id)
+        - priority(a.properties as Record<string, unknown>, a.layer?.id),
+    )[0]
+    const coordKey = feature.properties?.coordKey as string
+    // Second-tap detection uses the dedicated touchFirstTapCoord ref (NOT
+    // hoveredRef) so a stray mousemove — e.g. iOS Safari's synthesised one
+    // that fires before click — can't pre-mark the station and cause the
+    // first real tap to skip the preview and open the modal.
+    // We also require the previous first-tap to be RECENT (within
+    // SECOND_TAP_WINDOW_MS). Anything older is treated as stale state and
+    // the current tap becomes a fresh first-tap — this prevents the "after
+    // N taps it breaks" edge case where the ref gets out of sync with user
+    // intent after distractions or close-then-navigate sequences.
+    const now = Date.now()
+    const isFreshSecondTap =
+      touchFirstTapCoord.current === coordKey &&
+      now - touchFirstTapAt.current < SECOND_TAP_WINDOW_MS
+    if (isFreshSecondTap) {
+      // Real second tap. Clear our flag and let the click fall through to
+      // open the modal.
+      touchFirstTapCoord.current = null
+      touchFirstTapAt.current = 0
+      return
+    }
+    // First tap (or switching to a different station). Show preview + suppress
+    // the click that follows this touchstart.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [lng, lat] = (feature.geometry as any).coordinates as [number, number]
+    touchFirstTapCoord.current = coordKey
+    touchFirstTapAt.current = now
+    hoveredRef.current = coordKey
+    // `feature.properties` on a GeoJSON Feature is `Record<string, unknown> | null`,
+    // but resolveStationIconImage takes `Record<string, unknown> | undefined`. Coerce
+    // a null properties bag to undefined so the call type-checks — the helper treats
+    // both the same way (no properties → "icon-unrated" default).
+    setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties ?? undefined) })
+    setRadiusPos({ lng, lat })
+    longPressFired.current = true
   }, [])
 
-  // Cancel the long-press if the finger lifts or moves (pan gesture)
+  // No-op on touchend/touchmove — we now persist the hover state between taps
+  // instead of clearing on lift, so the 2nd tap has something to detect.
   const handleTouchEndOrMove = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-    // Clear circles when finger lifts
-    hoveredRef.current = null
-    setHovered(null)
+    // Intentionally empty. Retained so existing prop wiring (<Map onTouchStart
+    // … onTouchEnd={handleTouchEndOrMove} />) doesn't break; can remove in a
+    // later refactor.
   }, [])
 
   // Dev only — right-clicking a station immediately excludes it without opening the modal.
@@ -1295,10 +3303,68 @@ export default function HikeMap() {
       longPressFired.current = false
       return
     }
-    const feature = e.features?.[0]
+    // Prefer a hovered-station-hit feature over anything else in the click
+    // event. e.features[0] is usually this layer (it renders last in the
+    // Mapbox stack), but on a mobile tap that lands just inside the enlarged
+    // 64px radius and also clips a neighbouring station's 16px hit area,
+    // Mapbox can occasionally return the neighbour first. Explicitly
+    // searching for the hovered layer guarantees the "station in preview
+    // state" always wins the tap and opens ITS modal — regardless of
+    // neighbour ratings.
+    let feature =
+      e.features?.find((f) => f.layer?.id === "hovered-station-hit")
+      ?? e.features?.[0]
     if (!feature) {
+      // Tap on empty map — clear BOTH two-tap layers so the next station
+      // tap starts fresh as a first tap, rather than a stale "second tap".
+      touchFirstTapCoord.current = null
+      touchFirstTapAt.current = 0
+      clickFirstTapCoord.current = null
+      clickFirstTapAt.current = 0
       setSelectedStation(null)
       return
+    }
+    // If the click landed on the enlarged hovered-hit layer, its feature only
+    // carries { coordKey }. Resolve to the real station feature (with name,
+    // journeys, etc.) so all downstream logic works normally.
+    if (feature.layer?.id === "hovered-station-hit") {
+      const hoveredCoordKey = feature.properties?.coordKey as string | undefined
+      // Special case: the London hexagon's hovered form has coordKey "london"
+      // (set by the source at the hexagon's origin coords). For a real-station
+      // primary we resolve to that station's feature and let the normal modal
+      // flow run. For a synthetic primary (e.g. City of London at Guildhall
+      // with no station feature) we short-circuit and open the modal here,
+      // using the primary's displayName — no "Station" suffix, no lookup.
+      if (hoveredCoordKey === "london") {
+        const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
+        if (primaryDef?.isSynthetic) {
+          const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
+          setSelectedStation({
+            name: primaryDef.displayName,
+            lng: originCoords.lng,
+            lat: originCoords.lat,
+            minutes: 0,
+            coordKey: primaryOrigin,
+            flickrCount: null,
+            screenX: pt?.x ?? window.innerWidth / 2,
+            screenY: pt?.y ?? window.innerHeight / 2,
+          })
+          hoveredRef.current = null
+          touchFirstTapCoord.current = null
+          touchFirstTapAt.current = 0
+          setHovered(null)
+          return
+        }
+        const primaryFeature = stations?.features.find(
+          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === primaryOrigin
+        )
+        if (primaryFeature) feature = primaryFeature as unknown as typeof feature
+      } else {
+        const real = stations?.features.find(
+          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === hoveredCoordKey
+        )
+        if (real) feature = real as unknown as typeof feature
+      }
     }
     // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France)
     if (feature.properties?.isSecretAdmin) {
@@ -1316,10 +3382,60 @@ export default function HikeMap() {
       }
       return
     }
-    // Primary origin — either the hexagon (isLondon) or the station icon itself
-    // (name matches primaryOrigin). Both open the welcome banner, never the modal.
-    const clickedName = feature.properties?.name as string | undefined
-    if (feature.properties?.isLondon || clickedName === primaryOrigin) {
+    // London hexagon + primary-station dots are both "active primary" clicks.
+    // Their behaviour is controlled by PRIMARY_CLICK_BEHAVIOUR:
+    //   "modal"  → open photo modal (simplified view: title + photos only).
+    //   "banner" → open the welcome banner instead.
+    // Flip the flag at the top of the file to switch modes; no other edits.
+    if (feature.properties?.isLondon) {
+      if (PRIMARY_CLICK_BEHAVIOUR === "banner") {
+        const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
+        setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
+        setBannerVisible(true)
+        return
+      }
+      // Synthetic primaries (e.g. City of London) have no real station feature
+      // to substitute — open the modal directly with the displayName as the
+      // title (the StationModal will suppress its " Station" suffix via the
+      // isSynthetic prop). Real-station primaries fall through to the feature-
+      // substitution path below and take the normal modal flow.
+      const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
+      if (primaryDef?.isSynthetic) {
+        const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
+        setSelectedStation({
+          name: primaryDef.displayName,
+          lng: originCoords.lng,
+          lat: originCoords.lat,
+          minutes: 0,
+          coordKey: primaryOrigin,
+          flickrCount: null,
+          screenX: pt?.x ?? window.innerWidth / 2,
+          screenY: pt?.y ?? window.innerHeight / 2,
+        })
+        return
+      }
+      const primaryFeature = stations?.features.find(
+        (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === primaryOrigin
+      )
+      if (primaryFeature) {
+        feature = primaryFeature as unknown as typeof feature
+      } else {
+        // Real-station primary with no feature match (shouldn't happen in
+        // practice — curated primaries always live in stations.json). Fall
+        // back to the banner so something visible opens.
+        const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
+        setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
+        setBannerVisible(true)
+        return
+      }
+    }
+    const clickedCoordKey = feature.properties?.coordKey as string | undefined
+    // Scope to the active primary's cluster — a tap on a London cluster
+    // member (e.g. Moorgate) when the active primary is Charing Cross is a
+    // normal station tap, not a primary-dot tap.
+    const isPrimaryDot =
+      !!clickedCoordKey && getActivePrimaryCoords(primaryOrigin).includes(clickedCoordKey)
+    if (isPrimaryDot && PRIMARY_CLICK_BEHAVIOUR === "banner") {
       const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
       setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
       setBannerVisible(true)
@@ -1329,6 +3445,7 @@ export default function HikeMap() {
     // Convert geo coords → screen pixels so the modal can animate from this point
     const screenPt = mapRef.current?.project([lng, lat])
     const coordKey = feature.properties?.coordKey as string
+
     // Look up journey data from the raw GeoJSON (Mapbox flattens nested props)
     const rawFeature = stations?.features.find(
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === coordKey
@@ -1336,6 +3453,15 @@ export default function HikeMap() {
     const journeys = rawFeature?.properties?.journeys as
       Record<string, JourneyInfo> | undefined
     setHovered(null)
+    // Reset ALL two-tap state on modal open. hoveredRef for mouse-hover
+    // correctness; touchFirstTapCoord and clickFirstTapCoord (plus their
+    // timestamps) so the next tap on any station is treated as a fresh
+    // first-tap rather than a lingering second-tap.
+    hoveredRef.current = null
+    touchFirstTapCoord.current = null
+    touchFirstTapAt.current = 0
+    clickFirstTapCoord.current = null
+    clickFirstTapAt.current = 0
     setSelectedStation({
       name: feature.properties?.name as string,
       lng,
@@ -1347,7 +3473,7 @@ export default function HikeMap() {
       screenY: screenPt?.y ?? window.innerHeight / 2,
       journeys,
     })
-  }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords])
+  }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords, isTouchDevice])
 
   // Called on initial map load and handles icon registration.
   // Also registers a style.load listener for theme swaps.
@@ -1376,9 +3502,16 @@ export default function HikeMap() {
     `
     document.head.appendChild(style)
 
-    // Replace the ⓘ icon with a © character
+    // Replace the ⓘ icon with a © character.
     const attribBtn = document.querySelector('.mapboxgl-ctrl-attrib-button')
     if (attribBtn) attribBtn.textContent = '©'
+
+    // Move the attribution control from the default bottom-right corner to
+    // the bottom-left, sitting just after the Mapbox logo. Frees the bottom-
+    // right slot for the mobile help button (? icon).
+    const attribCtrl = document.querySelector('.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib')
+    const bottomLeftCtrl = document.querySelector('.mapboxgl-ctrl-bottom-left')
+    if (attribCtrl && bottomLeftCtrl) bottomLeftCtrl.appendChild(attribCtrl)
 
     // Register custom icon images for station markers.
     registerIcons(map)
@@ -1450,19 +3583,41 @@ export default function HikeMap() {
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
         primaryOrigin={primaryOrigin}
-        primaryOriginGroups={PRIMARY_ORIGIN_GROUPS}
+        // Admin-only origins (e.g. Charing Cross) are visible in the dropdown
+        // only when devExcludeActive is on.
+        primaryOriginGroups={devExcludeActive ? PRIMARY_ORIGIN_GROUPS_ALL : PRIMARY_ORIGIN_GROUPS_PUBLIC}
         onPrimaryOriginChange={setPrimaryOrigin}
-        originDisplayName={(name) => ORIGIN_DISPLAY_NAMES[name] ?? name}
-        originMenuName={(name) => ORIGIN_MENU_NAMES[name] ?? name}
+        // Both callbacks receive a coord key now. ALL_ORIGINS merges primary+friend
+        // so the filter-panel can label either role with one callback.
+        originDisplayName={(key) => ALL_ORIGINS[key]?.displayName ?? key}
+        originMobileDisplayName={(key) => ALL_ORIGINS[key]?.mobileDisplayName}
+        originMenuName={(key) => ALL_ORIGINS[key]?.menuName ?? key}
+        // Phase 2: admin-only search / custom primary support.
+        searchableStations={searchableStations}
+        recentPrimaries={recentCustomPrimaries}
+        onCustomPrimarySelect={selectCustomPrimary}
+        coordToName={coordToName}
         friendOrigin={friendOrigin}
-        friendOrigins={FRIEND_ORIGINS}
+        friendOrigins={FRIEND_ORIGIN_KEYS}
         onFriendOriginChange={setFriendOrigin}
         friendMaxMinutes={friendMaxMinutes}
         onFriendMaxMinutesChange={setFriendMaxMinutes}
-        onActivateFriend={() => setFriendOrigin(FRIEND_ORIGINS[0])}
+        onActivateFriend={() => setFriendOrigin(FRIEND_ORIGIN_KEYS[0])}
         onDeactivateFriend={() => setFriendOrigin(null)}
         primaryDirectOnly={primaryDirectOnly}
-        onPrimaryDirectOnlyChange={setPrimaryDirectOnly}
+        // Toggling "Direct" clears "Indirect" (and vice-versa below) — they're
+        // mutually exclusive. Without this, a user could leave both ticked
+        // and see zero stations rendered, which reads as a bug rather than
+        // a configuration choice.
+        onPrimaryDirectOnlyChange={(v) => {
+          setPrimaryDirectOnly(v)
+          if (v) setPrimaryIndirectOnly(false)
+        }}
+        primaryIndirectOnly={primaryIndirectOnly}
+        onPrimaryIndirectOnlyChange={(v) => {
+          setPrimaryIndirectOnly(v)
+          if (v) setPrimaryDirectOnly(false)
+        }}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
       />
@@ -1479,11 +3634,30 @@ export default function HikeMap() {
         originY={bannerOrigin?.y}
       />
 
+      {/* Help button — bottom-right on mobile (attribution © is moved to
+          the bottom-left to free this slot; avoids overlapping with the
+          filter menu in the top-left). Top-right on desktop as the
+          rightmost of the pair (theme toggle is shifted to right-14 in
+          page.tsx). Clicking re-opens the welcome banner, animating out
+          from the button's own position. */}
+      <div className="absolute bottom-4 right-4 md:bottom-auto md:top-4 z-50">
+        <HelpButton
+          onClick={(origin) => {
+            // Animate from the button itself (passed through from the click),
+            // NOT from the London hexagon — matches the visual expectation
+            // that the banner "emerges" from whatever summoned it.
+            setBannerOrigin(origin)
+            setBannerVisible(true)
+          }}
+        />
+      </div>
+
+
       {/* Dev mode toggle + zoom badge — only rendered in local development.
           process.env.NODE_ENV is inlined at build time by Next.js, so this
           entire block is stripped from production bundles (dead-code elimination). */}
       {process.env.NODE_ENV === "development" && (
-        <div className="absolute bottom-8 left-2 z-10 flex items-center gap-2">
+        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
           <button
             onClick={() => {
               const next = !devExcludeActive
@@ -1535,7 +3709,7 @@ export default function HikeMap() {
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
-        interactiveLayerIds={["station-hit-area", "london-hit-area", "secret-admin-hit"]}
+        interactiveLayerIds={["hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit"]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
@@ -1692,69 +3866,13 @@ export default function HikeMap() {
           </Source>
         )}
 
-        {/* London origin marker — hexagon at Farringdon, opens welcome banner on click */}
-        <Source
-          id="london-marker"
-          type="geojson"
-          data={{
-            type: "FeatureCollection",
-            features: [{
-              type: "Feature",
-              geometry: { type: "Point", coordinates: [originCoords.lng, originCoords.lat] },
-              properties: { isLondon: true, coordKey: "london" },
-            }],
-          }}
-        >
-          {mapReady && (
-            <Layer
-              id="london-icon"
-              type="symbol"
-              layout={{
-                "icon-image": "icon-london",
-                "icon-allow-overlap": true,
-                "icon-ignore-placement": true,
-                "icon-size": hovered?.coordKey === "london" ? 1.3 : 1,
-              }}
-            />
-          )}
-          {/* Label — always visible beneath the hexagon, showing the current
-              primary origin name plus a "time to escape" sublabel. Uses the
-              short display name if one is defined in ORIGIN_DISPLAY_NAMES. */}
-          {mapReady && (
-            <Layer
-              id="london-label"
-              type="symbol"
-              layout={{
-                "text-field": [
-                  "format",
-                  ORIGIN_DISPLAY_NAMES[primaryOrigin] ?? primaryOrigin, { "font-scale": 1 },
-                  "\n", {},
-                  "time to escape", { "font-scale": 0.8 },
-                ],
-                "text-size": 11,
-                "text-offset": [0, 1.4],
-                "text-anchor": "top",
-                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-                "text-allow-overlap": true,
-              }}
-              paint={{
-                "text-color": labelColor,
-                "text-halo-color": haloColor,
-                "text-halo-width": 1.5,
-              }}
-            />
-          )}
-          {/* Invisible hit area for click detection */}
-          <Layer
-            id="london-hit-area"
-            type="circle"
-            paint={{
-              "circle-radius": 16,
-              "circle-color": "#000000",
-              "circle-opacity": 0.01,
-            }}
-          />
-        </Source>
+        {/* The London origin marker (the hexagon at the home station)
+            used to live here — before the stations Source. That put
+            it BENEATH every station icon, so whenever a custom primary
+            was picked (Kentish Town, Farringdon, …) the station's own
+            rating icon overlapped the hexagon at the same coord and
+            hid it. Moved below the stations Source so it always
+            renders on top of station icons. */}
 
         {/* Secret admin toggle — invisible tap target at Boulogne-Tintelleries
             (France, across the Channel). Same pattern as the London hit area but
@@ -2032,16 +4150,224 @@ export default function HikeMap() {
           </Source>
         )}
 
+        {/* Home-station marker — the hexagon + label sitting at the
+            currently-selected primary origin coord. Rendered AFTER the
+            stations Source so the hexagon draws on top of any station
+            icon that might be at the same coord (common for custom
+            primaries picked via the search: the hexagon sits exactly
+            where that station's rating dot is). Kept BEFORE the
+            hovered-station source so the pulse/glow animation on
+            hover still draws over the hexagon when the user mouses
+            into it. */}
+        <Source
+          id="london-marker"
+          type="geojson"
+          data={{
+            type: "FeatureCollection",
+            features: [{
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [originCoords.lng, originCoords.lat] },
+              properties: { isLondon: true, coordKey: "london" },
+            }],
+          }}
+        >
+          {mapReady && (
+            <Layer
+              id="london-icon"
+              type="symbol"
+              layout={{
+                "icon-image": "icon-london",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-size": hovered?.coordKey === "london" ? 1.3 : 1,
+              }}
+            />
+          )}
+          {/* Label — always visible beneath the hexagon, showing the current
+              primary origin name plus a "time to escape" sublabel. Falls back to
+              canonicalName if displayName isn't set, and finally to the raw coord key. */}
+          {mapReady && (
+            <Layer
+              id="london-label"
+              type="symbol"
+              layout={{
+                "text-field": [
+                  "format",
+                  // Map label uses the full displayName (even on mobile).
+                  // The mobileDisplayName "super-shorthand" is intentionally
+                  // only applied to the filter-panel dropdown trigger where
+                  // horizontal space is tight — the map has more room and
+                  // users benefit from seeing the full name of their origin.
+                  // For a custom primary (NR station picked via the search),
+                  // PRIMARY_ORIGINS has no entry → fall back to coordToName
+                  // (the station's own name from stations.json).
+                  PRIMARY_ORIGINS[primaryOrigin]?.displayName
+                    ?? PRIMARY_ORIGINS[primaryOrigin]?.canonicalName
+                    ?? coordToName[primaryOrigin]
+                    ?? primaryOrigin, { "font-scale": 1 },
+                  "\n", {},
+                  "time to escape", { "font-scale": 0.8 },
+                ],
+                "text-size": 11,
+                "text-offset": [0, 1.4],
+                "text-anchor": "top",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+              }}
+              paint={{
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
+                "text-halo-width": 1.5,
+              }}
+            />
+          )}
+          {/* Invisible hit area for click detection */}
+          <Layer
+            id="london-hit-area"
+            type="circle"
+            paint={{
+              "circle-radius": 16,
+              "circle-color": "#000000",
+              "circle-opacity": 0.01,
+            }}
+          />
+        </Source>
+
+        {/* Hovered-station decorations (mobile two-tap "preview" state).
+            - A soft green glow that animates via setPaintProperty (see the
+              useEffect above) — visual indicator that the station is armed for
+              the next tap to open.
+            - A larger, top-layer hit area so the second tap lands reliably
+              even if the user's finger drifts slightly or the station sits
+              under a cluster of neighbours. Rendered AFTER all other station
+              layers, so it's on top of them in the tap-priority order. */}
+        {hovered && (
+          <Source
+            id="hovered-station"
+            type="geojson"
+            data={{
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [hovered.lng, hovered.lat] },
+              // Carry the coordKey through so tap handlers (which read
+              // feature.properties.coordKey) see the hovered-station-hit as
+              // the hovered station and open the right modal on second tap.
+              // iconImage is passed through as a feature property so the
+              // hovered-station-icon Layer can read it via ["get", "iconImage"]
+              // — more robust than binding icon-image directly to hovered.iconImage
+              // via the layout prop, which was occasionally not picking up the
+              // change when only hovered.iconImage differed between renders.
+              properties: { coordKey: hovered.coordKey, iconImage: hovered.iconImage },
+            }}
+          >
+            {/* beforeId pushes this layer BENEATH the station icons so the
+                halo sits outside/around the icon rather than tinting the
+                icon itself from on top. station-dots always exists (even
+                when its filter returns no features) so this reference is
+                stable across admin/non-admin modes. */}
+            <Layer
+              id="hovered-station-glow"
+              type="circle"
+              beforeId="station-dots"
+              paint={{
+                "circle-radius": 23,            // overwritten by the rAF loop
+                "circle-color": "#22c55e",      // Tailwind green-500
+                "circle-blur": 2,               // softer diffusion → reads as a glow, not a dot
+                "circle-opacity": 0.3,          // overwritten by the rAF loop
+                "circle-pitch-alignment": "map",
+              }}
+            />
+            {/* Pulsing icon overlay for the hovered station. Renders the same
+                icon image as the base layer (resolved to hovered.iconImage at
+                set-hover time) in a dedicated single-feature layer so we can
+                animate its icon-size at 60fps without triggering Mapbox's
+                symbol-layout on every station. The pulse ALWAYS stays ≥ 1.3×
+                so it fully covers the static base icon underneath (which also
+                renders the hovered station at 1.3×) — no peek-through. */}
+            <Layer
+              id="hovered-station-icon"
+              type="symbol"
+              layout={{
+                // Read the icon image from the source feature's properties via
+                // expression. This gives us two benefits:
+                //   1. When hovered changes (different station, different icon),
+                //      react-map-gl's source.setData triggers a re-evaluation —
+                //      Mapbox is VERY reliable about that, less so about
+                //      detecting layout-prop scalar changes.
+                //   2. Layer spec stays stable across renders, so Mapbox never
+                //      sees a "removed/re-added layer" scenario that could
+                //      leave the icon showing a stale image for a frame.
+                "icon-image": ["coalesce", ["get", "iconImage"], "icon-unrated"],
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-size": 1.3,               // overwritten by the rAF loop
+              }}
+            />
+            <Layer
+              id="hovered-station-hit"
+              type="circle"
+              paint={{
+                // Desktop: ~2x the default 16px station-hit-area radius.
+                // Mobile: 4x the default (64px) — once a station is already
+                // in the pulsing "preview" state, we want a huge, unmissable
+                // tap target so the second tap reliably opens the modal
+                // even if the finger drifts beyond the visible icon. This
+                // layer is rendered LAST in the Mapbox layer stack, which
+                // combined with the handleTouchStart/handleClick feature
+                // preference (see below) means the hovered station always
+                // wins taps within this enlarged zone — regardless of
+                // whether a neighbouring station is highlight/verified/etc.
+                "circle-radius": isMobile ? 64 : 32,
+                "circle-color": "transparent",
+                "circle-opacity": 0.01,
+              }}
+            />
+          </Source>
+        )}
+
         {/* Station modal — opens when a dot is clicked, dismissed by clicking overlay.
             Uses displayStation (ref-backed) so the component stays mounted during the
             exit animation even after selectedStation is set to null. */}
         {displayStation && (
           <StationModal
             open={!!selectedStation}
-            onClose={() => setSelectedStation(null)}
+            onClose={() => {
+              setSelectedStation(null)
+              // Reset ALL two-tap state on ANY modal close (X, backdrop,
+              // Escape). Both touch-based (touchstart) AND click-based
+              // layers need clearing so the next tap on any station is
+              // treated as a fresh first-tap. Without this, a closing path
+              // that skips handleClick could leave a coord ref pointing at
+              // the just-opened station, turning the next tap into a stale
+              // "second tap".
+              touchFirstTapCoord.current = null
+              touchFirstTapAt.current = 0
+              clickFirstTapCoord.current = null
+              clickFirstTapAt.current = 0
+              hoveredRef.current = null
+              longPressFired.current = false
+            }}
             lat={displayStation.lat}
             lng={displayStation.lng}
-            stationName={displayStation.name}
+            // When the click is on the PRIMARY station itself AND that
+            // primary has a cluster (KX, Waterloo, Stratford, or the
+            // London synthetic), show the cluster's menuName as the
+            // overlay title — "Kings Cross, St Pancras, & Euston" /
+            // "Waterloo & Waterloo East" / "Stratford & Stratford
+            // International" / "Central London" — rather than just the
+            // shorthand displayName. The map label stays shorthand via
+            // displayName on the hexagon's own text-field; this affects
+            // the modal/overlay only.
+            //
+            // No " Station" suffix in any of these cases (handled via
+            // the isSynthetic prop below — set true for both true
+            // synthetics AND primaries-with-clusters, so the title reads
+            // as a place, not a single station).
+            stationName={
+              displayStation.coordKey === primaryOrigin &&
+              !!PRIMARY_ORIGIN_CLUSTER[primaryOrigin]
+                ? (PRIMARY_ORIGINS[primaryOrigin]?.menuName ?? displayStation.name)
+                : displayStation.name
+            }
             minutes={displayStation.minutes}
             flickrCount={displayStation.flickrCount}
             originX={displayStation.screenX}
@@ -2051,8 +4377,8 @@ export default function HikeMap() {
             onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
             onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}
             isExcluded={excludedStations.has(displayStation.coordKey)}
-            isOrigin={originStations.has(displayStation.name.toLowerCase())}
-            onToggleOrigin={() => handleToggleOrigin(displayStation.name)}
+            isOrigin={originStations.has(displayStation.coordKey)}
+            onToggleOrigin={() => handleToggleOrigin(displayStation.coordKey, displayStation.name)}
             approvedPhotos={curations[displayStation.coordKey]?.approved ?? []}
             rejectedIds={new Set(curations[displayStation.coordKey]?.rejected ?? [])}
             onApprovePhoto={(photo) => handleApprovePhoto(displayStation.coordKey, displayStation.name, photo)}
@@ -2062,15 +4388,157 @@ export default function HikeMap() {
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
-            journeys={displayStation.journeys}
-            friendOrigin={friendOrigin}
-            primaryOrigin={primaryOrigin}
-            isFriendOrigin={!!friendOrigin && displayStation.name === friendOrigin}
+            // StationModal's internal API is name-based (it calls getEffectiveJourney
+            // which expects a name, and prints "X minutes from <name>"). Translate
+            // coord-keyed state → names at the boundary. journeys are re-keyed too.
+            journeys={modalJourneys}
+            friendOrigin={friendOrigin ? (ALL_ORIGINS[friendOrigin]?.canonicalName ?? null) : null}
+            // For a curated primary (Farringdon, KX, CHX, …) this is the
+            // canonicalName which matches a key in modalJourneys. For a
+            // CUSTOM primary picked via the dropdown search (e.g. Kentish
+            // Town) there's no PRIMARY_ORIGINS entry and no pre-fetched
+            // journey, so we pass the station's own name from coordToName.
+            // The modal's journey lookup won't find a match and will fall
+            // through to the "from {primaryOrigin}" fallback copy.
+            primaryOrigin={
+              PRIMARY_ORIGINS[primaryOrigin]?.canonicalName
+                ?? coordToName[primaryOrigin]
+                ?? primaryOrigin
+            }
+            isFriendOrigin={!!friendOrigin && displayStation.coordKey === friendOrigin}
+            // Active-primary coords (the primary itself + its cluster members)
+            // get the same stripped-down modal as friend stations — title +
+            // photos only, no journey info or Hike button. Scoped to the
+            // ACTIVE primary so a click on, say, Moorgate while primary is
+            // Charing Cross opens the normal modal (Moorgate is only a
+            // cluster member of the London synthetic primary).
+            isPrimaryOrigin={getActivePrimaryCoords(primaryOrigin).includes(displayStation.coordKey)}
+            // Suppress the " Station" suffix in two cases:
+            //   1. Synthetic primaries (City of London at Guildhall) — the
+            //      name is a place, not a station.
+            //   2. Clicks on a clustered-primary station (KX, Waterloo) —
+            //      the title is the cluster's menuName, which already
+            //      enumerates the stations, so " Station" reads oddly.
+            isSynthetic={
+              !!PRIMARY_ORIGINS[displayStation.coordKey]?.isSynthetic ||
+              (displayStation.coordKey === primaryOrigin && !!PRIMARY_ORIGIN_CLUSTER[primaryOrigin])
+            }
           />
         )}
         </>}
 
       </Map>
+
+      {/* Home-station transition spinner.
+          Renders a centered pill with a spinner + label whenever the
+          useTransition started by picking a new primary origin is
+          still in flight. Positioned over the viewport centre — the
+          map is always London-focused so "centred over the viewport"
+          is effectively "over London" for this app.
+
+          Why absolute/pointer-events-none:
+            - absolute with inset-0 in a relative-positioned parent
+              gives us a full-page overlay without affecting layout.
+            - pointer-events-none on the outer wrapper means clicks
+              pass straight through to the map/FilterPanel behind —
+              no accidental interaction blocks.
+            - The inner pill stays visible because it sits at a high
+              z-index and uses its own background.
+
+          Animation polish:
+            - opacity transition gives it a gentle fade-in/out rather
+              than a sudden pop.
+            - animate-spin is Tailwind's stock 1s linear rotation,
+              applied to a classic CSS ring (border-4 transparent on
+              one side + coloured on the rest). */}
+      <div
+        aria-hidden={notificationPhase === "idle"}
+        className={cn(
+          "pointer-events-none absolute inset-0 z-[50] flex items-center justify-center",
+          // Bumped from 200ms → 700ms so the post-success fade
+          // lingers long enough to register as "that worked, moving
+          // on" rather than feeling abrupt. Fade-IN uses the same
+          // duration but the loading state typically commits faster
+          // than that, so the in-fade mostly overlaps with the
+          // spinner being visible — a non-issue.
+          "transition-opacity duration-700",
+          notificationPhase !== "idle" ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <div className="flex items-center gap-3 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
+          {notificationPhase !== "loading" ? (
+            /* Tick. Rendered whenever we're NOT actively loading —
+                i.e. during "success" AND "idle". Using "not loading"
+                rather than "success only" matters during the fade-out:
+                phase flips success→idle INSTANTLY, but the pill's
+                opacity takes 200ms to animate to 0. If the icon
+                swapped back to the spinner the moment phase became
+                "idle", the user would see the checkmark briefly
+                replaced by a spinner as the pill faded away. By
+                keeping the tick during "idle", it stays visible
+                throughout the fade-out. During the INITIAL idle
+                (before any interaction) the outer opacity-0 hides
+                the pill anyway, so there's no visual cost.
+
+                Same 20px footprint as the spinner so the pill
+                doesn't reflow when the icon swaps. Inline SVG
+                (rather than pulling in an icon lib for a single
+                glyph) — path is a classic Heroicons checkmark. */
+            <svg
+              aria-label="Done"
+              // text-primary maps to CSS --primary, the same token
+              // used for Heavenly (icon-highlight) and Good
+              // (icon-verified) map icons via colors.primary.
+              // Keeping success messaging on-brand instead of a
+              // generic green.
+              className="h-5 w-5 text-primary"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+              />
+            </svg>
+          ) : (
+            <span
+              aria-label="Loading"
+              className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary"
+            />
+          )}
+          {/* Label resolution, most-specific first:
+                1. menuName — used when the primary has a cluster
+                   (KX→"Kings Cross, St Pancras, & Euston",
+                   Waterloo→"Waterloo & Waterloo East", synthetic→
+                   "Any London terminus"). Reads more accurately than
+                   the short displayName because picking the cluster
+                   primary actually fetches trains from ALL its
+                   member stations.
+                2. displayName — short curated label ("Charing
+                   Cross", "Victoria") for primaries without
+                   clusters.
+                3. coordToName[coord] — the OSM station name, covers
+                   seeded/searched picks that aren't in PRIMARY_ORIGINS
+                   at all (Stratford, Farringdon, Kentish Town, …).
+                4. "new home" — generic fallback. Shouldn't happen in
+                   practice; the outer opacity-0 hides the pill in
+                   the idle phase anyway. */}
+          <span className="text-sm font-medium">
+            Looking up trains from {pendingPrimaryCoord
+              ? (
+                  PRIMARY_ORIGIN_CLUSTER[pendingPrimaryCoord]
+                    ? (PRIMARY_ORIGINS[pendingPrimaryCoord]?.menuName
+                        ?? PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
+                        ?? pendingPrimaryCoord)
+                    : (PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
+                        ?? coordToName[pendingPrimaryCoord]
+                        ?? "new home")
+                )
+              : "new home"}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

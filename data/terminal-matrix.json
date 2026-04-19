@@ -143,6 +143,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 17,
+      "polyline": "grlyHzga@[NuDrLcAiCrJoMhCoEf@oAp@mCNuBNyFFgG]seASiRK}CyCkk@oCmd@mEo_AiA}Q_@qBwEyQyC}K_AgE_BiKe@aEc@}Fk@eKSwT?uPR}UCqDUcNUsJQoOBaCAPRiDVyBnDsVnDgTtAmNd@eFCAoA`[Nb@",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Kings Cross": {
@@ -286,6 +298,18 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 11,
+      "polyline": "oroyHvdWSB~DdGx@}@kB_Ga@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTpDoTe@Wn@BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }
@@ -435,6 +459,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 11,
+      "polyline": "aloyHpoWa@iBSYEBXn@x@}@kB_Ga@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTpDoTe@Wn@BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Euston": {
@@ -578,6 +614,18 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 13,
+      "polyline": "{boyHjaYnB]Iq@PQeMab@W_AKo@o@sHq@yKcAkN[_FgAuXWcFkAySaByUOoDCgABcCNaBNq@jEsObBkGpAyFzIuf@jBkLzAuIZaAj@cAn@m@d@[dAk@hAe@bB_ApHFvES~Ea@nB?h@DnDl@xEj@zAf@Iz@bBlBNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }
@@ -727,6 +775,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 26,
+      "polyline": "_thyHrc[sCk@gCkEClBuc@cByM[iEBiDNmHrAgCPcCDaBIuB]}Ak@sDoBuAg@qCk@eBU}BKw@AqBNeG`AgFt@mCXsADgACiBQcB[eBm@oDkBwA{@gBmAuBoBmBoB}EsFwCaEkA{BuAuDsByGuCiIoM{b@a@oBQqAsByTSFfE|Lp@s@aAaDa@{Aq@oDYeBEkDDmCd@mDh@iCp@sBnGwMjToa@~I_OpD{GdBwA~BiBjBaB^c@jAaBj@o@P[^mARsAHw@Bs@GmAcBaQMsIFkDFcBPyBr@gGhBaL|BeMv@gFi@Yn@BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Waterloo": {
@@ -870,6 +930,18 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 19,
+      "polyline": "cijyHv`UDm@PaAAWZQBA_AwIq@}Gk@gFI}AAcBPaKJoHJ_IPaF_@qYGcGKqB_@eEUoAcBcGYkB_ByNC@n@jAN]c@m@{FeHkAi@wCo@qAO{AKyGm@uACi@JsC|AeAx@yArAuC~CsAbB{CzB_Ab@]?cKsCsAg@gAg@gCsAwBq@Gj@`B|BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }
@@ -1019,6 +1091,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 7,
+      "polyline": "yamyHryNTkBEKLOJJNg@b@^@APlNgCvYq@fGYfB]Qf@ANb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Marylebone": {
@@ -1162,6 +1246,18 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 21,
+      "polyline": "a~myHl__@XILIi@gFC_@J_@YgCCBEa@BAm@aGEBEe@FCAIPECW@UQcBMq@Cq@[qCJEC[n@YCG|AkDHC}CoZW_J[_Iy@uIwA{NCcARcF@iAMoBMmAc@wCwEuWa@mCk@oEWsAqDiOaEaPkLu`@aA}Ca@cBYyAM}AGmB?uBH{A\\aCh@gCd@{ATm@vBkElCeGzSs`@tJ{OhDsGX]bCgB|EcEx@_Af@u@\\w@b@cBR_BJmBEkA{A_OOkK?{BJeCP{B|CiTpDoTe@Wn@BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }
@@ -1311,6 +1407,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 23,
+      "polyline": "a`kyHliWvAeDPIL{AWQQGu@i@MSGC@[F[ABxAeA@GkDgCoBeBo@u@sAqBg@}@eAcCq@uBs@gCk@qCm@}DYqBWcCg@eHKoCi@gXy@gYMwJq@mWy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaD[aC_@mAg@eAu@cAw@u@{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CkChZq@fGYfB]Qf@ANb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "London Bridge": {
@@ -1454,6 +1562,18 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 10,
+      "polyline": "sqjyHz{OEJFJBCAl@J??RsAzLCF}AsB_EkEq@]cEgAi@?sB\\k@@oG}Ao@Ak@L{@j@}MlKkDtBa@Lc@GwM}D}H}CKx@`B|BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }
@@ -1603,6 +1723,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 15,
+      "polyline": "yzkyHjgS`@AUgLe@eQy@uLo@mFOuBCo@@wAHeBPoA^eBx@gDhA_EZaBPkB`@}Kh@oHv@kI^mDhA{MVwFH_C@eDE_DSaD[aC_@mAg@eAu@cAw@u@{@e@eA_@wAKyAHkBb@kBp@o@`@kB|AcAvA_A`BcBzDa@bAeB~Fq@jC{B`La@~CkChZq@fGYfB]Qf@ANb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Fenchurch Street": {
@@ -1749,6 +1881,18 @@
           "2026-07-25"
         ]
       }
+    },
+    "Moorgate": {
+      "minutes": 12,
+      "polyline": "i{kyHrkNc@d@qAdAeA}C{AuDMKa@aBU{@DEGIABAEMu@CKWPEc@Ok@Uk@UmAMBi@XAAe@h@mAlB_AfB{BxFWx@iB`HwBxKi@zDi@fHq@nHq@~IaAnGa@Sf@ANb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
     }
   },
   "Cannon Street": {
@@ -1892,6 +2036,176 @@
         "isConsistent": true,
         "dates": [
           "2026-04-18",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Moorgate": {
+      "minutes": 9,
+      "polyline": "yxkyHdvPGJSIYEIEF_@QG`BmOCAC@}K|DACg@n@{CzB_Ab@]?cKsCsAg@gAg@gCsAwBq@Gj@`B|BNb@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    }
+  },
+  "Moorgate": {
+    "Paddington": {
+      "minutes": 19,
+      "polyline": "admyHrkPOc@xA}ZEAiBfR_@bDiEtWyC|SUhDCh@@QCnDVnRVxKPzLCjEOnQ?lPRfTj@hKd@~Ff@hE~AlKtA`GdErO~CfMTxAdAdQxE|bAbC~`@`Dbn@JjGNfOX|dAOpIQxDQ`Au@nCw@zAaCzDuIhLrAjD~CmMZO",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Kings Cross": {
+      "minutes": 12,
+      "polyline": "admyHrkPOc@g@@\\PqDnT}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBxAnEg@h@sEwFRC",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "St Pancras": {
+      "minutes": 11,
+      "polyline": "admyHrkPOc@g@@\\PqDnT}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBxAnEg@h@m@a@DCRX`@hB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Euston": {
+      "minutes": 14,
+      "polyline": "admyHrkPOc@aB}BJy@aCaAcDq@uHcA}@DoEl@}DXqGLwA^oEnBa@V]`@c@~@a@bBeBvJeU`uAm@hEA`Ab@`TnCjkArCvZ`@lCPr@pM`c@FIU|@oB\\",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Victoria": {
+      "minutes": 27,
+      "polyline": "admyHrkPOc@o@Cd@VXgBp@gGtCc\\`@iCpB}Jp@kCdB_GbBcE|@iBpAqBdAgAzAgAhAe@~Bq@hAOl@AvAJdA^z@d@bA`A~@zAh@xA\\pBPxBJdD@jCA`BUvFK~BiAzMkAnLg@pGUnEYtHQjB[`BeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWLvJx@fYh@fXJnCf@dHVbCv@rFd@`Cj@fCr@dCZz@dAbCpAxBh@t@n@t@nBdBxEjDzBlAvAj@~KbClEz@rAj@tAdAx@fAb@`Al@jB|BfIzBpJHjA?`BEjFF`LHfATtAlA~ETz@hAzCpB|El@fBf@rBb@bDp@vHThAt@zBl@hCVlBFpB@j@NArBgC?@DODA_@pBGj@DRXB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Waterloo": {
+      "minutes": 19,
+      "polyline": "admyHrkPOc@cBmBH{@vBp@fCrAfAf@rAf@pKtC\\Ep@_@zC{BrAcBtC_DxAsAdAy@rC}Ah@KtABxGl@zAJpANvCn@jAh@zFdH`@l@Q`@a@sAE@hBbPX`BbB`GRvA\\nEJpEJtJTnQShGQlOQ~ICzCF|A`@bEZhCpAvMPxAJGk@\\AFDDU~ACX",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Liverpool Street": {
+      "minutes": 9,
+      "polyline": "admyHrkPOc@o@Ch@XbA}G|@iLx@mJRsCMECgNA@c@]Od@KKMNDJUjB",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Marylebone": {
+      "minutes": 22,
+      "polyline": "admyHrkPOc@g@@\\PqDnT}ChTY|DCbA?zBNjKzA~NDjAKlBS~Ac@bB]v@{@lAm@n@uEzDcCfBa@j@aDdGuJzO{Sr`@mCdGwBjEq@lB_@zAg@zCO~AEjBBjBJfBPpA\\bBf@hBzAvE|Jd]`E`P|DpP`@nCTjBnArHhDnRj@bENnBB`ACvAQtDBbAvAzNx@tI^fJRvHxCxYLGqBlEBFo@XBZKD\\zC@f@Lp@PbB@n@@FDAD`@E@h@lFBZDABXC@SFXfCK^ThCV|BMHYH",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Charing Cross": {
+      "minutes": 22,
+      "polyline": "admyHrkPOc@xA}ZEAiBfR_@bDiEtWyC|SUhDCh@@QCnDVnRVxKPzLCjEOnQ?lPRfTj@hKd@~Ff@hE~AlKtA`GdErO~CfMTxAdAdQ`@fI@?{@wKAC`Dk@|DeAbEoA|FeCfBy@t@KzC?pAAfASx@c@PQj@iAtEgLCEz@RC@A@GOKNl@zAv@iBDY|AuD",
+      "vehicleType": "HEAVY_RAIL",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "London Bridge": {
+      "minutes": 11,
+      "polyline": "admyHrkPOc@cBmBH{@vBp@fCrAfAf@rAf@pKtC\\Ep@_@zC{BrAcBtC_DxAsAdAy@rC}Ah@KtABxGl@zAJpANvCn@jAh@zFdH`@l@Q`@YaOABdAj@Ha@D?HY",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Blackfriars": {
+      "minutes": 15,
+      "polyline": "admyHrkPOc@o@Cd@VXgBp@gGtCc\\`@iCpB}Jp@kCdB_GbBcE|@iBpAqBdAgAzAgAhAe@~Bq@hAOl@AvAJdA^z@d@bA`A~@zAh@xA\\pBPxBJdD@jCA`BUvFK~BiAzMkAnLg@pGUnEYtHQjB[`BeBnGm@dCY`BOzACxA?l@HdBV|B`@nDx@tLp@lWF`EM?",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Fenchurch Street": {
+      "minutes": 13,
+      "polyline": "admyHrkPOc@o@Ch@XbA}G|@iLx@mJVcDn@iElByJhBaHl@iBpB_FfB_DX_@f@k@HX^o@LC\\fBNXLb@Db@VQJf@F^@CFHEDj@|BJ^LJxBrFf@~AtAiA^a@",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
+          "2026-07-25"
+        ]
+      }
+    },
+    "Cannon Street": {
+      "minutes": 11,
+      "polyline": "admyHrkPOc@cBmBH{@vBp@fCrAfAf@rAf@pKtC\\Ep@_@zC{B`@i@HRzKsEBAB@aBlOPFG^VJZFB@FK",
+      "vehicleType": "SUBWAY",
+      "consistencyCheck": {
+        "isConsistent": true,
+        "dates": [
+          "2026-04-25",
           "2026-07-25"
         ]
       }

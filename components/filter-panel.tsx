@@ -1,20 +1,22 @@
 "use client"
 
-import { IconTrainFilled, IconChevronDown, IconPlus } from "@tabler/icons-react"
+import { IconTrainFilled, IconChevronDown, IconPlus, IconX } from "@tabler/icons-react"
 import SearchBar from "@/components/search-bar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuCheckboxItem,
+  DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { Fragment, useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useMemo, useRef, useState } from "react"
 
 // Wraps any inline content with a tooltip that works on both desktop (hover)
 // and touchscreens (tap toggles open/closed). Uses controlled `open` state
@@ -198,8 +200,31 @@ type FilterPanelProps = {
   onPrimaryOriginChange: (origin: string) => void
   /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
   originDisplayName: (name: string) => string
+  /** Optional extra-short "super-shorthand" used on mobile only (e.g. "Charing Cross" → "Charing X", "City of London" → "City"). Falls back to originDisplayName when not provided. */
+  originMobileDisplayName?: (name: string) => string | undefined
   /** Maps a canonical name to a longer label for dropdown menu items (e.g. "Kings Cross St Pancras" → "Kings X, St Pancras, Euston") */
   originMenuName: (name: string) => string
+  /** All NR stations — drives the primary-dropdown search bar autocomplete. Only used when adminMode is on. */
+  searchableStations?: {
+    coord: string
+    name: string
+    crs: string
+    // primaryCoord: the cluster primary this station belongs to, or
+    // the station's own coord for isolated stations. Used to dedupe
+    // matches — two cluster members that both match ("Waterloo" +
+    // "Waterloo East") collapse to a single row.
+    primaryCoord: string
+    // displayLabel: what renders in the dropdown. For cluster
+    // members this is the cluster's menuName ("Waterloo & Waterloo
+    // East"); for isolated stations it's the station's own name.
+    displayLabel: string
+  }[]
+  /** Coord keys of custom primaries the user has previously selected via search. Shown as quick-picks beneath the main origin list in admin mode. */
+  recentPrimaries?: string[]
+  /** Called when the user picks a station via the search bar or a recent entry. */
+  onCustomPrimarySelect?: (coord: string) => void
+  /** Resolves a coord key to a human-readable station name — used to label recents. */
+  coordToName?: Record<string, string>
   /** Friend origin station name, or null if not active */
   friendOrigin: string | null
   /** All available friend origin options */
@@ -213,14 +238,262 @@ type FilterPanelProps = {
   /** "Direct trains only" toggle for the primary origin */
   primaryDirectOnly: boolean
   onPrimaryDirectOnlyChange: (value: boolean) => void
+  /** Admin-only inverse of primaryDirectOnly — shows ONLY indirect (stitched
+   *  / hub-routed) destinations. Useful for debugging the stitcher. */
+  primaryIndirectOnly: boolean
+  onPrimaryIndirectOnlyChange: (value: boolean) => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMenuName, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryIndirectOnly, onPrimaryIndirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+  // Helper: renders the trigger's origin label, using the mobile super-shorthand
+  // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
+  // is defined. Keeps the markup tidy at each of the several call-sites.
+  //
+  // For custom primaries (an arbitrary NR station picked via the search box)
+  // originDisplayName returns the raw coord key because the coord isn't in
+  // PRIMARY_ORIGINS. Fall back to coordToName so we show the station's name
+  // instead of "-0.842,51.412…". The outer span has `truncate` so overly
+  // long names ellipsis cleanly rather than breaking the "Max time from …"
+  // row onto a second line.
+  const renderOriginLabel = (key: string) => {
+    const resolved = originDisplayName(key)
+    const full = resolved === key && coordToName[key] ? coordToName[key] : resolved
+    const mobile = originMobileDisplayName?.(key) ?? full
+    return mobile === full ? (
+      <>{full}</>
+    ) : (
+      <>
+        <span className="sm:hidden">{mobile}</span>
+        <span className="hidden sm:inline">{full}</span>
+      </>
+    )
+  }
   // Collapsed state — only meaningful on mobile; desktop never shows the toggle button
   const [collapsed, setCollapsed] = useState(false)
+
+  // Primary-origin dropdown: search state. When the user types 3+ chars, the
+  // dropdown's normal origin list is REPLACED with a filtered list of NR
+  // stations (Phase 2 custom primary). Only shown when admin mode is active.
+  const [primarySearch, setPrimarySearch] = useState("")
+  const isPrimarySearchActive = primarySearch.trim().length >= 3
+
+  // Mobile-only: when the user taps the inline "Other stations" input, the
+  // native keyboard pops up and obscures the dropdown's results. To avoid
+  // typing blind, we promote the input into a full-viewport sheet that puts
+  // the field at the top and results below — so the remaining UI stays
+  // visible above the keyboard.
+  // Kept outside the dropdown's open/close cycle: closing the dropdown (e.g.
+  // by tapping outside or selecting an item) does NOT reset this state; the
+  // user's explicit close (X button or result tap) is the only way out.
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  // Ref to the sheet's own input — used to programmatically blur (dismiss
+  // the keyboard) when the user pans/taps the results area. Separate from
+  // the dropdown's inline input, which only exists on desktop in practice.
+  const mobileSheetInputRef = useRef<HTMLInputElement>(null)
+  // Controlled open-state for the dropdown so we can programmatically
+  // close it while the mobile search sheet is up AND reopen it when the
+  // sheet is dismissed without a selection.
+  //
+  // Why close the dropdown when the sheet opens? Radix DropdownMenu runs
+  // a FOCUS TRAP while open — any focus() call outside the dropdown's
+  // DOM subtree gets yanked back to the dropdown. That breaks our
+  // "focus the sheet input synchronously inside the gesture" trick: the
+  // focus lands on the sheet input for a split-second, Radix notices,
+  // pulls focus back to the dropdown input, and iOS sees a focus flap
+  // without a stable visible focus target → refuses to raise the
+  // keyboard, no blinking caret.
+  //
+  // Closing the dropdown releases the focus trap. The sheet input keeps
+  // its focus; keyboard rises; caret blinks. On dismiss (X tap), we
+  // REOPEN the dropdown so the user is back in the state they were in
+  // before opening the sheet. Selection paths leave the dropdown closed
+  // (since picking a primary origin is itself a completion).
+  const [primaryDropdownOpen, setPrimaryDropdownOpen] = useState(false)
+  // Dismiss the sheet only — reopens the dropdown so the user is back to
+  // where they were before tapping search. Clears the search text so the
+  // next open shows the blank empty-state again.
+  const closeMobileSearchOnly = () => {
+    setMobileSearchOpen(false)
+    setPrimarySearch("")
+    setPrimaryDropdownOpen(true)
+  }
+  // Dismiss both sheet AND dropdown — called after a result is selected.
+  const closeAllAfterSelection = () => {
+    setMobileSearchOpen(false)
+    setPrimaryDropdownOpen(false)
+    setPrimarySearch("")
+  }
+  // Sheet mount animation: the sheet renders off-screen (translate-y-full)
+  // on mount, then on next frame flips to translate-y-0 so the browser
+  // animates the transform. Matches the photo-overlay's slide-up-from-bottom
+  // style. `sheetEntered` stays in sync with mobileSearchOpen via an effect
+  // rather than derived inline so the initial render commits at full-
+  // offscreen and the transform-change happens on the NEXT frame (a state
+  // update inside useEffect triggers a re-render after paint).
+  const [sheetEntered, setSheetEntered] = useState(false)
+  useEffect(() => {
+    if (!mobileSearchOpen) {
+      setSheetEntered(false)
+      return
+    }
+    // Clear stale state from the last close (search text + any residual
+    // drag offset). setDragOffset(0) resets the inline translateY so a
+    // sheet that was swipe-dismissed with a leftover offset re-opens
+    // from a clean translate(100%+0) baseline.
+    setPrimarySearch("")
+    setDragOffset(0)
+    const raf1 = requestAnimationFrame(() => {
+      setSheetEntered(true)
+      // Imperative focus — belt-and-braces with the synchronous focus
+      // inside the trigger's onFocus handler. rAF keeps us within the
+      // user-gesture window iOS needs to raise the keyboard if the
+      // trigger's synchronous focus didn't stick.
+      mobileSheetInputRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(raf1)
+  }, [mobileSearchOpen, setPrimarySearch])
+
+  // iOS visual-viewport tracking. When iOS raises the keyboard, it
+  // doesn't just shrink the window — it often ALSO scrolls the layout
+  // viewport upward to try to bring the focused input into view,
+  // setting visualViewport.offsetTop > 0. Because the sheet is
+  // `position: fixed` against the LAYOUT viewport, that offset pushes
+  // the sheet's top edge ABOVE the user's visible area — exactly the
+  // "pushed up into outer space" symptom. The fix is to stop using
+  // Tailwind's `top-8 bottom-0` (layout-viewport-relative) and instead
+  // drive `top` and `height` via inline style using visualViewport
+  // metrics, which describe the VISIBLE area. Result: the sheet
+  // always hugs the actual visible viewport, regardless of keyboard
+  // state or iOS's scroll antics.
+  const [vvMetrics, setVvMetrics] = useState<{ top: number; height: number }>(
+    () => ({
+      top: 0,
+      // SSR-safe fallback — on server, window is undefined; use 0 and
+      // let the first client effect populate real numbers.
+      height: typeof window !== "undefined" ? window.innerHeight : 0,
+    }),
+  )
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.visualViewport) return
+    const vv = window.visualViewport
+    const update = () => setVvMetrics({ top: vv.offsetTop, height: vv.height })
+    update()
+    // Both events matter: resize fires when the keyboard shows/hides
+    // (viewport height changes); scroll fires when iOS pans the visual
+    // viewport within the layout viewport (e.g. after the page
+    // scrolls to reveal a focused input).
+    vv.addEventListener("resize", update)
+    vv.addEventListener("scroll", update)
+    return () => {
+      vv.removeEventListener("resize", update)
+      vv.removeEventListener("scroll", update)
+    }
+  }, [])
+
+  // Swipe-down-to-dismiss state machine for the mobile sheet. Attaches
+  // only to the top-bar region (drag handle + input row) so scrolling the
+  // results area doesn't double-duty as dismissal. Commits the dismiss if
+  // the drag exceeds ~80px OR velocity is noticeably downward at release.
+  const dragStartY = useRef<number | null>(null)
+  const dragStartAt = useRef<number>(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  // isDragging is a derived flag — mirrored as state (not ref) so the
+  // sheet's className re-evaluates when the drag starts/ends and the
+  // transition class flips. transition is OFF during drag (so finger
+  // tracking is 1:1) and ON otherwise (so open/close/snap-back animate).
+  const [isDragging, setIsDragging] = useState(false)
+  const mobileSheetDragHandlers = useMemo(() => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      // Only react to primary touches/clicks; ignore mousewheel etc.
+      if (e.pointerType !== "touch" && e.pointerType !== "pen") return
+      dragStartY.current = e.clientY
+      dragStartAt.current = performance.now()
+      setDragOffset(0)
+      setIsDragging(true)
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      if (dragStartY.current == null) return
+      const dy = e.clientY - dragStartY.current
+      // Only track downward drags — upward pulls do nothing.
+      setDragOffset(Math.max(0, dy))
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (dragStartY.current == null) return
+      const dy = e.clientY - dragStartY.current
+      const dt = performance.now() - dragStartAt.current
+      const velocity = dt > 0 ? dy / dt : 0 // px per ms
+      dragStartY.current = null
+      setIsDragging(false)  // re-enable CSS transition for the release animation
+      // Commit the dismiss if the drag was big enough OR fast-downward.
+      // 80px threshold is small enough to feel responsive without firing
+      // on accidental taps; 0.4px/ms ≈ 400px/s is a gentle flick.
+      if (dy > 80 || velocity > 0.4) {
+        // Keep the dragOffset set to its current value — the transition
+        // will interpolate from translateY(current+dragOffset) down to
+        // translateY(100%+dragOffset) in one smooth slide. Zeroing the
+        // offset now would cause a snap-up before the close animation
+        // (the old bug). After the close transition completes the offset
+        // clears in the useEffect below (gated on mobileSearchOpen).
+        closeMobileSearchOnly()
+      } else {
+        // Didn't clear threshold — snap back to the open position. The
+        // inline transform interpolates from translateY(N) back to
+        // translateY(0) via the re-enabled CSS transition.
+        setDragOffset(0)
+      }
+    },
+    onPointerCancel: () => {
+      dragStartY.current = null
+      setIsDragging(false)
+      setDragOffset(0)
+    },
+  }), [])
+  const matchingStations = useMemo(() => {
+    if (!isPrimarySearchActive) return []
+    // normalise() strips punctuation and collapses whitespace so
+    // user queries match station names regardless of apostrophes /
+    // hyphens / curly quotes. Without this, "kings cross" misses
+    // "London King's Cross" (apostrophe in "King's"), "st pancras"
+    // misses "St. Pancras" if anywhere written with a dot, and so on.
+    // Applied to BOTH the query and each station name.
+    const normalise = (s: string) =>
+      s
+        .toLowerCase()
+        // Strip curly + straight apostrophes, dots, and hyphens.
+        // Keep spaces so word order still matters.
+        .replace(/['\u2019.\-]/g, "")
+        // Collapse any run of whitespace into a single space.
+        .replace(/\s+/g, " ")
+        .trim()
+    const q = normalise(primarySearch)
+    // Prefer name-starts-with over name-contains so the top matches feel
+    // relevant. Cap to 15 so the dropdown stays scannable.
+    const starts: typeof searchableStations = []
+    const contains: typeof searchableStations = []
+    for (const s of searchableStations) {
+      const n = normalise(s.name)
+      if (n.startsWith(q)) starts.push(s)
+      else if (n.includes(q)) contains.push(s)
+      if (starts.length + contains.length >= 40) break
+    }
+    // Dedupe by primaryCoord — multiple cluster members matching the
+    // same search (e.g. "waterloo" matching both "Waterloo" AND
+    // "Waterloo East") collapse to a single row showing the cluster
+    // name. Happens AFTER the name-match step so that searching by
+    // an individual cluster-member name (e.g. "euston") still finds
+    // the right cluster, but only ONE entry shows up.
+    const seen = new Set<string>()
+    const deduped: typeof searchableStations = []
+    for (const s of [...starts, ...contains]) {
+      if (seen.has(s.primaryCoord)) continue
+      seen.add(s.primaryCoord)
+      deduped.push(s)
+    }
+    return deduped.slice(0, 15)
+  }, [primarySearch, isPrimarySearchActive, searchableStations])
 
   // --- Train arrival animation ---
   // Purely visual: after the banner is dismissed, a fake slider overlay
@@ -324,10 +597,16 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return formatDuration(mins)
   }
 
+  // Fragment wrapper so we can render the mobile-search sheet as a sibling
+  // of the main card. The sheet overlays the entire viewport (fixed inset-0)
+  // so it needs to be outside the absolutely-positioned card — otherwise
+  // the sheet would inherit the card's transform/positioning context.
+  // Card classes: on mobile inset-x-2/top-2 (0.5rem margins) stretches the
+  // card nearly to the viewport edges; on sm+ we restore the 1rem margins
+  // + fixed sidebar width.
   return (
-    // On mobile: left-4 right-4 stretches the card to full width minus margin on both sides.
-    // On sm+: right-auto + w-64 revert to the fixed sidebar width.
-    <div className="absolute left-4 right-4 top-4 z-10 rounded-lg bg-card p-4 text-card-foreground shadow-md sm:right-auto sm:w-64">
+    <>
+    <div className="absolute inset-x-2 top-2 z-10 rounded-lg bg-card p-4 text-card-foreground shadow-md sm:inset-x-auto sm:left-4 sm:top-4 sm:w-64">
 
       {/* Header row — single button wrapping logo + chevron so the entire
           row is one continuous hit area for toggling collapse */}
@@ -370,8 +649,15 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       }`}>
         {/* overflow-y-clip clips content vertically for the collapse animation
-            while allowing horizontal overflow (e.g. negative-margin buttons) */}
-        <div className="min-h-0 overflow-y-clip">
+            while allowing horizontal overflow (e.g. negative-margin buttons).
+            min-w-0 is CRITICAL: grid items default to min-width:auto, which
+            refuses to shrink below content intrinsic size. Without this, a
+            long origin name like "Stratford International" would push the
+            whole row wider than the card, spilling the "2h 30m" duration
+            off-screen. With min-w-0, the grid child respects its column's
+            available width and the inner `truncate` class actually kicks
+            in early enough to clip to "Stratford Interna…". */}
+        <div className="min-h-0 min-w-0 overflow-y-clip">
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
           {/* Search bar only shows when admin mode is toggled on */}
@@ -380,50 +666,264 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               <SearchBar value={searchQuery} onChange={onSearchChange} />
             </div>
           )}
-          <div id="SLIDER-LABEL" className="mt-4 mb-2 flex items-baseline justify-between">
-            <span className="flex items-center gap-1 text-sm font-medium">
-              {/* relative so this text renders above the trigger's before: pseudo-element */}
-              <span className="relative">Max time from</span>
+          <div id="SLIDER-LABEL" className="mt-4 mb-2 flex items-baseline justify-between gap-2">
+            {/* min-w-0 lets the inner truncation actually bite — without it the
+                flex child refuses to shrink below its content and text wraps. */}
+            <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
+              {/* whitespace-nowrap + shrink-0 ensures "Max time from" always
+                  renders on one line and never loses width to a long origin name. */}
+              <span className="relative whitespace-nowrap shrink-0">Max time from</span>
               {/* Chevron dropdown — clicking the origin name or chevron opens it */}
-              {primaryOriginGroups.flat().length > 1 ? (
-                <DropdownMenu>
+              {/* Dropdown trigger is always rendered. The previous
+                  `primaryOriginGroups.flat().length > 1` gate made sense
+                  when multiple curated London termini lived in the
+                  dropdown — if only one origin existed, no need for a
+                  picker. With the restructure, the dropdown now holds
+                  the recents list + search input regardless of how
+                  many curated groups are present, so the gate was
+                  hiding the trigger even though plenty of picks are
+                  still available inside. */}
+              {(
+                <DropdownMenu
+                  open={primaryDropdownOpen}
+                  onOpenChange={(open) => {
+                    setPrimaryDropdownOpen(open)
+                    // Reset the search box every time the menu closes, so
+                    // re-opening it shows the normal origin list (not the
+                    // last search result state).
+                    if (!open) setPrimarySearch("")
+                  }}
+                >
                   <DropdownMenuTrigger asChild>
                     {/* relative + before: pseudo-element creates the hover background
                         BEHIND adjacent text. -z-10 on the pseudo puts it below sibling
-                        spans that have `relative`, while the button itself stays clickable. */}
-                    <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
-                      {originDisplayName(primaryOrigin)}
-                      <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
+                        spans that have `relative`, while the button itself stays clickable.
+                        min-w-0 allows the inner origin-name span to truncate. */}
+                    <button type="button" className="group/trigger relative inline-flex min-w-0 cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                      {/* truncate = overflow-hidden + text-ellipsis + whitespace-nowrap.
+                          Long origin names like "Charing Cross" shrink to "Charing C…" on
+                          narrow mobile rather than wrapping onto a second line. */}
+                      <span className="truncate">{renderOriginLabel(primaryOrigin)}</span>
+                      <IconChevronDown size={12} className="shrink-0 text-muted-foreground group-hover/trigger:text-accent-foreground" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    {/* Each group is rendered as a block; between groups we drop
-                        a DropdownMenuSeparator (a thin horizontal ruler). */}
+                  {/* On mobile: force a viewport-minus-2rem width so Radix's
+                      collision detection clamps the content to 1rem from each
+                      edge, effectively centring it with equal margins.
+                      On desktop: cap at 22rem so long menu names (City cluster)
+                      wrap to two lines rather than stretching the menu.
+                      collisionPadding ensures Radix respects the 1rem gutter.
+
+                      Height cap: Radix fills the custom CSS variable
+                      --radix-dropdown-menu-content-available-height with the
+                      pixel distance from the trigger to the nearest viewport
+                      edge (minus collisionPadding). Using it as max-height
+                      guarantees the dropdown never clips below the viewport,
+                      even when the list is long (many termini + recents +
+                      search results). overflow-y-auto makes the extra content
+                      scrollable — overrides the base component's
+                      overflow-hidden via Tailwind-merge (last overflow-*
+                      class wins). overscroll-contain prevents touch scroll
+                      chaining — once the user hits the top/bottom of the
+                      dropdown list, further swipes don't scroll the map
+                      behind it. */}
+                  <DropdownMenuContent
+                    align="start"
+                    collisionPadding={16}
+                    className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain"
+                    // CRITICAL for mobile keyboard: prevent Radix from
+                    // restoring focus to the dropdown trigger button when
+                    // the dropdown closes. Without this, when we
+                    // synchronously move focus to the mobile sheet's input
+                    // (see onFocus below) and then call
+                    // setPrimaryDropdownOpen(false), Radix's unmount
+                    // cleanup yanks focus BACK to the trigger button — iOS
+                    // sees focus transferred away from the input it was
+                    // about to raise the keyboard for and cancels the
+                    // keyboard. Calling preventDefault on the restoration
+                    // event leaves focus wherever we put it.
+                    onCloseAutoFocus={(e) => e.preventDefault()}
+                  >
+                    {/* Desktop layout:
+                          1. Curated synthetic primary ("Any London terminus")
+                          2. HR
+                          3. Recents (default-seeded on first load, max 10)
+                             — ALWAYS visible, even while searching. Recents
+                             are what the user reaches for first.
+                          4. Search input (placeholder "Other London stations")
+                          5. Search matches — rendered BELOW the input so
+                             they flow naturally from where the user is
+                             typing, rather than disrupting the layout
+                             above.
+
+                        On mobile the full-screen sheet takes over on input
+                        focus and has its own top-down layout, so this
+                        change only affects desktop.
+
+                        London termini like Charing Cross, Victoria, Waterloo
+                        et al. used to have permanent dropdown slots. They
+                        no longer do — they're found via search, and promoted
+                        into the recents list when picked. */}
                     {primaryOriginGroups.map((group, groupIdx) => (
                       <Fragment key={groupIdx}>
                         {groupIdx > 0 && <DropdownMenuSeparator />}
                         {group.map((origin) => (
-                          <DropdownMenuCheckboxItem
+                          <DropdownMenuItem
                             key={origin}
-                            checked={origin === primaryOrigin}
-                            onCheckedChange={() => onPrimaryOriginChange(origin)}
+                            onSelect={() => onPrimaryOriginChange(origin)}
+                            // Selected state shown via a muted background tint
+                            // (accent colour at 50% opacity) rather than a
+                            // left-side checkmark, which ate precious horizontal
+                            // space and made long cluster names even harder to
+                            // read on mobile.
+                            className={cn(
+                              "whitespace-normal leading-tight cursor-pointer",
+                              origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
+                            )}
                           >
-                            {/* Menu items use a longer, more descriptive label
-                                than the trigger (e.g. "Kings X, St Pancras, Euston"
-                                instead of the trigger's "Kings Cross"). */}
                             {originMenuName(origin)}
-                          </DropdownMenuCheckboxItem>
+                          </DropdownMenuItem>
                         ))}
                       </Fragment>
                     ))}
+
+                    <DropdownMenuSeparator />
+
+                    {/* Position 3: recents. Always rendered (not gated on
+                        search state) so the user never loses them while
+                        typing. Matches now live BELOW the search input. */}
+                    {recentPrimaries.length > 0 && recentPrimaries.map((coord) => {
+                      // Label resolution, in order:
+                      //   1. originMenuName(coord) if coord is a known primary
+                      //      — picks up the rich "Kings Cross, St Pancras,
+                      //      & Euston" label instead of just "Kings Cross".
+                      //   2. coordToName[coord] — the station's own name
+                      //      from stations.json (covers Stratford,
+                      //      Farringdon, Kentish Town, etc.).
+                      //   3. raw coord as last-ditch fallback.
+                      const menu = originMenuName(coord)
+                      const label = menu !== coord
+                        ? menu
+                        : coordToName[coord] ?? coord
+                      return (
+                        <DropdownMenuItem
+                          key={coord}
+                          onSelect={() => onCustomPrimarySelect?.(coord)}
+                          className={cn(
+                            "whitespace-normal leading-tight cursor-pointer",
+                            coord === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
+                          )}
+                        >
+                          {label}
+                        </DropdownMenuItem>
+                      )
+                    })}
+
+                    {/* Non-admin users get a small "coming soon" note at
+                        the bottom of the list, where the search input
+                        would normally be. Explains the short list and
+                        signals that we're actively working on expanding
+                        coverage. Not clickable; small italic muted text
+                        to read as a status message rather than a
+                        selectable option. */}
+                    {!adminMode && (
+                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                        More stations coming soon
+                      </div>
+                    )}
+
+                    {/* Positions 4 + 5 (search input + match results) are
+                        gated behind adminMode. Non-admin users see only
+                        the synthetic "Any London terminus" option plus
+                        recents. Reasoning: until every reasonable home
+                        station has its own RTT data fetched, custom
+                        primaries give inconsistent routing quality
+                        (Richmond→Ascot via Waterloo detour, etc.), so
+                        rather than expose the search to everyone we're
+                        restricting it to admin use while the data
+                        coverage fills in. */}
+                    {adminMode && (
+                      <>
+                        {/* Position 4: search input at the bottom.
+                            stopPropagation on keydown keeps Radix's built-in
+                            typeahead from hijacking our keystrokes. */}
+                        <div className="px-1.5 py-1">
+                          <Input
+                            type="text"
+                            placeholder="Other London stations"
+                            value={primarySearch}
+                            onChange={(e) => setPrimarySearch(e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            // On mobile (< sm), open the dedicated search sheet
+                            // and transfer focus to its input SYNCHRONOUSLY
+                            // within this gesture — that's the only reliable
+                            // way iOS will keep the keyboard up and show the
+                            // blinking caret when the sheet renders.
+                            onFocus={() => {
+                              if (typeof window !== "undefined" &&
+                                  window.matchMedia("(max-width: 639px)").matches) {
+                                mobileSheetInputRef.current?.focus()
+                                setPrimaryDropdownOpen(false)
+                                setMobileSearchOpen(true)
+                              }
+                            }}
+                            className="h-7 text-xs px-2"
+                          />
+                        </div>
+
+                        {/* Position 5: search matches, rendered BELOW the
+                            input so the list flows naturally from where the
+                            user is typing. Only appears when the search is
+                            active (3+ chars); empty input keeps the dropdown
+                            to recents only. */}
+                        {isPrimarySearchActive && (
+                          matchingStations.length > 0 ? (
+                            matchingStations.map((s) => (
+                              <DropdownMenuItem
+                                // key uses primaryCoord because dedupe collapses
+                                // multiple cluster members into a single row;
+                                // coord alone might still be unique but primaryCoord
+                                // reflects the row's real identity.
+                                key={s.primaryCoord}
+                                onSelect={() => {
+                                  // Pass the station's own coord (not primaryCoord) —
+                                  // selectCustomPrimary's clusterMemberToPrimary
+                                  // redirect handles the rest, and preserves the
+                                  // historical behaviour where a cluster-member
+                                  // pick routes to its parent primary.
+                                  onCustomPrimarySelect?.(s.coord)
+                                  setPrimarySearch("")
+                                }}
+                                className={cn(
+                                  "whitespace-normal leading-tight cursor-pointer",
+                                  // Highlight the row if EITHER the matched
+                                  // station's coord OR its cluster primary is
+                                  // currently active — handles both "user is
+                                  // already on Kings Cross" and "user is on a
+                                  // cluster sibling that was canonicalised".
+                                  (s.coord === primaryOrigin || s.primaryCoord === primaryOrigin)
+                                    && "bg-accent/50 focus:bg-accent/50"
+                                )}
+                              >
+                                {s.displayLabel}
+                              </DropdownMenuItem>
+                            ))
+                          ) : (
+                            <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                              No matches
+                            </div>
+                          )
+                        )}
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
-              ) : (
-                originDisplayName(primaryOrigin)
               )}
             </span>
-            {/* Shows the current value, styled as secondary info */}
-            <span className="text-sm font-extrabold text-primary">
+            {/* Shows the current value, styled as secondary info.
+                shrink-0 keeps the max-time value at full width — the origin
+                name on the left truncates instead. */}
+            <span className="shrink-0 text-sm font-extrabold text-primary">
               {formatMax(maxMinutes)}
             </span>
           </div>
@@ -516,12 +1016,31 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             <Label htmlFor="primary-direct-only" className="cursor-pointer text-xs text-muted-foreground">Direct trains only</Label>
           </div>
 
+          {/* Admin-only inverse: "Indirect trains only". Shows the stations
+              that require ≥1 change from the primary. Handy for debugging
+              the stitcher — the union of Direct + Indirect equals the full
+              destination set, so isolating the indirect cohort makes weird
+              routing (long change lists, unexpected terminals) visually
+              obvious. adminMode is the only gate; visually it matches the
+              Direct-trains checkbox above so the two read as a pair. */}
+          {adminMode && (
+            <div className="mt-1.5 flex items-center gap-[0.4rem]">
+              <Checkbox
+                id="primary-indirect-only"
+                checked={primaryIndirectOnly}
+                onCheckedChange={(checked) => onPrimaryIndirectOnlyChange(checked === true)}
+                className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
+              />
+              <Label htmlFor="primary-indirect-only" className="cursor-pointer text-xs text-muted-foreground">Indirect only</Label>
+            </div>
+          )}
+
           {/* Admin-only: min travel time. Hides stations closer than this from the primary origin.
               Simpler styling than the max slider — no arrival animation, shares the train track visuals. */}
           {adminMode && (
             <div className="mt-3">
               <div className="mb-2 flex items-baseline justify-between">
-                <span className="text-sm font-medium">Min time from {originDisplayName(primaryOrigin)}</span>
+                <span className="text-sm font-medium">Min time from {renderOriginLabel(primaryOrigin)}</span>
                 <span className="text-sm font-extrabold text-primary">
                   {minMinutes === 0 ? "Off" : formatDuration(minMinutes)}
                 </span>
@@ -551,42 +1070,51 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
           )}
           {friendOrigin && (
             <>
-              {/* Label row with dropdown switcher and dismiss button */}
-              <div className="group mt-3 mb-2 flex items-baseline justify-between">
-                <span className="flex items-center gap-1 text-sm font-medium">
-                  {/* relative so this text renders above the trigger's before: pseudo-element */}
-                  <span className="relative">Max time from</span>
+              {/* Label row with dropdown switcher and dismiss button.
+                  Same layout tweaks as the primary row: min-w-0 on the flex
+                  containers so long origin names truncate rather than wrap,
+                  whitespace-nowrap on the label, shrink-0 on the value span. */}
+              <div className="group mt-3 mb-2 flex items-baseline justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
+                  <span className="relative whitespace-nowrap shrink-0">Max time from</span>
                   {/* Clicking the origin name or chevron opens the dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button type="button" className="group/trigger relative inline-flex cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
-                        {originDisplayName(friendOrigin)}
-                        <IconChevronDown size={12} className="text-muted-foreground group-hover/trigger:text-accent-foreground" />
+                      <button type="button" className="group/trigger relative inline-flex min-w-0 cursor-pointer items-center gap-0.5 rounded-md border-0 bg-transparent px-1.5 -mx-1.5 py-0.5 font-inherit text-inherit outline-none hover:text-accent-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:cursor-pointer before:absolute before:inset-0 before:rounded-md before:-z-10 hover:before:bg-accent">
+                        <span className="truncate">{renderOriginLabel(friendOrigin)}</span>
+                        <IconChevronDown size={12} className="shrink-0 text-muted-foreground group-hover/trigger:text-accent-foreground" />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
+                    <DropdownMenuContent
+                      align="start"
+                      collisionPadding={16}
+                      className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem]"
+                    >
                       {friendOrigins.map((origin) => (
-                        <DropdownMenuCheckboxItem
+                        <DropdownMenuItem
                           key={origin}
-                          checked={origin === friendOrigin}
-                          onCheckedChange={() => onFriendOriginChange(origin)}
+                          onSelect={() => onFriendOriginChange(origin)}
+                          className={cn(
+                            "whitespace-normal leading-tight cursor-pointer",
+                            origin === friendOrigin && "bg-accent/50 focus:bg-accent/50"
+                          )}
                         >
                           {/* Menu label (e.g. "Birmingham New St"); trigger uses the shorter "Birmingham". */}
                           {originMenuName(origin)}
-                        </DropdownMenuCheckboxItem>
+                        </DropdownMenuItem>
                       ))}
                       {/* Separator + "Remove" deactivates friend mode entirely */}
                       <DropdownMenuSeparator />
-                      <DropdownMenuCheckboxItem
-                        checked={false}
-                        onCheckedChange={() => onDeactivateFriend()}
+                      <DropdownMenuItem
+                        onSelect={() => onDeactivateFriend()}
+                        className="cursor-pointer"
                       >
                         Remove
-                      </DropdownMenuCheckboxItem>
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </span>
-                <span className="whitespace-nowrap text-sm font-extrabold text-primary">
+                <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-primary">
                   {formatMax(friendMaxMinutes)}
                 </span>
               </div>
@@ -658,5 +1186,222 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         </div>
       </div>
     </div>
+
+    {/* Mobile-only search sheet. Opens when the dropdown's inline "Other
+        stations" input is focused on a < sm viewport. Put at the end of
+        the return so it overlays everything, including the Radix dropdown
+        portal. Hidden on sm+ (sm:hidden).
+
+        The sheet is ALWAYS MOUNTED on mobile (not conditionally rendered)
+        so its input ref is valid before `mobileSearchOpen` flips. That
+        matters for iOS: the keyboard only rises when focus() is called
+        synchronously inside the user's gesture. Mounting the sheet
+        lazily on state change pushes the focus() call a few ticks past
+        the gesture boundary and iOS refuses to raise the keyboard. With
+        the sheet always present, the dropdown input's onFocus handler
+        can focus the sheet input directly before the state change —
+        inside the gesture — and the keyboard comes up reliably with a
+        blinking caret.
+
+        Visibility is controlled via translate-y (off-screen vs on-screen)
+        + pointer-events (nothing can be clicked while "closed").
+          • translate-y-full + pointer-events-none: closed, invisible.
+          • translate-y-0: open, interactive.
+        Transition duration 280ms matches the photo-overlay's mobile
+        slide-up. */}
+      {/* Backdrop — dark semi-transparent scrim + blur behind the sheet.
+          Matches the photo-overlay's DialogOverlay visual. Rendered as a
+          sibling of the sheet at a slightly lower z so the sheet floats
+          above it. The backdrop's own fade-in is tied to sheetEntered so
+          it transitions in with the sheet's slide-up. Tapping the backdrop
+          is NOT a dismiss vector here (the X button is the dismiss path)
+          — pointer-events-none while closed so it doesn't eat touches
+          intended for the app underneath; auto while open. */}
+      <div
+        className={cn(
+          "fixed inset-0 z-[59] bg-black/50 backdrop-blur-sm sm:hidden",
+          "transition-opacity duration-[280ms] ease-out",
+          sheetEntered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+        )}
+        aria-hidden="true"
+      />
+      <div
+        className={cn(
+          // `fixed inset-x-0 z-[60]` — full width, above everything. top
+          // and height are driven by inline style below (from
+          // visualViewport) so the sheet tracks the VISIBLE viewport,
+          // not the layout viewport. Dropping the old Tailwind `top-8
+          // bottom-0` is what prevents iOS from pushing the sheet above
+          // the top of the visible area when the keyboard is up.
+          "fixed inset-x-0 z-[60] flex flex-col bg-background rounded-t-2xl shadow-2xl",
+          // Transition is enabled except while a live drag is in progress
+          // — during active dragging the sheet must track the finger 1:1
+          // with no animation lag. When the drag is released OR the
+          // open/closed state changes, the transition runs on the inline
+          // transform below.
+          !isDragging && "transition-transform duration-[280ms] ease-out",
+          "sm:hidden",
+          !mobileSearchOpen && dragOffset === 0 && "pointer-events-none",
+        )}
+        // CRITICAL: drive all translate-Y via a SINGLE inline transform,
+        // not Tailwind classes. The transform stacks the open/closed
+        // position with the active drag offset so CSS transitions see a
+        // single interpolating value. With the old class-based approach
+        // (translate-y-0 vs translate-y-full), releasing a drag mid-way
+        // caused a brief frame where the class transform said "open" but
+        // the inline transform was gone — the sheet visibly snapped up
+        // before the effect-driven close animation took over, producing
+        // the juddery feel. Stacking both into the inline transform means
+        // any state change animates smoothly from the current screen
+        // position.
+        //
+        // `top` and `height` come from visualViewport — see vvMetrics
+        // effect above. The 32px offset on top matches the old `top-8`
+        // spacing (1 rem × 2). `height - 32` keeps the sheet's bottom
+        // exactly at the top edge of the keyboard when it's up, so
+        // nothing extends behind the keyboard.
+        style={{
+          top: vvMetrics.top + 32,
+          height: Math.max(0, vvMetrics.height - 32),
+          transform: sheetEntered
+            ? `translateY(${dragOffset}px)`
+            : `translateY(calc(100% + ${dragOffset}px))`,
+        }}
+        // NOTE: deliberately NO aria-hidden here. The sheet's input is
+        // focused SYNCHRONOUSLY from the dropdown trigger's onFocus
+        // handler (to give iOS an unbroken gesture → focus → keyboard
+        // chain). Marking the subtree aria-hidden at that moment
+        // prevents Safari/iOS from accepting the programmatic focus,
+        // so the keyboard never appears. Pointer-events-none on the
+        // class above already keeps the closed sheet from blocking
+        // taps behind it.
+      >
+        {/* Top bar. The input has the clear/dismiss X BUILT-IN as an
+            absolute-positioned button — always visible so users can dismiss
+            even before typing. Wrapper is relative so the X positions over
+            the input's right edge.
+
+            The whole top area (drag handle + input row) is a swipe-down
+            dismiss target: pointerDown captures the start Y, pointerMove
+            progressively translates the sheet down as the user drags,
+            pointerUp commits if the drag exceeded ~80px or the velocity
+            was downward, otherwise the sheet snaps back. See
+            mobileSheetDragHandlers below for the underlying state machine. */}
+        <div
+          className="px-3 pt-3 pb-2 shrink-0 touch-none"
+          {...mobileSheetDragHandlers}
+        >
+          {/* Drag-handle hint bar at the top centre — same visual language
+              as the photo-overlay mobile sheet. Acts as the primary
+              swipe-down grab target. */}
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-muted" />
+          <div className="relative">
+            <input
+              ref={mobileSheetInputRef}
+              type="text"
+              // Deliberately NO autoFocus — the sheet is permanently
+              // mounted, so autoFocus would only fire once (at app
+              // load, when the sheet is offscreen and closed) and do
+              // nothing on subsequent opens. Focus is driven
+              // imperatively from the dropdown trigger's onFocus
+              // handler instead, which runs inside the user's tap
+              // gesture and therefore lets iOS raise the keyboard.
+              value={primarySearch}
+              placeholder="Search"
+              onChange={(e) => setPrimarySearch(e.target.value)}
+              // pr-10 reserves space for the always-visible clear/dismiss
+              // X button (absolute-positioned over the right edge).
+              className="w-full h-10 rounded-lg border border-input bg-input/30 pl-3 pr-10 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            />
+            {/* Always-visible X. Two behaviours:
+                  • If the input has content → clear the input (keep sheet
+                    open, keep keyboard up for continued typing).
+                  • If the input is empty → dismiss the sheet entirely.
+                Handled on **pointerDown** rather than click so the action
+                fires immediately, even if iOS is about to dismiss the
+                keyboard or transfer focus. With onClick the browser first
+                processes the focus change + keyboard dismissal (a layout
+                shift), which on iOS delays or even swallows the click —
+                the dreaded "tap once to dismiss keyboard, tap again to
+                activate the button" pattern. onPointerDown runs before
+                any of that, guaranteeing the close/clear commits on the
+                user's very first touch. preventDefault stops the browser
+                from then transferring focus to the button (which would
+                un-focus the input and flicker the keyboard). */}
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-label={primarySearch ? "Clear search" : "Close search"}
+              onPointerDown={(e) => {
+                e.preventDefault()
+                if (primarySearch) {
+                  setPrimarySearch("")
+                  mobileSheetInputRef.current?.focus()
+                } else {
+                  closeMobileSearchOnly()
+                }
+              }}
+              className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
+            >
+              <IconX size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Results / empty-state area. overflow-y-auto lets long result
+            lists scroll inside the sheet; onScroll blurs the input when
+            the user actually scrolls (matching iOS native "scroll-to-
+            dismiss-keyboard" UX). We use onScroll rather than onTouchStart
+            because the latter fires on every tap — including taps on
+            result buttons — which caused iOS to eat the first click
+            dismissing the keyboard before registering the button press.
+            Scrolling doesn't fire on discrete taps, so tapping a button
+            stays a single-tap action. */}
+        <div
+          className="flex-1 overflow-y-auto overscroll-contain"
+          onScroll={() => mobileSheetInputRef.current?.blur()}
+        >
+          {isPrimarySearchActive ? (
+            matchingStations.length > 0 ? (
+              matchingStations.map((s) => (
+                <button
+                  // key uses primaryCoord because dedupe may collapse
+                  // multiple cluster members to one row — primaryCoord
+                  // is the row's real identity.
+                  key={s.primaryCoord}
+                  type="button"
+                  tabIndex={-1}
+                  onClick={() => {
+                    // Pass the station's own coord — selectCustomPrimary
+                    // canonicalises to the cluster primary via
+                    // clusterMemberToPrimary.
+                    onCustomPrimarySelect?.(s.coord)
+                    closeAllAfterSelection()
+                  }}
+                  className={cn(
+                    "block w-full text-left px-4 py-3 text-sm border-b border-border/30",
+                    // Highlight when either the match's own coord OR its
+                    // cluster primary is the active primary.
+                    (s.coord === primaryOrigin || s.primaryCoord === primaryOrigin) && "bg-accent/50",
+                  )}
+                >
+                  {s.displayLabel}
+                </button>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-sm text-muted-foreground">No matches</div>
+            )
+          ) : (
+            // Empty state. User requested the sheet always opens blank —
+            // no recents pre-populated, even when the currently-active
+            // primary is a custom one. Recents still show if the user
+            // searches for them (they appear among matching stations).
+            <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+              Search for any National Rail station in London
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

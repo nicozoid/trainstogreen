@@ -8,5 +8,135 @@
     "name": "Potters Bar",
     "publicNote": "Almost worthy because of the great and tranquil beauty of Gobions Wood, and it being only 20m from Kings Cross on a quick train. Unfortunately the surrounding fields and busy commuter roads that make up the bulk of the area don’t have enough going for them to put this on the recommendation list.",
     "privateNote": ""
+  },
+  "-0.6224578,51.800672": {
+    "name": "Tring",
+    "publicNote": "The nearby Ashridge Estate (a free-entry National Trust property) is highly recommended — all very beautiful, especially if you appreciated woods, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely. Main routes can be very busy weekends so take the minor paths to avoid the crowds. A number of restaurants and cafés available for lunch — I recommend the Bakehouse Café at Ashridge House.",
+    "privateNote": ""
+  },
+  "-1.0356438,51.3720595": {
+    "name": "Mortimer",
+    "publicNote": "Perhaps an idiosyncratic love of mine, as this isn't a popular hiking spot, but I find it exceptionally charming. I recommend walking from Mortimer Station to Bramley Station, by way of the Roman ruins of Sylchester. This takes you through what little remains of of Calleva Atrebatum — once a thriving Roman city — including the original walls, and a large amphitheatre where gladiatorial combats entertained up to 7,000 people at a time. The Cavella Arms in Silchester is a perfect stop for lunch, but note that the menu is limited on Sundays.",
+    "privateNote": "tested"
+  },
+  "-1.3726319,51.8247081": {
+    "name": "Hanborough",
+    "publicNote": "It's an easy walk from the station to the beautiful, vast (and free) grounds of Marlborough House, the baroque pile gifted by Queen Anne to her favourite Sarah Churchill. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that.",
+    "privateNote": ""
+  },
+  "0.2815355,50.7696435": {
+    "name": "Eastbourne",
+    "publicNote": "For strong walkers I highly recommend walking all the way from Eastbourne to Seaford Station. This starts out following the charming Eastbourne seafront and then into the absolutely spectacular Seven Sisters cliff walk. You can have lunch at the National Trust village of Birling Gap, before completing the trek through marshes of Cuckmere Haven. It's long but impossible to mess up since you're just following the sea, and everything is signposted. The cliffs are best appreciated when sparkling on a bright summer's day. Alas, everyone else knows this so the Seven Sisters part is extremely busy on Summer weekends — although it does create a jolly festival atmosphere if you can tolerate that. To me this is the greatest walk in England.",
+    "privateNote": ""
+  },
+  "0.1819438,51.2764117": {
+    "name": "Sevenoaks",
+    "publicNote": "I highly recommend the walk between Sevenoaks and Borough Green & Wrotham Station, via [Ightham Mote](https://www.nationaltrust.org.uk/visit/kent/ightham-mote) — a small but charming 14th Century National Trust manor where you can have lunch and easily fit in a tour of the house. I prefer to start at Borough Green but either direction is fine. [Knole House](https://www.nationaltrust.org.uk/visit/kent/knole) is at the Sevenoaks end of the walk — well worth a visit but requires an entire day in itself.",
+    "privateNote": ""
+  },
+  "0.3061936,51.2931422": {
+    "name": "Borough Green & Wrotham",
+    "publicNote": "I highly recommend the walk between Sevenoaks and Borough Green & Wrotham Station, via [Ightham Mote](https://www.nationaltrust.org.uk/visit/kent/ightham-mote) — a small but charming 14th Century National Trust manor where you can have lunch and easily fit in a tour of the house. I prefer to start at Borough Green but either direction is fine. [Knole House](https://www.nationaltrust.org.uk/visit/kent/knole) is at the Sevenoaks end of the walk — well worth a visit but requires an entire day in itself.",
+    "privateNote": ""
+  },
+  "0.4949233,50.9128867": {
+    "name": "Battle",
+    "publicNote": "The site of the Battle of Hastings, upon which William the Conqeuror built his mighty Battle Abbey in papally-imposed contrition for the blood he had shed. Well worth visiting, and surrounded by exceptionally beautiful countryside.",
+    "privateNote": ""
+  },
+  "-2.0230749,51.6767954": {
+    "name": "Kemble",
+    "publicNote": "Your gateway to a particularly beautiful part of the Cotswalds. Hike all the way from here to Stroud Station if you're feeling ambitious.",
+    "privateNote": ""
+  },
+  "-1.8064141,51.0705706": {
+    "name": "Salisbury",
+    "publicNote": "Combine your pilgrimage to Stonehenge with a beautiful hike.",
+    "privateNote": ""
+  },
+  "-0.5419326,50.8966534": {
+    "name": "Amberley",
+    "publicNote": "The Amberley to Arundel Station walk is magical, with a good pub lunch available halfway along.",
+    "privateNote": "tested"
+  },
+  "-0.4422487,51.2192418": {
+    "name": "Gomshall",
+    "publicNote": "High concentration of charming medieval villages.",
+    "privateNote": "tested"
+  },
+  "-0.09193,51.51586": {
+    "name": "City of London",
+    "publicNote": "If you stand at the Guildhall — where the historic ‘City of London’ is still governed — you’re within 20 minutes walk of seven London terminals: Cannon Street, Fenchurch Street, Liverpool Street, Moorgate, Blackfriars, London Bridge, and Farringdon (well, Farringdon isn’t a terminal, but it is the best-connected station in Greater London).\nBy default, Trains to Green assumes you’ll start your journey at one of these stations. Switch to your preferred home station in the filter menu.",
+    "privateNote": ""
+  },
+  "-0.1239491,51.530609": {
+    "name": "Kings Cross",
+    "publicNote": "Kings Cross, St Pancras and Euston stations are within 5 minutes walk of each other. Trains to Green measures your travel-time from whichever is quickest.",
+    "privateNote": ""
+  },
+  "-0.112801,51.5028379": {
+    "name": "Waterloo",
+    "publicNote": "Waterloo and Waterloo East stations are within 5 minutes walk of one another. Trains to Green measures your travel-time from whichever is quickest.",
+    "privateNote": ""
+  },
+  "-0.1278,51.5075": {
+    "name": "London",
+    "publicNote": "By default, Trains to Green assumes you’ll start your journey at one of London’s 18 termini: Charing Cross, Kings Cross, St Pancras, Euston, Liverpool Street, London Bridge, Waterloo, Waterloo East, Victoria, Paddington, Marylebone, Blackfriars, Moorgate, Cannon St, or Fenchurch St. When you select a rural hiking station, the travel-time you see is from whichever London terminus provides the quickest journey. Over time, alternative London starting stations will be added to give you a more tailored experience.\n\nWherever you start from, journey times are always based on the Saturday schedule. Travel times on Sundays and weekdays may differ.\n\nSend any comments any questions to [nicolas@niczap.design](mailto:nicolas@niczap.design).",
+    "privateNote": " Obviously your real journey depends on where you live! Choose your closest London National Rail station for a more tailored experience."
+  },
+  "0.9760562,51.2444245": {
+    "name": "Chilham",
+    "publicNote": "",
+    "privateNote": "tested"
+  },
+  "0.7025193,50.9339128": {
+    "name": "Winchelsea",
+    "publicNote": "",
+    "privateNote": "tested"
+  },
+  "0.2042149,51.3623288": {
+    "name": "Eynsford",
+    "publicNote": "",
+    "privateNote": "tested. note this journey varies by date"
+  },
+  "0.1731809,51.1972733": {
+    "name": "Penshurst",
+    "publicNote": "",
+    "privateNote": "tested. actually better than trainline here!"
+  },
+  "-0.6105638,51.4832744": {
+    "name": "Windsor and Eton Central",
+    "publicNote": "",
+    "privateNote": "confirmed"
+  },
+  "-0.7664026,51.571086": {
+    "name": "Marlow",
+    "publicNote": "",
+    "privateNote": "issue: trainline has same route, but much faster - 49m"
+  },
+  "0.1000064,50.7729203": {
+    "name": "Seaford",
+    "publicNote": "",
+    "privateNote": "BUG: trainline has faster router chaning at lewes. 1h25m"
+  },
+  "-0.6326933,52.0212048": {
+    "name": "Aspley Guise",
+    "publicNote": "",
+    "privateNote": "confirmed. perfect match"
+  },
+  "0.0306729,50.83111": {
+    "name": "Southease",
+    "publicNote": "",
+    "privateNote": "bug: trainline has faster 1h12m. same route. apparently the RTT data might fix this."
+  },
+  "-0.0035472,51.541289": {
+    "name": "Stratford",
+    "publicNote": "Stratford Station and Stratford International Station are within 8 minutes walk of one another. Trains to Green measures your travel-time from whichever is quickest.\nFun fact: Stratford International is not international and the name makes no sense. It was named such in the hope of summoning the Eurostar there, but the word-magic failed to take effect.",
+    "privateNote": ""
+  },
+  "-0.104555,51.519964": {
+    "name": "Farringdon",
+    "publicNote": "Fun fact: Farringdon is where the creator of Trains to Green lives. It's also roughly in the middle of London's 18 terminus stations.",
+    "privateNote": ""
   }
 }

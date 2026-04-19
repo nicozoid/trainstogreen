@@ -78,10 +78,20 @@ function DialogContent({
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
             <Button
               variant="ghost"
-              className="absolute top-2 right-2
+              // top-0 right-0 = flush with the modal's top-right corner, no
+              // margin. opacity-0 keeps the X invisible until the user hovers
+              // anywhere over its hit area; focus-visible:opacity-100 restores
+              // a11y (keyboard users see it on tab). Mobile still hides it
+              // completely — tapping the overlay backdrop is the mobile dismiss.
+              // hover:bg-transparent overrides the ghost variant's default
+              // hover:bg-secondary/20, which read as a green tint on the
+              // flat overlay. This button is purely an icon — no chrome.
+              className="absolute top-0 right-0
               cursor-pointer
-              opacity-40
+              opacity-0
               hover:opacity-100
+              hover:bg-transparent
+              focus-visible:opacity-100
               max-sm:hidden
               "
               size="icon-sm"
