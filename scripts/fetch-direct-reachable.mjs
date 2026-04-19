@@ -260,6 +260,19 @@ async function fetchForDate(dateStr) {
     // We record the calling-point sequence for the FASTEST service we've seen
     // per (origin, destination) pair — lets the UI synthesise a polyline and
     // show intermediate-stop count without another API call.
+    //
+    // NEW (Phase 4 schema): also record per-stop ARRIVAL TIMES as minutes
+    // from the service's origin departure, parallel to the CRS array. Unlocks
+    // "calling-point-as-hub" routing in the app — e.g. Richmond→Ascot via
+    // Barnes needs X→Barnes time + Barnes→D time on the relevant services,
+    // which weren't computable from raw minMinutes + CRS chain alone.
+    //
+    // Backward compat: parallel-array shape (not a reshape of the existing
+    // field). Consumers that only read fastestCallingPoints keep working;
+    // new calling-point-as-hub code reads fastestCallingPointTimes on top.
+    // Existing entries in origin-routes.json that pre-date this field
+    // simply won't participate in calling-point-as-hub routing until
+    // their primary gets re-fetched.
     for (let i = idx + 1; i < calling.length; i++) {
       const { crs, arrMs } = calling[i]
       if (arrMs == null) continue
@@ -269,6 +282,18 @@ async function fetchForDate(dateStr) {
       const mins = Math.round((arrMs - originDepartMs) / 60000)
       if (mins <= 0 || mins > 24 * 60) continue  // sanity bounds (handles clock skew)
 
+      // Build the fastestCallingPoints slice and its parallel per-stop times.
+      // index 0 is the origin → 0 minutes by definition. Subsequent entries
+      // get (arrMs - originDepartMs) in minutes. Nulls are preserved (rare
+      // but defensive — some CP entries lack arrival timestamps).
+      const sliceArr = calling.slice(idx, i + 1)
+      const fastestCallingPoints = sliceArr.map((c) => c.crs)
+      const fastestCallingPointTimes = sliceArr.map((c, k) => {
+        if (k === 0) return 0  // service origin = zero minutes
+        if (c.arrMs == null) return null
+        return Math.round((c.arrMs - originDepartMs) / 60000)
+      })
+
       const prev = reachable.get(crs)
       if (!prev) {
         reachable.set(crs, {
@@ -276,7 +301,8 @@ async function fetchForDate(dateStr) {
           crs,
           minMinutes: mins,
           services: 1,
-          fastestCallingPoints: calling.slice(idx, i + 1).map((c) => c.crs),
+          fastestCallingPoints,
+          fastestCallingPointTimes,
           // Upstream is pinned to the WINNING service — when a faster service
           // displaces the current winner below, upstream gets replaced too.
           upstreamCallingPoints: upstream,
@@ -285,7 +311,8 @@ async function fetchForDate(dateStr) {
         prev.services++
         if (mins < prev.minMinutes) {
           prev.minMinutes = mins
-          prev.fastestCallingPoints = calling.slice(idx, i + 1).map((c) => c.crs)
+          prev.fastestCallingPoints = fastestCallingPoints
+          prev.fastestCallingPointTimes = fastestCallingPointTimes
           prev.upstreamCallingPoints = upstream
         }
       }
@@ -344,6 +371,11 @@ function takeBetter(existing, candidate) {
       // service that runs every week).
       services: Math.max(existing.services ?? 0, candidate.services ?? 0),
       fastestCallingPoints: candidate.fastestCallingPoints,
+      // fastestCallingPointTimes is parallel to fastestCallingPoints — must
+      // be carried from the same winning date's data. Older entries in
+      // origin-routes.json won't have it; degrade to undefined rather than
+      // invent numbers.
+      fastestCallingPointTimes: candidate.fastestCallingPointTimes,
       upstreamCallingPoints: candidate.upstreamCallingPoints ?? [],
     }
   }
@@ -395,6 +427,14 @@ current[originStation.coord] = {
         minMinutes: r.minMinutes,
         services: r.services,
         fastestCallingPoints: r.fastestCallingPoints,
+        // Parallel to fastestCallingPoints (same length): arrival time
+        // from the service's origin in minutes. Drives calling-point-
+        // as-hub routing downstream. Omitted from the output JSON
+        // when undefined (older pre-schema entries) to keep the diff
+        // clean — don't write a null field just to be explicit.
+        ...(r.fastestCallingPointTimes !== undefined && {
+          fastestCallingPointTimes: r.fastestCallingPointTimes,
+        }),
         upstreamCallingPoints: r.upstreamCallingPoints ?? [],
       }])
   ),

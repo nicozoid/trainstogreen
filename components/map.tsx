@@ -392,6 +392,18 @@ type DirectReachable = {
   services: number
   fastestCallingPoints: string[]
   /**
+   * Parallel to fastestCallingPoints (same length): arrival time in minutes
+   * from the service's origin departure. Index 0 is always 0 (origin itself).
+   * Entries may be null when the RTT response omitted an arrival timestamp
+   * for a given stop (rare). Added in the Phase 4 schema extension to unlock
+   * calling-point-as-hub routing: the app can compute "from X to any
+   * intermediate C" or "from any intermediate C to D" using the same
+   * service's timings. Older rows written before this extension lack the
+   * field entirely — consumers must treat `undefined` as "no per-stop
+   * timing available; fall back to whatever the old path does".
+   */
+  fastestCallingPointTimes?: Array<number | null>
+  /**
    * Stations this service calls at BEFORE the origin, captured so a passenger
    * who lives further out (e.g. Kentish Town for a Farringdon-bound
    * Thameslink) can be told to board earlier on the same train. Recorded
@@ -656,6 +668,7 @@ export default function HikeMap() {
       "-0.0035472,51.541289",   // Stratford
       "-0.104555,51.519964",    // Farringdon
       "-0.1239491,51.530609",   // Kings Cross (primary coord; renders as the full "Kings Cross, St Pancras, & Euston" menuName)
+      "-0.1705184,51.4644589",  // Clapham Junction — first suburban hub released under conservative admin-only search gating
     ],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
