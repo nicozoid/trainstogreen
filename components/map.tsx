@@ -1786,26 +1786,9 @@ export default function HikeMap() {
           if (directCandidate && stitchedCandidate) {
             const directMin = directCandidate.mins
             const stitchedMin = stitchedCandidate.mins
-            // Single-station shortcut: if the user picked a specific home
-            // station (not the London synthetic "Any London terminus"),
-            // they want to board AT that station. A stitched route that
-            // requires tube-hopping to a different London terminal
-            // defeats the point — e.g. Cannon Street → Gravesend is
-            // 62min direct on Southeastern from CST, but if we apply the
-            // 15-min rule the app silently routes via St Pancras+HS1
-            // (~45min, 1 change), which is faster on paper but wrong for
-            // a CST-home user. Detect single-station primaries by the
-            // absence of a cluster — CST, CHX, VIC, PAD, MYB, LST, BFR,
-            // MOG, FST, LBG all qualify; Waterloo / Kings Cross /
-            // Stratford / London-synthetic all have clusters and keep
-            // the normal preference rules.
-            const isSingleStationPrimary = !PRIMARY_ORIGIN_CLUSTER[primaryOrigin]
-            if (isSingleStationPrimary) {
-              best = directCandidate
-            }
             // Rule 1 — 2h30m cutoff: direct would be out of range but stitched
             // is still in range, so use stitched regardless of the 15-min rule.
-            else if (directMin > DAY_TRIP_MAX_MIN && stitchedMin <= DAY_TRIP_MAX_MIN) {
+            if (directMin > DAY_TRIP_MAX_MIN && stitchedMin <= DAY_TRIP_MAX_MIN) {
               best = stitchedCandidate
             }
             // Rule 2 — 15-min preference: only switch to stitched if it saves
