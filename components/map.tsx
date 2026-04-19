@@ -2612,6 +2612,19 @@ export default function HikeMap() {
       const network = (bf?.properties?.network as string | undefined) ?? ""
       const isNR = /National Rail|Elizabeth line/.test(network)
       if (!isNR) continue
+      // Proximity dedupe: if a previously-added diamond is within ~70m
+      // (squared-deg < 1e-6 at London's latitude) of this one, skip.
+      // Collapses the double StP entry (main concourse vs HS1/SPL
+      // concourse, ~80m apart) and any future near-duplicates into a
+      // single icon + label. Waterloo / Waterloo East are 400m apart
+      // so both survive; KX NR / KX Underground would ordinarily
+      // survive too if the tube filter above hadn't already dropped
+      // Underground.
+      const nearPrevious = iconFeatures.some((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
+      })
+      if (nearPrevious) continue
       iconFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
@@ -2619,14 +2632,22 @@ export default function HikeMap() {
       })
       const rawName = bf?.properties?.name as string | undefined
       if (!rawName) continue
-      // Shorten the name for the label if we have a better primary display
-      // name (e.g. "London King's Cross" → "Kings Cross"). Falls back to
-      // the raw baseStations name otherwise. Plus one targeted override
-      // for Liverpool Street → "Liverpool St" because the full name runs
-      // into Moorgate's label at typical zoom.
+      // Label resolution: prefer the primary's displayName when the coord
+      // is itself a PRIMARY_ORIGINS key; otherwise use the baseStations
+      // OSM name. Then apply a few targeted normalisations so the
+      // terminus waypoint labels read consistently:
+      //   - "London King's Cross" → "Kings Cross" (drop "London" prefix,
+      //     apostrophe-free to match the other cluster labels)
+      //   - "London St. Pancras International" → "St Pancras International"
+      //   - "Liverpool Street" → "Liverpool St" (avoids running into the
+      //     adjacent Moorgate label)
       const primaryDisplayName = PRIMARY_ORIGINS[coord]?.displayName
       let label = primaryDisplayName ?? rawName
+      if (label === "London King's Cross") label = "Kings Cross"
+      if (label === "London St. Pancras International") label = "St Pancras International"
       if (label === "Liverpool Street") label = "Liverpool St"
+      if (label === "Cannon Street") label = "Cannon St"
+      if (label === "Fenchurch Street") label = "Fenchurch St"
       if (seenNames.has(label)) continue
       seenNames.add(label)
       labelFeatures.push({
@@ -3008,6 +3029,40 @@ export default function HikeMap() {
     return resolveJourneyCoords(journeys?.[primaryOrigin])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
+
+  // When the Central London synthetic is the active primary AND a journey
+  // is being hovered, identify which of the 16 terminus diamonds matches
+  // the journey's origin — i.e. the London station where the polyline
+  // starts. That one diamond should remain visible at all zoom levels
+  // (below the main-layer's minzoom=9) so the user sees where the
+  // highlighted train actually departs from, even zoomed out to a
+  // country-wide view.
+  //
+  // Matched by proximity: take the polyline's first coord and find the
+  // closest cluster member within ~250m (squared-deg threshold).
+  // Squared-deg keeps the comparison cheap and accurate enough at
+  // London's latitude.
+  const journeyOriginClusterCoord = useMemo(() => {
+    if (!hoveredJourneyCoords || hoveredJourneyCoords.length === 0) return null
+    if (!londonTerminusFeatures) return null
+    if (!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic) return null
+    const [firstLng, firstLat] = hoveredJourneyCoords[0]
+    let best: [number, number] | null = null
+    let bestDist = Infinity
+    for (const f of londonTerminusFeatures.icons.features) {
+      const [l, a] = f.geometry.coordinates as [number, number]
+      const d = (l - firstLng) ** 2 + (a - firstLat) ** 2
+      if (d < bestDist) {
+        bestDist = d
+        best = [l, a]
+      }
+    }
+    // ~250m² tolerance in squared lng/lat. Journeys whose polyline doesn't
+    // begin at a London terminus (e.g. when a non-London primary is
+    // somehow active — shouldn't happen since we gate on isSynthetic, but
+    // defensive) return null so no "origin" diamond renders.
+    return bestDist < 1e-5 ? best : null
+  }, [hoveredJourneyCoords, londonTerminusFeatures, primaryOrigin])
 
   // Friend origin polyline — same logic but for the friend's journey
   const hoveredFriendJourneyCoords = useMemo(() => {
@@ -4063,6 +4118,12 @@ export default function HikeMap() {
               <Layer
                 id="london-terminus-icon"
                 type="symbol"
+                // Diamonds cluster tightly in central London — only start
+                // showing from zoom 9 so they don't form a single
+                // unreadable blob at nationwide zoom. Exception for the
+                // journey-origin diamond below, which stays visible at
+                // all zooms to anchor the polyline.
+                minzoom={9}
                 layout={{
                   "icon-image": "icon-london-terminus",
                   // ~0.6× of the standard rating-icon size — reads as a
@@ -4099,6 +4160,83 @@ export default function HikeMap() {
                 }}
               />
             </Source>
+
+            {/* Journey-origin overlay — the single diamond (+ label)
+                matching the currently-hovered journey's departure
+                terminus. No minzoom gating, so the user sees WHERE
+                their train starts even when zoomed out to a
+                country-wide view of the destination region. Rendered
+                on top of the main diamonds source, so at zoom 9+ it
+                just draws the same pixel twice at the same coord
+                (visually identical). */}
+            {journeyOriginClusterCoord && (() => {
+              // Find the matching label (if any) for this origin coord.
+              // Labels are name-deduped, so the origin might match a
+              // label with a different coord than the icon — look up
+              // by name via the raw cluster-member name.
+              const originLabel = (() => {
+                const [oLng, oLat] = journeyOriginClusterCoord
+                // Find closest label feature within tiny tolerance.
+                let bestLabel: string | null = null
+                let bestDist = Infinity
+                for (const lf of londonTerminusFeatures.labels.features) {
+                  const [l, a] = lf.geometry.coordinates as [number, number]
+                  const d = (l - oLng) ** 2 + (a - oLat) ** 2
+                  if (d < bestDist) {
+                    bestDist = d
+                    bestLabel = lf.properties.name as string
+                  }
+                }
+                return bestDist < 1e-5 ? bestLabel : null
+              })()
+              return (
+                <Source
+                  id="london-termini-origin"
+                  type="geojson"
+                  data={{
+                    type: "FeatureCollection",
+                    features: [{
+                      type: "Feature",
+                      geometry: { type: "Point", coordinates: journeyOriginClusterCoord },
+                      properties: { name: originLabel ?? "" },
+                    }],
+                  }}
+                >
+                  <Layer
+                    id="london-terminus-origin-icon"
+                    type="symbol"
+                    layout={{
+                      "icon-image": "icon-london-terminus",
+                      "icon-size": 0.6,
+                      "icon-allow-overlap": true,
+                      "icon-ignore-placement": true,
+                    }}
+                  />
+                  {originLabel && (
+                    <Layer
+                      id="london-terminus-origin-label"
+                      type="symbol"
+                      // Origin label tracks the origin icon — always
+                      // visible alongside it, even when the main
+                      // label layer (minzoom=11) is off.
+                      layout={{
+                        "text-field": ["get", "name"],
+                        "text-size": 11,
+                        "text-offset": [0, 0.9],
+                        "text-anchor": "top",
+                        "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                        "text-allow-overlap": true,
+                      }}
+                      paint={{
+                        "text-color": labelColor,
+                        "text-halo-color": haloColor,
+                        "text-halo-width": 1.5,
+                      }}
+                    />
+                  )}
+                </Source>
+              )
+            })()}
           </>
         )}
 
