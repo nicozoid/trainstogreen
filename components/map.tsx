@@ -2600,25 +2600,33 @@ export default function HikeMap() {
       const lng = parseFloat(lngStr)
       const lat = parseFloat(latStr)
       if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+      // Skip tube-only coords — the cluster includes Underground entrances
+      // for Kings Cross and Euston as satellite coords so cluster-member
+      // taps resolve to the parent primary, but visually we only want the
+      // National Rail stations shown as waypoint diamonds. Identify tube-
+      // only coords by their network tag.
+      const bf = baseStations.features.find((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return `${l},${a}` === coord
+      })
+      const network = (bf?.properties?.network as string | undefined) ?? ""
+      const isNR = /National Rail|Elizabeth line/.test(network)
+      if (!isNR) continue
       iconFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
         properties: {},
       })
-      // Lookup the station's own name from baseStations by coord; some
-      // cluster members (tube entrances) may not have a baseStations
-      // feature if they're tube-only and didn't survive the NR filter.
-      const bf = baseStations.features.find((f) => {
-        const [l, a] = f.geometry.coordinates as [number, number]
-        return `${l},${a}` === coord
-      })
       const rawName = bf?.properties?.name as string | undefined
       if (!rawName) continue
       // Shorten the name for the label if we have a better primary display
       // name (e.g. "London King's Cross" → "Kings Cross"). Falls back to
-      // the raw baseStations name otherwise.
+      // the raw baseStations name otherwise. Plus one targeted override
+      // for Liverpool Street → "Liverpool St" because the full name runs
+      // into Moorgate's label at typical zoom.
       const primaryDisplayName = PRIMARY_ORIGINS[coord]?.displayName
-      const label = primaryDisplayName ?? rawName
+      let label = primaryDisplayName ?? rawName
+      if (label === "Liverpool Street") label = "Liverpool St"
       if (seenNames.has(label)) continue
       seenNames.add(label)
       labelFeatures.push({
@@ -3690,7 +3698,11 @@ export default function HikeMap() {
     // Small diamond used for the 18 London-terminus reference markers when
     // the Central London synthetic is the active primary. Rendered at ~0.6×
     // icon-size in the layer below so it reads as a compact waypoint.
-    add('icon-london-terminus', createRatingIcon('diamond',       colors.primary,   stroke))
+    // Uses the SAME hardcoded #2f6544 (--tree-800) as the journey polyline
+    // layers so the diamonds visually match the route lines drawn on top
+    // — a visual "here's a terminus" anchor consistent with the polyline
+    // that threads between them.
+    add('icon-london-terminus', createRatingIcon('diamond',       "#2f6544",        stroke))
     // Excluded stations — only shown in admin mode. Uses --primary so the cross
     // reads with the same visual weight as Heavenly/Good/Origin markers.
     add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
