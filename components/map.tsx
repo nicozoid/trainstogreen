@@ -2644,7 +2644,7 @@ export default function HikeMap() {
       const primaryDisplayName = PRIMARY_ORIGINS[coord]?.displayName
       let label = primaryDisplayName ?? rawName
       if (label === "London King's Cross") label = "Kings Cross"
-      if (label === "London St. Pancras International") label = "St Pancras International"
+      if (label === "London St. Pancras International") label = "St Pancras"
       if (label === "Liverpool Street") label = "Liverpool St"
       if (label === "Cannon Street") label = "Cannon St"
       if (label === "Fenchurch Street") label = "Fenchurch St"
@@ -4551,7 +4551,16 @@ export default function HikeMap() {
                 "text-offset": [0, 1.4],
                 "text-anchor": "top",
                 "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                // allow-overlap: this label renders even if it collides
+                // with one placed earlier. ignore-placement: this label
+                // doesn't "steal" a slot from others, and crucially
+                // is NOT itself culled by earlier labels that already
+                // claimed the area — Charing Cross's diamond label
+                // sits 300m east and was occasionally demoting the
+                // "London" label visually at mid-zooms before this
+                // setting was explicit.
                 "text-allow-overlap": true,
+                "text-ignore-placement": true,
               }}
               paint={{
                 "text-color": labelColor,
