@@ -532,7 +532,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 // Using canvas (rather than SVG files) means no extra assets to load.
 // strokeColor switches between white (light mode) and black (dark mode) so
 // the outline stays visible against the map background.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross', color: string, strokeColor: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross' | 'diamond', color: string, strokeColor: string): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -596,6 +596,22 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     // Vertical arm — full top-to-bottom
     ctx.moveTo(cx, inset)
     ctx.lineTo(cx, 24 - inset)
+    ctx.stroke()
+  } else if (shape === 'diamond') {
+    // Square rotated 45° — four vertices at top, right, bottom, left
+    // centres. Used for London-terminus markers. Radius of ~7 keeps it
+    // visually matched to the other small rating icons (circle r=7).
+    ctx.beginPath()
+    const cx = 12, cy = 12, r = 7
+    ctx.moveTo(cx, cy - r)  // top
+    ctx.lineTo(cx + r, cy)  // right
+    ctx.lineTo(cx, cy + r)  // bottom
+    ctx.lineTo(cx - r, cy)  // left
+    ctx.closePath()
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = strokeColor
+    ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else if (shape === 'hexagon') {
     // Regular hexagon — 6 vertices evenly spaced, flat top edge
@@ -2556,6 +2572,67 @@ export default function HikeMap() {
   }, [visibleRatings, prevVisibleRatings])
 
   // Filters by visibleRatings + keeps leaving features during their shrink animation.
+  // London-terminus reference markers — only shown when the Central London
+  // synthetic primary is active. Renders a small diamond at each of the 18
+  // cluster members (KX/StP/Euston multi-coord variants included, they
+  // visually overlap in practice). Labels are deduped by station name so
+  // KX NR + KX Underground don't get two "Kings Cross" texts stacked on
+  // top of each other. Labels appear at zoom 11+. Non-interactive — the
+  // Source and Layers aren't wired into interactiveLayerIds so clicks
+  // pass through to whatever's underneath.
+  const londonTerminusFeatures = useMemo(() => {
+    if (!baseStations) return null
+    const syntheticCoord = Object.keys(PRIMARY_ORIGINS).find(
+      (k) => PRIMARY_ORIGINS[k]?.isSynthetic,
+    )
+    if (!syntheticCoord) return null
+    const clusterCoords = PRIMARY_ORIGIN_CLUSTER[syntheticCoord] ?? []
+    type PointFeature = {
+      type: "Feature"
+      geometry: { type: "Point"; coordinates: [number, number] }
+      properties: Record<string, unknown>
+    }
+    const iconFeatures: PointFeature[] = []
+    const labelFeatures: PointFeature[] = []
+    const seenNames = new Set<string>()
+    for (const coord of clusterCoords) {
+      const [lngStr, latStr] = coord.split(",")
+      const lng = parseFloat(lngStr)
+      const lat = parseFloat(latStr)
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+      iconFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: {},
+      })
+      // Lookup the station's own name from baseStations by coord; some
+      // cluster members (tube entrances) may not have a baseStations
+      // feature if they're tube-only and didn't survive the NR filter.
+      const bf = baseStations.features.find((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return `${l},${a}` === coord
+      })
+      const rawName = bf?.properties?.name as string | undefined
+      if (!rawName) continue
+      // Shorten the name for the label if we have a better primary display
+      // name (e.g. "London King's Cross" → "Kings Cross"). Falls back to
+      // the raw baseStations name otherwise.
+      const primaryDisplayName = PRIMARY_ORIGINS[coord]?.displayName
+      const label = primaryDisplayName ?? rawName
+      if (seenNames.has(label)) continue
+      seenNames.add(label)
+      labelFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: { name: label },
+      })
+    }
+    return {
+      icons: { type: "FeatureCollection" as const, features: iconFeatures },
+      labels: { type: "FeatureCollection" as const, features: labelFeatures },
+    }
+  }, [baseStations])
+
   // Stamps boolean flags (isNew / isLeaving) — NOT the scale values themselves.
   // Scale values live in the Layer expressions so stationsForMap doesn't recompute
   // on every animation frame, and avoids stale-value flashes on the first render.
@@ -3610,6 +3687,10 @@ export default function HikeMap() {
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
     add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
     add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
+    // Small diamond used for the 18 London-terminus reference markers when
+    // the Central London synthetic is the active primary. Rendered at ~0.6×
+    // icon-size in the layer below so it reads as a compact waypoint.
+    add('icon-london-terminus', createRatingIcon('diamond',       colors.primary,   stroke))
     // Excluded stations — only shown in admin mode. Uses --primary so the cross
     // reads with the same visual weight as Heavenly/Good/Origin markers.
     add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
@@ -3957,6 +4038,57 @@ export default function HikeMap() {
             }}
           />
         </Source>
+
+        {/* London-terminus reference markers — only when Central London is
+            the active primary. Placed BEFORE the stations Source so they
+            render beneath every station icon / label (bottom-most z-index —
+            the user's rule: "they should not obscure anything"). Neither
+            layer is wired into interactiveLayerIds, so clicks pass straight
+            through to whatever's underneath. */}
+        {PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic && londonTerminusFeatures && (
+          <>
+            <Source id="london-termini-icons" type="geojson" data={londonTerminusFeatures.icons}>
+              <Layer
+                id="london-terminus-icon"
+                type="symbol"
+                layout={{
+                  "icon-image": "icon-london-terminus",
+                  // ~0.6× of the standard rating-icon size — reads as a
+                  // compact waypoint at all zooms without competing with
+                  // the hiking-destination icons.
+                  "icon-size": 0.6,
+                  // Always render even if another symbol is in the way
+                  // (e.g. Mapbox's own base-style station symbols).
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                }}
+              />
+            </Source>
+            <Source id="london-termini-labels" type="geojson" data={londonTerminusFeatures.labels}>
+              <Layer
+                id="london-terminus-label"
+                type="symbol"
+                // Names only start showing in when you've zoomed in enough
+                // to distinguish individual termini from the cluster.
+                minzoom={11}
+                layout={{
+                  "text-field": ["get", "name"],
+                  "text-size": 11,
+                  // Nudge the label below the diamond so the icon stays visible.
+                  "text-offset": [0, 0.9],
+                  "text-anchor": "top",
+                  "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                  "text-allow-overlap": false,
+                }}
+                paint={{
+                  "text-color": labelColor,
+                  "text-halo-color": haloColor,
+                  "text-halo-width": 1.5,
+                }}
+              />
+            </Source>
+          </>
+        )}
 
         {stationsForMap && (
           <Source id="stations" type="geojson" data={stationsForMap}>
