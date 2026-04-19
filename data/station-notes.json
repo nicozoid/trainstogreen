@@ -107,12 +107,12 @@
   "-0.6105638,51.4832744": {
     "name": "Windsor and Eton Central",
     "publicNote": "",
-    "privateNote": "confirmed"
+    "privateNote": "Trainline says 28m — Paddington via Slough"
   },
   "-0.7664026,51.571086": {
     "name": "Marlow",
     "publicNote": "",
-    "privateNote": "issue: trainline has same route, but much faster - 49m"
+    "privateNote": "Trainline says 49m — Paddington via Maidenhead"
   },
   "0.1000064,50.7729203": {
     "name": "Seaford",
@@ -122,7 +122,7 @@
   "-0.6326933,52.0212048": {
     "name": "Aspley Guise",
     "publicNote": "",
-    "privateNote": "confirmed. perfect match"
+    "privateNote": "Trainline says: 1h9m - Euston via Bletchley"
   },
   "0.0306729,50.83111": {
     "name": "Southease",
@@ -142,6 +142,26 @@
   "0.7468492,51.3889653": {
     "name": "Swale",
     "publicNote": "",
-    "privateNote": "Trainline says 1h 12m st pancras via sittingbourne"
+    "privateNote": "Trainline says 1h 12m — st pancras via sittingbourne"
+  },
+  "-1.4457051,51.4026132": {
+    "name": "Kintbury",
+    "publicNote": "",
+    "privateNote": "Trainline says: 1h5m — Paddington via Newbury"
+  },
+  "-0.899422,51.5338451": {
+    "name": "Henley-on-Thames",
+    "publicNote": "",
+    "privateNote": "Trainline says 49m — Paddington via Twyford"
+  },
+  "-1.0608367,51.3299792": {
+    "name": "Bramley",
+    "publicNote": "",
+    "privateNote": "Trainline says 51m — Paddington via Reading"
+  },
+  "1.3498136,51.9670171": {
+    "name": "Felixstowe",
+    "publicNote": "",
+    "privateNote": "Trainline says 1h54m — Liverpool St via Ipswich"
   }
 }
