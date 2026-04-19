@@ -197,25 +197,17 @@ const INTERCHANGE_BUFFER_MIN = 3
 
 // Minimum realistic wait time between two consecutive HEAVY_RAIL legs in a
 // mid-journey change (e.g. change at Guildford from a Waterloo train to the
-// North Downs line). Google Routes sometimes picks itineraries with
-// impossibly-tight 3-4 minute connections ("miss that specific train and
-// your actual wait is 60 min"), which then flow through into our stitched
-// durations and mislead the user. Enforcing this minimum on the gap between
-// an arrival and the next departure gives a time closer to what a typical
-// traveller should plan for — still optimistic for less-frequent routes, but
-// realistic enough that users won't hit a connection they can't make.
-//
-// Why 15 and not 10? Tested against Trainline on several cases:
-// - Gomshall via Guildford (was 52m) with 10-min buffer gives 58m. Still
-//   under Trainline's shown fastest of 46m because the Guildford→Gomshall
-//   ride in our source data is longer than Trainline's fastest. 15m buffer
-//   gives 63m, which is the right side of optimistic.
-// - Eynsford via Swanley with 10-min buffer gives 36m (Trainline: 46m
-//   fastest). 15m buffer gives 41m, which then trips the direct-preference
-//   rule below (direct from Victoria/Blackfriars is ~54m, threshold 15 kicks
-//   in: 41 > 54-15=39, so direct wins). Matches reality: Eynsford IS best
-//   served direct from Victoria/BFR Thameslink, not stitched via LBG.
-const MIN_CHANGE_BUFFER_MIN = 15
+// Fallback-only value: used when a leg in the source journey is missing
+// arrival/departure timestamps and we can't compute the real inter-leg gap
+// from the API data. In every other case we trust the API's own gap
+// verbatim — no artificial floor. This means e.g. Seaford via Lewes
+// picks up the realistic 4-minute change that Trainline shows, rather
+// than getting padded to 15 minutes and looking slower than it actually
+// is. Previously we enforced a 15-min floor here to protect users from
+// impossibly-tight Google Routes itineraries; dropping that floor trusts
+// the APIs for what they're designed to tell us and accepts the
+// occasional unreachable-in-practice tight connection.
+const MISSING_TIMESTAMP_FALLBACK_MIN = 15
 
 /**
  * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
@@ -314,10 +306,11 @@ export function stitchJourney({
     // tube/walk in between, this isn't a clean rail-only continuation.
     const originLegs = source.legs.slice(startIdx)
     if (originLegs.some((l) => l.vehicleType !== "HEAVY_RAIL")) continue
-    // Compute duration from timestamps with per-change buffer enforcement
-    // (MIN_CHANGE_BUFFER_MIN) so unrealistically-tight connections in the
-    // Google Routes source get padded to a realistic minimum. Single-leg
-    // journeys skip the buffer logic entirely.
+    // Compute duration purely from the API-provided timestamps — no
+    // artificial minimum buffer between legs. Trust whatever gap the
+    // source journey tells us (e.g. a 4-minute same-platform connection
+    // at Lewes for Victoria→Seaford). Single-leg journeys skip the gap
+    // logic entirely.
     let minutes = 0
     let timestampsOk = true
     for (let i = 0; i < originLegs.length; i++) {
@@ -328,7 +321,7 @@ export function stitchJourney({
         const nextLeg = originLegs[i + 1]
         if (!nextLeg.departureTime) { timestampsOk = false; break }
         const gap = (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        minutes += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+        minutes += gap
       }
     }
     if (!timestampsOk || !Number.isFinite(minutes) || minutes <= 0) continue
@@ -507,10 +500,11 @@ function stitchFromSource(
  *  source.durationMinutes.
  *
  *  Sums per-leg ride times from each leg's own start/end timestamps, plus
- *  enforces MIN_CHANGE_BUFFER_MIN between consecutive legs — see the const's
- *  comment for rationale. If timestamps are missing on any internal leg,
- *  falls back to the start-to-end delta (which still includes whatever gaps
- *  the source encoded, good or bad) and bails if that isn't available. */
+ *  the actual gap between consecutive legs as given by the API (no
+ *  artificial minimum). If timestamps are missing on any internal leg,
+ *  uses MISSING_TIMESTAMP_FALLBACK_MIN for that gap and, if per-leg
+ *  timestamps are missing entirely, falls back to the source journey's
+ *  own start-to-end delta. */
 function computeMainlineMinutes(
   source: StitchedJourneyInfo,
   mainlineLegs: StitchedJourneyInfo["legs"],
@@ -550,13 +544,15 @@ function computeMainlineMinutes(
     total += (new Date(leg.arrivalTime).getTime() - new Date(leg.departureTime).getTime()) / 60_000
     if (i < mainlineLegs.length - 1) {
       const nextLeg = mainlineLegs[i + 1]
-      // Gap = time between this leg's arrival and the next leg's departure.
-      // Enforce MIN_CHANGE_BUFFER_MIN floor so a 3-minute platform-dash
-      // connection isn't inherited verbatim into the user-facing duration.
+      // Gap = time between this leg's arrival and the next leg's
+      // departure, taken verbatim from the API timestamps. No floor —
+      // a 4-minute same-platform connection gets counted as 4 minutes.
+      // Only falls back to a sensible default when the next leg
+      // doesn't have timestamps at all (rare in practice).
       const gap = nextLeg.departureTime && nextLeg.arrivalTime
         ? (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        : MIN_CHANGE_BUFFER_MIN
-      total += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+        : MISSING_TIMESTAMP_FALLBACK_MIN
+      total += gap
     }
   }
   return Math.round(total)
