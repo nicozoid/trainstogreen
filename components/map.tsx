@@ -1500,7 +1500,16 @@ export default function HikeMap() {
         // data OR any of its cluster satellites do. The City mega-cluster's
         // synthetic primary coord (Bank station) has no RTT data of its own —
         // its cluster members supply all the direct coverage.
-        const isRttPrimary = clusterCoords.some((c) => originRoutes[c] != null)
+        //
+        // Custom primaries (anything not in PRIMARY_ORIGINS — Stratford,
+        // Farringdon, Richmond once we fetch it, etc.) are EXCLUDED from
+        // this check even when they have their own RTT data. They go down
+        // the isCustomPrimary branch instead, where Step 0a can use the
+        // pre-fetched Google Routes journey under feature.journeys[primary]
+        // for comprehensive coverage (1092 destinations for Stratford)
+        // — the RTT-primary branch would only give us the RTT direct
+        // subset (~105 for Stratford) and silently drop everything else.
+        const isRttPrimary = !isCustomPrimary && clusterCoords.some((c) => originRoutes[c] != null)
         // Gather direct-reachable entries from every cluster member (including
         // the primary) and pick the fastest. We remember which cluster member
         // served the winner so the modal/journey can attribute it correctly
