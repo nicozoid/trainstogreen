@@ -3259,6 +3259,18 @@ export default function HikeMap() {
     return bestDist < 5e-5 ? best : null
   }, [hoveredJourneyCoords, londonTerminusFeatures, primaryOrigin])
 
+  // "Sticky" copy of the journey-origin diamond's coord so it can fade out on
+  // unhover instead of vanishing the moment journeyOriginClusterCoord goes
+  // null. Updated whenever the live value is non-null; CLEARED only at the
+  // end of the polyline fade-out effect below (the diamond keeps rendering
+  // with diminishing opacity until then).
+  const [persistentOriginCoord, setPersistentOriginCoord] = useState<[number, number] | null>(null)
+  useEffect(() => {
+    if (journeyOriginClusterCoord) setPersistentOriginCoord(journeyOriginClusterCoord)
+    // Intentionally NOT clearing on null — the fade-out effect handles that
+    // once the 250ms fade finishes, so the diamond fades instead of blinking off.
+  }, [journeyOriginClusterCoord])
+
   // Friend origin polyline — same logic but for the friend's journey
   const hoveredFriendJourneyCoords = useMemo(() => {
     if (!friendOrigin || !hovered || !stations) return null
@@ -3354,6 +3366,9 @@ export default function HikeMap() {
       } else {
         journeyFadeRef.current = null
         setJourneyLine(emptyLine)
+        // Let the terminus-origin diamond drop once the fade is complete —
+        // until now it's been fading alongside the polyline.
+        setPersistentOriginCoord(null)
       }
     }
     journeyFadeRef.current = requestAnimationFrame(fade)
@@ -4389,12 +4404,17 @@ export default function HikeMap() {
               type="geojson"
               data={{
                 type: "FeatureCollection",
-                features: journeyOriginClusterCoord
+                // Drives off `persistentOriginCoord` (not the live
+                // `journeyOriginClusterCoord`) so the diamond stays in the
+                // source during the 250ms fade-out on unhover. The coord is
+                // cleared at the END of the polyline fade, so the feature
+                // vanishes exactly when opacity hits 0.
+                features: persistentOriginCoord
                   ? [{
                       type: "Feature",
                       geometry: {
                         type: "Point",
-                        coordinates: journeyOriginClusterCoord,
+                        coordinates: persistentOriginCoord,
                       },
                       properties: { isTerminus: true },
                     }]
@@ -4409,6 +4429,14 @@ export default function HikeMap() {
                   "icon-size": 0.6,
                   "icon-allow-overlap": true,
                   "icon-ignore-placement": true,
+                }}
+                paint={{
+                  // Track the polyline's opacity curve so the diamond fades
+                  // in and out at the same rate. journeyOpacity peaks at 0.5
+                  // when a journey is hovered; doubling and clamping to 1
+                  // keeps the diamond fully opaque while hovered, then it
+                  // decays to 0 in lockstep with the polyline fade-out.
+                  "icon-opacity": Math.min(1, journeyOpacity * 2),
                 }}
               />
             </Source>
@@ -4526,13 +4554,15 @@ export default function HikeMap() {
                 // Per-station hit-area size.
                 // - Origin: enlarged (20px) so it's easier to click when overlapping other stations.
                 // - Excluded: shrunk (10px) so it loses hit-tests near any non-excluded station.
-                // - Others: default 16px.
+                // - Others: 12px on desktop (matches the visible pulsing icon —
+                //   cursor precision makes a forgiving target unnecessary) and
+                //   16px on mobile (the finger-friendly default we've always had).
                 // Radius depends only on feature properties (not hover state), so Mapbox
                 // doesn't repaint the layer on hover — that would cause hover flicker.
                 "circle-radius": ["case",
                   ["has", "isOrigin"], 20,
                   ["has", "isExcluded"], 10,
-                  16,
+                  isMobile ? 16 : 12,
                 ],
                 "circle-color": "#000000",
                 // Near-invisible but still detected by Mapbox hit testing.
@@ -4829,18 +4859,18 @@ export default function HikeMap() {
               id="hovered-station-hit"
               type="circle"
               paint={{
-                // Desktop: same as the default 16px station-hit-area —
-                // cursor precision makes an enlarged target unnecessary.
-                // Mobile: 4x the default (64px) — once a station is already
-                // in the pulsing "preview" state, we want a huge, unmissable
-                // tap target so the second tap reliably opens the modal
-                // even if the finger drifts beyond the visible icon. This
-                // layer is rendered LAST in the Mapbox layer stack, which
-                // combined with the handleTouchStart/handleClick feature
+                // Desktop: 12px — matches the visible pulsing-icon radius so
+                // the hit area doesn't extend beyond what the user sees pulsing.
+                // Mobile: 4x the desktop default (64px) — once a station is
+                // already in the pulsing "preview" state, we want a huge,
+                // unmissable tap target so the second tap reliably opens the
+                // modal even if the finger drifts beyond the visible icon.
+                // This layer is rendered LAST in the Mapbox layer stack,
+                // which combined with the handleTouchStart/handleClick feature
                 // preference (see below) means the hovered station always
                 // wins taps within this enlarged zone — regardless of
                 // whether a neighbouring station is highlight/verified/etc.
-                "circle-radius": isMobile ? 64 : 16,
+                "circle-radius": isMobile ? 64 : 12,
                 "circle-color": "transparent",
                 "circle-opacity": 0.01,
               }}

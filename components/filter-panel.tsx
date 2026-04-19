@@ -519,7 +519,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     if (prevBannerRef.current && !bannerVisible) {
       // Read the real Radix thumb's actual left value so the animation
       // lands in exactly the same spot — avoids a 1px jump on handoff.
-      let targetPercent = ((maxMinutes - 45) / (sliderMax - 45)) * 100
+      let targetPercent = ((maxMinutes - 30) / (sliderMax - 30)) * 100
       const realThumb = sliderWrapperRef.current?.querySelector<HTMLSpanElement>("[data-slot='slider-thumb']")
       if (realThumb) {
         // Radix wraps the thumb in a <span style="left: calc(X% + Ypx)">;
@@ -933,7 +933,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 doesn't flash at full width before the train has arrived */}
             <div ref={sliderWrapperRef} className={trainArriving || (bannerVisible && !hasAnimatedRef.current) ? "invisible" : ""}>
               <Slider
-                min={45}
+                min={30}
                 max={sliderMax}
                 step={15}
                 value={[maxMinutes]}
@@ -1119,7 +1119,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 </span>
               </div>
               <Slider
-                min={45}
+                min={30}
                 max={sliderMax}
                 step={15}
                 value={[friendMaxMinutes]}
