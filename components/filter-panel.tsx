@@ -134,7 +134,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "not-recommended", label: "Unworthy", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
+    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -1003,7 +1003,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               checked={primaryDirectOnly}
               onCheckedChange={(checked) => onPrimaryDirectOnlyChange(checked === true)}
               /* !bg-secondary + !border-secondary match the lighter fill used by
-                 the secondary rating checkboxes (Probably/Unworthy/Unknown).
+                 the secondary rating checkboxes (Probably/Okay/Unknown).
                  The ! (Tailwind !important) is needed to beat the base Checkbox's
                  data-checked:bg-primary / data-checked:border-primary defaults. */
               className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"

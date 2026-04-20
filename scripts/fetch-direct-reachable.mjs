@@ -476,6 +476,15 @@ const prevDates = Array.isArray(existingEntry?.sampledDates) ? existingEntry.sam
 const newDates = perDateMaps.map((p) => p.date)
 const sampledDates = Array.from(new Set([...prevDates, ...newDates])).sort()
 
+// V2-specific fetched dates. Only V2-schema-aware writes append to this
+// field, so it's a reliable signal for "how many Saturdays of
+// serviceDepMinutes/serviceDurationsMinutes data this primary has" —
+// unlike `sampledDates` above, which also accumulates legacy pre-V2
+// fetch dates that may have been pruned of their actual observations.
+// Admin panel uses v2FetchedDates for its completeness check.
+const prevV2Dates = Array.isArray(existingEntry?.v2FetchedDates) ? existingEntry.v2FetchedDates : []
+const v2FetchedDates = Array.from(new Set([...prevV2Dates, ...newDates])).sort()
+
 // ---------------------------------------------------------------------------
 // Write back — directReachable sorted by minMinutes ascending for scanability.
 // ---------------------------------------------------------------------------
@@ -520,6 +529,7 @@ current[originStation.coord] = {
       })
   ),
   sampledDates,
+  v2FetchedDates,
   generatedAt: new Date().toISOString(),
 }
 writeFileSync(ROUTES_PATH, JSON.stringify(current, null, 2) + "\n")
