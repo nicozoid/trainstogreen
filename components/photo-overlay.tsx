@@ -688,6 +688,14 @@ export default function StationModal({
           )}
         </div>
 
+        {/* ── Scroll region (desktop) ──
+            On desktop, body text + photos share a single scroll area beneath
+            the title row. Everything below this wrapper scrolls together.
+            Only the title row (above) stays pinned at the top of the modal.
+            On mobile, the outer DialogContent is the scroll container (see
+            max-sm:overflow-y-auto up there), so this wrapper reverts to
+            flex-none + overflow-visible and content flows inline. */}
+        <div className="min-h-0 flex-1 overflow-y-auto max-sm:flex-none max-sm:overflow-visible">
         <DialogHeader className="shrink-0 px-6 pt-0 pb-0">
           {!isFriendOrigin && !isPrimaryOrigin && (
             <>
@@ -1050,15 +1058,14 @@ export default function StationModal({
           </div>
         )}
 
-        {/* ── Scrollable photo area ── */}
-        {/* On mobile: drop flex-1 / overflow-y-auto so this flows inside the
-            DialogContent-level scroll (see max-sm:overflow-y-auto above).
-            Desktop keeps the original two-pane layout (static header, scrolling photos). */}
-        {/* pt-6 replaces the previously broken "pt-" class. Restores the
-            24px gap between the text area and the photo grid that used to
-            come from DialogContent's gap-6, now that we've reset that
-            parent gap to 0 to fix the title\u2194content spacing. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 pt-6 pb-6 max-sm:flex-none max-sm:overflow-visible">
+        {/* ── Photo area — now just a padded block ──
+            The parent scroll wrapper (opened above, right after the title
+            row) handles the actual overflow. This used to own
+            `min-h-0 flex-1 overflow-y-auto`, but moving those onto the
+            outer wrapper lets the notes/journey section scroll with the
+            photos on desktop — which is what the user wants (title + Hike
+            button stay pinned; everything else scrolls together). */}
+        <div className="px-6 pt-6 pb-6">
 
           {/* No API key */}
           {!hasApiKey && (
@@ -1174,6 +1181,7 @@ export default function StationModal({
             </>
           )}
         </div>
+        </div>{/* /scroll region */}
       </DialogContent>
     </Dialog>
   )
