@@ -1512,12 +1512,12 @@ export default function HikeMap() {
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
   const [friendDirectOnly, setFriendDirectOnly] = useState(false)
-  // "Indirect trains only" — admin-only inverse of the above. Shows stations
-  // that require ≥1 change from the primary. Useful for debugging the
-  // stitcher: the union of this and "Direct trains only" equals the full
-  // destination set, and any visual oddity (missing station, weird time)
-  // is easier to spot when only one cohort renders at a time.
-  const [primaryIndirectOnly, setPrimaryIndirectOnly] = useState(false)
+  // Admin-only minimum-changes filter — 0 means "Any" (non-admin always
+  // has 0). Higher values hide stations reachable with fewer changes,
+  // helpful for testing routing accuracy: the more changes a journey has,
+  // the more chance of a routing error. Replaces the previous
+  // "Indirect only" checkbox with a more granular dropdown selector.
+  const [primaryMinChanges, setPrimaryMinChanges] = useState(0)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
@@ -2117,6 +2117,60 @@ export default function HikeMap() {
     // the walk + wait at P.
     const isCustomPrimary = !PRIMARY_ORIGINS[primaryOrigin]
     const CUSTOM_INTERCHANGE_MIN = 5
+
+    // Extension A: via-direct-hub composition helper. For every origin-
+    // routes station H that reaches BOTH the custom primary AND the
+    // destination D, compose X→H (reverse of H→X) + interchange + H→D.
+    // Lets "bypass central London via suburban interchange" journeys
+    // win over Google's central-London routing when they're genuinely
+    // faster. Example: CLJ→Penshurst via Redhill (once RDH is RTT-fetched).
+    //
+    // Only valuable for custom primaries. Returns the fastest 1-change
+    // composition or null. Built inside the useMemo body so it can close
+    // over coordToName / crsToCoord / customHubs / CUSTOM_INTERCHANGE_MIN.
+    function buildViaDirectHubJourney(
+      customHubsArg: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string; directReachable?: Record<string, DirectReachable> } }>,
+      coordKey: string,
+      customName: string,
+      customCoord: string,
+    ): { journey: JourneyInfo; mins: number; changes: number } | null {
+      if (customHubsArg.length === 0) return null
+      let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+      const { lng: pLng, lat: pLat } = parseCoordKey(customCoord)
+      for (const hub of customHubsArg) {
+        const hubEntry = hub.routes.directReachable?.[coordKey]
+        if (!hubEntry?.minMinutes) continue
+        const mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + hubEntry.minMinutes
+        if (best != null && mins >= best.mins) continue
+        const hubName = hub.routes.name ?? ""
+        const hubToDestCoords = (hubEntry.fastestCallingPoints ?? [])
+          .map((crs) => crsToCoord[crs])
+          .filter((c): c is [number, number] => !!c)
+        const polylineCoords = hubToDestCoords.length > 1
+          ? [[pLng, pLat] as [number, number], ...hubToDestCoords]
+          : undefined
+        const cp = buildCallingPoints(hub.pCoord, coordKey)
+        const journey = {
+          durationMinutes: mins,
+          changes: 1,
+          legs: [
+            { vehicleType: "OTHER", departureStation: customName, arrivalStation: hubName },
+            {
+              vehicleType: "HEAVY_RAIL",
+              departureStation: hubName,
+              arrivalStation: hubEntry.name ?? "",
+              stopCount: Math.max(0, (hubEntry.fastestCallingPoints?.length ?? 0) - 2),
+            },
+          ],
+          polylineCoords,
+          londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+          londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+          callingPointsLegArrival: hubEntry.name,
+        } as unknown as JourneyInfo
+        best = { journey, mins, changes: 1 }
+      }
+      return best
+    }
     // Pre-filter origin-routes entries that direct-reach the custom station,
     // so the inner loop over destinations only iterates the relevant primaries.
     // Each entry gets the P→custom time cached for quick use below.
@@ -2642,6 +2696,25 @@ export default function HikeMap() {
                 (composed.changes === curChanges && composed.mins < curMins)
               ) {
                 effectiveSourceJourney = composed.journey
+              }
+            }
+            // Extension A: via-direct-hub composition. Wins when a
+            // single suburban interchange (e.g. Redhill for CLJ→PHR)
+            // beats Google's central-London routing. 1 change.
+            const viaHub = buildViaDirectHubJourney(
+              customHubs,
+              coordKey,
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              primaryOrigin,
+            )
+            if (viaHub) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                viaHub.changes < curChanges ||
+                (viaHub.changes === curChanges && viaHub.mins < curMins)
+              ) {
+                effectiveSourceJourney = viaHub.journey
               }
             }
 
@@ -3315,15 +3388,12 @@ export default function HikeMap() {
           const primaryChanges = f.properties.effectiveChanges as number | undefined
           if (primaryChanges == null || primaryChanges > 0) return false
         }
-        // "Indirect trains only" (admin-only inverse) — require ≥1 effective
-        // change. Stations without journey data are dropped (no way to know
-        // if they'd be direct or not). UI toggle is exclusive with
-        // primaryDirectOnly — the filter-panel unchecks one when the other
-        // is checked, so both flags shouldn't be true simultaneously, but we
-        // still evaluate them as independent conditions for safety.
-        if (primaryIndirectOnly) {
+        // Admin-only minimum-changes filter — hide stations reachable with
+        // fewer than `primaryMinChanges` changes. 0 = disabled. Stations
+        // without journey data are dropped when the filter is active.
+        if (primaryMinChanges > 0) {
           const primaryChanges = f.properties.effectiveChanges as number | undefined
-          if (primaryChanges == null || primaryChanges === 0) return false
+          if (primaryChanges == null || primaryChanges < primaryMinChanges) return false
         }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
@@ -3341,7 +3411,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryIndirectOnly, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryMinChanges, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -4608,7 +4678,7 @@ export default function HikeMap() {
         setFriendMaxMinutes(600)
         setMinMinutes(0)
         setPrimaryDirectOnly(false)
-        setPrimaryIndirectOnly(true)
+        setPrimaryMinChanges(1)
         setFriendDirectOnly(false)
         // highlight = Heavenly, verified = Good, unverified = Probably
         // highlight=Heavenly, verified=Good, unverified=Probably, not-recommended=Okay
@@ -4619,7 +4689,7 @@ export default function HikeMap() {
         setFriendMaxMinutes(150)
         setMinMinutes(0)
         setPrimaryDirectOnly(false)
-        setPrimaryIndirectOnly(false)
+        setPrimaryMinChanges(0)
         setFriendDirectOnly(false)
         setVisibleRatings(new Set())
       }
@@ -4906,12 +4976,14 @@ export default function HikeMap() {
         // a configuration choice.
         onPrimaryDirectOnlyChange={(v) => {
           setPrimaryDirectOnly(v)
-          if (v) setPrimaryIndirectOnly(false)
+          // Direct-only and min-changes are mutually exclusive: picking
+          // direct-only resets the admin Changes dropdown to Any.
+          if (v) setPrimaryMinChanges(0)
         }}
-        primaryIndirectOnly={primaryIndirectOnly}
-        onPrimaryIndirectOnlyChange={(v) => {
-          setPrimaryIndirectOnly(v)
-          if (v) setPrimaryDirectOnly(false)
+        primaryMinChanges={primaryMinChanges}
+        onPrimaryMinChangesChange={(v) => {
+          setPrimaryMinChanges(v)
+          if (v > 0) setPrimaryDirectOnly(false)
         }}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
@@ -4985,7 +5057,7 @@ export default function HikeMap() {
                 setFriendMaxMinutes(600)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
-                setPrimaryIndirectOnly(true)
+                setPrimaryMinChanges(1)
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
@@ -4994,7 +5066,7 @@ export default function HikeMap() {
                 setFriendMaxMinutes(150)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
-                setPrimaryIndirectOnly(false)
+                setPrimaryMinChanges(0)
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set())
               }
@@ -5918,6 +5990,12 @@ export default function HikeMap() {
             originX={displayStation.screenX}
             originY={displayStation.screenY}
             devMode={devExcludeActive}
+            adminMode={devExcludeActive}
+            stationCrs={
+              stations?.features.find(
+                (x) => (x.properties as { coordKey?: string } | undefined)?.coordKey === displayStation.coordKey,
+              )?.properties?.["ref:crs"] as string | undefined
+            }
             currentRating={ratings[displayStation.coordKey] ?? null}
             onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
             onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}

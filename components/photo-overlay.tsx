@@ -166,6 +166,12 @@ type StationModalProps = {
   /** When true, the station name represents a PLACE rather than a specific
    *  station (e.g. "City of London"). Suppresses the " Station" title suffix. */
   isSynthetic?: boolean
+  /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
+   *  adminMode is true, the title is prefixed with the code — helps
+   *  cross-reference the admin RTT status panel and origin-routes.json. */
+  stationCrs?: string
+  /** True when the user is currently in admin mode. Gates the CRS prefix. */
+  adminMode?: boolean
 }
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
@@ -311,6 +317,8 @@ export default function StationModal({
   isFriendOrigin = false,
   isPrimaryOrigin = false,
   isSynthetic = false,
+  stationCrs,
+  adminMode = false,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -669,7 +677,7 @@ export default function StationModal({
           className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
         >
           <DialogTitle className="text-2xl sm:text-3xl">
-            {stationName}{isSynthetic ? "" : " Station"}
+            {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
           </DialogTitle>
           {/* Desktop-only Hike button. Hidden for friend/primary origins
               (they don't get a Hike action). min-w-0 isn't needed on the

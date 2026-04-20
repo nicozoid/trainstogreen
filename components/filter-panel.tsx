@@ -238,16 +238,18 @@ type FilterPanelProps = {
   /** "Direct trains only" toggle for the primary origin */
   primaryDirectOnly: boolean
   onPrimaryDirectOnlyChange: (value: boolean) => void
-  /** Admin-only inverse of primaryDirectOnly — shows ONLY indirect (stitched
-   *  / hub-routed) destinations. Useful for debugging the stitcher. */
-  primaryIndirectOnly: boolean
-  onPrimaryIndirectOnlyChange: (value: boolean) => void
+  /** Admin-only minimum-changes filter. 0 = "Any" (no filter, always the
+   *  non-admin value). 1+ hides stations reachable with fewer than that
+   *  many changes — higher values surface routing edge cases since
+   *  multi-change journeys are more likely to contain bugs. */
+  primaryMinChanges: number
+  onPrimaryMinChangesChange: (value: number) => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryIndirectOnly, onPrimaryIndirectOnlyChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryMinChanges, onPrimaryMinChangesChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1016,22 +1018,33 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             <Label htmlFor="primary-direct-only" className="cursor-pointer text-xs text-muted-foreground">Direct trains only</Label>
           </div>
 
-          {/* Admin-only inverse: "Indirect trains only". Shows the stations
-              that require ≥1 change from the primary. Handy for debugging
-              the stitcher — the union of Direct + Indirect equals the full
-              destination set, so isolating the indirect cohort makes weird
-              routing (long change lists, unexpected terminals) visually
-              obvious. adminMode is the only gate; visually it matches the
-              Direct-trains checkbox above so the two read as a pair. */}
+          {/* Admin-only: "Changes" minimum filter. Hides stations that
+              are reachable with fewer than N changes — since routing bugs
+              get more likely as the change count grows, isolating the
+              high-change cohort surfaces edge cases faster than the old
+              binary Indirect-only checkbox. Values:
+                0 = Any (default outside admin mode; hidden there anyway)
+                1 = 1+ (every indirect journey — admin-mode default)
+                2/3/4 = progressively stricter
+              Native <select> rather than a DropdownMenu for compactness
+              — fits the same row footprint as the Direct-only label. */}
           {adminMode && (
             <div className="mt-1.5 flex items-center gap-[0.4rem]">
-              <Checkbox
-                id="primary-indirect-only"
-                checked={primaryIndirectOnly}
-                onCheckedChange={(checked) => onPrimaryIndirectOnlyChange(checked === true)}
-                className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
-              />
-              <Label htmlFor="primary-indirect-only" className="cursor-pointer text-xs text-muted-foreground">Indirect only</Label>
+              <Label htmlFor="primary-min-changes" className="cursor-pointer text-xs text-muted-foreground">
+                Changes
+              </Label>
+              <select
+                id="primary-min-changes"
+                value={primaryMinChanges}
+                onChange={(e) => onPrimaryMinChangesChange(Number(e.target.value))}
+                className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value={0}>Any</option>
+                <option value={1}>1+</option>
+                <option value={2}>2+</option>
+                <option value={3}>3+</option>
+                <option value={4}>4+</option>
+              </select>
             </div>
           )}
 
