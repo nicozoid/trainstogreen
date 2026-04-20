@@ -112,12 +112,12 @@
   "-0.7664026,51.571086": {
     "name": "Marlow",
     "publicNote": "",
-    "privateNote": "Trainline says 49m — Paddington via Maidenhead"
+    "privateNote": "Issue with London as home and Marlow as detination: 1 hour and 9 minutes from Paddington. One change: Maidenhead.\nTrainline says: London Paddington via Maidenhead: 49m\n---\nIssue with Clapham as home  and destination as  Marlow: 2 hours and 44 minutes from Clapham Junction. Three changes: Stratford, Liverpool Street and Maidenhead.\nTrainline's journey: Clapham Junction > Victoria > Paddington > Maidenhead > Marlow — 1h46m"
   },
   "0.1000064,50.7729203": {
     "name": "Seaford",
     "publicNote": "",
-    "privateNote": "Trainline says 1h25m - Victoria via Lewes"
+    "privateNote": "Issue with London as home and destination as Seaford: 1 hour and 49 minutes from Victoria. One change: Brighton.\nTrainline says 1h25m - Victoria via Lewes"
   },
   "-0.6326933,52.0212048": {
     "name": "Aspley Guise",
@@ -152,7 +152,7 @@
   "-0.899422,51.5338451": {
     "name": "Henley-on-Thames",
     "publicNote": "",
-    "privateNote": "Trainline says 49m — Paddington via Twyford"
+    "privateNote": "Trainline says\nLondon Paddington > Twyford > Henley-on-Thames: 49m\nClapham Junction > Victoria > Paddington > Twyford > Henley-on-Thames: 1h46m"
   },
   "-1.0608367,51.3299792": {
     "name": "Bramley",
@@ -203,5 +203,10 @@
     "name": "Overton",
     "publicNote": "Birthplace of Jane Austen.",
     "privateNote": ""
+  },
+  "1.1543273,51.7945324": {
+    "name": "Clacton-on-Sea",
+    "publicNote": "",
+    "privateNote": "Midge recommends walk to St Othas via jaywick"
   }
 }

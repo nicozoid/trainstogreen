@@ -20,47 +20,60 @@ import { exec } from "node:child_process"
 import { promisify } from "node:util"
 
 const execAsync = promisify(exec)
-const V2_COMPLETE_LOG = "/tmp/ttg-rtt/v2-complete.log"
+// Every orchestrator log we want to reconcile "which station has
+// what dates written" against. Add new orchestrator logs here as they
+// come online; duplicates are harmless because the parsed dates are
+// union'd into the same CRS key.
+const ORCHESTRATOR_LOGS = [
+  "/tmp/ttg-rtt/v2-complete.log",
+  "/tmp/ttg-rtt/v2-priority.log",
+  "/tmp/ttg-rtt/v2-rerun.log",
+  "/tmp/ttg-rtt/v2-backfill-slow.log",
+  "/tmp/ttg-rtt/phase-1-5-followup.log",
+]
 
 export const dynamic = "force-dynamic"
 
-// Parse /tmp/ttg-rtt/v2-complete.log for primaries whose fetches
+// Parse all known orchestrator logs for stations whose fetches
 // SUCCESSFULLY wrote back. Each [N/M] CRS — dates: DATES header marks
 // the start of a fetch; a "Wrote …" line before the next header means
 // the write succeeded with those dates.
 //
-// Returns a map CRS → Set<dateString>. We reconcile this against the
-// file's v2FetchedDates at API time so the panel is accurate even
-// when a mid-flight fetch running old code writes back without the
-// v2FetchedDates field.
-async function parseV2CompleteLog(): Promise<Map<string, Set<string>>> {
+// Returns a map CRS → Set<dateString>, unioned across every log so
+// historical runs (v2-complete, v2-priority, v2-rerun, etc.) all
+// contribute. Reconciled against the file's v2FetchedDates at API
+// time so the panel is accurate even when a mid-flight fetch running
+// old code writes back without the v2FetchedDates field.
+async function parseOrchestratorLogs(): Promise<Map<string, Set<string>>> {
   const map = new Map<string, Set<string>>()
-  let log = ""
-  try { log = await readFile(V2_COMPLETE_LOG, "utf8") } catch { return map }
   const headerRe = /^\[\d+\/\d+\] ([A-Z]+) — dates: ([0-9,\-]+)/
-  const lines = log.split("\n")
-  let currentCrs: string | null = null
-  let currentDates: string[] = []
-  for (const line of lines) {
-    const m = headerRe.exec(line)
-    if (m) {
-      currentCrs = m[1]
-      currentDates = m[2].split(",").map((d) => d.trim()).filter(Boolean)
-      continue
-    }
-    if (line.startsWith("Wrote ") && currentCrs) {
-      const set = map.get(currentCrs) ?? new Set<string>()
-      for (const d of currentDates) set.add(d)
-      map.set(currentCrs, set)
-      currentCrs = null
-      currentDates = []
+  for (const path of ORCHESTRATOR_LOGS) {
+    let log = ""
+    try { log = await readFile(path, "utf8") } catch { continue }
+    const lines = log.split("\n")
+    let currentCrs: string | null = null
+    let currentDates: string[] = []
+    for (const line of lines) {
+      const m = headerRe.exec(line)
+      if (m) {
+        currentCrs = m[1]
+        currentDates = m[2].split(",").map((d) => d.trim()).filter(Boolean)
+        continue
+      }
+      if (line.startsWith("Wrote ") && currentCrs) {
+        const set = map.get(currentCrs) ?? new Set<string>()
+        for (const d of currentDates) set.add(d)
+        map.set(currentCrs, set)
+        currentCrs = null
+        currentDates = []
+      }
     }
   }
   return map
 }
 
 // Inspect the process table for any currently-running fetch scripts.
-// Returns the CRS codes of primaries with an in-flight
+// Returns the CRS codes of stations with an in-flight
 // fetch-direct-reachable.mjs process, and a flag for whether an
 // orchestrator wrapper (v2-complete.sh / v2-rerun.sh / etc.) is alive.
 //
@@ -77,11 +90,11 @@ async function getProcessState(): Promise<{ inProgressCrs: string[]; wrapperRunn
   const state = { inProgressCrs: [] as string[], wrapperRunning: false }
   try {
     const { stdout } = await execAsync("ps -Ao command=")
-    const keepPattern = /fetch-direct-reachable|v2-complete|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry/
+    const keepPattern = /fetch-direct-reachable|v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup/
     for (const line of stdout.split("\n")) {
       if (!keepPattern.test(line)) continue
       // Wrapper scripts count as "something is queued/running"
-      if (/v2-complete|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry/.test(line)) {
+      if (/v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup/.test(line)) {
         state.wrapperRunning = true
       }
       // fetch-direct-reachable.mjs <CRS> --dates=... — extract CRS
@@ -100,7 +113,7 @@ type Entry = {
   serviceDepMinutes?: number[]
 }
 
-type Primary = {
+type Station = {
   name: string
   crs: string
   directReachable: Record<string, Entry>
@@ -109,7 +122,7 @@ type Primary = {
   generatedAt?: string
 }
 
-type PrimarySummary = {
+type StationSummary = {
   coord: string
   name: string
   crs: string
@@ -117,7 +130,7 @@ type PrimarySummary = {
   journeys: number
   /**
    * Dates that contributed V2-schema observations (serviceDepMinutes /
-   * serviceDurationsMinutes) to this primary. Preferred over `sampledDates`
+   * serviceDurationsMinutes) to this station. Preferred over `sampledDates`
    * for completeness checks because `sampledDates` can include legacy
    * pre-V2 fetch dates whose observations were later pruned when we
    * narrowed the scope to Saturday-morning 09:00–12:00.
@@ -135,14 +148,14 @@ export async function GET() {
       readFile(path, "utf8"),
       stat(path),
     ])
-    const data = JSON.parse(raw) as Record<string, Primary>
+    const data = JSON.parse(raw) as Record<string, Station>
     // Log-derived "confirmed V2 write" dates per CRS. Union'd with
     // whatever the file's v2FetchedDates says so an old-code write
     // that dropped the field doesn't regress the panel.
-    const logCompleted = await parseV2CompleteLog()
-    const primaries: PrimarySummary[] = []
-    for (const [coord, primary] of Object.entries(data)) {
-      const dr = primary.directReachable ?? {}
+    const logCompleted = await parseOrchestratorLogs()
+    const stations: StationSummary[] = []
+    for (const [coord, station] of Object.entries(data)) {
+      const dr = station.directReachable ?? {}
       // Only count directReachable entries backed by V2-schema
       // observations. Any legacy entry that slipped past the prune (or
       // hasn't been re-fetched yet) is treated as worthless for this
@@ -166,28 +179,28 @@ export async function GET() {
       //     that date — it's the earliest Saturday we've sampled).
       // V1 legacy dates in `sampledDates` are ignored on purpose.
       const dateSet = new Set<string>()
-      if (Array.isArray(primary.v2FetchedDates)) {
-        for (const d of primary.v2FetchedDates) dateSet.add(d)
+      if (Array.isArray(station.v2FetchedDates)) {
+        for (const d of station.v2FetchedDates) dateSet.add(d)
       }
-      const fromLog = logCompleted.get(primary.crs)
+      const fromLog = logCompleted.get(station.crs)
       if (fromLog) for (const d of fromLog) dateSet.add(d)
       if (destinations > 0) dateSet.add("2026-04-25")
       const dates = [...dateSet].sort()
-      primaries.push({
+      stations.push({
         coord,
-        name: primary.name,
-        crs: primary.crs,
+        name: station.name,
+        crs: station.crs,
         destinations,
         journeys,
         dates,
-        generatedAt: primary.generatedAt ?? null,
+        generatedAt: station.generatedAt ?? null,
       })
     }
     // Sort by CRS for stable display order.
-    primaries.sort((a, b) => a.crs.localeCompare(b.crs))
+    stations.sort((a, b) => a.crs.localeCompare(b.crs))
     const { inProgressCrs, wrapperRunning } = await getProcessState()
     return NextResponse.json({
-      primaries,
+      stations,
       inProgressCrs,
       wrapperRunning,
       fileUpdatedAt: meta.mtime.toISOString(),
