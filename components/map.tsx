@@ -7,6 +7,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { HelpButton } from "@/components/help-button"
+import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
@@ -1167,6 +1168,9 @@ export default function HikeMap() {
   // uses, rather than setting bannerVisible=false directly (which
   // would unmount without animation).
   const welcomeBannerRef = useRef<WelcomeBannerHandle>(null)
+  // RTT status panel visibility — admin-only. Opened via the "RTT"
+  // button next to the admin close (bottom-centre) when admin is active.
+  const [rttStatusOpen, setRttStatusOpen] = useState(false)
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
@@ -4544,8 +4548,24 @@ export default function HikeMap() {
               z {zoom.toFixed(1)}
             </div>
           )}
+          {/* RTT status panel trigger — admin-only. Opens a modal
+              showing the live origin-routes.json summary (destinations,
+              journeys, sampled Saturdays per primary). Auto-refreshes
+              every 4s so admins can watch in-flight fetches land. */}
+          {devExcludeActive && (
+            <button
+              onClick={() => setRttStatusOpen(true)}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+            >
+              RTT
+            </button>
+          )}
         </div>
       )}
+
+      {/* RTT status modal — mounted always so its Dialog's portal is
+          ready, but `open` is driven by the admin-only button above. */}
+      <RTTStatusPanel open={rttStatusOpen} onOpenChange={setRttStatusOpen} />
 
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
