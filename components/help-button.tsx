@@ -32,7 +32,18 @@ export function HelpButton({
       aria-label="Show welcome banner"
       // bg-background/60 = semi-transparent fill so the map peeks through;
       // backdrop-blur-sm softens whatever's underneath. Matches ThemeToggle.
-      className="bg-background/60 backdrop-blur-sm hover:bg-background transition-colors cursor-pointer"
+      // Mobile overrides (max-sm:):
+      //   • bg-background/20 — very faint fill so the map reads through
+      //     but there's still a subtle chip shape. At this small size
+      //     the full desktop 60% fill made the icon feel like a heavy
+      //     sticker sitting on the map.
+      //   • border-input/30 — outline variant's border drops to 30%
+      //     opaque so the small chip doesn't look like it has a heavy
+      //     ring around it at mobile size.
+      //   • size-5 shrinks the button to roughly half the default 36px
+      //     icon-button size.
+      //   • [&_svg]:size-3 shrinks the inner SVG in proportion.
+      className="bg-background/60 backdrop-blur-sm hover:bg-background transition-colors cursor-pointer max-sm:bg-background/20 max-sm:border-input/30 max-sm:size-5 max-sm:[&_svg]:!size-3"
     >
       <CircleHelp className="size-4" />
     </Button>

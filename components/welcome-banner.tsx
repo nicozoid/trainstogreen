@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react"
 import { X } from "lucide-react"
 import { welcomeCopy } from "@/lib/copy"
 
@@ -12,9 +12,22 @@ type WelcomeBannerProps = {
   originY?: number
 }
 
+/**
+ * Imperative handle the parent can grab via ref. `close()` triggers the
+ * same exit-animation path as a backdrop click or the X button — lets the
+ * parent dismiss via an external control (e.g. toggling the ? help icon)
+ * without bypassing the animation.
+ */
+export type WelcomeBannerHandle = {
+  close: () => void
+}
+
 const ANIM_DURATION = 400 // ms
 
-export function WelcomeBanner({ open, onDismiss, originX, originY }: WelcomeBannerProps) {
+export const WelcomeBanner = forwardRef<WelcomeBannerHandle, WelcomeBannerProps>(function WelcomeBanner(
+  { open, onDismiss, originX, originY },
+  ref,
+) {
   // ── Manual close animation ──
   // Same pattern as StationModal: keep the component mounted while playing the
   // exit animation ourselves, then actually dismiss after the timer fires.
@@ -39,6 +52,14 @@ export function WelcomeBanner({ open, onDismiss, originX, originY }: WelcomeBann
       onDismiss()
     }, ANIM_DURATION * 0.65)
   }, [isClosing, onDismiss])
+
+  // Expose close() so the parent can trigger the animated exit flow
+  // from external controls (e.g. toggling the ? help icon). Callers
+  // should use this rather than setting `open=false` directly, otherwise
+  // the banner unmounts without the exit animation.
+  useImperativeHandle(ref, () => ({
+    close: handleAnimatedClose,
+  }), [handleAnimatedClose])
 
   // Don't render anything until the banner has been opened at least once,
   // and hide after close animation finishes
@@ -198,4 +219,4 @@ export function WelcomeBanner({ open, onDismiss, originX, originY }: WelcomeBann
       </div>
     </div>
   )
-}
+})
