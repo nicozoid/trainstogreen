@@ -97,7 +97,7 @@
   "0.2042149,51.3623288": {
     "name": "Eynsford",
     "publicNote": "",
-    "privateNote": "tested. note this journey varies by date"
+    "privateNote": "Trainline says 33m — London Bridge via Swanley (25 July)"
   },
   "0.1731809,51.1972733": {
     "name": "Penshurst",
@@ -163,5 +163,40 @@
     "name": "Felixstowe",
     "publicNote": "",
     "privateNote": "Trainline says 1h54m — Liverpool St via Ipswich"
+  },
+  "0.4121616,51.2266654": {
+    "name": "Yalding",
+    "publicNote": "",
+    "privateNote": "Trainline says 57m — London Bridge via Paddock Wood"
+  },
+  "0.0703481,50.8591176": {
+    "name": "Glynde",
+    "publicNote": "",
+    "privateNote": "Trainline says: 1h25m — Victoria via Lewes"
+  },
+  "0.2112588,51.1939929": {
+    "name": "Leigh",
+    "publicNote": "",
+    "privateNote": "Trainline says 52m — London Bridge via Tonbridge"
+  },
+  "0.1887766,51.3321241": {
+    "name": "Shoreham",
+    "publicNote": "",
+    "privateNote": "Trainline says 37m — London Bridge via Swanley"
+  },
+  "-0.776776,51.3315657": {
+    "name": "Blackwater",
+    "publicNote": "",
+    "privateNote": "Trainline says 50m — Paddington via Reading"
+  },
+  "-0.5250129,51.2151195": {
+    "name": "Chilworth",
+    "publicNote": "",
+    "privateNote": "Trainline says 1h — Waterloo via Guildford"
+  },
+  "-0.566879,51.2143603": {
+    "name": "Shalford",
+    "publicNote": "",
+    "privateNote": "Trainline says 56m — Waterloo via Guildford"
   }
 }
