@@ -178,10 +178,15 @@ function msToMinutesOfDayUK(ms) {
   return h * 60 + m
 }
 
-// Default: Saturday morning 07:00–12:00, which covers the realistic window a
-// day-hiker would leave London. Override with --hours HH,HH for testing.
+// Default: Saturday morning 09:00–12:00, which covers the realistic window a
+// day-hiker would leave London. The 07:00–09:00 slice was dropped on
+// 2026-04-20 — it added ~40% to fetch time without serving the target
+// user (hikers rarely leave pre-09:00, and fetch-journeys.mjs's Google
+// baseline is pinned at 09:30 BST, so RTT only needs to cover 09:00
+// onwards). Override with --hours HH,HH if you need the wider window
+// (e.g. debugging an early-morning service pattern).
 const hoursArg = process.argv.find((a) => a.startsWith("--hours="))
-const [hFrom, hTo] = hoursArg ? hoursArg.replace("--hours=", "").split(",").map(Number) : [7, 12]
+const [hFrom, hTo] = hoursArg ? hoursArg.replace("--hours=", "").split(",").map(Number) : [9, 12]
 const mTo = hTo === 23 ? 59 : 0
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { useTheme } from "next-themes"
 import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
-import { WelcomeBanner } from "@/components/welcome-banner"
+import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { HelpButton } from "@/components/help-button"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
@@ -940,7 +940,9 @@ export default function HikeMap() {
       "-0.0035472,51.541289",   // Stratford
       "-0.104555,51.519964",    // Farringdon
       "-0.1239491,51.530609",   // Kings Cross (primary coord; renders as the full "Kings Cross, St Pancras, & Euston" menuName)
-      "-0.1705184,51.4644589",  // Clapham Junction — first suburban hub released under conservative admin-only search gating
+      // Clapham Junction was seeded here as the first suburban hub,
+      // pulled out for now — we don't have solid RTT data for it yet
+      // and it was unhelpful to surface without that backing.
     ],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
@@ -1154,20 +1156,17 @@ export default function HikeMap() {
   const [primaryIndirectOnly, setPrimaryIndirectOnly] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
-  // Start hidden by default — hydration from localStorage runs after mount,
-  // so the welcome banner briefly flashes on first return visit. That's a
-  // small price for never showing a wrongly-hidden banner to new users.
-  // See hasSeenWelcome hook below which handles first-visit logic.
+  // Banner shows on EVERY page load. We deliberately DON'T persist a
+  // "has seen welcome" flag — reloading brings the banner back. The
+  // previous behaviour stored ttg:hasSeenWelcome in localStorage so
+  // returning visitors skipped it; the user preferred a consistent
+  // intro every time. Dismissing only hides it for the current session.
   const [bannerVisible, setBannerVisible] = useState(true)
-  const [hasSeenWelcome, setHasSeenWelcome] = usePersistedState("ttg:hasSeenWelcome", false)
-  // Sync bannerVisible with hasSeenWelcome after localStorage hydrates on mount.
-  // We can't start `bannerVisible` as `!hasSeenWelcome` because the hook reads
-  // from localStorage in a useEffect (after first render), so on returning
-  // visits the banner is briefly visible then closes. An effect mirrors that
-  // hidden/visible flip back onto `bannerVisible`.
-  useEffect(() => {
-    if (hasSeenWelcome) setBannerVisible(false)
-  }, [hasSeenWelcome])
+  // Imperative handle on the banner so the ? help button can trigger
+  // the same animated-close path that a backdrop tap or the X button
+  // uses, rather than setting bannerVisible=false directly (which
+  // would unmount without animation).
+  const welcomeBannerRef = useRef<WelcomeBannerHandle>(null)
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
@@ -4277,7 +4276,13 @@ export default function HikeMap() {
     const style = document.createElement('style')
     style.textContent = `
       .mapbox-improve-map { display: none !important; }
-      .mapboxgl-ctrl-attrib.mapboxgl-compact { background: transparent !important; }
+      /* Attribution strip — transparent background on BOTH desktop and
+         mobile (previously .mapboxgl-compact only targeted the mobile
+         collapsed variant, so desktop kept its default white pill). */
+      .mapboxgl-ctrl-attrib,
+      .mapboxgl-ctrl-attrib.mapboxgl-compact {
+        background: transparent !important;
+      }
       .mapboxgl-ctrl-attrib-button {
         opacity: 0.4;
         background-color: transparent !important;
@@ -4286,6 +4291,32 @@ export default function HikeMap() {
         line-height: 24px;
         text-align: center;
       }
+      /* Lay out the bottom-left control group horizontally so the © sits
+         to the RIGHT of the Mapbox logo instead of stacking below it.
+         Applies on mobile only — the JS below moves the attrib into
+         bottom-left only on mobile; on desktop the attrib stays in its
+         default bottom-right corner (single element, flex harmless).
+         align-items: center keeps the © text vertically aligned with
+         the logo's midline; gap gives breathing room between them. */
+      .mapboxgl-ctrl-bottom-left {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 4px;
+      }
+      /* Mobile: attrib lives in bottom-left next to the logo (moved
+         there by the JS below). 6px bottom margin lifts © clear of
+         the screen edge; align-items: center on the parent vertically
+         centres it against the logo. */
+      .mapboxgl-ctrl-bottom-left .mapboxgl-ctrl-attrib {
+        margin: 0 0 6px 0 !important;
+      }
+      /* Desktop: attrib stays in its default bottom-right corner.
+         6px on all sides — tight against the edge, same visual weight
+         as the mobile © at the opposite corner. */
+      .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
+        margin: 6px !important;
+      }
     `
     document.head.appendChild(style)
 
@@ -4293,12 +4324,24 @@ export default function HikeMap() {
     const attribBtn = document.querySelector('.mapboxgl-ctrl-attrib-button')
     if (attribBtn) attribBtn.textContent = '©'
 
-    // Move the attribution control from the default bottom-right corner to
-    // the bottom-left, sitting just after the Mapbox logo. Frees the bottom-
-    // right slot for the mobile help button (? icon).
-    const attribCtrl = document.querySelector('.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib')
-    const bottomLeftCtrl = document.querySelector('.mapboxgl-ctrl-bottom-left')
-    if (attribCtrl && bottomLeftCtrl) bottomLeftCtrl.appendChild(attribCtrl)
+    // On MOBILE only, move the © attribution from its default
+    // bottom-right slot to the bottom-left, next to the Mapbox logo —
+    // that frees bottom-right for the help button (?), which lives at
+    // bottom-right on mobile (top-right on desktop). The row layout +
+    // vertical-center alignment of the bottom-left container is set
+    // via injected CSS above so the © reads as part of the same
+    // horizontal strip as the logo.
+    //
+    // On DESKTOP we leave attrib in its default bottom-right corner —
+    // the help button is at top-right so no conflict, and the © is more
+    // readable in its own corner there.
+    //
+    // Mirrors the same breakpoint (md/768px) the help button uses.
+    if (window.matchMedia('(max-width: 767.98px)').matches) {
+      const attribCtrl = document.querySelector('.mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib')
+      const bottomLeftCtrl = document.querySelector('.mapboxgl-ctrl-bottom-left')
+      if (attribCtrl && bottomLeftCtrl) bottomLeftCtrl.appendChild(attribCtrl)
+    }
 
     // Register custom icon images for station markers.
     registerIcons(map)
@@ -4418,12 +4461,14 @@ export default function HikeMap() {
       />
 
       <WelcomeBanner
+        ref={welcomeBannerRef}
         open={bannerVisible}
         onDismiss={() => {
+          // Session-only dismiss — no persistence, so reloading the page
+          // brings the banner back. (Previously this also set
+          // setHasSeenWelcome(true) against a persisted localStorage key;
+          // that was removed so every fresh load greets the user.)
           setBannerVisible(false)
-          // Remember the user has seen it — subsequent visits skip the
-          // banner unless they explicitly click the hexagon again.
-          setHasSeenWelcome(true)
         }}
         originX={bannerOrigin?.x}
         originY={bannerOrigin?.y}
@@ -4435,12 +4480,31 @@ export default function HikeMap() {
           rightmost of the pair (theme toggle is shifted to right-14 in
           page.tsx). Clicking re-opens the welcome banner, animating out
           from the button's own position. */}
-      <div className="absolute bottom-4 right-4 md:bottom-auto md:top-4 z-50">
+      {/* Sub-sm (< 640px, true mobile): bottom-right, 7px from the
+          bottom + 7px from the right (explicit px because our
+          --spacing: 0.6rem mobile override would turn Tailwind's
+          default bottom-4/right-4 into ~38px). Also sits BELOW
+          overlays via z-10 so photo modals + welcome banner obscure it.
+          sm+ (tablet + desktop): top-right, default Tailwind spacing
+          (right-4 = 16px), z-50 to match the page's other top-right
+          chrome. Switches at the sm breakpoint to match the
+          help-button.tsx internals, which also use max-sm: for its
+          mobile-only size + opacity overrides. */}
+      <div className="absolute bottom-[7px] right-[7px] sm:bottom-auto sm:top-4 sm:right-4 z-10 sm:z-50">
         <HelpButton
           onClick={(origin) => {
-            // Animate from the button itself (passed through from the click),
-            // NOT from the London hexagon — matches the visual expectation
-            // that the banner "emerges" from whatever summoned it.
+            // Toggle: if the banner is already open, a second click on ?
+            // dismisses it. Route through the banner's imperative close()
+            // so the exit animation (shrink-to-origin on desktop, slide-
+            // down on mobile) plays, exactly as if the user had clicked
+            // the backdrop or the X.
+            if (bannerVisible) {
+              welcomeBannerRef.current?.close()
+              return
+            }
+            // Not open — summon it, animating FROM the button's own
+            // position so the banner reads as "emerging" from whatever
+            // summoned it, not from the London hexagon.
             setBannerOrigin(origin)
             setBannerVisible(true)
           }}
