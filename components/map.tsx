@@ -598,25 +598,49 @@ function msToUKMinutesOfDay(ms: number): number {
  *   - no RTT service arrives at the interchange by (continuationDep − buffer)
  *   - the best candidate saves 0 or negative minutes vs original
  */
-function tryHybridSplice(journey: JourneyInfo, primaryCoord: string): JourneyInfo | null {
+// Look up the origin-routes.json coord key for a station name, using
+// matchTerminal to canonicalise ("London Paddington" → "Paddington")
+// then scanning origin-routes for any entry that normalises to the same
+// canonical. Returns null when no match — caller skips splice.
+function findOriginRoutesCoord(stationName: string | undefined): string | null {
+  if (!stationName) return null
+  const canonical = matchTerminal(stationName, londonTerminalsData as Terminal[])
+  // Some origin-routes entries aren't in the terminals list (Maidenhead,
+  // Lewes, etc. — fetched as interchange-hub origins). Exact-name match
+  // is a decent fallback for those.
+  const target = canonical ?? stationName.replace(/^London\s+/i, "").trim()
+  for (const [coord, data] of Object.entries(originRoutes)) {
+    if (!data?.name) continue
+    const dataCanonical = matchTerminal(data.name, londonTerminalsData as Terminal[])
+    if (dataCanonical === target || data.name === target) return coord
+    if (data.name.replace(/^London\s+/i, "").trim() === target) return coord
+  }
+  return null
+}
+
+function tryHybridSplice(journey: JourneyInfo): JourneyInfo | null {
   const legs = journey.legs ?? []
   if (legs.length < 2) return null
 
-  // Only splice when HEAVY_RAIL is literally the first leg. A pre-rail walk
-  // or tube hop would need its timings re-shifted to match the new rail
-  // departure — correct but fiddly. Skip for MVP; revisit if needed.
-  const firstLeg = legs[0]
-  if (firstLeg.vehicleType !== "HEAVY_RAIL") return null
-  if (!firstLeg.departureTime || !firstLeg.arrivalTime) return null
+  const firstRailIdx = legs.findIndex((l) => l.vehicleType === "HEAVY_RAIL")
+  if (firstRailIdx < 0) return null
+  if (firstRailIdx === legs.length - 1) return null
+  const firstRail = legs[firstRailIdx]
+  if (!firstRail.departureTime || !firstRail.arrivalTime) return null
 
-  const drMap = originRoutes[primaryCoord]?.directReachable
+  // Resolve the first-rail leg's dep station → origin-routes coord.
+  // This (not the USER's primary) is the correct anchor for the splice
+  // — we need the timetable of the station the train actually starts
+  // from, regardless of how the user got there.
+  const railOriginCoord = findOriginRoutesCoord(firstRail.departureStation)
+  if (!railOriginCoord) return null
+  const drMap = originRoutes[railOriginCoord]?.directReachable
   if (!drMap) return null
 
-  // Find the interchange entry by exact name match against firstLeg.arrivalStation.
-  // Name normalisation could help (e.g. "London Paddington" vs "Paddington") but
-  // in practice Google Routes and RTT both use the short form for interchange
-  // stations like Maidenhead / Lewes / Haywards Heath, so exact match suffices.
-  const interchangeName = firstLeg.arrivalStation
+  // Find the interchange entry by name match against firstRail.arrivalStation.
+  // For multi-leg trains (e.g. Kent lines), this is the arr station of the
+  // FIRST rail leg — the point where the passenger changes to the next leg.
+  const interchangeName = firstRail.arrivalStation
   let interchangeEntry: DirectReachable | null = null
   for (const entry of Object.values(drMap)) {
     if (entry.name === interchangeName) {
@@ -630,27 +654,20 @@ function tryHybridSplice(journey: JourneyInfo, primaryCoord: string): JourneyInf
   const durs = interchangeEntry.serviceDurationsMinutes
   if (!deps || !durs || deps.length === 0 || durs.length !== deps.length) return null
 
-  // First-leg duration from authoritative Google timestamps.
-  const firstDepMs = new Date(firstLeg.departureTime).getTime()
-  const firstArrMs = new Date(firstLeg.arrivalTime).getTime()
+  const firstDepMs = new Date(firstRail.departureTime).getTime()
+  const firstArrMs = new Date(firstRail.arrivalTime).getTime()
   const firstDurationMin = Math.round((firstArrMs - firstDepMs) / 60000)
-  // Skip if RTT isn't meaningfully faster (1-2 min noise isn't worth the
-  // splice — keep Google's leg unchanged).
   if (interchangeEntry.minMinutes >= firstDurationMin - 1) return null
 
-  // Continuation leg's departure is the constraint. Use the IMMEDIATE next
-  // leg (leg[1]) since firstLeg is leg[0]. If leg[1] has no departureTime
-  // (legacy record), bail — we need it to compute the latest RTT arrival.
-  const nextLeg = legs[1]
+  // Continuation leg's departure is the constraint.
+  const nextLeg = legs[firstRailIdx + 1]
   if (!nextLeg?.departureTime) return null
   const nextDepMs = new Date(nextLeg.departureTime).getTime()
   const continuationDepMin = msToUKMinutesOfDay(nextDepMs)
   const originalDepMin = msToUKMinutesOfDay(firstDepMs)
   const latestArrMin = continuationDepMin - MIN_CHANGE_BUFFER_MIN
 
-  // Pick the LATEST-arriving service with arr ≤ latestArrMin. This minimises
-  // wait at the interchange (wait = BUFFER exactly) and maximises the hybrid
-  // departure time from P, which equals maximum time saved.
+  // Pick the latest-arriving service with arr ≤ latestArrMin.
   let bestDepMin = -1
   let bestDurMin = -1
   let bestArrMin = -1
@@ -665,29 +682,375 @@ function tryHybridSplice(journey: JourneyInfo, primaryCoord: string): JourneyInf
   }
   if (bestArrMin < 0) return null
 
-  // Time saved = how much later we can depart P (final arrival at D is unchanged).
   const savedMin = bestDepMin - originalDepMin
   if (savedMin <= 0) return null
 
-  // Rebuild: same final arrival, later first-leg departure, SHORTER first-leg
-  // duration. `durationMinutes` reduces by exactly savedMin.
-  const newFirstDepMs = firstDepMs + savedMin * 60_000
+  // Rebuild legs:
+  //   - Preceding non-rail legs (walk, tube transfer): SHIFT later by
+  //     savedMin so they end just before the new rail departure. User
+  //     effectively leaves home later to match the faster train.
+  //   - First rail leg: replace with the new dep/arr + shorter duration.
+  //   - Legs after the first rail: UNCHANGED (same continuation).
+  //
+  // Journey's durationMinutes shrinks by savedMin (same final arrival,
+  // later effective start). This is the "Marlow 1h9m → 49m" fix the
+  // user originally flagged.
+  const shiftMs = savedMin * 60_000
+  const newFirstDepMs = firstDepMs + shiftMs
   const newFirstArrMs = newFirstDepMs + bestDurMin * 60_000
-  const newLegs = legs.map((leg, idx) =>
-    idx === 0
-      ? {
-          ...leg,
-          departureTime: new Date(newFirstDepMs).toISOString(),
-          arrivalTime: new Date(newFirstArrMs).toISOString(),
-        }
-      : leg,
-  )
+  const newLegs = legs.map((leg, idx) => {
+    if (idx < firstRailIdx) {
+      // Shift walk/tube prefix forward. If the leg has no timestamps
+      // (older record), leave it unchanged — user's experience is
+      // still fine, the duration metric is what matters here.
+      if (!leg.departureTime || !leg.arrivalTime) return leg
+      return {
+        ...leg,
+        departureTime: new Date(new Date(leg.departureTime).getTime() + shiftMs).toISOString(),
+        arrivalTime: new Date(new Date(leg.arrivalTime).getTime() + shiftMs).toISOString(),
+      }
+    }
+    if (idx === firstRailIdx) {
+      return {
+        ...leg,
+        departureTime: new Date(newFirstDepMs).toISOString(),
+        arrivalTime: new Date(newFirstArrMs).toISOString(),
+      }
+    }
+    return leg
+  })
 
   return {
     ...journey,
     durationMinutes: journey.durationMinutes - savedMin,
     legs: newLegs,
   }
+}
+
+/**
+ * Reroute / reschedule a multi-leg journey using RTT service-level data.
+ *
+ * Handles TWO classes of Google-journey weakness that Option 2 splice
+ * (single-leg swap with the same interchange) cannot:
+ *
+ *   1. WRONG INTERCHANGE — Seaford via Brighton (109 min) when V2 data
+ *      shows VIC → Lewes → Seaford is ~83 min.
+ *   2. BAD SERVICE PAIRING — Marlow: Google picked PAD 11:48 (slow 38m
+ *      stopper) → Maidenhead → Marlow 12:34 = 69 min. V2 data reveals
+ *      an 11:08 Elizabeth-line PAD (22m) → 11:34 Maidenhead → Marlow
+ *      pairing = 49 min, same final arrival cycle, just earlier.
+ *
+ * Algorithm: for every hub candidate in the primary's directReachable
+ * set — INCLUDING the current interchange — pair V2 observations from
+ * primary→hub and hub→finalDest using service-level scheduling. Pick
+ * the combination that minimises journey duration (hub.arr − primary.dep)
+ * with at least MIN_CHANGE_BUFFER_MIN between legs. Return the rebuilt
+ * journey when it beats the current one by ≥ 5 min.
+ *
+ * Uses actual (depMin, durMin) observation pairs so the result is a
+ * REAL, CONNECTABLE pair of services, not a theoretical min-time sum.
+ */
+function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
+  const legs = journey.legs ?? []
+  if (legs.length < 2) return null
+  // Indices of HEAVY_RAIL legs
+  const railIdxs: number[] = []
+  legs.forEach((l, i) => { if (l.vehicleType === "HEAVY_RAIL") railIdxs.push(i) })
+  if (railIdxs.length < 2) return null
+  const prevRailIdx = railIdxs[railIdxs.length - 2]
+  const lastRailIdx = railIdxs[railIdxs.length - 1]
+  if (lastRailIdx !== prevRailIdx + 1) return null
+  const prevRail = legs[prevRailIdx]
+  const lastRail = legs[lastRailIdx]
+  if (!prevRail.departureTime || !prevRail.arrivalTime) return null
+  if (!lastRail.departureTime || !lastRail.arrivalTime) return null
+
+  const reroutableOriginName = prevRail.departureStation
+  const reroutableOriginCoord = findOriginRoutesCoord(reroutableOriginName)
+  if (!reroutableOriginCoord) return null
+  const drMap = originRoutes[reroutableOriginCoord]?.directReachable
+  if (!drMap) return null
+
+  const finalDestName = lastRail.arrivalStation
+
+  const prevRailDepMs = new Date(prevRail.departureTime).getTime()
+  const lastRailArrMs = new Date(lastRail.arrivalTime).getTime()
+  const currentTotalMin = Math.round((lastRailArrMs - prevRailDepMs) / 60_000)
+
+  // Pick the latest service-pair (A→hub, hub→finalDest) that:
+  //   - both have valid V2 observations
+  //   - hub.dep ≥ A.arr + MIN_CHANGE_BUFFER_MIN (real connection)
+  //   - minimises (hub.arr − A.dep) = journey duration
+  // Returns null when no valid pair exists.
+  function bestPairThroughHub(
+    p2h: DirectReachable,
+    h2f: DirectReachable,
+  ): { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null {
+    const aDeps = p2h.serviceDepMinutes
+    const aDurs = p2h.serviceDurationsMinutes
+    const hDeps = h2f.serviceDepMinutes
+    const hDurs = h2f.serviceDurationsMinutes
+    if (!aDeps || !aDurs || !hDeps || !hDurs) return null
+    if (aDeps.length === 0 || hDeps.length === 0) return null
+    if (aDeps.length !== aDurs.length || hDeps.length !== hDurs.length) return null
+    let best: { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null = null
+    for (let i = 0; i < hDeps.length; i++) {
+      const hDep = hDeps[i]
+      const hDur = hDurs[i]
+      const latestAArr = hDep - MIN_CHANGE_BUFFER_MIN
+      // Latest A-service arriving by latestAArr = maximises A.dep =
+      // minimises journey duration for this fixed hub dep.
+      let bestA: { dep: number; dur: number; arr: number } | null = null
+      for (let j = 0; j < aDeps.length; j++) {
+        const aArr = aDeps[j] + aDurs[j]
+        if (aArr > latestAArr) continue
+        if (!bestA || aDeps[j] > bestA.dep) {
+          bestA = { dep: aDeps[j], dur: aDurs[j], arr: aArr }
+        }
+      }
+      if (!bestA) continue
+      const totalMin = hDep + hDur - bestA.dep
+      if (!best || totalMin < best.totalMin) {
+        best = { totalMin, aDep: bestA.dep, aDur: bestA.dur, hDep, hDur }
+      }
+    }
+    return best
+  }
+
+  let best: {
+    hubName: string
+    pair: { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number }
+  } | null = null
+
+  for (const [hubCoord, p2hEntry] of Object.entries(drMap)) {
+    const hubOrigin = originRoutes[hubCoord]
+    if (!hubOrigin) continue
+    let h2fEntry: DirectReachable | null = null
+    for (const e of Object.values(hubOrigin.directReachable)) {
+      if (e.name === finalDestName) { h2fEntry = e; break }
+    }
+    if (!h2fEntry) continue
+    const pair = bestPairThroughHub(p2hEntry, h2fEntry)
+    if (!pair) continue
+    if (!best || pair.totalMin < best.pair.totalMin) {
+      best = { hubName: p2hEntry.name, pair }
+    }
+  }
+
+  if (!best) return null
+  if (best.pair.totalMin >= currentTotalMin - 5) return null
+
+  // Rebuild rail legs. Anchor to the SAME calendar date as the original
+  // prev-rail leg's departure so timestamps stay on the right Saturday.
+  const anchorDate = new Date(prevRail.departureTime)
+  const toIso = (minOfDay: number) => {
+    const d = new Date(anchorDate)
+    d.setUTCHours(0, 0, 0, 0)
+    // Minutes-of-day are UK-local. Apply DST offset from the anchor's
+    // own UK-time (BST = UTC+1, GMT = UTC+0). Simpler: construct the
+    // date in UK local and format to ISO. Here we mirror the offset
+    // implied by the anchor.
+    const anchorUtcMin = anchorDate.getUTCHours() * 60 + anchorDate.getUTCMinutes()
+    const anchorUkMin = ukMinutesOfDayFromIso(prevRail.departureTime!)
+    const tzShiftMin = anchorUkMin - anchorUtcMin  // 60 in BST, 0 in GMT
+    const utcMin = minOfDay - tzShiftMin
+    d.setUTCMinutes(utcMin)
+    return d.toISOString()
+  }
+
+  const aDep = best.pair.aDep
+  const aArr = aDep + best.pair.aDur
+  const hDep = best.pair.hDep
+  const hArr = hDep + best.pair.hDur
+
+  const newPrevLeg = {
+    ...prevRail,
+    arrivalStation: best.hubName,
+    departureTime: toIso(aDep),
+    arrivalTime: toIso(aArr),
+  }
+  const newLastLeg = {
+    ...lastRail,
+    departureStation: best.hubName,
+    departureTime: toIso(hDep),
+    arrivalTime: toIso(hArr),
+  }
+
+  // Shift any preceding non-rail legs so they still end just before the
+  // new prev-rail dep — matching the old "user leaves home later"
+  // behaviour from tryHybridSplice.
+  const oldPrevDepMs = prevRailDepMs
+  const newPrevDepMs = new Date(newPrevLeg.departureTime).getTime()
+  const shiftMs = newPrevDepMs - oldPrevDepMs
+
+  const newLegs = legs.map((leg, idx) => {
+    if (idx === prevRailIdx) return newPrevLeg
+    if (idx === lastRailIdx) return newLastLeg
+    if (idx < prevRailIdx && leg.departureTime && leg.arrivalTime) {
+      return {
+        ...leg,
+        departureTime: new Date(new Date(leg.departureTime).getTime() + shiftMs).toISOString(),
+        arrivalTime: new Date(new Date(leg.arrivalTime).getTime() + shiftMs).toISOString(),
+      }
+    }
+    return leg
+  })
+
+  const savedMin = Math.round(currentTotalMin - best.pair.totalMin)
+  return {
+    ...journey,
+    durationMinutes: Math.max(1, journey.durationMinutes - savedMin),
+    legs: newLegs,
+  }
+}
+
+// Interchange buffer (minutes) used when a custom-primary journey composes
+// X→hub→(matrix hop)→terminal→destination. Duplicates CUSTOM_INTERCHANGE_MIN
+// defined inside the useMemo scope because tryComposeViaTerminal lives at
+// module scope. Keep both in sync.
+const CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE = 5
+
+/**
+ * Compose a custom-primary journey by hub-hopping to an ALTERNATIVE London
+ * terminal and stitching from there. Motivation:
+ *
+ *   CLJ → Marlow via Google Routes picks Stratford + Liverpool Street
+ *   (2h44m). The genuine fastest is via Victoria + Paddington (~72min).
+ *   Neither tryHybridSplice nor tryRerouteViaAlternativeHub can change the
+ *   FIRST London terminus the journey routes through — they only touch the
+ *   interchange between rail legs. This helper fills that gap.
+ *
+ * Algorithm — for every (customHub H, london terminal T) pair, compose:
+ *     X → H (RTT, H.pToCustomMins)
+ *     + interchange + (if H≠T) matrix[H][T] hop + interchange
+ *     + stitchJourney({newOrigin: T}).durationMinutes
+ * and keep the best by (fewest changes, then shortest duration).
+ *
+ * stitchJourney pulls the T→D mainline from whichever pre-fetched source
+ * journey on the feature contains a HEAVY_RAIL subsequence starting at T.
+ * So PAD→Marlow becomes reachable via the Farringdon source journey (which
+ * has [F→PAD, PAD→Maidenhead, Maidenhead→Marlow]).
+ *
+ * The stitched leg is additionally passed through tryHybridSplice and
+ * tryRerouteViaAlternativeHub so service-level pairing improvements (the
+ * ones that unlocked London→Marlow 49min) are applied here too.
+ */
+function tryComposeViaTerminal(
+  feature: unknown,
+  customHubs: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string } }>,
+  customName: string,
+  customCoord: string,
+): { journey: JourneyInfo; mins: number; changes: number } | null {
+  if (customHubs.length === 0) return null
+  let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+
+  for (const hub of customHubs) {
+    const hubCanonical = matchTerminal(hub.routes.name, londonTerminals)
+    if (!hubCanonical) continue
+    const hubName = hub.routes.name ?? hubCanonical
+    for (const T of londonTerminals) {
+      let stitched = stitchJourney({
+        feature: feature as Parameters<typeof stitchJourney>[0]["feature"],
+        newOrigin: T,
+        matrix: terminalMatrix,
+        terminals: londonTerminals,
+      })
+      if (!stitched?.durationMinutes) continue
+      // Apply the same splice + reroute improvements that curated primaries
+      // get. Crucial for Marlow-style cases where Google's source journey
+      // picked a slow PAD→Maidenhead service — reroute swaps it to the
+      // optimal service-level pairing.
+      const sp = tryHybridSplice(stitched as unknown as JourneyInfo)
+      if (sp) stitched = sp as unknown as typeof stitched
+      const rr = tryRerouteViaAlternativeHub(stitched as unknown as JourneyInfo)
+      if (rr) stitched = rr as unknown as typeof stitched
+
+      const stitchedMins = stitched.durationMinutes ?? 0
+      const stitchedChanges = stitched.changes ?? 0
+
+      let mins: number
+      let changes: number
+      let matrixLeg: JourneyInfo["legs"][number] | null = null
+
+      if (T.name === hubCanonical) {
+        mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE + stitchedMins
+        changes = 1 + stitchedChanges
+      } else {
+        const hop = terminalMatrix[hubCanonical]?.[T.name]
+        if (!hop?.minutes) continue
+        mins = hub.pToCustomMins + hop.minutes + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE * 2 + stitchedMins
+        changes = 2 + stitchedChanges
+        matrixLeg = {
+          vehicleType: "OTHER",
+          departureStation: hubName,
+          arrivalStation: T.name,
+        } as JourneyInfo["legs"][number]
+      }
+
+      const firstLeg = {
+        vehicleType: "OTHER",
+        departureStation: customName,
+        arrivalStation: hubName,
+      } as JourneyInfo["legs"][number]
+
+      const legs = matrixLeg
+        ? [firstLeg, matrixLeg, ...(stitched.legs ?? [])]
+        : [firstLeg, ...(stitched.legs ?? [])]
+
+      // Polyline assembly — prepend [home, hub] straight segment, append
+      // the matrix hop polyline (decoded) when the hub→T hop exists, then
+      // the stitched journey's own polylineCoords. Without this the hover
+      // polyline for composed journeys showed nothing for routes like
+      // CLJ→Marlow via Waterloo+Paddington.
+      const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
+      const { lng: hLng, lat: hLat } = parseCoordKey(hub.pCoord)
+      let polylineCoords: [number, number][] = [[cLng, cLat], [hLng, hLat]]
+      if (T.name !== hubCanonical) {
+        const hop = terminalMatrix[hubCanonical]?.[T.name]
+        if (hop?.polyline) {
+          polylineCoords = [...polylineCoords, ...decodePolyline(hop.polyline)]
+        } else {
+          // No matrix polyline — fall back to a straight segment to T.
+          polylineCoords.push([T.lng, T.lat])
+        }
+      }
+      const stitchedCoords = (stitched as unknown as { polylineCoords?: [number, number][] }).polylineCoords
+      if (stitchedCoords && stitchedCoords.length > 0) {
+        polylineCoords = [...polylineCoords, ...stitchedCoords]
+      }
+
+      const candidate = {
+        durationMinutes: mins,
+        changes,
+        legs,
+        polylineCoords: polylineCoords.length > 1 ? polylineCoords : undefined,
+      } as unknown as JourneyInfo
+
+      if (best == null || changes < best.changes || (changes === best.changes && mins < best.mins)) {
+        best = { journey: candidate, mins, changes }
+      }
+    }
+  }
+  return best
+}
+
+// UK-local minutes-of-day from an ISO timestamp — mirrors the offset
+// encoded in the ISO string (either "+01:00" BST or "Z"/"+00:00" GMT).
+// Used by tryRerouteViaAlternativeHub to convert the V2 observation
+// min-of-day values back to absolute UTC timestamps for new leg
+// timestamps.
+function ukMinutesOfDayFromIso(iso: string): number {
+  // Google Routes gives us "Z" UTC. Treat it as UK local per the
+  // fetch window: our data is Saturday-morning UK, which spans BST.
+  // For dates within BST (Apr–Oct), UK = UTC+1. Outside, UK = UTC.
+  const d = new Date(iso)
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).formatToParts(d)
+  const h = +(parts.find((p) => p.type === "hour")?.value ?? 0)
+  const m = +(parts.find((p) => p.type === "minute")?.value ?? 0)
+  return h * 60 + m
 }
 
 // Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
@@ -1886,8 +2249,14 @@ export default function HikeMap() {
             // way the result lives in `effectiveSourceJourney` and downstream
             // code (effective-minutes + feature.journeys modal/polyline read)
             // sees the splice consistently.
-            const spliced = tryHybridSplice(prefetchedPrimaryJourney, primaryOrigin)
-            let effectiveSourceJourney: JourneyInfo = spliced ?? prefetchedPrimaryJourney
+            const spliced = tryHybridSplice(prefetchedPrimaryJourney)
+            const afterSplice = spliced ?? prefetchedPrimaryJourney
+            // Wrong-interchange reroute (e.g. Seaford via Brighton →
+            // Seaford via Lewes when V2 data shows the Lewes path is
+            // shorter). Runs on the post-splice journey so both
+            // optimisations can compose.
+            const rerouted = tryRerouteViaAlternativeHub(afterSplice)
+            let effectiveSourceJourney: JourneyInfo = rerouted ?? afterSplice
 
             // London calling-points enrichment for prefetched Google journeys.
             //
@@ -2150,8 +2519,26 @@ export default function HikeMap() {
                     londonUpstreamCallingPoints: cp.upstream.length > 0 ? cp.upstream : undefined,
                   }
                 : stitched
-              if (!stitchedCandidate || enriched.durationMinutes! < stitchedCandidate.mins) {
-                stitchedCandidate = { mins: enriched.durationMinutes!, journey: enriched as unknown as JourneyInfo }
+              // Option 2 hybrid splice — try swapping a slow Google first
+              // rail leg for a faster RTT-direct service. Works on stitched
+              // journeys now that tryHybridSplice auto-detects the rail
+              // leg's origin; the user's primary is often the synthetic
+              // London cluster (no own origin-routes entry), but the
+              // rail leg's actual starting terminus does have one. This
+              // is what unlocks the Marlow / Seaford / Southease fixes:
+              // PAD → Maidenhead, VIC → Lewes, VIC → Haywards Heath
+              // all have V2 observations since 2026-04-20.
+              const stitchedSpliced = tryHybridSplice(enriched as unknown as JourneyInfo)
+              const afterSplice = stitchedSpliced ?? (enriched as unknown as JourneyInfo)
+              // Second pass — reroute via an alternative hub if Google's
+              // chosen interchange isn't the best one (e.g. Seaford via
+              // Brighton rather than Lewes). Only fires when we have V2
+              // origin-routes data for BOTH the penultimate leg's
+              // origin and the alt hub.
+              const rerouted = tryRerouteViaAlternativeHub(afterSplice)
+              const finalStitched = rerouted ?? afterSplice
+              if (!stitchedCandidate || finalStitched.durationMinutes! < stitchedCandidate.mins) {
+                stitchedCandidate = { mins: finalStitched.durationMinutes!, journey: finalStitched }
               }
             }
           }
@@ -2233,8 +2620,30 @@ export default function HikeMap() {
             // faster RTT service. When the splice fires, spliceOverride is
             // written back into next.journeys so the modal displays the
             // hybrid timings.
-            const spliced = tryHybridSplice(primaryJourney, primaryOrigin)
-            let effectiveSourceJourney: JourneyInfo = spliced ?? primaryJourney
+            const spliced = tryHybridSplice(primaryJourney)
+            const afterSplice = spliced ?? primaryJourney
+            const rerouted = tryRerouteViaAlternativeHub(afterSplice)
+            let effectiveSourceJourney: JourneyInfo = rerouted ?? afterSplice
+            // Try composing via an alternative London terminus. When Google
+            // Routes' pre-fetched journey picked a suboptimal first terminus
+            // (e.g. CLJ→Marlow via Stratford+LST at 2h44m), this recomposes
+            // X→hub→terminal→D via the terminal matrix + stitched mainline.
+            const composed = tryComposeViaTerminal(
+              f,
+              customHubs,
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              primaryOrigin,
+            )
+            if (composed) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                composed.changes < curChanges ||
+                (composed.changes === curChanges && composed.mins < curMins)
+              ) {
+                effectiveSourceJourney = composed.journey
+              }
+            }
 
             // London calling-points enrichment (same rationale as the
             // isRttPrimary branch above). Custom primaries like Farringdon
@@ -2482,7 +2891,8 @@ export default function HikeMap() {
               mins: number
               changes: number
               hub: CustomHub
-              kind: "rtt-direct" | "source-stitched" | "double-hop"
+              kind: "rtt-direct" | "source-stitched" | "double-hop" | "composed"
+              composedJourney?: JourneyInfo
               sourceJourney?: JourneyInfo
               // Only set for double-hop: the intermediate terminal name the
               // user interchanges at (after arriving from X's hub).
@@ -2575,6 +2985,29 @@ export default function HikeMap() {
                 }
               }
             }
+            // Option D: composed-via-terminal — try every (hub H, terminal T)
+            // pair and use stitchJourney to synthesise a T→D mainline from
+            // any source journey on the feature. Crucial for destinations
+            // where the best first terminus isn't one of the baseline Routes
+            // API origins (PAD, VIC, Marylebone, …).
+            {
+              const composed = tryComposeViaTerminal(
+                f,
+                customHubs,
+                coordToName[primaryOrigin] ?? primaryOrigin,
+                primaryOrigin,
+              )
+              if (composed && customHubs[0]) {
+                const candidate: RouteCandidate = {
+                  mins: composed.mins,
+                  changes: composed.changes,
+                  hub: customHubs[0],
+                  kind: "composed",
+                  composedJourney: composed.journey,
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+            }
             if (winner != null) {
               originMins = winner.mins
               effectiveChanges = winner.changes
@@ -2600,7 +3033,14 @@ export default function HikeMap() {
                 return null
               }
 
-              if (winner.kind === "rtt-direct") {
+              if (winner.kind === "composed") {
+                // Composed journey already has fully assembled legs
+                // (X→hub OTHER, optional hub→T matrix OTHER, ...stitched.legs).
+                // No extra polyline construction here — hover polyline will
+                // fall back to straight segments if absent. Good enough for
+                // the edge-case coverage this path unlocks.
+                synthJourney = winner.composedJourney ?? null
+              } else if (winner.kind === "rtt-direct") {
                 // Legs: [custom→hub interchange, hub→dest mainline].
                 // Calling points use the hub's own RTT data for this dest,
                 // so the "…can also be boarded at" hint reflects the actual
@@ -4161,14 +4601,27 @@ export default function HikeMap() {
       const next = !devExcludeActive
       setDevExcludeActive(next)
       if (next) {
-        // Admin on — max slider extends to 600; open wide so nothing is hidden
+        // Admin on — focus on indirect journeys with curated ratings
+        // (Heavenly / Good / Probably). Sliders open wide so nothing is
+        // hidden by the upper/lower bounds.
         setMaxMinutes(600)
         setFriendMaxMinutes(600)
-        setVisibleRatings(new Set())
+        setMinMinutes(0)
+        setPrimaryDirectOnly(false)
+        setPrimaryIndirectOnly(true)
+        setFriendDirectOnly(false)
+        // highlight = Heavenly, verified = Good, unverified = Probably
+        // highlight=Heavenly, verified=Good, unverified=Probably, not-recommended=Okay
+        setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
       } else {
-        // Admin off — clamp sliders to the non-admin cap (150) so the thumb stays in range
-        setMaxMinutes((m) => Math.min(m, 150))
-        setFriendMaxMinutes((m) => Math.min(m, 150))
+        // Admin off — clear all filter state back to the non-admin defaults.
+        setMaxMinutes(150)
+        setFriendMaxMinutes(150)
+        setMinMinutes(0)
+        setPrimaryDirectOnly(false)
+        setPrimaryIndirectOnly(false)
+        setFriendDirectOnly(false)
+        setVisibleRatings(new Set())
       }
       return
     }
@@ -4525,15 +4978,25 @@ export default function HikeMap() {
             onClick={() => {
               const next = !devExcludeActive
               setDevExcludeActive(next)
-              // Show all stations when entering dev mode so nothing is hidden while curating
               if (next) {
+                // Admin on — preset checkboxes for testing:
+                //   Indirect only + Heavenly/Good/Probably/Okay ratings.
                 setMaxMinutes(600)
                 setFriendMaxMinutes(600)
-                // Clear all rating checkboxes — empty set means "show all" in the filter logic
-                setVisibleRatings(new Set())
+                setMinMinutes(0)
+                setPrimaryDirectOnly(false)
+                setPrimaryIndirectOnly(true)
+                setFriendDirectOnly(false)
+                setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
-                setMaxMinutes((m) => Math.min(m, 150))
-                setFriendMaxMinutes((m) => Math.min(m, 150))
+                // Admin off — clear ALL filter checkboxes back to defaults.
+                setMaxMinutes(150)
+                setFriendMaxMinutes(150)
+                setMinMinutes(0)
+                setPrimaryDirectOnly(false)
+                setPrimaryIndirectOnly(false)
+                setFriendDirectOnly(false)
+                setVisibleRatings(new Set())
               }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
