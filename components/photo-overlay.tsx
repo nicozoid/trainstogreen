@@ -242,29 +242,43 @@ const LONDON_TERMINUS_RE = new RegExp(
   "g",
 )
 
-// Wrap every occurrence of a London-terminus name in the given text
-// with a font-medium span. Returns React children. When isLondonHome
-// is false the text is returned unchanged. Used ONLY in modal copy;
-// the highlighting is a visual cue that helps admins/users see which
-// parts of a journey involve a central-London terminus vs a suburban
-// interchange — which only matters when the active primary is the
-// synthetic Central London cluster.
-function highlightTermini(text: string, isLondonHome: boolean): React.ReactNode {
-  if (!isLondonHome || !text) return text
+// Wrap station-name occurrences in the given text with styled spans.
+// Two classes of highlighting, driven by the opts config:
+//   • Termini (when isLondonHome) — font-medium + text-muted-foreground.
+//     Subtle two-axis label for London-terminus names.
+//   • extraBoldNames — font-medium alone (no muted tint). Used to
+//     distinguish the HOME and FRIEND origin stations from each other
+//     when friend mode is active. Muted would make them blend in with
+//     the termini highlights; plain font-medium keeps them visually
+//     distinct while still differentiated from regular body text.
+//
+// When a name matches BOTH a terminus AND an extraBoldNames entry
+// (e.g. home = Paddington + friend mode on), the terminus rule wins
+// so we get the consistent muted+medium treatment.
+function highlightTermini(
+  text: string,
+  isLondonHome: boolean,
+  extraBoldNames: string[] = [],
+): React.ReactNode {
+  if (!text) return text
+  const terminusForms = isLondonHome ? LONDON_TERMINUS_FORMS : []
+  const terminusSet = new Set(terminusForms)
+  const allForms = [...new Set([...terminusForms, ...extraBoldNames])]
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length)
+  if (allForms.length === 0) return text
+  const re = new RegExp(
+    `\\b(${allForms.map((f) => f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`,
+    "g",
+  )
   const parts: React.ReactNode[] = []
   let last = 0
   let match: RegExpExecArray | null
-  LONDON_TERMINUS_RE.lastIndex = 0
-  while ((match = LONDON_TERMINUS_RE.exec(text)) !== null) {
+  while ((match = re.exec(text)) !== null) {
     if (match.index > last) parts.push(text.slice(last, match.index))
-    // Two-axis emphasis: font-medium bumps the weight 400→500, and
-    // text-muted-foreground tints the colour. Combined they read as
-    // a subtle-but-distinct label against the main-foreground body
-    // text. In the "Alternative starts on this route:" region (which
-    // is ALREADY text-muted-foreground on its span) the colour axis
-    // is a no-op but the font-medium axis still distinguishes
-    // terminus names from the regular calling-point entries.
-    parts.push(<span key={parts.length} className="font-medium text-muted-foreground">{match[0]}</span>)
+    const isTerminus = terminusSet.has(match[0])
+    const cls = isTerminus ? "font-medium text-muted-foreground" : "font-medium"
+    parts.push(<span key={parts.length} className={cls}>{match[0]}</span>)
     last = match.index + match[0].length
   }
   if (last < text.length) parts.push(text.slice(last))
@@ -842,6 +856,12 @@ export default function StationModal({
                     // when the user had explicitly chosen a non-London origin).
                     : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
                   isLondonHome,
+                  // extraBold home origin when friend mode is on, so
+                  // the home/friend sentences visually distinguish.
+                  // Already implicit when home is Central London
+                  // (the actual terminus gets terminus-highlighted),
+                  // so the extra bold only needs to fire when !isLondonHome.
+                  friendOrigin && !isLondonHome ? [primaryOrigin] : [],
                 )}
                 {(() => {
                   // Three distinct outcomes in this section, each getting
@@ -997,6 +1017,27 @@ export default function StationModal({
                 })()}
               </DialogDescription>
 
+              {/* Friend journey info — full width, separate row below
+                  the home journey. Rendered ABOVE the Alternative
+                  routes block so the narrative reads: home journey →
+                  friend journey → alts-from-home (with "from London"
+                  disambiguation suffix on the subheader when friend
+                  is visible). mt uses --para-gap for consistent
+                  rhythm with everything else. */}
+              {friendOrigin && journeys?.[friendOrigin] && (
+                <p className="mt-[var(--para-gap)] text-sm">
+                  {highlightTermini(
+                    singleOriginDescription(friendOrigin, journeys[friendOrigin]),
+                    isLondonHome,
+                    // Friend origin always extraBold so it stands out
+                    // from the home journey paragraph above. Termini
+                    // in the friend's path still get the muted +
+                    // medium treatment when home is Central London.
+                    [friendOrigin],
+                  )}
+                </p>
+              )}
+
               {/* Alternative terminus routes (London synthetic primary
                   only — map.tsx populates `alternativeRoutes` on the
                   active journey when the user's home is the whole
@@ -1090,7 +1131,14 @@ export default function StationModal({
                       // between subheader-above-gap and regular
                       // paragraph gap holds.
                       <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-                        Alternative routes
+                        {/* When a friend route is also on-screen below,
+                            disambiguate by suffixing "from London" so
+                            it's clear these alts belong to the home
+                            origin (London synthetic primary — alts only
+                            render in that mode) and NOT the friend. */}
+                        {friendOrigin && journeys?.[friendOrigin]
+                          ? "Alternative routes from London"
+                          : "Alternative routes"}
                       </p>
                     )}
                     {alts.map(renderAlt)}
@@ -1098,12 +1146,6 @@ export default function StationModal({
                 )
               })()}
 
-              {/* Friend journey info — full width, separate row below primary */}
-              {friendOrigin && journeys?.[friendOrigin] && (
-                <p className="text-sm">
-                  {singleOriginDescription(friendOrigin, journeys[friendOrigin])}
-                </p>
-              )}
             </>
           )}
 
