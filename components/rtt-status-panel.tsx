@@ -201,13 +201,78 @@ const QUEUE_ORDER: string[] = [
   "LBO", "NBY", "SAL", "FTN", "WIN", "SBJ", "EGR", "ABW", "LGE",
   "WMD", "TAU", "BGN", "BND", "HKM", "NWD", "HRH", "AHV", "ACT",
   "HSL", "FEL", "WYB", "MAR", "BXB", "FAV", "BSR", "MAN",
+  // Phase K — /tmp/ttg-rtt/batch-9-hubs.sh. Every London-area NR /
+  // Elizabeth-line station that isn't already fully V2 captured.
+  // 321 codes total; order matches the script's for-loop so the
+  // panel's queue-rank logic produces correct ETAs.
+  "WAL", "WDT", "SMY", "MIL", "CTF", "WIM", "NLT", "KGL", "BWO",
+  "GSN", "WFN", "HWW", "DGC", "DNM", "SDH", "NDL", "IVR", "THD",
+  "CDN", "WME", "KND", "RHM", "SIH", "SUC", "RMF", "SUR", "MOT",
+  "SMO", "HEN", "RDT", "OLD", "BMN", "WDO", "HAF", "WCY", "UPM",
+  "BSH", "HGY", "SRH", "STW", "GFD", "IFD", "SVK", "WHR", "BAK",
+  "KDB", "ZLW", "DMK", "QRP", "EDR", "BRX", "CHP", "CSS", "ZFD",
+  "FLW", "HMP", "KMP", "SUU", "UPH", "SHP", "QRB", "VXH", "HYW",
+  "PNW", "WLI", "BNH", "ELW", "ERH", "WNT", "BRS", "NEM", "CTK",
+  "MAL", "TOL", "CSN", "STE", "EPH", "SUO", "BNS", "ESH", "HMW",
+  "CHE", "OTF", "EFF", "WBO", "NSH", "IMW", "EAD", "CHN", "WBY",
+  "TOO", "HYR", "WSW", "AHD", "ORP", "HNH", "CSD", "EPD", "BFN",
+  "BXY", "BAL", "MTL", "WSU", "BBL", "EYN", "WWC", "SMG", "OXS",
+  "CLG", "WRU", "HMC", "TAD", "CLW", "RIC", "HOH", "CAT", "WEH",
+  "SRA", "KLY", "WHS", "WHY", "UWL", "WOH", "LNY", "KTN", "GNW",
+  "LHS", "KCK", "HDW", "MTC", "MDS", "BKH", "DEP", "CYP", "BKA",
+  "HER", "RAY", "WCP", "SNL", "LHD", "CSH", "EWE", "SYD", "FOH",
+  "HPA", "NXG", "NWX", "SAJ", "WCB", "WWD", "WWA", "PLU", "SGR",
+  "GRP", "HGR", "ESD", "CIT", "PET", "CLD", "DNG", "SCY", "SNR",
+  "RDD", "LAD", "CFB", "LSY", "NBC", "CLK", "WWI", "EDN", "ELE",
+  "EGH", "SNS", "TWI", "WRY", "WTN", "BNI", "CHK", "KWB", "BFD",
+  "SYL", "ISL", "HOU", "CHY", "ASN", "NBT", "TED", "HCB", "KPA",
+  "SRU", "NUM", "BMD", "ENL", "WLC", "MIJ", "CUF", "CWH", "GDH",
+  "GPK", "PAL", "HRN", "BOP", "ANZ", "KNL", "HHY", "DYP", "BKG",
+  "TOM", "CMD", "MRW", "SBM", "MYL", "LEW", "WHP", "SRS", "HWV",
+  "BCY", "MNP", "EPS", "HXX", "TAT", "EWW", "EBD", "SRT", "LGF",
+  "WDU", "SYH", "PNE", "KTH", "BKJ", "BKL", "BMS", "SEH", "KMS",
+  "BRG", "FNR", "NHD", "CFT", "BGM", "BEC", "RVB", "LGJ", "GRY",
+  "DDK", "RNM", "CFH", "OCK", "ENC", "SFA", "CSB", "WLT", "PUO",
+  "BLM", "SRC", "NRB", "TTH", "LEE", "MTG", "NEH", "SID", "CRY",
+  "AYP", "NFL", "SWM", "GNH", "SCG", "GDP", "PFL", "PMR", "SPB",
+  "BRE", "HRO", "PBR", "WIH", "CTH", "WEA", "STL", "HAN", "GMY",
+  "AML", "HAC", "PUT", "EXR", "CRI", "HYS", "MZH", "BXH", "BVD",
+  "CDS", "AFS", "FCN", "CTN", "PON", "LEB", "ELS", "KNG", "BAD",
+  "WCX", "SUD", "WMB", "AAP", "NSG", "OKL", "NBA", "SUP", "WNW",
+  "GIP", "BIK", "EDW", "SGN", "CBP", "DRG", "TUH", "BCZ", "CWX",
+  "CUS", "BDS", "TCR", "PDX", "SPL", "LSX",
+  // Phase L — /tmp/ttg-rtt/batch-10-hubs.sh. Friend-origin candidates
+  // — stations where a friend of a London user plausibly lives, so
+  // they can be picked as a friend origin once the friend-picker
+  // feature lands. Covers major regional cities + Home Counties /
+  // coastal commuter towns.
+  "YRK", "LDS", "LIV", "NCL", "PMH", "PMS", "SOC", "BMO",
+  "EBN", "HGS", "CBE", "CBW", "BMH", "POO", "CCH", "WRH",
+  "TBW", "REI", "DKG", "CHM",
+  // Phase M — /tmp/ttg-rtt/batch-11-hubs.sh. Future-scope coverage
+  // for "any London home + any-within-3h friend": major cities,
+  // National Park gateways, cathedral / university towns.
+  "PRE", "WVH", "NMP", "LAN", "HFD", "SWA", "SHR", "WOF", "WOS", "BPN",
+  "WDM", "SKI", "MAT", "BUX", "KEI", "ALM", "BWK", "KGM", "MIM", "PAN", "GOR",
+  "DHM", "HUL", "TRU", "PLY", "WRW",
+  // Phase N — /tmp/ttg-rtt/batch-12-hubs.sh. Remaining 50k+ population
+  // centres within 3h45m of London not yet covered. MKC (Milton Keynes)
+  // was the biggest oversight; rest are Yorkshire textile cities,
+  // Medway towns, Sussex/Hampshire commuters, Midlands suburbs, etc.
+  "BBN", "BON", "RCD", "BDI", "BDQ", "HUD", "HFX", "WKF", "RMC",
+  "MBR", "SUN", "DAR", "MKC", "AYS", "BAN", "RUG", "BHI", "BSW",
+  "SUT", "SOL", "WSL", "RDC", "KID", "BUT", "MFT", "MDE", "MDW",
+  "CTM", "GLM", "FKC", "GRV", "BSO", "AHT", "FNB", "CRW", "WSM",
+  "CNM", "RAM", "SCA",
 ]
 
-// Primaries we deliberately DON'T top up — their Google Routes data is
-// comprehensive enough that re-fetching would burn API budget without
-// adding real value. Surfaced with 🪦 in the admin table so it's clear
-// they're frozen on purpose, not overlooked.
-const INTENTIONALLY_STALE_STATIONS = new Set(["ZFD", "SRA"])
+// Primaries we deliberately DON'T top up. Empty now — earlier we
+// graveyarded ZFD (Farringdon) and SRA (Stratford) because their
+// Google Routes data was good enough, but batch-9 re-queues every
+// London-area NR station that isn't fully V2 captured, including
+// those two. Kept as a Set (not deleted) so future intentional
+// stale-flags can still be added without reintroducing the const.
+const INTENTIONALLY_STALE_STATIONS = new Set<string>()
 
 // Union of TRACKED_SEED and every CRS in QUEUE_ORDER. Any station we
 // queue for a batch fetch automatically becomes a "tracked" primary in
