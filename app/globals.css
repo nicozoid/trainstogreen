@@ -116,7 +116,17 @@
 :root {
     /* Responsive spacing — tighter on mobile, roomier on larger screens.
        Overrides the --spacing registered in @theme inline above. */
-    --spacing: 0.3rem;          
+    --spacing: 0.3rem;
+
+    /* Shared vertical rhythm for in-modal text. Controls:
+         • the gap between top-level paragraphs in the photo-overlay
+           journey-info region (alt paragraphs, Notes block, etc.)
+         • the gap between a subheader (Alternative routes / Notes)
+           and the first paragraph beneath it
+         • the gap between <p> children inside the notes block
+       One knob — tune this to retune paragraph spacing everywhere
+       in the modal without chasing mt-* classes around. */
+    --para-gap: 0.25rem; /* 4px */
 
     --background: var(--beach-500);                    /* white */
     --foreground: var(--abyss-900);        /* near-black */

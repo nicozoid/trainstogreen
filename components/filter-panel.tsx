@@ -246,9 +246,9 @@ type FilterPanelProps = {
    *   "inner"   — ≥1 interchange at a central-London terminus
    *   "outer"   — ≥1 interchange at a non-London-terminus station
    *   "lowdata" — ≥1 interchange at a station with no RTT data yet */
-  primaryInterchangeFilter: "off" | "direct" | "any" | "inner" | "outer" | "lowdata"
+  primaryInterchangeFilter: "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata"
   onPrimaryInterchangeFilterChange: (
-    value: "off" | "direct" | "any" | "inner" | "outer" | "lowdata",
+    value: "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata",
   ) => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
@@ -1038,7 +1038,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-interchange-filter"
                 value={primaryInterchangeFilter}
                 onChange={(e) => onPrimaryInterchangeFilterChange(
-                  e.target.value as "off" | "direct" | "any" | "inner" | "outer" | "lowdata",
+                  e.target.value as "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1048,6 +1048,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="inner">Inner</option>
                 <option value="outer">Outer</option>
                 <option value="lowdata">Low data</option>
+                <option value="gooddata">Good data</option>
               </select>
             </div>
           )}
