@@ -1632,14 +1632,14 @@ export default function HikeMap() {
   // extends to 600min ("Max" = no upper limit).
   // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
   // does NOT persist across reloads — every visit starts from a clean slate.
-  const [maxMinutes, setMaxMinutes] = useState(150)
+  const [maxMinutes, setMaxMinutes] = useState(120)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations.
   // Not persisted — every reload starts with no friend (same as the other
   // filter state). Value is a "lng,lat" coord key.
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = useState(150)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
   // "Direct trains only" toggles — when true, only keep stations reachable
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
@@ -5671,8 +5671,8 @@ export default function HikeMap() {
                 setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
                 // Admin off — clear ALL filter checkboxes back to defaults.
-                setMaxMinutes(150)
-                setFriendMaxMinutes(150)
+                setMaxMinutes(120)
+                setFriendMaxMinutes(120)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
                 setPrimaryInterchangeFilter("off")
@@ -6378,6 +6378,37 @@ export default function HikeMap() {
                 "text-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
               }}
             />
+            {/* Friend-origin label — matches the home marker's "always
+                visible" treatment. Unlike other station labels
+                (which only appear at zoom 11+), the active friend
+                station's label is shown at every zoom level so the
+                user can always see where their friend is travelling
+                from. Filtered to the friend origin's coord and uses
+                text-allow-overlap + ignore-placement so Mapbox
+                doesn't cull it in favour of other symbols. */}
+            {friendOrigin && (
+              <Layer
+                id="station-label-friend"
+                type="symbol"
+                /* eslint-disable @typescript-eslint/no-explicit-any */
+                filter={["==", ["get", "coordKey"], friendOrigin] as any}
+                /* eslint-enable @typescript-eslint/no-explicit-any */
+                layout={{
+                  "text-field": ["format", ["get", "name"], { "font-scale": 1 }],
+                  "text-size": 11,
+                  "text-offset": [0, 1.4],
+                  "text-anchor": "top",
+                  "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                  "text-allow-overlap": true,
+                  "text-ignore-placement": true,
+                }}
+                paint={{
+                  "text-color": labelColor,
+                  "text-halo-color": haloColor,
+                  "text-halo-width": 1.5,
+                }}
+              />
+            )}
             {/* Hover label — shows the full name+time label for the hovered station
                 at ANY zoom level, temporarily overriding the normal zoom restrictions. */}
             {hovered && (

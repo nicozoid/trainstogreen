@@ -597,10 +597,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return m === 0 ? `${h}h` : `${h}h ${m}m`
   }
 
-  // Slider max constants. Non-admin users are capped at 2h30m. Admin mode
+  // Slider max constants. Non-admin users are capped at 2h. Admin mode
   // extends to 10h — effectively unlimited for GB rail; the filter treats
   // values at this cap as "no maximum".
-  const NON_ADMIN_MAX = 150
+  const NON_ADMIN_MAX = 120
   const ADMIN_MAX = 600
   const sliderMax = adminMode ? ADMIN_MAX : NON_ADMIN_MAX
 
