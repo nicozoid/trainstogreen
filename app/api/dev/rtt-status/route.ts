@@ -14,12 +14,55 @@
 // poll and see the dataset update as the v2-complete.sh fetcher writes.
 
 import { NextResponse } from "next/server"
-import { readFile, stat } from "node:fs/promises"
+import { readFile, readdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { exec } from "node:child_process"
 import { promisify } from "node:util"
 
 const execAsync = promisify(exec)
+
+// Orchestrator scripts under /tmp/ttg-rtt/ are the source of truth for
+// queued-but-not-yet-started fetches. We scan their contents for CRS
+// codes referenced in:
+//   • `for CRS in RDH TON PDW; do` loop headers (space-separated)
+//   • `--only=MOG,CST,FST,LBG` flags (comma-separated)
+//   • `fetch-direct-reachable.mjs RDH` literal invocations
+// Lines beginning with `#` are skipped so the comment-header "queue" in
+// suburban-hubs.sh doesn't double-count its own CRS list.
+async function parseQueuedCrs(): Promise<Set<string>> {
+  const set = new Set<string>()
+  let files: string[] = []
+  try {
+    files = (await readdir("/tmp/ttg-rtt"))
+      .filter((f) => f.endsWith(".sh"))
+      .map((f) => join("/tmp/ttg-rtt", f))
+  } catch {
+    return set
+  }
+  const loopRe = /for\s+CRS\s+in\s+([A-Z][A-Z0-9\s]*);?\s*do/g
+  const onlyRe = /--only=([A-Z][A-Z0-9,]+)/g
+  const literalRe = /fetch-direct-reachable\.mjs\s+([A-Z]{2,4})\b/g
+  for (const path of files) {
+    let src = ""
+    try { src = await readFile(path, "utf8") } catch { continue }
+    for (const raw of src.split("\n")) {
+      const line = raw.trim()
+      if (!line || line.startsWith("#")) continue
+      let m
+      while ((m = loopRe.exec(line))) {
+        for (const crs of m[1].split(/\s+/)) if (crs) set.add(crs)
+      }
+      loopRe.lastIndex = 0
+      while ((m = onlyRe.exec(line))) {
+        for (const crs of m[1].split(",")) if (crs) set.add(crs)
+      }
+      onlyRe.lastIndex = 0
+      while ((m = literalRe.exec(line))) set.add(m[1])
+      literalRe.lastIndex = 0
+    }
+  }
+  return set
+}
 // Every orchestrator log we want to reconcile "which station has
 // what dates written" against. Add new orchestrator logs here as they
 // come online; duplicates are harmless because the parsed dates are
@@ -90,11 +133,14 @@ async function getProcessState(): Promise<{ inProgressCrs: string[]; wrapperRunn
   const state = { inProgressCrs: [] as string[], wrapperRunning: false }
   try {
     const { stdout } = await execAsync("ps -Ao command=")
-    const keepPattern = /fetch-direct-reachable|v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup/
+    const keepPattern = /fetch-direct-reachable|v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup|batch-\d+-hubs|suburban-hubs/
     for (const line of stdout.split("\n")) {
       if (!keepPattern.test(line)) continue
-      // Wrapper scripts count as "something is queued/running"
-      if (/v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup/.test(line)) {
+      // Wrapper scripts count as "something is queued/running" — the
+      // ETA logic in the panel gates on this flag to display times.
+      // Keep this regex in sync with the list of known orchestrator
+      // filenames under /tmp/ttg-rtt/.
+      if (/v2-complete|v2-priority|v2-rerun|v2-backfill|tier1-fetch|clj-fetch|bfr-retry|phase-1-5-followup|batch-\d+-hubs|suburban-hubs/.test(line)) {
         state.wrapperRunning = true
       }
       // fetch-direct-reachable.mjs <CRS> --dates=... — extract CRS
@@ -199,10 +245,50 @@ export async function GET() {
     // Sort by CRS for stable display order.
     stations.sort((a, b) => a.crs.localeCompare(b.crs))
     const { inProgressCrs, wrapperRunning } = await getProcessState()
+    // Queued CRS = CRS referenced in an orchestrator script but not yet
+    // in origin-routes.json (and not currently being fetched). Gives the
+    // admin panel a comprehensive view of what's coming up rather than
+    // only what has already completed.
+    //
+    // Also resolve each CRS to its real station name (from
+    // public/stations.json) so the panel can show e.g. "Brighton" next
+    // to BTN rather than the bare code. Names that don't resolve fall
+    // back to the CRS on the client.
+    const queuedCrsSet = await parseQueuedCrs()
+    const fetchedCrs = new Set(stations.map((s) => s.crs))
+    const inProgressSet = new Set(inProgressCrs)
+    const crsToName: Record<string, string> = {}
+    try {
+      const publicStationsPath = join(process.cwd(), "public", "stations.json")
+      const rawPublic = await readFile(publicStationsPath, "utf8")
+      const parsed = JSON.parse(rawPublic) as { features: Array<{ properties?: Record<string, unknown> }> }
+      for (const f of parsed.features ?? []) {
+        const crs = f.properties?.["ref:crs"] as string | undefined
+        const name = f.properties?.["name"] as string | undefined
+        if (crs && name && !crsToName[crs]) crsToName[crs] = name
+      }
+    } catch {
+      // If public/stations.json can't be read, queuedCrs still returns
+      // bare codes — non-fatal.
+    }
+    const queuedCrs = [...queuedCrsSet]
+      .filter((crs) => !fetchedCrs.has(crs) && !inProgressSet.has(crs))
+      .sort()
+      .map((crs) => ({ crs, name: crsToName[crs] ?? crs }))
+    // Full CRS→name map for every scraped CRS — queued, in-progress, or
+    // in TARGET_STATIONS. Panel uses this as the universal name lookup
+    // so in-progress rows (filtered out of queuedCrs) still show their
+    // real station name instead of falling back to the bare CRS.
+    const scrapedNames: Record<string, string> = {}
+    for (const crs of queuedCrsSet) {
+      if (crsToName[crs]) scrapedNames[crs] = crsToName[crs]
+    }
     return NextResponse.json({
       stations,
       inProgressCrs,
       wrapperRunning,
+      queuedCrs,
+      scrapedNames,
       fileUpdatedAt: meta.mtime.toISOString(),
     })
   } catch (err) {

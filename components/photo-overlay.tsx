@@ -106,6 +106,27 @@ export type JourneyInfo = {
    * (the existing behaviour for non-custom primaries).
    */
   callingPointsLegArrival?: string
+  /**
+   * Alternative direct-train routes from OTHER London termini, within
+   * +30 min of this journey's duration. Only populated when the active
+   * primary is the synthetic London cluster (not for standalone-terminus
+   * or custom primaries — there's no ambiguity about where to start
+   * from in those cases). Each entry describes a distinct terminus's
+   * direct train to the same destination, with its own calling points
+   * so the modal can render a parallel paragraph beneath the main route.
+   */
+  alternativeRoutes?: {
+    terminusName: string
+    durationMinutes: number
+    /** 0 = direct train; 1+ = that many changes. */
+    changes: number
+    /** When changes > 0, the change-station names in order (typically
+     *  one entry — we cap indirect alternatives at 1 change). Used by
+     *  the modal to render "with 1 change at Foo." after the time. */
+    changeStations: string[]
+    londonCallingPoints: { name: string; crs: string; minutesFromOrigin: number }[]
+    londonUpstreamCallingPoints: { name: string; crs: string; minutesExtra: number }[]
+  }[]
 }
 
 type StationModalProps = {
@@ -166,6 +187,19 @@ type StationModalProps = {
   /** When true, the station name represents a PLACE rather than a specific
    *  station (e.g. "City of London"). Suppresses the " Station" title suffix. */
   isSynthetic?: boolean
+  /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
+   *  adminMode is true, the title is prefixed with the code — helps
+   *  cross-reference the admin RTT status panel and origin-routes.json. */
+  stationCrs?: string
+  /** True when the user is currently in admin mode. Gates the CRS prefix. */
+  adminMode?: boolean
+  /** Admin-only: true when the CURRENT home→destination pair has been
+   *  tested and approved. Drives the Approve toggle + its active state. */
+  isApprovedForHome?: boolean
+  /** Admin-only: toggles the approved flag for the active home→dest
+   *  pair. No-op (button hidden) when the station is excluded or an
+   *  origin station — those classes don't participate in approval. */
+  onToggleApproved?: (approved: boolean) => void
 }
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
@@ -311,6 +345,10 @@ export default function StationModal({
   isFriendOrigin = false,
   isPrimaryOrigin = false,
   isSynthetic = false,
+  stationCrs,
+  adminMode = false,
+  isApprovedForHome = false,
+  onToggleApproved,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -669,7 +707,7 @@ export default function StationModal({
           className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
         >
           <DialogTitle className="text-2xl sm:text-3xl">
-            {stationName}{isSynthetic ? "" : " Station"}
+            {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
           </DialogTitle>
           {/* Desktop-only Hike button. Hidden for friend/primary origins
               (they don't get a Hike action). min-w-0 isn't needed on the
@@ -808,9 +846,17 @@ export default function StationModal({
                   const reachesDest =
                     towardsStation != null &&
                     towardsStation === stationName.replace(/ Station$/, "")
+                  // Prefix choice:
+                  //   • reachesDest (direct train to the user's
+                  //     destination): "Alternative starts on this route:"
+                  //     — deliberately generic so the same copy works
+                  //     across main + alt paragraphs.
+                  //   • otherwise (train terminates at a change
+                  //     station): "The train to X can also be boarded
+                  //     at:" — unchanged.
                   const prefix = towardsStation
                     ? reachesDest
-                      ? `Alternative starts for a direct train to ${towardsStation}: `
+                      ? `Alternative starts on this route: `
                       : `The train to ${towardsStation} can also be boarded at: `
                     : "Can also start same route at: "
                   return (
@@ -863,6 +909,76 @@ export default function StationModal({
                   )
                 })()}
               </DialogDescription>
+
+              {/* Alternative terminus routes (London synthetic primary
+                  only — map.tsx populates `alternativeRoutes` on the
+                  active journey when the user's home is the whole
+                  London cluster). Each renders as its own small-muted
+                  paragraph mirroring the main journey's structure:
+                  "Alternative route: X min direct from Y." plus a
+                  calling-points line with the same separator logic.
+                  Hidden for non-London primaries and whenever the list
+                  is empty, so no visual footprint in those cases. */}
+              {(() => {
+                const alts = journeys?.[primaryOrigin]?.alternativeRoutes
+                if (!alts || alts.length === 0) return null
+                return alts.map((alt, idx) => {
+                  const up = (alt.londonUpstreamCallingPoints ?? [])
+                    .slice()
+                    .sort((a, b) => b.minutesExtra - a.minutesExtra)
+                    .map((s) => ({ key: s.crs, name: s.name, label: `+${s.minutesExtra}m` }))
+                  const down = (alt.londonCallingPoints ?? [])
+                    .slice()
+                    .sort((a, b) => a.minutesFromOrigin - b.minutesFromOrigin)
+                    .map((s) => ({ key: s.crs, name: s.name, label: `-${s.minutesFromOrigin}m` }))
+                  const items = [...up, ...down]
+                  // Render the alt's main sentence. Three variants:
+                  //   • direct (changes === 0): "{time} direct from X."
+                  //   • 1 change: "{time} from X with 1 change at Y."
+                  //   • 2+ changes: "{time} from X with N changes at Y, Z."
+                  // prettifyStationLabel drops "International", curly
+                  // apostrophes, "(COV)" codes etc so names in the sentence
+                  // read consistently with the main journey line above.
+                  const terminusLabel = prettifyStationLabel(alt.terminusName)
+                  const changeLabels = (alt.changeStations ?? []).map(prettifyStationLabel)
+                  const mainSentence = alt.changes === 0
+                    ? `${formatMinutes(alt.durationMinutes)} direct from ${terminusLabel}.`
+                    : alt.changes === 1 && changeLabels.length > 0
+                      ? `${formatMinutes(alt.durationMinutes)} from ${terminusLabel} with 1 change at ${changeLabels[0]}.`
+                      : `${formatMinutes(alt.durationMinutes)} from ${terminusLabel} with ${alt.changes} changes at ${changeLabels.join(", ")}.`
+                  return (
+                    <p
+                      key={`${alt.terminusName}-${idx}`}
+                      className="mt-2 text-sm [overflow-wrap:anywhere]"
+                    >
+                      Alternative route: {mainSentence}
+                      {items.length > 0 && (
+                        <span className="block [overflow-wrap:anywhere] text-xs text-muted-foreground">
+                          Alternative starts on this route:{" "}
+                          {items.map((item, i) => {
+                            // Same separator logic as the main journey line
+                            // (comma, " & " before last of 2, ", & " before
+                            // last of 3+). Keeps the copy pattern uniform
+                            // across main and alt paragraphs.
+                            let sep = ""
+                            if (i > 0) {
+                              sep = i === items.length - 1
+                                ? (items.length > 2 ? ", & " : " & ")
+                                : ", "
+                            }
+                            return (
+                              <span key={item.key}>
+                                {sep}{item.name} ({item.label})
+                              </span>
+                            )
+                          })}
+                          .
+                        </span>
+                      )}
+                    </p>
+                  )
+                })
+              })()}
 
               {/* Friend journey info — full width, separate row below primary */}
               {friendOrigin && journeys?.[friendOrigin] && (
@@ -972,6 +1088,29 @@ export default function StationModal({
                   </svg>
                 }
               />
+
+              {/* Approve home→destination pair — admin-only journey
+                  testing flag. Hidden for excluded and origin stations
+                  (both classes keep their normal colour in admin mode
+                  and don't participate in the approval workflow). Only
+                  rendered when a toggle handler is wired (map.tsx
+                  passes one whenever the station is a normal
+                  destination). Active = approved (green check). */}
+              {!isExcluded && !isOrigin && onToggleApproved && (
+                <DevActionButton
+                  label={isApprovedForHome ? "Approved" : "Approve"}
+                  active={isApprovedForHome}
+                  onClick={() => onToggleApproved(!isApprovedForHome)}
+                  icon={
+                    /* Check mark — fill green when approved, grey outline otherwise. */
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke={isApprovedForHome ? 'var(--primary)' : 'currentColor'}
+                      strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="4 12 10 18 20 6" />
+                    </svg>
+                  }
+                />
+              )}
 
               {/* Thin vertical separator between delete and rating buttons */}
               <div className="mx-1 h-6 w-px bg-border" />

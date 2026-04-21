@@ -298,7 +298,11 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
   // Kings Cross primary represents the KX/St Pancras/Euston group — they're
   // next-door and share a tube interchange, so most riders pick any of the
-  // three interchangeably. Cluster members are declared below.
+  // three interchangeably. Cluster members are declared below. Searchable
+  // (not adminOnly) but not pre-populated — the default dropdown only
+  // shows the synthetic "Central London" primary; individual termini
+  // including this cluster surface via the search box or the recents
+  // list once the user picks them.
   "-0.1239491,51.530609":  { canonicalName: "Kings Cross St Pancras", displayName: "Kings Cross",      menuName: "Kings Cross, St Pancras, & Euston" },
   "-0.1236888,51.5074975": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
   "-0.163592,51.5243712":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
@@ -1034,6 +1038,134 @@ function tryComposeViaTerminal(
   return best
 }
 
+// Station-to-station walking/short-tube hops that aren't in the terminal
+// matrix (because the matrix only contains terminal-to-terminal routes,
+// and one endpoint here — Waterloo East — is aliased to Waterloo in
+// london-terminals.json rather than being its own terminal entry).
+//
+// Keyed by coord string on both sides so lookups are direct and no
+// name-normalisation is required. Minutes are realistic walking times
+// through the covered concourse; polylines are intentionally null so
+// the map draws a straight line between the two station coords — good
+// enough for a 150m pedestrian link.
+//
+// Expand this map as more "need to walk between adjacent stations"
+// cases surface. Each entry should appear symmetrically (both
+// directions) so the composition loop doesn't need to care which side
+// is the rail origin.
+const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {
+  // Waterloo ↔ Waterloo East — covered pedestrian link, ~5 min.
+  // Unlocks CLJ→YAL class journeys: CLJ→WAT (rail) → walk → WAE →
+  // Paddock Wood (rail) → Yalding (branch rail). Both sides are in
+  // origin-routes.json already (WAE is an independent fetched primary).
+  "-0.112801,51.5028379":   { "-0.1082027,51.5042171": { minutes: 5 } },  // WAT → WAE
+  "-0.1082027,51.5042171":  { "-0.112801,51.5028379":  { minutes: 5 } },  // WAE → WAT
+}
+
+/**
+ * Extension B — triple-hop "walking interchange" composition. Handles
+ * journeys like CLJ → Yalding that route:
+ *
+ *   X → H1 (rail, H1 is a customHub terminus, RTT-observed)
+ *     → walk via WALKING_HOPS to H2 (adjacent origin-routes station)
+ *     → H3 (rail, H3 is reached directly from H2, origin-routes entry)
+ *     → D (final rail, D is reached directly from H3)
+ *
+ * Example: CLJ → WAT → walk → WAE → Paddock Wood → Yalding.
+ *
+ * Returns the fastest four-leg composition or null if no combination
+ * reaches D under the day-hike-range cap. The interchange buffer is
+ * applied at each hand-off (including the walking one).
+ */
+function tryComposeViaWalkingDoubleHub(
+  customHubs: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string; directReachable?: Record<string, DirectReachable> } }>,
+  destCoordKey: string,
+  customName: string,
+  customCoord: string,
+): { journey: JourneyInfo; mins: number; changes: number } | null {
+  if (customHubs.length === 0) return null
+  const INTERCHANGE = 5
+  let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+
+  for (const h1 of customHubs) {
+    const walks = WALKING_HOPS[h1.pCoord]
+    if (!walks) continue
+    const h1Name = h1.routes.name ?? ""
+    for (const [h2Coord, walk] of Object.entries(walks)) {
+      const h2Routes = originRoutes[h2Coord]
+      if (!h2Routes) continue
+      const h2Name = h2Routes.name ?? ""
+      // For every H3 in H2's directReachable that's ALSO a top-level
+      // origin-routes entry, see if H3 reaches D directly. H3 being an
+      // origin-routes entry is required so we can look up H3→D times.
+      for (const [h3Coord, h2ToH3] of Object.entries(h2Routes.directReachable ?? {})) {
+        if (!h2ToH3?.minMinutes) continue
+        if (h3Coord === destCoordKey) continue  // double-hop handled elsewhere
+        const h3Routes = originRoutes[h3Coord]
+        if (!h3Routes) continue
+        const h3ToD = h3Routes.directReachable?.[destCoordKey]
+        if (!h3ToD?.minMinutes) continue
+        const total =
+          h1.pToCustomMins +
+          INTERCHANGE + walk.minutes +
+          INTERCHANGE + h2ToH3.minMinutes +
+          INTERCHANGE + h3ToD.minMinutes
+        if (best != null && total >= best.mins) continue
+        const h3Name = h3Routes.name ?? ""
+        const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
+        const { lng: h1Lng, lat: h1Lat } = parseCoordKey(h1.pCoord)
+        const { lng: h2Lng, lat: h2Lat } = parseCoordKey(h2Coord)
+        const { lng: h3Lng, lat: h3Lat } = parseCoordKey(h3Coord)
+        // Polyline: home → H1 → H2 (walking segment, straight line) +
+        // H2→H3 calling-points + H3→D calling-points.
+        // Polyline approximated as straight segments between the
+        // known coords (home → H1 → H2 → H3 → D). The detailed
+        // calling-points CRS→coord map lives inside the useMemo
+        // scope, so producing a fully-resolved polyline here would
+        // mean threading it through as an arg. Straight segments
+        // are acceptable for this edge case — the user-visible
+        // improvement (a hover-polyline at all rather than none) is
+        // the main thing.
+        const { lng: dLng, lat: dLat } = parseCoordKey(destCoordKey)
+        const polylineCoords: [number, number][] = [
+          [cLng, cLat],
+          [h1Lng, h1Lat],
+          [h2Lng, h2Lat],
+          [h3Lng, h3Lat],
+          [dLng, dLat],
+        ]
+        const journey = {
+          durationMinutes: total,
+          // Two RAIL changes (at H3 to board final, at H2 to board H3
+          // train). The walking hop is counted as part of the H1
+          // transfer rather than as a separate change. Matches the
+          // way Trainline surfaces "2 changes" for this class.
+          changes: 2,
+          legs: [
+            { vehicleType: "OTHER", departureStation: customName, arrivalStation: h1Name },
+            { vehicleType: "OTHER", departureStation: h1Name, arrivalStation: h2Name },
+            {
+              vehicleType: "HEAVY_RAIL",
+              departureStation: h2Name,
+              arrivalStation: h3Name,
+              stopCount: Math.max(0, (h2ToH3.fastestCallingPoints?.length ?? 0) - 2),
+            },
+            {
+              vehicleType: "HEAVY_RAIL",
+              departureStation: h3Name,
+              arrivalStation: h3ToD.name ?? "",
+              stopCount: Math.max(0, (h3ToD.fastestCallingPoints?.length ?? 0) - 2),
+            },
+          ],
+          polylineCoords,
+        } as unknown as JourneyInfo
+        best = { journey, mins: total, changes: 2 }
+      }
+    }
+  }
+  return best
+}
+
 // UK-local minutes-of-day from an ISO timestamp — mirrors the offset
 // encoded in the ISO string (either "+01:00" BST or "Z"/"+00:00" GMT).
 // Used by tryRerouteViaAlternativeHub to convert the V2 observation
@@ -1302,11 +1434,11 @@ export default function HikeMap() {
     "ttg:recentCustomPrimaries",
     [
       "-0.0035472,51.541289",   // Stratford
-      "-0.104555,51.519964",    // Farringdon
-      "-0.1239491,51.530609",   // Kings Cross (primary coord; renders as the full "Kings Cross, St Pancras, & Euston" menuName)
-      // Clapham Junction was seeded here as the first suburban hub,
-      // pulled out for now — we don't have solid RTT data for it yet
-      // and it was unhelpful to surface without that backing.
+      // Farringdon and the Kings Cross cluster were seeded here earlier
+      // but pulled out now that the synthetic "Central London" primary
+      // covers the whole 15-terminus group automatically — exposing
+      // them as separate picks added noise without additional utility
+      // for the typical user.
     ],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
@@ -1512,12 +1644,21 @@ export default function HikeMap() {
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
   const [friendDirectOnly, setFriendDirectOnly] = useState(false)
-  // "Indirect trains only" — admin-only inverse of the above. Shows stations
-  // that require ≥1 change from the primary. Useful for debugging the
-  // stitcher: the union of this and "Direct trains only" equals the full
-  // destination set, and any visual oddity (missing station, weird time)
-  // is easier to spot when only one cohort renders at a time.
-  const [primaryIndirectOnly, setPrimaryIndirectOnly] = useState(false)
+  // Admin-only interchange filter. Lets the admin slice the destination
+  // set by WHERE the user would change trains — great for testing,
+  // because different interchange classes have different bug profiles.
+  //
+  //   "off"     — no filter (non-admin default, dropdown hidden)
+  //   "direct"  — zero interchanges (absorbs the old admin-mode "Direct
+  //               trains only" checkbox into the dropdown)
+  //   "any"     — at least one interchange (i.e. any journey with ≥1 change)
+  //   "inner"   — ≥1 interchange at a central-London terminus
+  //   "outer"   — ≥1 interchange at a non-London-terminus station
+  //   "lowdata" — ≥1 interchange at a station with no RTT data yet
+  //               (most likely to have routing bugs — helps prioritise
+  //               which suburban hubs to fetch next)
+  type InterchangeFilter = "off" | "direct" | "any" | "inner" | "outer" | "lowdata"
+  const [primaryInterchangeFilter, setPrimaryInterchangeFilter] = useState<InterchangeFilter>("off")
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
@@ -1569,6 +1710,11 @@ export default function HikeMap() {
   // Maps coordKey → rating; loaded from data/station-ratings.json via API.
   // Universal (not per-user) — ratings are set in dev mode and affect all viewers.
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
+  // Admin-only: set of "homeCoord|destCoord" pairs the admin has tested
+  // and approved. Controls the red-tint overlay on the map in admin
+  // mode (any non-approved destination for the current primary gets a
+  // red dot) and the "Approved for this home" checkbox in the modal.
+  const [approvedJourneys, setApprovedJourneys] = useState<Set<string>>(new Set())
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
   // Empty set = no filter = all stations visible. Not persisted — rating
@@ -1596,6 +1742,11 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
+    // Approved home→dest pairs. Server returns a flat string[] of
+    // composite keys; we wrap it in a Set for O(1) lookups at render.
+    fetch("/api/dev/approve-journey")
+      .then((res) => res.json())
+      .then((keys: string[]) => setApprovedJourneys(new Set(keys)))
   }, [])
 
 
@@ -2117,6 +2268,60 @@ export default function HikeMap() {
     // the walk + wait at P.
     const isCustomPrimary = !PRIMARY_ORIGINS[primaryOrigin]
     const CUSTOM_INTERCHANGE_MIN = 5
+
+    // Extension A: via-direct-hub composition helper. For every origin-
+    // routes station H that reaches BOTH the custom primary AND the
+    // destination D, compose X→H (reverse of H→X) + interchange + H→D.
+    // Lets "bypass central London via suburban interchange" journeys
+    // win over Google's central-London routing when they're genuinely
+    // faster. Example: CLJ→Penshurst via Redhill (once RDH is RTT-fetched).
+    //
+    // Only valuable for custom primaries. Returns the fastest 1-change
+    // composition or null. Built inside the useMemo body so it can close
+    // over coordToName / crsToCoord / customHubs / CUSTOM_INTERCHANGE_MIN.
+    function buildViaDirectHubJourney(
+      customHubsArg: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string; directReachable?: Record<string, DirectReachable> } }>,
+      coordKey: string,
+      customName: string,
+      customCoord: string,
+    ): { journey: JourneyInfo; mins: number; changes: number } | null {
+      if (customHubsArg.length === 0) return null
+      let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+      const { lng: pLng, lat: pLat } = parseCoordKey(customCoord)
+      for (const hub of customHubsArg) {
+        const hubEntry = hub.routes.directReachable?.[coordKey]
+        if (!hubEntry?.minMinutes) continue
+        const mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + hubEntry.minMinutes
+        if (best != null && mins >= best.mins) continue
+        const hubName = hub.routes.name ?? ""
+        const hubToDestCoords = (hubEntry.fastestCallingPoints ?? [])
+          .map((crs) => crsToCoord[crs])
+          .filter((c): c is [number, number] => !!c)
+        const polylineCoords = hubToDestCoords.length > 1
+          ? [[pLng, pLat] as [number, number], ...hubToDestCoords]
+          : undefined
+        const cp = buildCallingPoints(hub.pCoord, coordKey)
+        const journey = {
+          durationMinutes: mins,
+          changes: 1,
+          legs: [
+            { vehicleType: "OTHER", departureStation: customName, arrivalStation: hubName },
+            {
+              vehicleType: "HEAVY_RAIL",
+              departureStation: hubName,
+              arrivalStation: hubEntry.name ?? "",
+              stopCount: Math.max(0, (hubEntry.fastestCallingPoints?.length ?? 0) - 2),
+            },
+          ],
+          polylineCoords,
+          londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+          londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+          callingPointsLegArrival: hubEntry.name,
+        } as unknown as JourneyInfo
+        best = { journey, mins, changes: 1 }
+      }
+      return best
+    }
     // Pre-filter origin-routes entries that direct-reach the custom station,
     // so the inner loop over destinations only iterates the relevant primaries.
     // Each entry gets the P→custom time cached for quick use below.
@@ -2644,6 +2849,47 @@ export default function HikeMap() {
                 effectiveSourceJourney = composed.journey
               }
             }
+            // Extension A: via-direct-hub composition. Wins when a
+            // single suburban interchange (e.g. Redhill for CLJ→PHR)
+            // beats Google's central-London routing. 1 change.
+            const viaHub = buildViaDirectHubJourney(
+              customHubs,
+              coordKey,
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              primaryOrigin,
+            )
+            if (viaHub) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                viaHub.changes < curChanges ||
+                (viaHub.changes === curChanges && viaHub.mins < curMins)
+              ) {
+                effectiveSourceJourney = viaHub.journey
+              }
+            }
+            // Extension B: triple-hop walking-interchange composition.
+            // Unlocks CLJ→YAL class journeys (CLJ → WAT → walk → WAE →
+            // PKW → YAL). Only wins when the walking-chain path is
+            // STRICTLY faster than what we already have — it's 2 rail
+            // changes, so direct or single-change options beat it by
+            // the change-count tiebreak automatically.
+            const viaWalk = tryComposeViaWalkingDoubleHub(
+              customHubs,
+              coordKey,
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              primaryOrigin,
+            )
+            if (viaWalk) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                viaWalk.changes < curChanges ||
+                (viaWalk.changes === curChanges && viaWalk.mins < curMins)
+              ) {
+                effectiveSourceJourney = viaWalk.journey
+              }
+            }
 
             // London calling-points enrichment (same rationale as the
             // isRttPrimary branch above). Custom primaries like Farringdon
@@ -3008,6 +3254,30 @@ export default function HikeMap() {
                 if (isBetter(candidate, winner)) winner = candidate
               }
             }
+            // Option E: Extension B — triple-hop walking-interchange.
+            // Covers CLJ→YAL class journeys where the user takes rail
+            // to a terminus, walks to an adjacent origin-routes hub
+            // (e.g. WAT→WAE), then takes two more rail legs. Same
+            // rendering path as "composed" because its journey has
+            // pre-assembled legs + polyline.
+            {
+              const viaWalk = tryComposeViaWalkingDoubleHub(
+                customHubs,
+                coordKey,
+                coordToName[primaryOrigin] ?? primaryOrigin,
+                primaryOrigin,
+              )
+              if (viaWalk && customHubs[0]) {
+                const candidate: RouteCandidate = {
+                  mins: viaWalk.mins,
+                  changes: viaWalk.changes,
+                  hub: customHubs[0],
+                  kind: "composed",
+                  composedJourney: viaWalk.journey,
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+            }
             if (winner != null) {
               originMins = winner.mins
               effectiveChanges = winner.changes
@@ -3253,10 +3523,256 @@ export default function HikeMap() {
           next.journeys = { ...(existing ?? {}), [primaryOrigin]: spliceOverride }
         }
 
+        // Alternative terminus routes (London synthetic primary only).
+        // Lets the modal surface "Victoria is 6 min slower but direct too"
+        // scenarios. Only relevant when the user's home is the whole
+        // London cluster — for any other primary, the specific terminus
+        // they'd use is already nailed down.
+        if (primaryOrigin === "-0.1269,51.5196") {
+          const activeJ = (next.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+          if (activeJ) {
+            type Candidate = {
+              terminusName: string
+              terminusCoord: string
+              durationMinutes: number
+              callingList: string[]
+              downstream: { name: string; crs: string; minutesFromOrigin: number }[]
+              upstream: { name: string; crs: string; minutesExtra: number }[]
+              changes: number
+              changeStations: string[]
+            }
+            const candidates: Candidate[] = []
+            // london-terminals.json's lat/lng are rounded/approximate and
+            // don't match origin-routes.json keys. Use the cluster coord
+            // list instead — those ARE the origin-routes.json keys (same
+            // strings we use everywhere else for terminus identification).
+            const clusterCoords = PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []
+            for (const tCoord of clusterCoords) {
+              const tRoutes = originRoutes[tCoord]
+              if (!tRoutes) continue
+              const entry = tRoutes.directReachable?.[coordKey]
+              if (!entry?.minMinutes) continue
+              // Resolve terminus display name through matchTerminal so cluster
+              // satellites (Waterloo East, Euston Underground) surface under
+              // their canonical parent name (Waterloo / Euston).
+              const canonical = matchTerminal(tRoutes.name, londonTerminals) ?? tRoutes.name
+              // Dedupe — multiple coord entries can map to the same canonical
+              // terminus (KX Underground + NR, StP main + HS1). Keep the
+              // fastest observation per canonical name.
+              const existing = candidates.find((c) => c.terminusName === canonical)
+              if (existing && existing.durationMinutes <= entry.minMinutes) continue
+              const cp = buildCallingPoints(tCoord, coordKey)
+              const record: Candidate = {
+                terminusName: canonical,
+                terminusCoord: tCoord,
+                durationMinutes: entry.minMinutes,
+                callingList: entry.fastestCallingPoints ?? [],
+                downstream: cp?.downstream ?? [],
+                upstream: cp?.upstream ?? [],
+                changes: 0,
+                changeStations: [],
+              }
+              if (existing) Object.assign(existing, record)
+              else candidates.push(record)
+            }
+            // Indirect-route composition. For any terminus T that does
+            // NOT have D direct, try to compose T → hub → D where hub
+            // is any origin-routes entry that both T reaches directly
+            // AND that directly reaches D. Uses 5-minute change buffer
+            // (CUSTOM_INTERCHANGE_MIN).
+            //
+            // CRITICAL filter: the hub must NOT be a London terminus.
+            // If H is a terminus, then "T → H → D" is really just "go
+            // to H and take H's train" — i.e. a different way to reach
+            // an existing direct-route candidate, not a genuinely
+            // different physical route. Including those pollutes the
+            // alt-route list with near-duplicates (e.g. CST→LBG→Hastings,
+            // BFR→LBG→Hastings, STP→LBG→Hastings are all just "catch
+            // the LBG Hastings train"). The only indirect alts worth
+            // surfacing are those via SUBURBAN interchanges — CLJ, ECR,
+            // Ashford, Haywards Heath, etc — where the hub isn't a
+            // terminus and the combined journey has legitimately
+            // different character.
+            const clusterCoordSet = new Set(clusterCoords)
+            for (const tCoord of clusterCoords) {
+              const tRoutes = originRoutes[tCoord]
+              if (!tRoutes) continue
+              const canonical = matchTerminal(tRoutes.name, londonTerminals) ?? tRoutes.name
+              // Skip if we already have a direct entry for this terminus.
+              if (candidates.some((c) => c.terminusName === canonical)) continue
+              // Iterate every origin-routes hub H — both T reaches it AND
+              // it reaches D. Pick the hub minimising total duration.
+              let best: null | {
+                hubName: string
+                totalMin: number
+                tToHMin: number
+                hCoord: string
+              } = null
+              for (const [hCoord, hRoutes] of Object.entries(originRoutes)) {
+                if (hCoord === tCoord) continue
+                // Hub must be a suburban / regional interchange, not a
+                // London terminus — see filter rationale above.
+                if (clusterCoordSet.has(hCoord)) continue
+                const tToH = tRoutes.directReachable?.[hCoord]
+                const hToD = hRoutes.directReachable?.[coordKey]
+                if (!tToH?.minMinutes || !hToD?.minMinutes) continue
+                const total = tToH.minMinutes + 5 + hToD.minMinutes
+                if (!best || total < best.totalMin) {
+                  best = {
+                    hubName: hRoutes.name ?? hCoord,
+                    totalMin: total,
+                    tToHMin: tToH.minMinutes,
+                    hCoord,
+                  }
+                }
+              }
+              if (!best) continue
+              // Upstream of the first leg (T → hub) — reuse buildCallingPoints
+              // on T's hub-direct entry. Downstream is intentionally empty
+              // for indirect alts; showing intermediate stops of two
+              // different trains at once would be more confusing than
+              // helpful in the first pass.
+              const cpLeg1 = buildCallingPoints(tCoord, best.hCoord)
+              candidates.push({
+                terminusName: canonical,
+                terminusCoord: tCoord,
+                durationMinutes: best.totalMin,
+                // Sentinel calling list — keeps indirect candidates from
+                // dedup-merging with direct ones (they won't be suffix
+                // matches since only-directs have real calling lists and
+                // indirects have no overlap with them).
+                callingList: [`__indirect_via_${best.hubName}`],
+                downstream: [],
+                upstream: cpLeg1?.upstream ?? [],
+                changes: 1,
+                changeStations: [best.hubName],
+              })
+            }
+            if (candidates.length >= 2) {
+              candidates.sort((a, b) => a.durationMinutes - b.durationMinutes)
+              // Generalised dedup rule: if candidate B's calling list is
+              // [extra...] + A's calling list (A is a proper suffix of B),
+              // they're the same physical train and B is upstream of A.
+              // Iterate fastest-first, keep the shortest-list representative
+              // per physical-train cluster, and roll extensions up as its
+              // upstream board points. Fixes Balcombe (LBG + BFR + STP on
+              // same Thameslink), Hastings (LBG + WAE + CHX on same
+              // Southeastern), Hassocks (BFR + STP on Thameslink — show
+              // BFR paragraph with STP as its upstream start).
+              type Kept = Candidate & {
+                extraUpstream: { name: string; crs: string; minutesExtra: number }[]
+              }
+              const kept: Kept[] = []
+              for (const c of candidates) {
+                // Does this candidate EXTEND an already-kept one (tail match)?
+                let extOf: Kept | null = null
+                for (const k of kept) {
+                  if (c.callingList.length <= k.callingList.length) continue
+                  const tail = c.callingList.slice(-k.callingList.length).join(",")
+                  if (tail === k.callingList.join(",")) { extOf = k; break }
+                }
+                if (extOf) {
+                  const mb = c.durationMinutes - extOf.durationMinutes
+                  if (mb > 0) {
+                    extOf.extraUpstream.push({
+                      name: c.terminusName,
+                      crs: originRoutes[c.terminusCoord]?.crs ?? "",
+                      minutesExtra: mb,
+                    })
+                  }
+                } else {
+                  kept.push({ ...c, extraUpstream: [] })
+                }
+              }
+              const main = kept[0]
+              const alternatives = kept
+                .slice(1)
+                .filter((k) => k.durationMinutes <= main.durationMinutes + 30)
+              // Merge main.extraUpstream into the active journey's upstream
+              // list when the journey matches the main terminus (cheap
+              // check: same duration within a small tolerance).
+              const enriched: JourneyInfo = { ...activeJ }
+              if (
+                main.extraUpstream.length > 0 &&
+                Math.abs((enriched.durationMinutes ?? 0) - main.durationMinutes) <= 2
+              ) {
+                const existingUp = enriched.londonUpstreamCallingPoints ?? []
+                const seen = new Set(existingUp.map((u) => u.crs))
+                const merged = [...existingUp]
+                for (const u of main.extraUpstream) if (!seen.has(u.crs)) merged.push(u)
+                // Sort by minutesExtra descending — earliest boarding first.
+                merged.sort((a, b) => b.minutesExtra - a.minutesExtra)
+                enriched.londonUpstreamCallingPoints = merged
+              }
+              if (alternatives.length > 0) {
+                enriched.alternativeRoutes = alternatives.map((c) => {
+                  // Merge each alternative's own extraUpstream into its
+                  // upstream calling-points list so the paragraph shows
+                  // sibling termini as board points too (e.g. BFR alt route
+                  // paragraph carries STP as an upstream start).
+                  const existingUp = c.upstream
+                  const seen = new Set(existingUp.map((u) => u.crs))
+                  const merged = [...existingUp]
+                  for (const u of c.extraUpstream) if (!seen.has(u.crs)) merged.push(u)
+                  merged.sort((a, b) => b.minutesExtra - a.minutesExtra)
+                  return {
+                    terminusName: c.terminusName,
+                    durationMinutes: c.durationMinutes,
+                    changes: c.changes,
+                    changeStations: c.changeStations,
+                    londonCallingPoints: c.downstream,
+                    londonUpstreamCallingPoints: merged,
+                  }
+                })
+              }
+              if (enriched !== activeJ) {
+                next.journeys = {
+                  ...(next.journeys as Record<string, JourneyInfo> | undefined ?? {}),
+                  [primaryOrigin]: enriched,
+                }
+              }
+            }
+          }
+        }
+
         return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
   }, [baseStations, primaryOrigin, originStations, excludedStations, coordToName])
+
+  // Lookup sets for the admin Interchange filter. Built lazily at filter
+  // time so the sets are identity-stable across renders and the memo
+  // below doesn't rebuild them every slider tick.
+  //   • normalise — cheap name-canonicalisation matching stitchJourney's
+  //     own normalise (lowercase, strip " Station" / "London " /
+  //     punctuation). Sufficient for comparing leg arrivalStation
+  //     strings against the two sets below.
+  //   • fullV2OriginNames — normalised names of every top-level entry
+  //     in origin-routes.json. An interchange at a station in this set
+  //     means we have real timetabled RTT data we can reroute through;
+  //     absence = "low data" (most likely to surface routing bugs).
+  //   • londonTerminalNameSet — normalised names of every terminal +
+  //     alias from london-terminals.json. Distinguishes central-London
+  //     terminus changes ("inner") from suburban ones ("outer").
+  const interchangeLookups = useMemo(() => {
+    const normaliseName = (s: string) =>
+      s.toLowerCase()
+        .replace(/[.'\u2019]/g, "")
+        .replace(/^london\s+/, "")
+        .replace(/\s+station$/, "")
+        .replace(/\s*\([^)]*\)\s*$/, "")
+        .trim()
+    const fullV2 = new Set<string>()
+    for (const entry of Object.values(originRoutes)) {
+      if (entry?.name) fullV2.add(normaliseName(entry.name))
+    }
+    const terminals = new Set<string>()
+    for (const t of londonTerminals) {
+      terminals.add(normaliseName(t.name))
+      for (const a of t.aliases) terminals.add(normaliseName(a))
+    }
+    return { normaliseName, fullV2, terminals }
+  }, [])
 
   // Recompute filtered stations whenever the slider or raw data changes.
   // useMemo avoids re-filtering the whole array on every render.
@@ -3315,15 +3831,36 @@ export default function HikeMap() {
           const primaryChanges = f.properties.effectiveChanges as number | undefined
           if (primaryChanges == null || primaryChanges > 0) return false
         }
-        // "Indirect trains only" (admin-only inverse) — require ≥1 effective
-        // change. Stations without journey data are dropped (no way to know
-        // if they'd be direct or not). UI toggle is exclusive with
-        // primaryDirectOnly — the filter-panel unchecks one when the other
-        // is checked, so both flags shouldn't be true simultaneously, but we
-        // still evaluate them as independent conditions for safety.
-        if (primaryIndirectOnly) {
-          const primaryChanges = f.properties.effectiveChanges as number | undefined
-          if (primaryChanges == null || primaryChanges === 0) return false
+        // Admin-only Interchange filter — slice by where the user would
+        // change trains. See `primaryInterchangeFilter` state comment for
+        // the category definitions. Interchange stations are every
+        // non-final leg's arrivalStation, normalised for alias matching.
+        if (primaryInterchangeFilter !== "off") {
+          // "direct" filters on the pre-computed effectiveChanges so it
+          // behaves identically to the (now admin-mode-hidden) "Direct
+          // trains only" checkbox. No leg inspection needed.
+          if (primaryInterchangeFilter === "direct") {
+            const primaryChanges = f.properties.effectiveChanges as number | undefined
+            if (primaryChanges == null || primaryChanges > 0) return false
+          } else {
+            const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+            const legs = journey?.legs ?? []
+            // Non-final leg arrivals = interchange points.
+            const interchanges: string[] = []
+            for (let i = 0; i < legs.length - 1; i++) {
+              const name = legs[i]?.arrivalStation
+              if (name) interchanges.push(interchangeLookups.normaliseName(name))
+            }
+            if (interchanges.length === 0) return false
+            if (primaryInterchangeFilter === "inner") {
+              if (!interchanges.some((n) => interchangeLookups.terminals.has(n))) return false
+            } else if (primaryInterchangeFilter === "outer") {
+              if (!interchanges.some((n) => !interchangeLookups.terminals.has(n))) return false
+            } else if (primaryInterchangeFilter === "lowdata") {
+              if (!interchanges.some((n) => !interchangeLookups.fullV2.has(n))) return false
+            }
+            // "any" requires interchanges.length >= 1 which we already checked.
+          }
         }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
@@ -3341,7 +3878,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryIndirectOnly, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, interchangeLookups, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -3507,16 +4044,32 @@ export default function HikeMap() {
         })
         .map(f => {
           const category = (f.properties.rating as string | undefined) ?? 'unrated'
+          // Admin-only "needsApproval" flag — true when the current
+          // home→dest pair has NOT been admin-approved AND the station
+          // is a normal destination (not excluded / not origin / not
+          // the primary itself). Drives the red-tint overlay layer.
+          // Computed here (not in the filter layer) so the layer's
+          // `has` filter can read a cheap boolean property.
+          const coord = f.properties.coordKey as string
+          const isDest =
+            !f.properties.isExcluded &&
+            !f.properties.isOrigin &&
+            coord !== primaryOrigin
+          const composite = `${primaryOrigin}|${coord}`
+          const needsApproval = isDest && !approvedJourneys.has(composite)
+          const base = needsApproval
+            ? { ...f.properties, needsApproval: 1 }
+            : f.properties
           if (newlyAddedRatings.has(category)) {
-            return { ...f, properties: { ...f.properties, isNew: 1 } }
+            return { ...f, properties: { ...base, isNew: 1 } }
           }
           if (newlyRemovedRatings.has(category)) {
-            return { ...f, properties: { ...f.properties, isLeaving: 1 } }
+            return { ...f, properties: { ...base, isLeaving: 1 } }
           }
-          return f
+          return { ...f, properties: base }
         }),
     }
-  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin])
+  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, approvedJourneys, primaryOrigin])
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
   // no state delay, so icons don't flash before the shrink starts.
@@ -3626,6 +4179,29 @@ export default function HikeMap() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, rating }),
+    })
+  }, [])
+
+  // Admin-only: toggle "approved for this home" for a (home, dest) pair.
+  // Keyed by the composite "homeCoord|destCoord" string so the backing
+  // file's JSON keys are unambiguous and lookups are O(1).
+  const handleToggleApproved = useCallback(async (
+    homeCoord: string,
+    destCoord: string,
+    homeName: string,
+    destName: string,
+    approved: boolean,
+  ) => {
+    const key = `${homeCoord}|${destCoord}`
+    setApprovedJourneys((prev) => {
+      const next = new Set(prev)
+      if (approved) next.add(key); else next.delete(key)
+      return next
+    })
+    await fetch("/api/dev/approve-journey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeCoord, destCoord, homeName, destName, approved }),
     })
   }, [])
 
@@ -4608,7 +5184,7 @@ export default function HikeMap() {
         setFriendMaxMinutes(600)
         setMinMinutes(0)
         setPrimaryDirectOnly(false)
-        setPrimaryIndirectOnly(true)
+        setPrimaryInterchangeFilter("lowdata")
         setFriendDirectOnly(false)
         // highlight = Heavenly, verified = Good, unverified = Probably
         // highlight=Heavenly, verified=Good, unverified=Probably, not-recommended=Okay
@@ -4619,7 +5195,7 @@ export default function HikeMap() {
         setFriendMaxMinutes(150)
         setMinMinutes(0)
         setPrimaryDirectOnly(false)
-        setPrimaryIndirectOnly(false)
+        setPrimaryInterchangeFilter("off")
         setFriendDirectOnly(false)
         setVisibleRatings(new Set())
       }
@@ -4906,12 +5482,14 @@ export default function HikeMap() {
         // a configuration choice.
         onPrimaryDirectOnlyChange={(v) => {
           setPrimaryDirectOnly(v)
-          if (v) setPrimaryIndirectOnly(false)
+          // Direct-only and interchange filter are mutually exclusive:
+          // picking direct-only resets the dropdown to "off".
+          if (v) setPrimaryInterchangeFilter("off")
         }}
-        primaryIndirectOnly={primaryIndirectOnly}
-        onPrimaryIndirectOnlyChange={(v) => {
-          setPrimaryIndirectOnly(v)
-          if (v) setPrimaryDirectOnly(false)
+        primaryInterchangeFilter={primaryInterchangeFilter}
+        onPrimaryInterchangeFilterChange={(v) => {
+          setPrimaryInterchangeFilter(v)
+          if (v !== "off") setPrimaryDirectOnly(false)
         }}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
@@ -4985,7 +5563,7 @@ export default function HikeMap() {
                 setFriendMaxMinutes(600)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
-                setPrimaryIndirectOnly(true)
+                setPrimaryInterchangeFilter("lowdata")
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
@@ -4994,7 +5572,7 @@ export default function HikeMap() {
                 setFriendMaxMinutes(150)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
-                setPrimaryIndirectOnly(false)
+                setPrimaryInterchangeFilter("off")
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set())
               }
@@ -5021,6 +5599,30 @@ export default function HikeMap() {
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
             >
               RTT
+            </button>
+          )}
+          {/* Clear session — admin-only. Wipes every ttg:* localStorage
+              entry (primary origin, recent custom primaries, friend
+              origin, ratings cache, any future persisted UI state) and
+              reloads the page. Gives the admin a quick way to see the
+              site exactly as a first-time visitor would — no leftover
+              state from prior testing sessions. */}
+          {devExcludeActive && (
+            <button
+              onClick={() => {
+                // Confirm since wiping is irreversible (old recents are
+                // gone; the default seed repopulates on next load).
+                if (!confirm("Clear all ttg:* localStorage keys and reload? This simulates a fresh visit.")) return
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                  const k = localStorage.key(i)
+                  if (k && k.startsWith("ttg:")) localStorage.removeItem(k)
+                }
+                location.reload()
+              }}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+              title="Wipe ttg:* localStorage + reload"
+            >
+              Clear session
             </button>
           )}
         </div>
@@ -5432,6 +6034,34 @@ export default function HikeMap() {
 
         {stationsForMap && (
           <Source id="stations" type="geojson" data={stationsForMap}>
+            {/* Admin-only red halo for unapproved destinations. Sits
+                BENEATH the icon layers (mounted first so it renders
+                first in the Source's implicit layer order). Filter
+                matches the `needsApproval=1` property set upstream in
+                stationsForMap's map callback, plus the usual "not
+                excluded / not origin" guard so those two station
+                classes stay their normal colour in admin mode. The
+                outer {devExcludeActive && …} gate keeps the layer
+                completely unmounted in non-admin mode — no runtime
+                cost for regular users. */}
+            {devExcludeActive && (
+              <Layer
+                id="station-unapproved-halo"
+                type="circle"
+                filter={["all",
+                  ["has", "needsApproval"],
+                  ["!", ["has", "isExcluded"]],
+                  ["!", ["has", "isOrigin"]],
+                ]}
+                paint={{
+                  "circle-color": "#dc2626", // red-600 — matches admin exclude cross
+                  "circle-radius": 10,
+                  "circle-opacity": 0.55,
+                  "circle-stroke-color": "#dc2626",
+                  "circle-stroke-width": 0,
+                }}
+              />
+            )}
             {/* Unrated stations — canvas-drawn circle icon, same approach as rated icons */}
             <Layer
               id="station-dots"
@@ -5918,6 +6548,20 @@ export default function HikeMap() {
             originX={displayStation.screenX}
             originY={displayStation.screenY}
             devMode={devExcludeActive}
+            adminMode={devExcludeActive}
+            stationCrs={
+              stations?.features.find(
+                (x) => (x.properties as { coordKey?: string } | undefined)?.coordKey === displayStation.coordKey,
+              )?.properties?.["ref:crs"] as string | undefined
+            }
+            isApprovedForHome={approvedJourneys.has(`${primaryOrigin}|${displayStation.coordKey}`)}
+            onToggleApproved={(approved: boolean) => handleToggleApproved(
+              primaryOrigin,
+              displayStation.coordKey,
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              displayStation.name,
+              approved,
+            )}
             currentRating={ratings[displayStation.coordKey] ?? null}
             onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
             onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}
