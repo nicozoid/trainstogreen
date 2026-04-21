@@ -298,13 +298,12 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
   // Kings Cross primary represents the KX/St Pancras/Euston group — they're
   // next-door and share a tube interchange, so most riders pick any of the
-  // three interchangeably. Cluster members are declared below. Now
-  // adminOnly: with the synthetic "Central London" primary covering
-  // the whole 15-terminus cluster and auto-picking the fastest
-  // individual terminus per destination, exposing this group as a
-  // separate home option was mostly redundant. Still available in
-  // admin mode for data-debugging / sanity-check comparisons.
-  "-0.1239491,51.530609":  { canonicalName: "Kings Cross St Pancras", displayName: "Kings Cross",      menuName: "Kings Cross, St Pancras, & Euston", adminOnly: true },
+  // three interchangeably. Cluster members are declared below. Searchable
+  // (not adminOnly) but not pre-populated — the default dropdown only
+  // shows the synthetic "Central London" primary; individual termini
+  // including this cluster surface via the search box or the recents
+  // list once the user picks them.
+  "-0.1239491,51.530609":  { canonicalName: "Kings Cross St Pancras", displayName: "Kings Cross",      menuName: "Kings Cross, St Pancras, & Euston" },
   "-0.1236888,51.5074975": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
   "-0.163592,51.5243712":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
   "-0.177317,51.5170952":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
@@ -5600,6 +5599,30 @@ export default function HikeMap() {
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
             >
               RTT
+            </button>
+          )}
+          {/* Clear session — admin-only. Wipes every ttg:* localStorage
+              entry (primary origin, recent custom primaries, friend
+              origin, ratings cache, any future persisted UI state) and
+              reloads the page. Gives the admin a quick way to see the
+              site exactly as a first-time visitor would — no leftover
+              state from prior testing sessions. */}
+          {devExcludeActive && (
+            <button
+              onClick={() => {
+                // Confirm since wiping is irreversible (old recents are
+                // gone; the default seed repopulates on next load).
+                if (!confirm("Clear all ttg:* localStorage keys and reload? This simulates a fresh visit.")) return
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                  const k = localStorage.key(i)
+                  if (k && k.startsWith("ttg:")) localStorage.removeItem(k)
+                }
+                location.reload()
+              }}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+              title="Wipe ttg:* localStorage + reload"
+            >
+              Clear session
             </button>
           )}
         </div>

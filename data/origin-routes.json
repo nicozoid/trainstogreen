@@ -178309,5 +178309,1588 @@
       "2026-07-25"
     ],
     "generatedAt": "2026-04-21T00:27:19.452Z"
+  },
+  "0.0950574,51.781293": {
+    "name": "Harlow Town",
+    "crs": "HWN",
+    "directReachable": {
+      "0.0365138,51.7754392": {
+        "name": "Roydon",
+        "crs": "RYN",
+        "minMinutes": 3,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 7
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 4
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          563,
+          601,
+          623,
+          661,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          4,
+          3,
+          4,
+          3,
+          4,
+          3
+        ]
+      },
+      "0.1323175,51.7904819": {
+        "name": "Harlow Mill",
+        "crs": "HWM",
+        "minMinutes": 3,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "SRA",
+            "name": "Stratford",
+            "coord": "-0.0035472,51.541289",
+            "minutesBeforeOrigin": 44
+          },
+          {
+            "crs": "LEB",
+            "name": "Lea Bridge",
+            "coord": "-0.0371218,51.5667512",
+            "minutesBeforeOrigin": 39
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 30
+          },
+          {
+            "crs": "ENL",
+            "name": "Enfield Lock",
+            "coord": "-0.0285689,51.6706112",
+            "minutesBeforeOrigin": 24
+          },
+          {
+            "crs": "WLC",
+            "name": "Waltham Cross",
+            "coord": "-0.0264754,51.6847637",
+            "minutesBeforeOrigin": 22
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 9
+          },
+          {
+            "crs": "RYN",
+            "name": "Roydon",
+            "coord": "0.0365138,51.7754392",
+            "minutesBeforeOrigin": 4
+          }
+        ],
+        "serviceDepMinutes": [
+          581,
+          596,
+          598,
+          641,
+          656,
+          658,
+          701,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      "0.16054,51.8146205": {
+        "name": "Sawbridgeworth",
+        "crs": "SAW",
+        "minMinutes": 5,
+        "services": 9,
+        "fastestCallingPoints": [
+          "HWN",
+          "SAW"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          5
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "SRA",
+            "name": "Stratford",
+            "coord": "-0.0035472,51.541289",
+            "minutesBeforeOrigin": 40
+          },
+          {
+            "crs": "LEB",
+            "name": "Lea Bridge",
+            "coord": "-0.0371218,51.5667512",
+            "minutesBeforeOrigin": 35
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 27
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "RYN",
+            "name": "Roydon",
+            "coord": "0.0365138,51.7754392",
+            "minutesBeforeOrigin": 8
+          }
+        ],
+        "serviceDepMinutes": [
+          547,
+          581,
+          581,
+          596,
+          598,
+          607,
+          611,
+          641,
+          641,
+          656,
+          658,
+          667,
+          671,
+          701,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          5,
+          7,
+          6,
+          7,
+          6,
+          5,
+          5,
+          7,
+          6,
+          7,
+          6,
+          5,
+          5,
+          6,
+          7
+        ]
+      },
+      "-0.0106258,51.7468257": {
+        "name": "Broxbourne",
+        "crs": "BXB",
+        "minMinutes": 6,
+        "services": 12,
+        "fastestCallingPoints": [
+          "HWN",
+          "BXB"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          6
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "CMB",
+            "name": "Cambridge North",
+            "coord": "0.1587703,52.2246512",
+            "minutesBeforeOrigin": 58
+          },
+          {
+            "crs": "CBG",
+            "name": "Cambridge",
+            "coord": "0.1377154,52.1941089",
+            "minutesBeforeOrigin": 50
+          },
+          {
+            "crs": "SED",
+            "name": "Shelford",
+            "coord": "0.1398447,52.1494347",
+            "minutesBeforeOrigin": 43
+          },
+          {
+            "crs": "WLF",
+            "name": "Whittlesford Parkway",
+            "coord": "0.1657359,52.1035739",
+            "minutesBeforeOrigin": 39
+          },
+          {
+            "crs": "GRC",
+            "name": "Great Chesterford",
+            "coord": "0.1932286,52.0599283",
+            "minutesBeforeOrigin": 35
+          },
+          {
+            "crs": "AUD",
+            "name": "Audley End",
+            "coord": "0.2071507,52.0044551",
+            "minutesBeforeOrigin": 29
+          },
+          {
+            "crs": "NWE",
+            "name": "Newport",
+            "coord": "0.215334,51.9798629",
+            "minutesBeforeOrigin": 26
+          },
+          {
+            "crs": "ESM",
+            "name": "Elsenham",
+            "coord": "0.2277995,51.9206948",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "SST",
+            "name": "Stansted Mountfitchet",
+            "coord": "0.199248,51.9012646",
+            "minutesBeforeOrigin": 16
+          },
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 6
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 3
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          548,
+          563,
+          578,
+          601,
+          608,
+          623,
+          638,
+          661,
+          668,
+          683,
+          698
+        ],
+        "serviceDurationsMinutes": [
+          8,
+          6,
+          9,
+          6,
+          8,
+          6,
+          9,
+          6,
+          8,
+          6,
+          9,
+          6
+        ]
+      },
+      "0.1654013,51.8664266": {
+        "name": "Bishop's Stortford",
+        "crs": "BIS",
+        "minMinutes": 9,
+        "services": 13,
+        "fastestCallingPoints": [
+          "HWN",
+          "BIS"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          9
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 31
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 17
+          }
+        ],
+        "serviceDepMinutes": [
+          547,
+          562,
+          566,
+          567,
+          581,
+          596,
+          598,
+          607,
+          611,
+          626,
+          627,
+          641,
+          656,
+          658,
+          667,
+          671,
+          686,
+          701,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          11,
+          9,
+          9,
+          9,
+          13,
+          13,
+          12,
+          11,
+          13,
+          9,
+          9,
+          13,
+          13,
+          12,
+          11,
+          13,
+          9,
+          13,
+          13
+        ]
+      },
+      "-0.0237804,51.7028638": {
+        "name": "Cheshunt",
+        "crs": "CHN",
+        "minMinutes": 10,
+        "services": 12,
+        "fastestCallingPoints": [
+          "HWN",
+          "BXB",
+          "CHN"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          6,
+          10
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "CMB",
+            "name": "Cambridge North",
+            "coord": "0.1587703,52.2246512",
+            "minutesBeforeOrigin": 58
+          },
+          {
+            "crs": "CBG",
+            "name": "Cambridge",
+            "coord": "0.1377154,52.1941089",
+            "minutesBeforeOrigin": 50
+          },
+          {
+            "crs": "SED",
+            "name": "Shelford",
+            "coord": "0.1398447,52.1494347",
+            "minutesBeforeOrigin": 43
+          },
+          {
+            "crs": "WLF",
+            "name": "Whittlesford Parkway",
+            "coord": "0.1657359,52.1035739",
+            "minutesBeforeOrigin": 39
+          },
+          {
+            "crs": "GRC",
+            "name": "Great Chesterford",
+            "coord": "0.1932286,52.0599283",
+            "minutesBeforeOrigin": 35
+          },
+          {
+            "crs": "AUD",
+            "name": "Audley End",
+            "coord": "0.2071507,52.0044551",
+            "minutesBeforeOrigin": 29
+          },
+          {
+            "crs": "NWE",
+            "name": "Newport",
+            "coord": "0.215334,51.9798629",
+            "minutesBeforeOrigin": 26
+          },
+          {
+            "crs": "ESM",
+            "name": "Elsenham",
+            "coord": "0.2277995,51.9206948",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "SST",
+            "name": "Stansted Mountfitchet",
+            "coord": "0.199248,51.9012646",
+            "minutesBeforeOrigin": 16
+          },
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 6
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 3
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          548,
+          563,
+          578,
+          601,
+          608,
+          623,
+          638,
+          661,
+          668,
+          683,
+          698
+        ],
+        "serviceDurationsMinutes": [
+          14,
+          10,
+          17,
+          10,
+          14,
+          10,
+          17,
+          10,
+          14,
+          10,
+          17,
+          10
+        ]
+      },
+      "-0.0599442,51.588123": {
+        "name": "Tottenham Hale",
+        "crs": "TOM",
+        "minMinutes": 17,
+        "services": 18,
+        "fastestCallingPoints": [
+          "HWN",
+          "TOM"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          17
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "SSD",
+            "name": "Stansted Airport",
+            "coord": "0.2621537,51.8892596",
+            "minutesBeforeOrigin": 17
+          },
+          {
+            "crs": "SST",
+            "name": "Stansted Mountfitchet",
+            "coord": "0.199248,51.9012646",
+            "minutesBeforeOrigin": 11
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          548,
+          563,
+          568,
+          578,
+          598,
+          601,
+          608,
+          623,
+          628,
+          638,
+          658,
+          661,
+          668,
+          683,
+          688,
+          698,
+          718
+        ],
+        "serviceDurationsMinutes": [
+          23,
+          19,
+          31,
+          17,
+          19,
+          17,
+          23,
+          19,
+          31,
+          17,
+          19,
+          17,
+          23,
+          19,
+          31,
+          17,
+          19,
+          17
+        ]
+      },
+      "0.2621537,51.8892596": {
+        "name": "Stansted Airport",
+        "crs": "SSD",
+        "minMinutes": 17,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "SSD"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          17
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 31
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 17
+          }
+        ],
+        "serviceDepMinutes": [
+          560,
+          562,
+          590,
+          592,
+          620,
+          622,
+          650,
+          652,
+          680,
+          710
+        ],
+        "serviceDurationsMinutes": [
+          17,
+          22,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17,
+          17
+        ]
+      },
+      "0.199248,51.9012646": {
+        "name": "Stansted Mountfitchet",
+        "crs": "SST",
+        "minMinutes": 17,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM",
+          "SAW",
+          "BIS",
+          "SST"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          6,
+          12,
+          17
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 34
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          596,
+          598,
+          656,
+          658,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          17,
+          17,
+          17,
+          17,
+          17
+        ]
+      },
+      "-0.0264754,51.6847637": {
+        "name": "Waltham Cross",
+        "crs": "WLC",
+        "minMinutes": 20,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN",
+          "BXB",
+          "CHN",
+          "WLC"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          9,
+          17,
+          20
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 7
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 4
+          }
+        ],
+        "serviceDepMinutes": [
+          563,
+          623,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          20,
+          20,
+          20
+        ]
+      },
+      "0.2277995,51.9206948": {
+        "name": "Elsenham",
+        "crs": "ESM",
+        "minMinutes": 20,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM",
+          "SAW",
+          "BIS",
+          "SST",
+          "ESM"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          6,
+          12,
+          17,
+          20
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 34
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          596,
+          598,
+          656,
+          658,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          21,
+          20,
+          21,
+          20,
+          21
+        ]
+      },
+      "0.2071507,52.0044551": {
+        "name": "Audley End",
+        "crs": "AUD",
+        "minMinutes": 21,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "BIS",
+          "AUD"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          9,
+          21
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 33
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          566,
+          567,
+          596,
+          598,
+          626,
+          627,
+          656,
+          658,
+          686,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          21,
+          21,
+          29,
+          29,
+          21,
+          21,
+          29,
+          29,
+          21,
+          29
+        ]
+      },
+      "-0.0285689,51.6706112": {
+        "name": "Enfield Lock",
+        "crs": "ENL",
+        "minMinutes": 22,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN",
+          "BXB",
+          "CHN",
+          "WLC",
+          "ENL"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          9,
+          17,
+          20,
+          22
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 7
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 4
+          }
+        ],
+        "serviceDepMinutes": [
+          563,
+          623,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          22,
+          22,
+          22
+        ]
+      },
+      "0.215334,51.9798629": {
+        "name": "Newport",
+        "crs": "NWE",
+        "minMinutes": 26,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM",
+          "SAW",
+          "BIS",
+          "SST",
+          "ESM",
+          "NWE"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          6,
+          12,
+          17,
+          20,
+          26
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 34
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          596,
+          598,
+          656,
+          658,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          26,
+          26,
+          26,
+          26,
+          26
+        ]
+      },
+      "-0.0371218,51.5667512": {
+        "name": "Lea Bridge",
+        "crs": "LEB",
+        "minMinutes": 28,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN",
+          "BXB",
+          "CHN",
+          "TOM",
+          "LEB"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          4,
+          8,
+          14,
+          23,
+          28
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 17
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 12
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          563,
+          601,
+          623,
+          661,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          28,
+          36,
+          28,
+          36,
+          28,
+          36
+        ]
+      },
+      "-0.053865,51.6019083": {
+        "name": "Northumberland Park",
+        "crs": "NUM",
+        "minMinutes": 28,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN",
+          "BXB",
+          "CHN",
+          "WLC",
+          "ENL",
+          "NUM"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          9,
+          17,
+          20,
+          22,
+          28
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 7
+          },
+          {
+            "crs": "HWM",
+            "name": "Harlow Mill",
+            "coord": "0.1323175,51.7904819",
+            "minutesBeforeOrigin": 4
+          }
+        ],
+        "serviceDepMinutes": [
+          563,
+          623,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          28,
+          28,
+          28
+        ]
+      },
+      "0.1657359,52.1035739": {
+        "name": "Whittlesford Parkway",
+        "crs": "WLF",
+        "minMinutes": 28,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "BIS",
+          "AUD",
+          "WLF"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          9,
+          21,
+          28
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 33
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          566,
+          567,
+          596,
+          598,
+          626,
+          627,
+          656,
+          658,
+          686,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          29,
+          28,
+          39,
+          38,
+          29,
+          28,
+          39,
+          38,
+          29,
+          39
+        ]
+      },
+      "-0.0814269,51.5182105": {
+        "name": "Liverpool Street",
+        "crs": "LST",
+        "minMinutes": 31,
+        "services": 12,
+        "fastestCallingPoints": [
+          "HWN",
+          "TOM",
+          "LST"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          17,
+          31
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "SSD",
+            "name": "Stansted Airport",
+            "coord": "0.2621537,51.8892596",
+            "minutesBeforeOrigin": 17
+          },
+          {
+            "crs": "SST",
+            "name": "Stansted Mountfitchet",
+            "coord": "0.199248,51.9012646",
+            "minutesBeforeOrigin": 11
+          }
+        ],
+        "serviceDepMinutes": [
+          548,
+          568,
+          578,
+          598,
+          608,
+          628,
+          638,
+          658,
+          668,
+          688,
+          698,
+          718
+        ],
+        "serviceDurationsMinutes": [
+          34,
+          31,
+          34,
+          31,
+          34,
+          31,
+          34,
+          31,
+          34,
+          31,
+          34,
+          31
+        ]
+      },
+      "0.1932286,52.0599283": {
+        "name": "Great Chesterford",
+        "crs": "GRC",
+        "minMinutes": 34,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM",
+          "SAW",
+          "BIS",
+          "SST",
+          "ESM",
+          "NWE",
+          "AUD",
+          "GRC"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          6,
+          12,
+          17,
+          20,
+          26,
+          29,
+          34
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 34
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          596,
+          598,
+          656,
+          658,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          35,
+          34,
+          35,
+          34,
+          35
+        ]
+      },
+      "-0.0035472,51.541289": {
+        "name": "Stratford",
+        "crs": "SRA",
+        "minMinutes": 36,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "RYN",
+          "BXB",
+          "CHN",
+          "TOM",
+          "LEB",
+          "SRA"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          4,
+          8,
+          14,
+          23,
+          28,
+          36
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "BIS",
+            "name": "Bishop's Stortford",
+            "coord": "0.1654013,51.8664266",
+            "minutesBeforeOrigin": 17
+          },
+          {
+            "crs": "SAW",
+            "name": "Sawbridgeworth",
+            "coord": "0.16054,51.8146205",
+            "minutesBeforeOrigin": 12
+          }
+        ],
+        "serviceDepMinutes": [
+          541,
+          563,
+          601,
+          623,
+          661,
+          683
+        ],
+        "serviceDurationsMinutes": [
+          36,
+          44,
+          36,
+          44,
+          36,
+          44
+        ]
+      },
+      "0.1377154,52.1941089": {
+        "name": "Cambridge",
+        "crs": "CBG",
+        "minMinutes": 40,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "BIS",
+          "AUD",
+          "WLF",
+          "CBG"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          9,
+          21,
+          28,
+          40
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 33
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          566,
+          567,
+          596,
+          598,
+          626,
+          627,
+          656,
+          658,
+          686,
+          716,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          41,
+          40,
+          53,
+          53,
+          41,
+          40,
+          53,
+          53,
+          41,
+          54,
+          53
+        ]
+      },
+      "0.1398447,52.1494347": {
+        "name": "Shelford",
+        "crs": "SED",
+        "minMinutes": 43,
+        "services": 3,
+        "fastestCallingPoints": [
+          "HWN",
+          "HWM",
+          "SAW",
+          "BIS",
+          "SST",
+          "ESM",
+          "NWE",
+          "AUD",
+          "GRC",
+          "WLF",
+          "SED"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          3,
+          6,
+          12,
+          17,
+          20,
+          26,
+          29,
+          34,
+          38,
+          43
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 34
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 20
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 12
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          596,
+          598,
+          656,
+          658,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          44,
+          43,
+          44,
+          43,
+          44
+        ]
+      },
+      "0.1587703,52.2246512": {
+        "name": "Cambridge North",
+        "crs": "CMB",
+        "minMinutes": 48,
+        "services": 6,
+        "fastestCallingPoints": [
+          "HWN",
+          "BIS",
+          "AUD",
+          "WLF",
+          "CBG",
+          "CMB"
+        ],
+        "fastestCallingPointTimes": [
+          0,
+          9,
+          21,
+          28,
+          40,
+          48
+        ],
+        "upstreamCallingPoints": [
+          {
+            "crs": "LST",
+            "name": "Liverpool Street",
+            "coord": "-0.0814269,51.5182105",
+            "minutesBeforeOrigin": 33
+          },
+          {
+            "crs": "TOM",
+            "name": "Tottenham Hale",
+            "coord": "-0.0599442,51.588123",
+            "minutesBeforeOrigin": 19
+          },
+          {
+            "crs": "CHN",
+            "name": "Cheshunt",
+            "coord": "-0.0237804,51.7028638",
+            "minutesBeforeOrigin": 11
+          },
+          {
+            "crs": "BXB",
+            "name": "Broxbourne",
+            "coord": "-0.0106258,51.7468257",
+            "minutesBeforeOrigin": 6
+          }
+        ],
+        "serviceDepMinutes": [
+          566,
+          567,
+          596,
+          598,
+          626,
+          627,
+          656,
+          658,
+          686,
+          716
+        ],
+        "serviceDurationsMinutes": [
+          49,
+          48,
+          61,
+          60,
+          49,
+          48,
+          61,
+          60,
+          49,
+          61
+        ]
+      }
+    },
+    "sampledDates": [
+      "2026-04-25",
+      "2026-07-25"
+    ],
+    "v2FetchedDates": [
+      "2026-04-25",
+      "2026-07-25"
+    ],
+    "generatedAt": "2026-04-21T00:35:52.444Z"
   }
 }
