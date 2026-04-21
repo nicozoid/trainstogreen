@@ -41,6 +41,17 @@ type StatusPayload = {
   // etc.) is alive. Tracked primaries that don't yet have 2 sampled
   // Saturdays get a queued ⏳ too when this is on.
   wrapperRunning: boolean
+  // Queued but not yet fetched primaries (scanned from orchestrator
+  // scripts under /tmp/ttg-rtt). Each carries the CRS plus the real
+  // station name resolved from public/stations.json so the panel shows
+  // e.g. "Brighton" alongside BTN. Rendered as synthetic empty rows.
+  queuedCrs?: Array<{ crs: string; name: string }>
+  // Full CRS→name map covering every scraped CRS (queued AND in-
+  // progress). Queued entries are also in queuedCrs above, but
+  // in-progress ones aren't — this map lets the panel resolve names
+  // for any synthetic-row CRS regardless of current fetch state.
+  scrapedNames?: Record<string, string>
+
   fileUpdatedAt: string
 }
 
@@ -85,7 +96,12 @@ function formatEta(d: Date): string {
 // (it's "bonus" data), but isn't flagged as "missing" when absent. The
 // set mirrors v2-complete.sh's target list — keep in sync when we
 // expand or contract fetch targets.
-const TARGET_STATIONS = new Set([
+// Stations we explicitly fetched or are fetching (the "tracked" set).
+// Seeded with the original Phase 1-3 targets; every CRS later added to
+// QUEUE_ORDER for a batch orchestrator is auto-appended below so the
+// panel treats it as tracked (⚠️/✅ badges, colour, ETA column) without
+// manual upkeep every time we queue a new batch.
+const TRACKED_SEED = [
   // 15 London termini — ALL need full 2-date 09:00–12:00 coverage
   "CHX", "LST", "MOG", "BFR", "CST", "FST", "LBG", "MYB",
   "PAD", "VIC", "WAT", "WAE", "KGX", "STP", "EUS",
@@ -99,7 +115,7 @@ const TARGET_STATIONS = new Set([
   // /tmp/ttg-rtt/v2-complete.sh.
   "RDG", "DFD", "WOK", "FPK", "ECR", "RMD", "WFJ", "WIJ",
   "SVS", "HRW", "FOG", "HAY", "EAL",
-])
+]
 
 // Pretty names for missing-target synthesised rows. Only used when the
 // primary isn't yet present in origin-routes.json — once it's been
@@ -143,6 +159,28 @@ const QUEUE_ORDER: string[] = [
   // Phase C continued — 13 suburban / regional stations, user-priority order
   "RDG", "DFD", "WOK", "FPK", "ECR", "RMD", "WFJ", "WIJ",
   "SVS", "HRW", "FOG", "HAY", "EAL",
+  // Phase D — /tmp/ttg-rtt/batch-2-hubs.sh (was first-after-v2 in the
+  // original chain; moved to head of queue after v2-priority.sh was
+  // killed mid-WIJ because the RTT rate-limit had burned out — the
+  // highest-priority suburban hubs were re-sequenced to the tail so
+  // they'd get the freshest API quota). Sourced from the London-as-
+  // home NRE spot-check: each fixes an over-estimated route.
+  "HAT", "PUR", "SVG", "HWN", "LTN",
+  // Phase E — /tmp/ttg-rtt/batch-3-hubs.sh. Top-ranked unfetched
+  // interchanges by day-hike-range frequency. Hiking-region gateways.
+  "BTN", "IPS", "WSB", "DVP", "SOO", "BLY", "TAM", "PBO",
+  // Phase F — /tmp/ttg-rtt/batch-4-hubs.sh. Second-tier interchanges.
+  "SOU", "SAY", "SIT", "BTH", "COV", "BHM", "CMB", "WIC", "MNG", "NOT",
+  // Phase G — /tmp/ttg-rtt/batch-5-hubs.sh. Third-tier AONB / National
+  // Park gateway hubs.
+  "HWY", "BCU", "OXF", "CBG", "TWY", "BAA", "COL", "DID", "BRI", "SOA",
+  // Phase H — /tmp/ttg-rtt/batch-6-hubs.sh (formerly suburban-hubs.sh,
+  // renamed to avoid colliding with batch-2's wait pattern). Highest-
+  // priority hubs — re-sequenced last so they fetch with maximum
+  // rate-limit headroom after everything else completes.
+  "RDH", "TON", "PDW",                           // high priority
+  "SEV", "AFK", "HHE", "GTW", "GLD",             // medium
+  "SLO", "SAC", "SNF", "BSK",                    // low
 ]
 
 // Primaries we deliberately DON'T top up — their Google Routes data is
@@ -150,6 +188,14 @@ const QUEUE_ORDER: string[] = [
 // adding real value. Surfaced with 🪦 in the admin table so it's clear
 // they're frozen on purpose, not overlooked.
 const INTENTIONALLY_STALE_STATIONS = new Set(["ZFD", "SRA"])
+
+// Union of TRACKED_SEED and every CRS in QUEUE_ORDER. Any station we
+// queue for a batch fetch automatically becomes a "tracked" primary in
+// the panel — gets the ⚠️/✅ badge, row colour, and completion-datetime
+// ETA. Without this the badge / ETA logic only recognised the original
+// 28 seed stations and every new-batch CRS (HAT, PUR, BTN, etc.)
+// rendered as a neutral "·" with no colour.
+const TARGET_STATIONS = new Set([...TRACKED_SEED, ...QUEUE_ORDER])
 
 export function RTTStatusPanel({ open, onOpenChange }: {
   open: boolean
@@ -217,13 +263,56 @@ export function RTTStatusPanel({ open, onOpenChange }: {
           // admin panel misleading — looks like those primaries aren't
           // being worked on when they actually are.
           const presentCrs = new Set(data.stations.map((p) => p.crs))
+          // API-provided CRS→name map (resolved from public/stations.json
+          // server-side). Seeded with queued-CRS entries so the TARGET
+          // loop below — which runs for in-progress CRS not in either
+          // stations or queuedCrs (because the server filters those out) —
+          // still gets real names. Without this seeding, HWN while being
+          // actively fetched displayed as "HWN HWN" instead of "HWN
+          // Harlow Town" — the queuedCrs-driven fallback only fires for
+          // genuinely-queued rows, not the brief in-progress window.
+          const apiCrsToName: Record<string, string> = {
+            // scrapedNames covers in-progress too (HWN while its fetch
+            // runs). queuedCrs entries would also show here but
+            // scrapedNames is a superset — prefer it.
+            ...(data.scrapedNames ?? {}),
+          }
+          for (const entry of data.queuedCrs ?? []) {
+            if (entry.name) apiCrsToName[entry.crs] = entry.name
+          }
+          const resolveName = (crs: string) =>
+            apiCrsToName[crs] ?? STATION_DISPLAY_NAMES[crs] ?? crs
           const synthesisedMissing: StationSummary[] = []
           for (const crs of TARGET_STATIONS) {
             if (presentCrs.has(crs)) continue
             synthesisedMissing.push({
               coord: `__missing:${crs}`,
-              name: STATION_DISPLAY_NAMES[crs] ?? crs,
+              name: resolveName(crs),
               crs,
+              destinations: 0,
+              journeys: 0,
+              dates: [],
+              generatedAt: null,
+            })
+          }
+          // Also surface every CRS the API picked up from orchestrator
+          // scripts that isn't in TARGET_STATIONS. The server already
+          // filtered out CRS codes that are present in origin-routes.json
+          // OR currently in-progress, so what's left is genuinely queued.
+          const syntheticCrs = new Set(synthesisedMissing.map((s) => s.crs))
+          for (const entry of data.queuedCrs ?? []) {
+            if (presentCrs.has(entry.crs) || syntheticCrs.has(entry.crs)) continue
+            // Prefer the API-resolved name (from public/stations.json);
+            // fall back to the hardcoded STATION_DISPLAY_NAMES map, then
+            // the bare CRS. This way new queued hubs get their real
+            // station names automatically without editing the panel.
+            const name = entry.name && entry.name !== entry.crs
+              ? entry.name
+              : (STATION_DISPLAY_NAMES[entry.crs] ?? entry.crs)
+            synthesisedMissing.push({
+              coord: `__queued:${entry.crs}`,
+              name,
+              crs: entry.crs,
               destinations: 0,
               journeys: 0,
               dates: [],
@@ -254,8 +343,14 @@ export function RTTStatusPanel({ open, onOpenChange }: {
             const isInProgress = inProgressSet.has(p.crs)
             const isTracked = TARGET_STATIONS.has(p.crs)
             const dateCount = p.dates.length
+            // Queued synthetic rows (from orchestrator-script scraping)
+            // carry a `__queued:` coord prefix and should rank alongside
+            // the TARGET_STATIONS incomplete rows rather than falling
+            // through to the "complete/bonus" bucket.
+            const isSyntheticQueued = p.coord.startsWith("__queued:")
             const isIncomplete =
-              isTracked && (p.destinations === 0 || dateCount < 2)
+              isSyntheticQueued ||
+              (isTracked && (p.destinations === 0 || dateCount < 2))
             const qRank = queueRank(p.crs)
             if (isInProgress) return [1, qRank, p.name]
             if (isIncomplete) return [2, qRank, p.name]
@@ -330,7 +425,13 @@ export function RTTStatusPanel({ open, onOpenChange }: {
           function etaFor(p: StationSummary): Date | null {
             if (INTENTIONALLY_STALE_STATIONS.has(p.crs)) return null
             const isTracked = TARGET_STATIONS.has(p.crs)
-            if (!isTracked) return null
+            // Suburban-hub queue rows (from orchestrator-script scraping)
+            // aren't in TARGET_STATIONS but we still want an ETA for
+            // them — they carry a `__queued:` coord prefix and a known
+            // QUEUE_ORDER slot, so the rest of this function can treat
+            // them exactly like incomplete tracked rows.
+            const isSyntheticQueued = p.coord.startsWith("__queued:")
+            if (!isTracked && !isSyntheticQueued) return null
             const dateCount = p.dates.length
             const isIncomplete = p.destinations === 0 || dateCount < 2
             // Completed tracked stations — surface when they finished
@@ -360,7 +461,7 @@ export function RTTStatusPanel({ open, onOpenChange }: {
             <table className="w-full border-collapse text-sm font-mono">
               <thead>
                 <tr className="border-b border-border text-left">
-                  <th className="py-2 pr-3 font-semibold">Station</th>
+                  <th className="py-2 pr-3 font-semibold">CRS / Station</th>
                   <th className="py-2 pr-3 text-right font-semibold">Dest.</th>
                   <th className="py-2 pr-3 text-right font-semibold">Journeys</th>
                   <th className="py-2 pr-3 font-semibold">Sampled dates</th>
@@ -388,6 +489,15 @@ export function RTTStatusPanel({ open, onOpenChange }: {
                   // Activity (🏃 / ⏳) is rendered separately below.
                   // Untracked primaries (Farringdon, Stratford — we
                   // intentionally skip them) stay neutral (·).
+                  // Synthetic-queued rows come from orchestrator-script
+                  // scraping — they aren't in TARGET_STATIONS (which
+                  // pre-dates the batched hub additions), but visually
+                  // they ARE tracked: we WILL fetch them. Carry the
+                  // ⚠️/amber treatment through by detecting the coord
+                  // prefix. Without this, every batch-2-through-6 hub
+                  // rendered as a neutral "·" while the original 28
+                  // tracked stations kept their colour + icon.
+                  const isSyntheticQueued = p.coord.startsWith("__queued:")
                   let rowClass = ""
                   let badge = ""
                   if (INTENTIONALLY_STALE_STATIONS.has(p.crs)) {
@@ -396,11 +506,11 @@ export function RTTStatusPanel({ open, onOpenChange }: {
                     // waste of RTT budget.
                     rowClass = "text-muted-foreground"
                     badge = "🪦"
-                  } else if (!isTracked) {
+                  } else if (!isTracked && !isSyntheticQueued) {
                     badge = "·"
                   } else {
                     const isIncomplete =
-                      p.destinations === 0 || dateCount < 2
+                      isSyntheticQueued || p.destinations === 0 || dateCount < 2
                     if (isIncomplete) {
                       rowClass = "text-amber-700 dark:text-amber-400"
                       badge = "⚠️"

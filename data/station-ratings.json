@@ -418,5 +418,25 @@
   "-0.193118,51.6975545": {
     "name": "Potters Bar",
     "rating": "not-recommended"
+  },
+  "-1.4825631,53.0242729": {
+    "name": "Belper",
+    "rating": "unverified"
+  },
+  "-1.5042939,53.0834695": {
+    "name": "Whatstandwell",
+    "rating": "unverified"
+  },
+  "-1.4808654,53.0604187": {
+    "name": "Ambergate",
+    "rating": "unverified"
+  },
+  "-1.6797007,52.6106234": {
+    "name": "Wilnecote",
+    "rating": "unverified"
+  },
+  "-0.3368448,53.3840114": {
+    "name": "Market Rasen",
+    "rating": "unverified"
   }
 }
