@@ -188,6 +188,19 @@ const QUEUE_ORDER: string[] = [
   // Phase C stations that got skipped when v2-priority.sh was killed
   // mid-WIJ on 2026-04-20. Runs when the pipeline is otherwise idle.
   "WIJ", "SVS", "HRW", "FOG", "HAY", "EAL",
+  // Phase J — /tmp/ttg-rtt/batch-8-hubs.sh. Comprehensive low-data-
+  // interchange pass: every station that appears as a rail-to-rail
+  // interchange in any Central-London journey but isn't yet fetched.
+  // Ordered by frequency across journeys. 62 hubs — from major
+  // regional termini (CRE, CDF, MAN) down to single-journey edges
+  // (SAL, FTN, WIN). Runs when everything else is idle.
+  "CRE", "CDF", "SOT", "DBY", "GRA", "NRW", "EXD", "SGB", "DON",
+  "WBQ", "RET", "GCR", "LTV", "STA", "SHF", "LEI", "LMS", "RGL",
+  "NUN", "WML", "CTR", "HIT", "WGN", "BDM", "SPT", "NWE", "MKT",
+  "TLS", "SWI", "HAV", "PTR", "CHD", "ELY", "LCN", "SFN", "ATL",
+  "LBO", "NBY", "SAL", "FTN", "WIN", "SBJ", "EGR", "ABW", "LGE",
+  "WMD", "TAU", "BGN", "BND", "HKM", "NWD", "HRH", "AHV", "ACT",
+  "HSL", "FEL", "WYB", "MAR", "BXB", "FAV", "BSR", "MAN",
 ]
 
 // Primaries we deliberately DON'T top up — their Google Routes data is

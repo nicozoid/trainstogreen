@@ -1171,9 +1171,15 @@ export default function StationModal({
           )}
 
           {/* Mobile-only Hike button, anchored at the bottom of all the text.
-              Desktop uses the inline button in the title row above instead. */}
+              Desktop uses the inline button in the title row above instead.
+              Top gap is 4× --para-gap — visually equivalent to the
+              section-break gap above subheaders, which is the right
+              rhythm for a clear separation between text content and an
+              action button. Without this (the prior `mt-1`), the
+              button sat too close to the notes after the DialogHeader
+              gap-0 override removed the flex-gap buffer. */}
           {!isFriendOrigin && !isPrimaryOrigin && (
-            <Button asChild className="mt-1 w-full sm:hidden">
+            <Button asChild className="mt-[calc(var(--para-gap)*4)] w-full sm:hidden">
               <a
                 href={komootUrl(stationName, lat, lng)}
                 target="_blank"

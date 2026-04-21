@@ -5610,13 +5610,18 @@ export default function HikeMap() {
               const next = !devExcludeActive
               setDevExcludeActive(next)
               if (next) {
-                // Admin on — preset checkboxes for testing:
-                //   Indirect only + Heavenly/Good/Probably/Okay ratings.
+                // Admin on — preset filters for a fresh testing slate:
+                //   • sliders opened wide (600) so no time-filter hides stations
+                //   • all four rating checkboxes ticked (Heavenly, Good,
+                //     Probably, Okay) — covers every curated category
+                //   • Interchange dropdown reset to "—" so the admin
+                //     sees the unfiltered journey set first, then
+                //     narrows via the dropdown as needed
                 setMaxMinutes(600)
                 setFriendMaxMinutes(600)
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
-                setPrimaryInterchangeFilter("lowdata")
+                setPrimaryInterchangeFilter("off")
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
