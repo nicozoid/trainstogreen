@@ -257,15 +257,27 @@ export async function GET() {
     const queuedCrsSet = await parseQueuedCrs()
     const fetchedCrs = new Set(stations.map((s) => s.crs))
     const inProgressSet = new Set(inProgressCrs)
-    const crsToName: Record<string, string> = {}
+    // Look up each CRS's real name AND coord from public/stations.json.
+    // The panel uses the coord to bucket stations into London-termini /
+    // London-other / Provincial categories (via a London bounding box)
+    // for its category filter.
+    const crsToMeta: Record<string, { name: string; coord: string }> = {}
     try {
       const publicStationsPath = join(process.cwd(), "public", "stations.json")
       const rawPublic = await readFile(publicStationsPath, "utf8")
-      const parsed = JSON.parse(rawPublic) as { features: Array<{ properties?: Record<string, unknown> }> }
+      const parsed = JSON.parse(rawPublic) as {
+        features: Array<{
+          properties?: Record<string, unknown>
+          geometry?: { coordinates?: [number, number] }
+        }>
+      }
       for (const f of parsed.features ?? []) {
         const crs = f.properties?.["ref:crs"] as string | undefined
         const name = f.properties?.["name"] as string | undefined
-        if (crs && name && !crsToName[crs]) crsToName[crs] = name
+        const c = f.geometry?.coordinates
+        if (crs && name && !crsToMeta[crs] && c) {
+          crsToMeta[crs] = { name, coord: `${c[0]},${c[1]}` }
+        }
       }
     } catch {
       // If public/stations.json can't be read, queuedCrs still returns
@@ -274,14 +286,23 @@ export async function GET() {
     const queuedCrs = [...queuedCrsSet]
       .filter((crs) => !fetchedCrs.has(crs) && !inProgressSet.has(crs))
       .sort()
-      .map((crs) => ({ crs, name: crsToName[crs] ?? crs }))
-    // Full CRS→name map for every scraped CRS — queued, in-progress, or
-    // in TARGET_STATIONS. Panel uses this as the universal name lookup
-    // so in-progress rows (filtered out of queuedCrs) still show their
-    // real station name instead of falling back to the bare CRS.
+      .map((crs) => ({
+        crs,
+        name: crsToMeta[crs]?.name ?? crs,
+        coord: crsToMeta[crs]?.coord ?? "",
+      }))
+    // Full CRS→name/coord map for every scraped CRS — queued, in-progress,
+    // or TARGET_STATIONS. Panel uses this as the universal metadata
+    // lookup so in-progress rows (filtered out of queuedCrs) still
+    // resolve to real names + coords for the category filter.
     const scrapedNames: Record<string, string> = {}
+    const scrapedCoords: Record<string, string> = {}
     for (const crs of queuedCrsSet) {
-      if (crsToName[crs]) scrapedNames[crs] = crsToName[crs]
+      const meta = crsToMeta[crs]
+      if (meta) {
+        scrapedNames[crs] = meta.name
+        scrapedCoords[crs] = meta.coord
+      }
     }
     return NextResponse.json({
       stations,
@@ -289,6 +310,7 @@ export async function GET() {
       wrapperRunning,
       queuedCrs,
       scrapedNames,
+      scrapedCoords,
       fileUpdatedAt: meta.mtime.toISOString(),
     })
   } catch (err) {

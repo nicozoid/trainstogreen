@@ -1657,7 +1657,11 @@ export default function HikeMap() {
   //   "lowdata" — ≥1 interchange at a station with no RTT data yet
   //               (most likely to have routing bugs — helps prioritise
   //               which suburban hubs to fetch next)
-  type InterchangeFilter = "off" | "direct" | "any" | "inner" | "outer" | "lowdata"
+  //   "gooddata" — every interchange is at a station with full RTT
+  //                data (inverse of lowdata). Useful for isolating the
+  //                "should be bug-free" cohort when diff-testing
+  //                against NRE.
+  type InterchangeFilter = "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata"
   const [primaryInterchangeFilter, setPrimaryInterchangeFilter] = useState<InterchangeFilter>("off")
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
@@ -1946,6 +1950,17 @@ export default function HikeMap() {
       const winnerRoutes = originRoutes[boardHereTerminalCoord]
       const entry = winnerRoutes?.directReachable?.[destCoord]
       if (!entry) return null
+      // Normalise station names via matchTerminal so London-terminus
+      // rows render consistently across the app. Without this, the
+      // same station surfaced different labels depending on data
+      // source: "London St. Pancras International" from upstream RTT
+      // vs "St Pancras" from the terminals list. The latter is the
+      // canonical short form — use it everywhere.
+      const nicerTerminusName = (fallback: string, crs: string) => {
+        const station = crsToStation[crs]
+        const rawName = station?.name ?? fallback
+        return matchTerminal(rawName, londonTerminals) ?? rawName
+      }
       const downstream = entry.fastestCallingPoints
         .slice(1, -1)
         .map((crs) => {
@@ -1955,7 +1970,7 @@ export default function HikeMap() {
           if (station.coordKey === primaryOrigin) return null
           const sub = winnerRoutes?.directReachable?.[station.coordKey]
           if (!sub) return null
-          return { name: station.name, crs, minutesFromOrigin: sub.minMinutes }
+          return { name: nicerTerminusName(station.name, crs), crs, minutesFromOrigin: sub.minMinutes }
         })
         .filter((p): p is { name: string; crs: string; minutesFromOrigin: number } => !!p)
       const upstream = (entry.upstreamCallingPoints ?? [])
@@ -1964,7 +1979,7 @@ export default function HikeMap() {
           if (!station || !station.isLondon) return null
           // Same reason as downstream — skip the primary origin.
           if (station.coordKey === primaryOrigin) return null
-          return { name: u.name, crs: u.crs, minutesExtra: u.minutesBeforeOrigin }
+          return { name: nicerTerminusName(u.name, u.crs), crs: u.crs, minutesExtra: u.minutesBeforeOrigin }
         })
         .filter((p): p is { name: string; crs: string; minutesExtra: number } => !!p)
       return { downstream, upstream }
@@ -3685,9 +3700,44 @@ export default function HikeMap() {
                 }
               }
               const main = kept[0]
-              const alternatives = kept
-                .slice(1)
-                .filter((k) => k.durationMinutes <= main.durationMinutes + 30)
+              // "Subset coverage" dedup — drop any alternative whose
+              // origin AND every calling-at station is already covered
+              // by a higher-ranked (kept) route. Example: for LON→PHR,
+              // the 52m Waterloo alt calls [WAE, LBG, …] which is a
+              // strict subset of the main LBG route's coverage (WAE
+              // is upstream of LBG, LBG is the origin); so there's no
+              // new information in surfacing Waterloo as a separate
+              // paragraph. WAE/WAT normalised as the same station via
+              // CLUSTER_PARENT to handle the Waterloo / Waterloo East
+              // cluster case.
+              const CLUSTER_PARENT: Record<string, string> = { WAE: "WAT" }
+              const normCrs = (crs: string) => CLUSTER_PARENT[crs] ?? crs
+              type KeptRoute = typeof main
+              const coveredSet = (r: KeptRoute): Set<string> => {
+                const set = new Set<string>()
+                const originCrs = originRoutes[r.terminusCoord]?.crs
+                if (originCrs) set.add(normCrs(originCrs))
+                for (const u of r.upstream) set.add(normCrs(u.crs))
+                for (const u of r.extraUpstream) if (u.crs) set.add(normCrs(u.crs))
+                for (const d of r.downstream) set.add(normCrs(d.crs))
+                return set
+              }
+              const unionCovered = coveredSet(main)
+              const alternatives: KeptRoute[] = []
+              for (const c of kept.slice(1)) {
+                if (c.durationMinutes > main.durationMinutes + 30) continue
+                const altCov = coveredSet(c)
+                let allCovered = true
+                for (const s of altCov) {
+                  if (!unionCovered.has(s)) { allCovered = false; break }
+                }
+                if (allCovered) continue
+                alternatives.push(c)
+                // Roll this alt's coverage into the union so later
+                // alternatives are compared against the full picture
+                // (main + all previously-kept alternatives).
+                for (const s of altCov) unionCovered.add(s)
+              }
               // Merge main.extraUpstream into the active journey's upstream
               // list when the journey matches the main terminus (cheap
               // check: same duration within a small tolerance).
@@ -3819,8 +3869,18 @@ export default function HikeMap() {
           return passesTimeFilter()
         }
 
-        // Regular destination stations — must have time data in range
-        if (mins == null) return false
+        // Regular destination stations — must have time data in range,
+        // EXCEPT in admin mode where stations with no journey data
+        // (e.g. Sheringham — too far for the Google Routes fetch
+        // budget) should still appear. That's how admin spots gaps in
+        // the dataset in the first place. Non-admin users stay filtered
+        // since a station with no time info has no actionable info.
+        if (mins == null) {
+          if (!devExcludeActive) return false
+          // In admin mode, fall through — the min/max sliders can't
+          // meaningfully filter a null-time station, so show it.
+          return true
+        }
         if (maxMinutes < 600 && mins > maxMinutes) return false
         if (minMinutes > 0 && mins < minMinutes) return false
         // "Direct trains only" for the primary origin — require 0 EFFECTIVE changes.
@@ -3858,6 +3918,11 @@ export default function HikeMap() {
               if (!interchanges.some((n) => !interchangeLookups.terminals.has(n))) return false
             } else if (primaryInterchangeFilter === "lowdata") {
               if (!interchanges.some((n) => !interchangeLookups.fullV2.has(n))) return false
+            } else if (primaryInterchangeFilter === "gooddata") {
+              // Every interchange must be at a full-RTT-data station.
+              // Inverse of lowdata: surfaces the cohort where the app's
+              // routing shouldn't be bottlenecked by missing hub data.
+              if (!interchanges.every((n) => interchangeLookups.fullV2.has(n))) return false
             }
             // "any" requires interchanges.length >= 1 which we already checked.
           }
@@ -5174,31 +5239,19 @@ export default function HikeMap() {
     }
     // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France)
     if (feature.properties?.isSecretAdmin) {
-      const next = !devExcludeActive
-      setDevExcludeActive(next)
-      if (next) {
-        // Admin on — focus on indirect journeys with curated ratings
-        // (Heavenly / Good / Probably). Sliders open wide so nothing is
-        // hidden by the upper/lower bounds.
-        setMaxMinutes(600)
-        setFriendMaxMinutes(600)
-        setMinMinutes(0)
-        setPrimaryDirectOnly(false)
-        setPrimaryInterchangeFilter("lowdata")
-        setFriendDirectOnly(false)
-        // highlight = Heavenly, verified = Good, unverified = Probably
-        // highlight=Heavenly, verified=Good, unverified=Probably, not-recommended=Okay
-        setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
-      } else {
-        // Admin off — clear all filter state back to the non-admin defaults.
-        setMaxMinutes(150)
-        setFriendMaxMinutes(150)
-        setMinMinutes(0)
-        setPrimaryDirectOnly(false)
-        setPrimaryInterchangeFilter("off")
-        setFriendDirectOnly(false)
-        setVisibleRatings(new Set())
-      }
+      // Boulogne (hidden secret-admin marker) toggles admin mode WITHOUT
+      // touching any filter UI state. This entry point is meant for
+      // quick peeking — I'm already looking at a particular slice of
+      // the map and just want admin overlays (red halos, admin-only
+      // rows, etc.) on top of what I'm seeing, without losing my
+      // sliders / checkboxes / interchange dropdown selection.
+      //
+      // The "admin" button at the bottom of the screen is the OTHER
+      // entry point — that one DOES reset to the curated admin preset
+      // (indirect-only, low-data hubs, Heavenly/Good/Probably/Okay
+      // ratings) because it's the intentional "start a testing
+      // session" flow.
+      setDevExcludeActive((v) => !v)
       return
     }
     // London hexagon + primary-station dots are both "active primary" clicks.
@@ -6554,6 +6607,7 @@ export default function HikeMap() {
                 (x) => (x.properties as { coordKey?: string } | undefined)?.coordKey === displayStation.coordKey,
               )?.properties?.["ref:crs"] as string | undefined
             }
+            isLondonHome={primaryOrigin === "-0.1269,51.5196"}
             isApprovedForHome={approvedJourneys.has(`${primaryOrigin}|${displayStation.coordKey}`)}
             onToggleApproved={(approved: boolean) => handleToggleApproved(
               primaryOrigin,

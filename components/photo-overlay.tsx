@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog"
 import { type FlickrPhoto } from "@/lib/flickr"
 import { getEffectiveJourney, prettifyStationLabel } from "@/lib/effective-journey"
+import londonTerminalsData from "@/data/london-terminals.json"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
 // Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
@@ -193,6 +194,14 @@ type StationModalProps = {
   stationCrs?: string
   /** True when the user is currently in admin mode. Gates the CRS prefix. */
   adminMode?: boolean
+  /** True when the active primary is the synthetic Central London
+   *  cluster. Gates the terminus-highlight feature (bolder text for
+   *  any London terminus mentioned in the journey info). Computed in
+   *  map.tsx against the cluster's coord rather than re-derived here
+   *  because the `primaryOrigin` string below is a display NAME
+   *  ("London"), not the coord — the comparison would be fragile if
+   *  driven off the name. */
+  isLondonHome?: boolean
   /** Admin-only: true when the CURRENT home→destination pair has been
    *  tested and approved. Drives the Approve toggle + its active state. */
   isApprovedForHome?: boolean
@@ -200,6 +209,66 @@ type StationModalProps = {
    *  pair. No-op (button hidden) when the station is excluded or an
    *  origin station — those classes don't participate in approval. */
   onToggleApproved?: (approved: boolean) => void
+}
+
+// Canonical London-terminus names (+ their aliases) used by the
+// highlighter. Built once at module load from london-terminals.json so
+// the regex below covers every form the journey text might contain —
+// "London Bridge", "St Pancras", "Kings Cross" (canonical) AND "St.
+// Pancras", "London Waterloo", "Waterloo East" (common aliases).
+// Waterloo East is intentionally retained as a distinct alias even
+// though it canonicalises to Waterloo — when the user sees "Waterloo
+// East (+6m)" in a calling-points line, we want THAT exact text
+// highlighted (not "Waterloo East" split into parts).
+const LONDON_TERMINUS_FORMS: string[] = (() => {
+  const forms = new Set<string>()
+  // Farringdon is listed in london-terminals.json (it's a recognised
+  // London-area stitching anchor for the stitcher) but it's a
+  // through-station, NOT a true terminus. User's highlight feature
+  // targets true termini only, so skip it here.
+  const NOT_A_TERMINUS = new Set(["Farringdon"])
+  for (const t of londonTerminalsData as Array<{ name: string; aliases: string[] }>) {
+    if (NOT_A_TERMINUS.has(t.name)) continue
+    forms.add(t.name)
+    for (const a of t.aliases) forms.add(a)
+  }
+  // Sort longest-first so the regex prefers "Waterloo East" over
+  // "Waterloo" when both could match (leftmost alternation is greedy
+  // on length in JS regex — longest-first alternatives win).
+  return [...forms].sort((a, b) => b.length - a.length)
+})()
+const LONDON_TERMINUS_RE = new RegExp(
+  `\\b(${LONDON_TERMINUS_FORMS.map((f) => f.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`,
+  "g",
+)
+
+// Wrap every occurrence of a London-terminus name in the given text
+// with a font-medium span. Returns React children. When isLondonHome
+// is false the text is returned unchanged. Used ONLY in modal copy;
+// the highlighting is a visual cue that helps admins/users see which
+// parts of a journey involve a central-London terminus vs a suburban
+// interchange — which only matters when the active primary is the
+// synthetic Central London cluster.
+function highlightTermini(text: string, isLondonHome: boolean): React.ReactNode {
+  if (!isLondonHome || !text) return text
+  const parts: React.ReactNode[] = []
+  let last = 0
+  let match: RegExpExecArray | null
+  LONDON_TERMINUS_RE.lastIndex = 0
+  while ((match = LONDON_TERMINUS_RE.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index))
+    // Two-axis emphasis: font-medium bumps the weight 400→500, and
+    // text-muted-foreground tints the colour. Combined they read as
+    // a subtle-but-distinct label against the main-foreground body
+    // text. In the "Alternative starts on this route:" region (which
+    // is ALREADY text-muted-foreground on its span) the colour axis
+    // is a no-op but the font-medium axis still distinguishes
+    // terminus names from the regular calling-point entries.
+    parts.push(<span key={parts.length} className="font-medium text-muted-foreground">{match[0]}</span>)
+    last = match.index + match[0].length
+  }
+  if (last < text.length) parts.push(text.slice(last))
+  return parts
 }
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
@@ -242,9 +311,15 @@ function singleOriginDescription(origin: string, journey: JourneyInfo): string {
       ? changeStations.join(" and ")
       : changeStations.slice(0, -1).join(", ") + " and " + changeStations.at(-1)
 
+  // 1-change journeys read more naturally as "Change at X" than
+  // "One change: X" — the prior wording felt over-formal for the
+  // common case. Multi-change keeps the numbered list-style copy
+  // ("Two changes: X and Y.") so the change count stays explicit.
+  if (changes === 1) {
+    return `${time} from ${displayOrigin}. Change at ${changeList}.`
+  }
   const changeNumber = ["Zero", "One", "Two", "Three", "Four", "Five"][changes] ?? String(changes)
-  const changeWord = changes === 1 ? "change" : "changes"
-  return `${time} from ${displayOrigin}. ${changeNumber} ${changeWord}: ${changeList}.`
+  return `${time} from ${displayOrigin}. ${changeNumber} changes: ${changeList}.`
 }
 
 // Builds travel description — shows both origins when friend mode is active.
@@ -347,6 +422,7 @@ export default function StationModal({
   isSynthetic = false,
   stationCrs,
   adminMode = false,
+  isLondonHome = false,
   isApprovedForHome = false,
   onToggleApproved,
 }: StationModalProps) {
@@ -734,7 +810,15 @@ export default function StationModal({
             max-sm:overflow-y-auto up there), so this wrapper reverts to
             flex-none + overflow-visible and content flows inline. */}
         <div className="min-h-0 flex-1 overflow-y-auto max-sm:flex-none max-sm:overflow-visible">
-        <DialogHeader className="shrink-0 px-6 pt-0 pb-0">
+        {/* gap-0 override: shadcn's DialogHeader defaults to flex-col
+            gap-2, which stacks flex-gap on top of the explicit mt-*
+            margins on each child (alts, subheaders, notes). Letting
+            both apply made the alt paragraphs look ~14px apart while
+            the notes div — which isn't a flex container — rendered
+            at the intended 4px. Killing the gap here means every
+            child's mt-[var(--para-gap)] (or mt-[calc…]) alone
+            controls its spacing, so alts and notes match. */}
+        <DialogHeader className="shrink-0 px-6 pt-0 pb-0 gap-0">
           {!isFriendOrigin && !isPrimaryOrigin && (
             <>
               {/* Primary journey info — ALWAYS full width now (both desktop
@@ -747,15 +831,18 @@ export default function StationModal({
                   directly inside DialogDescription so it needs the class
                   here too. */}
               <DialogDescription className="text-sm [overflow-wrap:anywhere]">
-                {journeys?.[primaryOrigin]
-                  ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
-                  // No pre-stored journey for this primary → happens for
-                  // custom primaries (any NR station picked via the search
-                  // bar — e.g. Kentish Town). Fall back to the primary's
-                  // own name so the narrative reads "X from Kentish Town."
-                  // rather than "from central London" (which was misleading
-                  // when the user had explicitly chosen a non-London origin).
-                  : `${formatMinutes(minutes)} from ${primaryOrigin}.`}
+                {highlightTermini(
+                  journeys?.[primaryOrigin]
+                    ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
+                    // No pre-stored journey for this primary → happens for
+                    // custom primaries (any NR station picked via the search
+                    // bar — e.g. Kentish Town). Fall back to the primary's
+                    // own name so the narrative reads "X from Kentish Town."
+                    // rather than "from central London" (which was misleading
+                    // when the user had explicitly chosen a non-London origin).
+                    : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                  isLondonHome,
+                )}
                 {(() => {
                   // Three distinct outcomes in this section, each getting
                   // its own copy in the same visual slot beneath the main
@@ -891,7 +978,7 @@ export default function StationModal({
                           }
                           return (
                             <span key={item.key}>
-                              {sep}{item.name} ({item.label})
+                              {sep}{highlightTermini(item.name, isLondonHome)} ({item.label})
                             </span>
                           )
                         })}
@@ -919,10 +1006,29 @@ export default function StationModal({
                   calling-points line with the same separator logic.
                   Hidden for non-London primaries and whenever the list
                   is empty, so no visual footprint in those cases. */}
+              {/* Modal-wide paragraph-spacing token. A typography rule
+                  rather than per-paragraph overrides: every paragraph
+                  in this region inherits the same small top gap, so
+                  the journey info reads as one tight block. Subheaders
+                  within the block get a LARGER top gap (see the
+                  "Alternative routes" heading) so they feel like
+                  section labels, not another body paragraph. */}
               {(() => {
                 const alts = journeys?.[primaryOrigin]?.alternativeRoutes
                 if (!alts || alts.length === 0) return null
-                return alts.map((alt, idx) => {
+                // Copy shape depends on alt count:
+                //   • 1 alt  → single paragraph prefixed "Alternative
+                //              route: {sentence}" (keeps the line short
+                //              when there's only one alternative).
+                //   • 2+ alts → one muted "Alternative routes" subheader
+                //              followed by N paragraphs WITHOUT the
+                //              prefix (avoids repeating the same label).
+                // mt-1 across both shapes matches the small gap between
+                // the main journey DialogDescription and the public
+                // notes block below — brings the whole "journey info"
+                // region into one visually unified cluster.
+                const grouped = alts.length >= 2
+                const renderAlt = (alt: typeof alts[number], idx: number) => {
                   const up = (alt.londonUpstreamCallingPoints ?? [])
                     .slice()
                     .sort((a, b) => b.minutesExtra - a.minutesExtra)
@@ -932,34 +1038,25 @@ export default function StationModal({
                     .sort((a, b) => a.minutesFromOrigin - b.minutesFromOrigin)
                     .map((s) => ({ key: s.crs, name: s.name, label: `-${s.minutesFromOrigin}m` }))
                   const items = [...up, ...down]
-                  // Render the alt's main sentence. Three variants:
-                  //   • direct (changes === 0): "{time} direct from X."
-                  //   • 1 change: "{time} from X with 1 change at Y."
-                  //   • 2+ changes: "{time} from X with N changes at Y, Z."
-                  // prettifyStationLabel drops "International", curly
-                  // apostrophes, "(COV)" codes etc so names in the sentence
-                  // read consistently with the main journey line above.
                   const terminusLabel = prettifyStationLabel(alt.terminusName)
                   const changeLabels = (alt.changeStations ?? []).map(prettifyStationLabel)
                   const mainSentence = alt.changes === 0
                     ? `${formatMinutes(alt.durationMinutes)} direct from ${terminusLabel}.`
                     : alt.changes === 1 && changeLabels.length > 0
-                      ? `${formatMinutes(alt.durationMinutes)} from ${terminusLabel} with 1 change at ${changeLabels[0]}.`
+                      ? `${formatMinutes(alt.durationMinutes)} from ${terminusLabel}. Change at ${changeLabels[0]}.`
                       : `${formatMinutes(alt.durationMinutes)} from ${terminusLabel} with ${alt.changes} changes at ${changeLabels.join(", ")}.`
                   return (
                     <p
                       key={`${alt.terminusName}-${idx}`}
-                      className="mt-2 text-sm [overflow-wrap:anywhere]"
+                      className="mt-[var(--para-gap)] text-sm [overflow-wrap:anywhere]"
                     >
-                      Alternative route: {mainSentence}
+                      {grouped
+                        ? highlightTermini(mainSentence, isLondonHome)
+                        : <>Alternative route: {highlightTermini(mainSentence, isLondonHome)}</>}
                       {items.length > 0 && (
                         <span className="block [overflow-wrap:anywhere] text-xs text-muted-foreground">
                           Alternative starts on this route:{" "}
                           {items.map((item, i) => {
-                            // Same separator logic as the main journey line
-                            // (comma, " & " before last of 2, ", & " before
-                            // last of 3+). Keeps the copy pattern uniform
-                            // across main and alt paragraphs.
                             let sep = ""
                             if (i > 0) {
                               sep = i === items.length - 1
@@ -968,7 +1065,7 @@ export default function StationModal({
                             }
                             return (
                               <span key={item.key}>
-                                {sep}{item.name} ({item.label})
+                                {sep}{highlightTermini(item.name, isLondonHome)} ({item.label})
                               </span>
                             )
                           })}
@@ -977,7 +1074,28 @@ export default function StationModal({
                       )}
                     </p>
                   )
-                })
+                }
+                return (
+                  <>
+                    {grouped && (
+                      // Subheader's top margin is THREE paragraph gaps,
+                      // tying the section-break spacing to the same
+                      // --para-gap variable that drives every other
+                      // vertical rhythm in the modal. The 3× multiplier
+                      // renders visually greater than a normal para gap
+                      // (that's the point — subheaders need breathing
+                      // room above so they feel like section labels).
+                      // Tune --para-gap in globals.css to scale the
+                      // whole rhythm proportionally; the 3:1 ratio
+                      // between subheader-above-gap and regular
+                      // paragraph gap holds.
+                      <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
+                        Alternative routes
+                      </p>
+                    )}
+                    {alts.map(renderAlt)}
+                  </>
+                )
               })()}
 
               {/* Friend journey info — full width, separate row below primary */}
@@ -991,6 +1109,19 @@ export default function StationModal({
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
+          {/* "Notes" subheader — same treatment as the "Alternative
+              routes" subheader. Top margin scales with --para-gap
+              (3×) so tuning that single var retunes both subheaders
+              in lockstep. Appears above the public note whenever a
+              note is being shown; admin mode always has the textarea
+              visible, so the gate includes devMode to label the empty
+              textarea too. */}
+          {(devMode || localPublicNote) && (
+            <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
+              Notes
+            </p>
+          )}
+
           {/* Public note: editable textarea in admin mode, plain text for everyone else */}
           {devMode ? (
             <textarea
@@ -1001,18 +1132,22 @@ export default function StationModal({
                 autoResize(e.target)
               }}
               placeholder="Public notes..."
-              className="mt-1 w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
           ) : (
             /* Split on any run of newlines into separate paragraphs. Users
                author notes with a single Enter keypress (one \n), so we
                treat each line as its own paragraph. `filter(Boolean)` drops
-               the empty strings that "\n\n" produces. `space-y-2.5` (10px)
-               is ≈ half the 20px text-sm line-height, giving each paragraph
-               visible breathing room without a full empty line. */
+               the empty strings that "\n\n" produces. The inter-<p> gap
+               AND the gap from the Notes subheader to this first
+               paragraph both use --para-gap: `mt-[var(--para-gap)]` on
+               the div controls the subheader→first-child gap, and
+               `[&>p+p]:mt-[var(--para-gap)]` controls the inter-<p>
+               gap. Result: "Notes → first note" matches "Alternative
+               routes → first alt" exactly. */
             localPublicNote && (
-              <div className="text-sm text-foreground space-y-2.5">
+              <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
                 {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
                   <p key={i}>{renderWithLinks(para)}</p>
                 ))}

@@ -45,12 +45,15 @@ type StatusPayload = {
   // scripts under /tmp/ttg-rtt). Each carries the CRS plus the real
   // station name resolved from public/stations.json so the panel shows
   // e.g. "Brighton" alongside BTN. Rendered as synthetic empty rows.
-  queuedCrs?: Array<{ crs: string; name: string }>
+  queuedCrs?: Array<{ crs: string; name: string; coord?: string }>
   // Full CRS→name map covering every scraped CRS (queued AND in-
   // progress). Queued entries are also in queuedCrs above, but
   // in-progress ones aren't — this map lets the panel resolve names
   // for any synthetic-row CRS regardless of current fetch state.
   scrapedNames?: Record<string, string>
+  // Parallel coord map (lng,lat strings) keyed the same way. Used for
+  // the category filter, which buckets rows by geographic location.
+  scrapedCoords?: Record<string, string>
 
   fileUpdatedAt: string
 }
@@ -181,6 +184,10 @@ const QUEUE_ORDER: string[] = [
   "RDH", "TON", "PDW",                           // high priority
   "SEV", "AFK", "HHE", "GTW", "GLD",             // medium
   "SLO", "SAC", "SNF", "BSK",                    // low
+  // Phase I — /tmp/ttg-rtt/batch-7-hubs.sh. Cleanup re-queue for the
+  // Phase C stations that got skipped when v2-priority.sh was killed
+  // mid-WIJ on 2026-04-20. Runs when the pipeline is otherwise idle.
+  "WIJ", "SVS", "HRW", "FOG", "HAY", "EAL",
 ]
 
 // Primaries we deliberately DON'T top up — their Google Routes data is
@@ -197,6 +204,32 @@ const INTENTIONALLY_STALE_STATIONS = new Set(["ZFD", "SRA"])
 // rendered as a neutral "·" with no colour.
 const TARGET_STATIONS = new Set([...TRACKED_SEED, ...QUEUE_ORDER])
 
+// The 15 London termini — hardcoded CRS set used by the category
+// filter. A station is categorised as "termini" iff its CRS is in this
+// set; "london" iff its coord lies inside LONDON_BOX; "provincial"
+// otherwise. The CRS-first check for termini means WAE (Waterloo East,
+// technically just outside the Waterloo footprint) still counts as a
+// terminus even if its coord edges out of a tight London bounding box.
+const LONDON_TERMINI_CRS = new Set([
+  "CHX", "LST", "MOG", "BFR", "CST", "FST", "LBG", "MYB",
+  "PAD", "VIC", "WAT", "WAE", "KGX", "STP", "EUS",
+])
+// Loose bounding box around Greater London — roughly TfL zones 1–6
+// plus a small margin so edge-of-London stations (Dartford, Shenfield,
+// Watford Junction, Richmond) still fall inside. Anything outside the
+// box is classified as provincial.
+const LONDON_BOX = { minLng: -0.55, maxLng: 0.35, minLat: 51.28, maxLat: 51.72 }
+type StationCategory = "termini" | "london" | "provincial"
+function categoriseCoord(coord: string | undefined): StationCategory | null {
+  if (!coord || coord.startsWith("__")) return null
+  const [lngStr, latStr] = coord.split(",")
+  const lng = parseFloat(lngStr), lat = parseFloat(latStr)
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
+  return lng >= LONDON_BOX.minLng && lng <= LONDON_BOX.maxLng &&
+         lat >= LONDON_BOX.minLat && lat <= LONDON_BOX.maxLat
+    ? "london" : "provincial"
+}
+
 export function RTTStatusPanel({ open, onOpenChange }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -204,6 +237,10 @@ export function RTTStatusPanel({ open, onOpenChange }: {
   const [data, setData] = useState<StatusPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lastFetchAt, setLastFetchAt] = useState<Date | null>(null)
+  // Category filter — shows either "all", just London termini, just
+  // London non-termini, or just provincial. Not persisted; each modal
+  // open starts with "all" so the admin sees the complete pipeline.
+  const [categoryFilter, setCategoryFilter] = useState<"all" | StationCategory>("all")
   // AbortController for in-flight fetches — used so a rapid close+reopen
   // doesn't write stale data into state after unmount.
   const abortRef = useRef<AbortController | null>(null)
@@ -254,6 +291,31 @@ export function RTTStatusPanel({ open, onOpenChange }: {
             Failed to load: {error}
           </div>
         )}
+
+        {/* Category filter pills. Four options; clicking an active pill
+            is a no-op (rather than clearing) because "all" is already
+            the explicit clear option. Pill style mirrors the compact
+            monospace aesthetic the rest of the panel uses. */}
+        <div className="flex items-center gap-1.5 text-xs font-mono">
+          {([
+            { key: "all", label: "All" },
+            { key: "termini", label: "London termini" },
+            { key: "london", label: "London, other" },
+            { key: "provincial", label: "Provincial" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setCategoryFilter(opt.key)}
+              className={`rounded px-2 py-1 transition-colors ${
+                categoryFilter === opt.key
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
 
         {data && (() => {
           // Merge real primaries with synthesised rows for TARGET_STATIONS
@@ -363,13 +425,31 @@ export function RTTStatusPanel({ open, onOpenChange }: {
             const recencyRank = -(Number.isFinite(ts) ? ts : 0)
             return [3, recencyRank, p.name]
           }
-          const rows = [...data.stations, ...synthesisedMissing].sort((a, b) => {
-            const [ga, na, sa] = groupAndTiebreaker(a)
-            const [gb, nb, sb] = groupAndTiebreaker(b)
-            if (ga !== gb) return ga - gb
-            if (na !== nb) return na - nb
-            return sa.localeCompare(sb)
-          })
+          // Classify a row into termini / london / provincial. Termini
+          // wins purely on CRS (matches LONDON_TERMINI_CRS), since a
+          // few termini coords sit on the edge of the bounding box.
+          // Otherwise parses the coord: real rows carry a "lng,lat"
+          // string; synthetic rows carry "__queued:X" / "__missing:X"
+          // and fall back to the API-provided scrapedCoords map.
+          const rowCategory = (p: StationSummary): StationCategory | null => {
+            if (LONDON_TERMINI_CRS.has(p.crs)) return "termini"
+            const coord = p.coord.startsWith("__")
+              ? (data.scrapedCoords?.[p.crs] ?? "")
+              : p.coord
+            return categoriseCoord(coord)
+          }
+          const rows = [...data.stations, ...synthesisedMissing]
+            .filter((p) => {
+              if (categoryFilter === "all") return true
+              return rowCategory(p) === categoryFilter
+            })
+            .sort((a, b) => {
+              const [ga, na, sa] = groupAndTiebreaker(a)
+              const [gb, nb, sb] = groupAndTiebreaker(b)
+              if (ga !== gb) return ga - gb
+              if (na !== nb) return na - nb
+              return sa.localeCompare(sb)
+            })
 
           // Compute ETA (completion timestamp) per primary. Only meaningful
           // while the orchestrator is running and we have queue positions;
