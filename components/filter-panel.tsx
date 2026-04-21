@@ -253,9 +253,10 @@ type FilterPanelProps = {
   /** Admin-only feature filter — slices destinations by which
    *  optional modal features they'd surface. "off" = no filter.
    *  "alt-routes" = only destinations with ≥1 alternative route.
-   *  More options may be added as modal features grow. */
-  primaryFeatureFilter: "off" | "alt-routes"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes") => void
+   *  "private-notes" = only destinations with a non-empty admin
+   *  private note. More options may be added as modal features grow. */
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes") => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
@@ -947,7 +948,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 doesn't flash at full width before the train has arrived */}
             <div ref={sliderWrapperRef} className={trainArriving || (bannerVisible && !hasAnimatedRef.current) ? "invisible" : ""}>
               <Slider
-                min={30}
+                // Non-admin: 30m floor — below ~30m even central London
+                // destinations aren't useful. Admin: 15m floor for
+                // debugging/filtering very-close destinations.
+                min={adminMode ? 15 : 30}
                 max={sliderMax}
                 step={15}
                 value={[maxMinutes]}
@@ -1059,27 +1063,28 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </div>
           )}
 
-          {/* Admin-only: "Features" filter. Slices destinations by
-              which optional modal features they'd surface on click
-              (alt routes, etc). Useful for spot-checking coverage of
-              specific features without clicking through every
-              station. Start-list deliberately small — add options as
-              new modal features land. */}
+          {/* Admin-only: "Feature" filter. Slices destinations by
+              which optional modal feature they'd surface on click
+              (alt routes, private notes, etc). Useful for spot-
+              checking coverage of specific features without clicking
+              through every station. Label is singular on purpose —
+              the dropdown picks ONE feature at a time. */}
           {adminMode && (
             <div className="mt-1.5 flex items-center gap-[0.4rem]">
               <Label htmlFor="primary-feature-filter" className="cursor-pointer text-xs text-muted-foreground">
-                Features
+                Feature
               </Label>
               <select
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes",
+                  e.target.value as "off" | "alt-routes" | "private-notes",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="off">—</option>
                 <option value="alt-routes">Alternative routes</option>
+                <option value="private-notes">Private notes</option>
               </select>
             </div>
           )}
@@ -1096,7 +1101,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               </div>
               <Slider
                 min={0}
-                max={180}
+                // 600m = 10h. Admin-only slider (the whole block is
+                // gated on adminMode further up) and this ceiling
+                // matches the admin MAX slider's own 10h cap. Lets
+                // an admin isolate destinations very far from London
+                // for diffing algorithm output on edge-of-reach
+                // stations in the north/west/south-west.
+                max={600}
                 step={15}
                 value={[minMinutes]}
                 onValueChange={([value]) => onMinChange(value)}
@@ -1168,7 +1179,8 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 </span>
               </div>
               <Slider
-                min={30}
+                // Matches the home slider's floor — admin drops to 15m.
+                min={adminMode ? 15 : 30}
                 max={sliderMax}
                 step={15}
                 value={[friendMaxMinutes]}

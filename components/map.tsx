@@ -1663,17 +1663,20 @@ export default function HikeMap() {
   //                against NRE.
   type InterchangeFilter = "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata"
   const [primaryInterchangeFilter, setPrimaryInterchangeFilter] = useState<InterchangeFilter>("off")
-  // Admin-only "Features" filter. Slices destinations by which
+  // Admin-only "Feature" filter. Slices destinations by which
   // optional modal-overlay features they surface. Start-list is
   // intentionally small; add entries as new modal features arise.
   //
-  //   "off"         — no filter (non-admin default, dropdown hidden)
-  //   "alt-routes"  — only destinations whose overlay shows at least
-  //                   one alternative route paragraph. Alt routes only
-  //                   populate when home is the synthetic Central
-  //                   London primary, so this filter is most useful
-  //                   in that mode.
-  type FeatureFilter = "off" | "alt-routes"
+  //   "off"             — no filter (non-admin default, dropdown hidden)
+  //   "alt-routes"      — only destinations whose overlay shows at
+  //                       least one alternative route paragraph. Alt
+  //                       routes only populate when home is the
+  //                       synthetic Central London primary, so this
+  //                       filter is most useful in that mode.
+  //   "private-notes"   — only destinations with a non-empty private
+  //                       note (admin-authored). Helps the admin find
+  //                       stations where they've stashed context.
+  type FeatureFilter = "off" | "alt-routes" | "private-notes"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
@@ -3958,15 +3961,22 @@ export default function HikeMap() {
             // "any" requires interchanges.length >= 1 which we already checked.
           }
         }
-        // Admin-only Features filter — slices destinations by which
+        // Admin-only Feature filter — slices destinations by which
         // optional modal features they'd surface on click. Useful for
         // spot-checking coverage (e.g. "which stations show alt
-        // routes?"). See `primaryFeatureFilter` state comment.
+        // routes?", "where did I stash a private note?"). See
+        // `primaryFeatureFilter` state comment.
         if (primaryFeatureFilter !== "off") {
-          const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
           if (primaryFeatureFilter === "alt-routes") {
+            const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
             const alts = (journey as unknown as { alternativeRoutes?: unknown[] } | undefined)?.alternativeRoutes
             if (!alts || alts.length === 0) return false
+          } else if (primaryFeatureFilter === "private-notes") {
+            // Private note lookup uses the live stationNotes state
+            // (coord-keyed). An entry with an empty privateNote
+            // string doesn't count — we require actual content.
+            const entry = stationNotes[f.properties.coordKey as string]
+            if (!entry?.privateNote?.trim()) return false
           }
         }
         // When friend mode is active, also require the station to be reachable
@@ -3985,7 +3995,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, interchangeLookups, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, interchangeLookups, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
