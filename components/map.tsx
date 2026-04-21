@@ -1663,6 +1663,18 @@ export default function HikeMap() {
   //                against NRE.
   type InterchangeFilter = "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata"
   const [primaryInterchangeFilter, setPrimaryInterchangeFilter] = useState<InterchangeFilter>("off")
+  // Admin-only "Features" filter. Slices destinations by which
+  // optional modal-overlay features they surface. Start-list is
+  // intentionally small; add entries as new modal features arise.
+  //
+  //   "off"         — no filter (non-admin default, dropdown hidden)
+  //   "alt-routes"  — only destinations whose overlay shows at least
+  //                   one alternative route paragraph. Alt routes only
+  //                   populate when home is the synthetic Central
+  //                   London primary, so this filter is most useful
+  //                   in that mode.
+  type FeatureFilter = "off" | "alt-routes"
+  const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
@@ -3609,6 +3621,22 @@ export default function HikeMap() {
             // terminus and the combined journey has legitimately
             // different character.
             const clusterCoordSet = new Set(clusterCoords)
+            // Zone 1 filter: any hub whose coord lies inside the rough
+            // zone-1 bounding box (TfL zone 1 ≈ lng [-0.20, -0.05],
+            // lat [51.49, 51.54]) is ALSO treated as a terminus for
+            // alt-route filtering. Rationale: routing via a zone-1
+            // hub (e.g. Farringdon for a T→ZFD→D indirect path) is
+            // functionally "go into central London then board another
+            // train" — the same shape as going via an actual terminus.
+            // Surfacing those as separate "alternative routes" would
+            // just duplicate the main route's narrative. Currently
+            // affects Farringdon and will auto-include any other
+            // zone-1 hub we fetch later.
+            const isInZone1 = (coord: string) => {
+              const [lngS, latS] = coord.split(",")
+              const lng = parseFloat(lngS), lat = parseFloat(latS)
+              return lng >= -0.20 && lng <= -0.05 && lat >= 51.49 && lat <= 51.54
+            }
             for (const tCoord of clusterCoords) {
               const tRoutes = originRoutes[tCoord]
               if (!tRoutes) continue
@@ -3625,9 +3653,12 @@ export default function HikeMap() {
               } = null
               for (const [hCoord, hRoutes] of Object.entries(originRoutes)) {
                 if (hCoord === tCoord) continue
-                // Hub must be a suburban / regional interchange, not a
-                // London terminus — see filter rationale above.
+                // Hub must be a suburban / regional interchange — not
+                // a London terminus AND not inside zone 1 (which reads
+                // as "you're already in central London, just go direct
+                // from the right terminus").
                 if (clusterCoordSet.has(hCoord)) continue
+                if (isInZone1(hCoord)) continue
                 const tToH = tRoutes.directReachable?.[hCoord]
                 const hToD = hRoutes.directReachable?.[coordKey]
                 if (!tToH?.minMinutes || !hToD?.minMinutes) continue
@@ -3927,6 +3958,17 @@ export default function HikeMap() {
             // "any" requires interchanges.length >= 1 which we already checked.
           }
         }
+        // Admin-only Features filter — slices destinations by which
+        // optional modal features they'd surface on click. Useful for
+        // spot-checking coverage (e.g. "which stations show alt
+        // routes?"). See `primaryFeatureFilter` state comment.
+        if (primaryFeatureFilter !== "off") {
+          const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+          if (primaryFeatureFilter === "alt-routes") {
+            const alts = (journey as unknown as { alternativeRoutes?: unknown[] } | undefined)?.alternativeRoutes
+            if (!alts || alts.length === 0) return false
+          }
+        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
@@ -3943,7 +3985,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, interchangeLookups, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, interchangeLookups, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -5544,6 +5586,8 @@ export default function HikeMap() {
           setPrimaryInterchangeFilter(v)
           if (v !== "off") setPrimaryDirectOnly(false)
         }}
+        primaryFeatureFilter={primaryFeatureFilter}
+        onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
       />
@@ -5622,6 +5666,7 @@ export default function HikeMap() {
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
                 setPrimaryInterchangeFilter("off")
+                setPrimaryFeatureFilter("off")
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
               } else {
@@ -5631,6 +5676,7 @@ export default function HikeMap() {
                 setMinMinutes(0)
                 setPrimaryDirectOnly(false)
                 setPrimaryInterchangeFilter("off")
+                setPrimaryFeatureFilter("off")
                 setFriendDirectOnly(false)
                 setVisibleRatings(new Set())
               }

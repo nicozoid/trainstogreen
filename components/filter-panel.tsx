@@ -250,12 +250,18 @@ type FilterPanelProps = {
   onPrimaryInterchangeFilterChange: (
     value: "off" | "direct" | "any" | "inner" | "outer" | "lowdata" | "gooddata",
   ) => void
+  /** Admin-only feature filter — slices destinations by which
+   *  optional modal features they'd surface. "off" = no filter.
+   *  "alt-routes" = only destinations with ≥1 alternative route.
+   *  More options may be added as modal features grow. */
+  primaryFeatureFilter: "off" | "alt-routes"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes") => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1049,6 +1055,31 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="outer">Outer</option>
                 <option value="lowdata">Low data</option>
                 <option value="gooddata">Good data</option>
+              </select>
+            </div>
+          )}
+
+          {/* Admin-only: "Features" filter. Slices destinations by
+              which optional modal features they'd surface on click
+              (alt routes, etc). Useful for spot-checking coverage of
+              specific features without clicking through every
+              station. Start-list deliberately small — add options as
+              new modal features land. */}
+          {adminMode && (
+            <div className="mt-1.5 flex items-center gap-[0.4rem]">
+              <Label htmlFor="primary-feature-filter" className="cursor-pointer text-xs text-muted-foreground">
+                Features
+              </Label>
+              <select
+                id="primary-feature-filter"
+                value={primaryFeatureFilter}
+                onChange={(e) => onPrimaryFeatureFilterChange(
+                  e.target.value as "off" | "alt-routes",
+                )}
+                className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="off">—</option>
+                <option value="alt-routes">Alternative routes</option>
               </select>
             </div>
           )}
