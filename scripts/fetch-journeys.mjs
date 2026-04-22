@@ -86,22 +86,6 @@ console.log(
   `Origin: ${originFeature.properties.name} (${originLat}, ${originLng})`
 )
 
-// Origin stations are never treated as destinations — skip all of them, not
-// just the one we're querying from. This list is the single source of truth
-// for which stations are origins vs destinations.
-const originStations = new Set(
-  JSON.parse(readFileSync("data/origin-stations.json", "utf-8")).map(
-    (n) => n.toLowerCase()
-  )
-)
-
-if (!originStations.has(ORIGIN_NAME.toLowerCase())) {
-  console.error(
-    `Error: "${ORIGIN_NAME}" is not listed in data/origin-stations.json`
-  )
-  process.exit(1)
-}
-
 // Load ratings so we can filter by rating if --filter is set
 const ratings = JSON.parse(readFileSync("data/station-ratings.json", "utf-8"))
 
@@ -322,9 +306,6 @@ async function main() {
     // Skip excluded stations (deliberately hidden from the map).
     // excluded-stations.json is now coordKey-only — unambiguous for stations with shared names.
     if (excluded.has(coordKey)) return false
-
-    // Skip all origin stations — they're origins, not destinations
-    if (originStations.has(name.toLowerCase())) return false
 
     // If --station is set, only include that specific station
     if (STATION_FILTER && name.toLowerCase() !== STATION_FILTER.toLowerCase()) {
