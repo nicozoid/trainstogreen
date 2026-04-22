@@ -6,6 +6,7 @@ import Map, { Layer, MapMouseEvent, MapRef, Source } from "react-map-gl/mapbox"
 import "mapbox-gl/dist/mapbox-gl.css"
 import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { HelpButton } from "@/components/help-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
@@ -1486,6 +1487,17 @@ export default function HikeMap() {
   // moving AWAY FROM, not the one we're moving TO. pendingPrimaryCoord
   // is committed outside the transition and always reflects the target.
   const [pendingPrimaryCoord, setPendingPrimaryCoord] = useState<string | null>(null)
+  // Coord of the friend being ADDED (or switched to). Drives the
+  // "Looking up trains from <X>" label during an add/switch transition.
+  // Cleared (null) during a friend-removal transition so the goodbye
+  // label below takes over.
+  const [pendingFriendCoord, setPendingFriendCoord] = useState<string | null>(null)
+  // Coord of the friend being REMOVED. Populated right before the
+  // remove-transition starts, captured from whatever friendOrigin was
+  // at the moment the user clicked Remove. Drives the pill label
+  // "Saying goodbye to <X>" — mutually exclusive with
+  // pendingFriendCoord.
+  const [goodbyeFriendCoord, setGoodbyeFriendCoord] = useState<string | null>(null)
   // Three-phase lifecycle for the home-station notification pill:
   //   - "idle"    : pill hidden (opacity 0, aria-hidden).
   //   - "loading" : spinner + "Looking up trains from X".
@@ -1534,8 +1546,39 @@ export default function HikeMap() {
   }, [isPending])
   const setPrimaryOrigin = useCallback((next: string) => {
     setPendingPrimaryCoord(next)
+    setPendingFriendCoord(null)
+    setGoodbyeFriendCoord(null)
     startTransition(() => setPrimaryOriginRaw(next))
   }, [setPrimaryOriginRaw])
+  // Wrap setFriendOrigin in the same transition machinery so picking
+  // a friend station (or clearing it) shows the notification pill
+  // while the heavy routing recompute runs in the background.
+  // Capturing the target coord in pendingFriendCoord lets the pill
+  // label read "Looking up trains from friend's <X>" before the new
+  // friendOrigin commits. null means "friend cleared" — we still
+  // want a transition so the map recompute is deferred, but no
+  // pending-coord so the pill stays idle.
+  // Keep a ref of the LIVE friendOrigin so the callback can read the
+  // latest value without re-creating itself every time friendOrigin
+  // changes. The useEffect below syncs the ref (we can't assign
+  // during render because the state declaration is further down in
+  // the component body — avoids a "used before declaration" error).
+  const currentFriendOriginRef = useRef<string | null>(null)
+  const setFriendOriginWithTransition = useCallback((next: string | null) => {
+    setPendingPrimaryCoord(null)
+    if (next === null) {
+      // Removal: capture the friend being dismissed so the pill can
+      // read "Saying goodbye to <X>". Clear pendingFriendCoord so
+      // the add/switch branch doesn't fire.
+      setPendingFriendCoord(null)
+      setGoodbyeFriendCoord(currentFriendOriginRef.current)
+    } else {
+      // Add / switch: drive the "Looking up trains from <X>" label.
+      setPendingFriendCoord(next)
+      setGoodbyeFriendCoord(null)
+    }
+    startTransition(() => setFriendOrigin(next))
+  }, [])
   // Reverse lookup: cluster-member coord → parent primary coord. Lets the
   // search-based picker redirect a tap on (e.g.) Waterloo East to the
   // Waterloo primary, or St Pancras to the Kings Cross primary, instead of
@@ -1595,6 +1638,12 @@ export default function HikeMap() {
       ? coord
       : (clusterMemberToPrimary[coord] ?? coord)
     setPendingPrimaryCoord(resolved)
+    // Clear any stale pendingFriendCoord so the notification pill
+    // reads the NEW primary rather than a previously-set friend.
+    // Without this, switching primary while a friend is active would
+    // keep the label showing the friend's name.
+    setPendingFriendCoord(null)
+    setGoodbyeFriendCoord(null)
     // Same transition wrapper as setPrimaryOrigin — the stations memo
     // recomputation is equally expensive whichever route you took to
     // pick a primary. Both state updates are inside the transition
@@ -1622,6 +1671,9 @@ export default function HikeMap() {
   themeRef.current = theme
   // Raw station data — loaded once, without primaryOrigin-dependent overrides
   const [baseStations, setBaseStations] = useState<StationCollection | null>(null)
+  // Keep a ref in sync with baseStations for async admin flows that
+  // need the latest value without being locked into a render closure.
+  useEffect(() => { baseStationsRef.current = baseStations }, [baseStations])
   // Origin stations (lowercase names). Seeded from data/origin-stations.json,
   // mutated via the admin-mode square-icon toggle in the station overlay.
   const [originStations, setOriginStations] = useState<Set<string>>(() => new Set(INITIAL_ORIGIN_STATIONS))
@@ -1640,6 +1692,13 @@ export default function HikeMap() {
   // filter state). Value is a "lng,lat" coord key.
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
   const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
+  // Keep the ref (declared above) in sync with friendOrigin so the
+  // setFriendOriginWithTransition callback can read the latest value
+  // on a removal without being forced to re-create on every
+  // friendOrigin change.
+  useEffect(() => {
+    currentFriendOriginRef.current = friendOrigin
+  }, [friendOrigin])
   // Lazy-loader for per-origin journey files. When the user picks a
   // friend (or switches home to one of the Routes-API primaries) the
   // corresponding journeys/<slug>.json is fetched and its records
@@ -1722,6 +1781,57 @@ export default function HikeMap() {
   useEffect(() => {
     if (primaryOrigin) ensureOriginLoaded(primaryOrigin)
   }, [primaryOrigin, ensureOriginLoaded])
+  // Precomputed routing diffs — loaded from `/routing/<slug>.json`
+  // files keyed by primary slug. Shape per entry:
+  //     { [coordKey]: { ...routing-added-or-changed-fields } }
+  // Each diff only stores fields the routing pass ADDED or MODIFIED
+  // on top of baseStations (everything else is already in
+  // stations.json). When the active primary has a loaded diff AND
+  // no friend is set, `routedStations` short-circuits and
+  // reconstructs a full FeatureCollection by merging the diff over
+  // baseStations instead of running the ~10s live compute.
+  const [precomputedRoutingByPrimary, setPrecomputedRoutingByPrimary] = useState<
+    Record<string, Record<string, Record<string, unknown>>>
+  >({})
+  // Coord → slug mapping for every primary that has a precomputed
+  // routing file available. Narrow: only the primaries that actually
+  // appear in the public dropdowns by default get precomputed.
+  // Anything else (user searches a non-preloaded London station)
+  // falls through to live compute.
+  const PRIMARY_SLUG: Record<string, string> = {
+    "-0.1269,51.5196":       "central-london",
+    "-0.0035472,51.541289":  "stratford",
+    // Preloaded friend-dropdown defaults — also precomputable as
+    // primaries in case admin / a future feature wants to use them
+    // as home origins. Their journey-file counterparts live under
+    // public/journeys/ for friend-side rendering; these are the
+    // home-side precomputed routing diffs.
+    "-1.898694,52.4776459":  "birmingham",
+    "-1.1449555,52.9473037": "nottingham",
+  }
+  // Lazy-fetch the precomputed routing diff for the currently active
+  // primary. Fires on mount (for the default home) and whenever the
+  // user switches primary to one that has a slug in PRIMARY_SLUG.
+  // Caches per-primary — switching back to a previously-loaded
+  // primary reuses the cached diff without a re-fetch. Missing files
+  // (404 or primary not in PRIMARY_SLUG) leave the cache entry
+  // absent, and the routedStations memo falls through to live
+  // compute for that primary.
+  useEffect(() => {
+    const slug = PRIMARY_SLUG[primaryOrigin]
+    if (!slug) return
+    // Already cached (even as explicit null on a previous 404) — don't refetch.
+    if (slug in precomputedRoutingByPrimary) return
+    fetch(`/routing/${slug}.json`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: Record<string, Record<string, unknown>> | null) => {
+        if (data && typeof data === "object") {
+          setPrecomputedRoutingByPrimary((prev) => ({ ...prev, [slug]: data }))
+        }
+      })
+      .catch(() => { /* swallow — fall through to live compute */ })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [primaryOrigin, precomputedRoutingByPrimary])
   // "Direct trains only" toggles — when true, only keep stations reachable
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
@@ -1792,6 +1902,30 @@ export default function HikeMap() {
   // Reset to false when the style changes (theme toggle) so Sources/Layers
   // don't try to render before the new style has finished loading.
   const [mapReady, setMapReady] = useState(false)
+  // When set, the routedStations short-circuit refuses to return the
+  // precomputed diff for this slug. Used by the admin "Regenerate
+  // routing (all)" button to force live compute on a primary whose
+  // precompute file is still on disk. Cleared once the admin flow
+  // finishes so normal users keep the instant-load path.
+  const [bypassPrecomputeForSlug, setBypassPrecomputeForSlug] = useState<string | null>(null)
+  // Drives the admin "Regen routing (all)" button's visual state.
+  // Null = idle, otherwise { index, total, slug } describes the
+  // primary currently being regenerated. The button label + spinner
+  // render off this. CSS-animated (compositor layer) so the spinner
+  // keeps rotating even during the 10s main-thread freeze of each
+  // primary's live compute.
+  const [regenProgress, setRegenProgress] = useState<{
+    index: number
+    total: number
+    slug: string
+  } | null>(null)
+  // Refs tracking latest routedStations / baseStations values. The
+  // admin "Regenerate routing" flow runs asynchronously across
+  // multiple primary switches, and each await needs to read the
+  // LATEST memo output — closure-capture of the state at handler
+  // creation time would give stale data.
+  const routedStationsRef = useRef<StationCollection | null>(null)
+  const baseStationsRef = useRef<StationCollection | null>(null)
   // Per-origin Google-Routes journey files, lazy-loaded from
   // /public/journeys/<slug>.json when the user picks a friend in
   // one of the 5 pre-fetched origins, or switches home to one of
@@ -1819,21 +1953,6 @@ export default function HikeMap() {
     "-1.1449555,52.9473037": "nottingham",
     "-1.898694,52.4776459": "birmingham",
   }
-  // Precomputed routing diff — loaded from
-  // `/routing/central-london.json` when it exists. Shape:
-  //     { [coordKey]: { ...routing-added-or-changed-fields } }
-  // The diff only stores fields the routing pass ADDED or MODIFIED
-  // on top of baseStations (everything else is already in
-  // stations.json). When the active primary is Central London AND no
-  // friend is set, `routedStations` short-circuits and reconstructs a
-  // full FeatureCollection by merging this diff over baseStations
-  // instead of running the ~10s compute.
-  const [precomputedRouting, setPrecomputedRouting] = useState<
-    Record<string, Record<string, unknown>> | null
-  >(null)
-  // Coord of the Central London synthetic primary. Keeping this as a
-  // constant here so the precompute gate below is easy to grep for.
-  const CENTRAL_LONDON_COORD = "-0.1269,51.5196"
   // `mapReady` flips true on the style's `load` event — style + icons
   // are wired, but tiles / markers may not yet be painted. For the
   // welcome-banner "is the map actually visible?" gate we want a
@@ -2045,24 +2164,23 @@ export default function HikeMap() {
   // toggles don't re-trigger this expensive pass (~10s stall).
   const routedStations = useMemo(() => {
     if (!baseStations) return null
-    // Short-circuit: if the active primary is Central London and no
-    // friend is set, AND we've got a precomputed routing diff loaded,
-    // reconstruct the full FeatureCollection by merging the diff over
-    // baseStations and skip the heavy compute below. Any other
-    // primary, any friend origin, or a missing snapshot → fall
-    // through to the live compute (current behaviour). This is a
-    // cheap O(features) spread — no routing work — so it's fine to
-    // do it here in the memo body.
-    if (
-      primaryOrigin === CENTRAL_LONDON_COORD &&
-      !friendOrigin &&
-      precomputedRouting
-    ) {
+    // Short-circuit: if we've got a precomputed routing diff for
+    // the currently active primary AND no friend is set, reconstruct
+    // the full FeatureCollection by merging the diff over
+    // baseStations and skip the heavy compute below. A missing diff
+    // (no slug for this primary, 404 on the file, or still loading)
+    // or a friend being set both fall through to the live compute
+    // path (current behaviour). This is a cheap O(features) spread —
+    // no routing work — so it's fine to do it here in the memo body.
+    const primarySlug = PRIMARY_SLUG[primaryOrigin]
+    const diffForPrimary = primarySlug ? precomputedRoutingByPrimary[primarySlug] : null
+    const isBypassed = primarySlug != null && bypassPrecomputeForSlug === primarySlug
+    if (!friendOrigin && diffForPrimary && !isBypassed) {
       return {
         ...baseStations,
         features: baseStations.features.map((f) => {
           const coordKey = f.properties.coordKey as string
-          const delta = precomputedRouting[coordKey]
+          const delta = diffForPrimary[coordKey]
           if (!delta) return f
           // Merge the routing deltas on top of base properties. For
           // `journeys` we merge entries rather than replace, so
@@ -3856,11 +3974,13 @@ export default function HikeMap() {
                 }
               }
               if (!best) continue
-              // Upstream of the first leg (T → hub) — reuse buildCallingPoints
-              // on T's hub-direct entry. Downstream is intentionally empty
-              // for indirect alts; showing intermediate stops of two
-              // different trains at once would be more confusing than
-              // helpful in the first pass.
+              // Upstream + downstream of the first leg (T → hub).
+              // Both reuse buildCallingPoints on T's hub-direct entry.
+              // Downstream on an indirect alt = intermediate stops on
+              // leg 1 before the change station, which are valid
+              // alternative boarding points for the same journey
+              // (e.g. Moorgate→FPK→Welwyn: board at Old Street
+              // instead of Moorgate and save 2 min).
               const cpLeg1 = buildCallingPoints(tCoord, best.hCoord)
               candidates.push({
                 terminusName: canonical,
@@ -3871,7 +3991,7 @@ export default function HikeMap() {
                 // matches since only-directs have real calling lists and
                 // indirects have no overlap with them).
                 callingList: [`__indirect_via_${best.hubName}`],
-                downstream: [],
+                downstream: cpLeg1?.downstream ?? [],
                 upstream: cpLeg1?.upstream ?? [],
                 changes: 1,
                 changeStations: [best.hubName],
@@ -3915,25 +4035,42 @@ export default function HikeMap() {
               }
               const main = kept[0]
               // "Subset coverage" dedup — drop any alternative whose
-              // origin AND every calling-at station is already covered
-              // by a higher-ranked (kept) route. Example: for LON→PHR,
-              // the 52m Waterloo alt calls [WAE, LBG, …] which is a
-              // strict subset of the main LBG route's coverage (WAE
-              // is upstream of LBG, LBG is the origin); so there's no
-              // new information in surfacing Waterloo as a separate
-              // paragraph. WAE/WAT normalised as the same station via
-              // CLUSTER_PARENT to handle the Waterloo / Waterloo East
-              // cluster case.
+              // set of MENTIONED LONDON TERMINI is already fully
+              // covered by higher-ranked (kept) routes. Only London
+              // termini count: intermediate suburban stops (e.g.
+              // Coulsdon South on a BFR alt) shouldn't save a route
+              // that otherwise restates termini already listed.
+              // Farringdon is EXCLUDED — it's a through-station, not
+              // a terminus, and its appearance in a route doesn't
+              // constitute a genuinely new London boarding option.
+              // WAE normalises to WAT (Waterloo East sits under the
+              // Waterloo cluster).
+              const LONDON_TERMINUS_CRS = new Set<string>([
+                "KGX", "STP", "SPL", "EUS",     // KX / St Pancras / Euston
+                "PAD", "VIC", "WAT", "WAE",      // Paddington / Vic / Waterloo (+ East)
+                "LST", "MYB", "CHX", "LBG",      // LSt / Marylebone / CHX / LBG
+                "BFR", "FST", "CST", "MOG",      // Blackfriars / FST / CST / Moorgate
+                // NOTE: Farringdon (ZFD) intentionally omitted.
+              ])
               const CLUSTER_PARENT: Record<string, string> = { WAE: "WAT" }
               const normCrs = (crs: string) => CLUSTER_PARENT[crs] ?? crs
               type KeptRoute = typeof main
+              // Coverage set for dedup: ONLY London-terminus CRS
+              // codes appearing in this route. Non-terminus stops
+              // (Coulsdon South, Finsbury Park as an interchange,
+              // etc.) are filtered out so they can't save an alt
+              // that restates already-covered termini.
               const coveredSet = (r: KeptRoute): Set<string> => {
                 const set = new Set<string>()
-                const originCrs = originRoutes[r.terminusCoord]?.crs
-                if (originCrs) set.add(normCrs(originCrs))
-                for (const u of r.upstream) set.add(normCrs(u.crs))
-                for (const u of r.extraUpstream) if (u.crs) set.add(normCrs(u.crs))
-                for (const d of r.downstream) set.add(normCrs(d.crs))
+                const push = (raw: string | undefined) => {
+                  if (!raw) return
+                  const c = normCrs(raw)
+                  if (LONDON_TERMINUS_CRS.has(c)) set.add(c)
+                }
+                push(originRoutes[r.terminusCoord]?.crs)
+                for (const u of r.upstream) push(u.crs)
+                for (const u of r.extraUpstream) push(u.crs)
+                for (const d of r.downstream) push(d.crs)
                 return set
               }
               const unionCovered = coveredSet(main)
@@ -3941,15 +4078,20 @@ export default function HikeMap() {
               for (const c of kept.slice(1)) {
                 if (c.durationMinutes > main.durationMinutes + 30) continue
                 const altCov = coveredSet(c)
+                // Empty terminus set → the alt mentions no termini
+                // at all (rare — would only happen if the route runs
+                // entirely through non-terminus London stations).
+                // Treat as "nothing new", drop it.
+                if (altCov.size === 0) continue
                 let allCovered = true
                 for (const s of altCov) {
                   if (!unionCovered.has(s)) { allCovered = false; break }
                 }
                 if (allCovered) continue
                 alternatives.push(c)
-                // Roll this alt's coverage into the union so later
-                // alternatives are compared against the full picture
-                // (main + all previously-kept alternatives).
+                // Roll this alt's terminus coverage into the union so
+                // later alts are compared against the full picture
+                // (main + previously-kept alts).
                 for (const s of altCov) unionCovered.add(s)
               }
               // Merge main.extraUpstream into the active journey's upstream
@@ -4002,7 +4144,11 @@ export default function HikeMap() {
         return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
-  }, [baseStations, primaryOrigin, coordToName, precomputedRouting, friendOrigin])
+  }, [baseStations, primaryOrigin, coordToName, precomputedRoutingByPrimary, friendOrigin, bypassPrecomputeForSlug])
+  // Keep a ref in sync with the routedStations memo output for the
+  // async admin "Regenerate routing" flow, which reads the latest
+  // compute result after awaited state transitions.
+  useEffect(() => { routedStationsRef.current = routedStations }, [routedStations])
 
   // Thin wrapper that applies the isOrigin / isExcluded flags per
   // feature. Cheap (a single Set.has + object spread per feature, no
@@ -4672,12 +4818,11 @@ export default function HikeMap() {
     // behaviour as today. No need to block the stations fetch on
     // this; the two resolve independently and the memo picks
     // whichever arrives first.
-    fetch("/routing/central-london.json")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: Record<string, Record<string, unknown>> | null) => {
-        if (data && typeof data === "object") setPrecomputedRouting(data)
-      })
-      .catch(() => { /* swallow — fall through to live compute */ })
+    // No longer eager-fetches only central-london. A separate
+    // useEffect below watches `primaryOrigin` and lazy-fetches the
+    // current primary's routing file on first use. This way users
+    // who immediately switch primary don't download the default
+    // file just to discard it.
 
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
@@ -5826,11 +5971,11 @@ export default function HikeMap() {
         coordToName={coordToName}
         friendOrigin={friendOrigin}
         friendOrigins={FRIEND_ORIGIN_KEYS}
-        onFriendOriginChange={setFriendOrigin}
+        onFriendOriginChange={setFriendOriginWithTransition}
         friendMaxMinutes={friendMaxMinutes}
         onFriendMaxMinutesChange={setFriendMaxMinutes}
-        onActivateFriend={() => setFriendOrigin(FRIEND_ORIGIN_KEYS[0])}
-        onDeactivateFriend={() => setFriendOrigin(null)}
+        onActivateFriend={() => setFriendOriginWithTransition(FRIEND_ORIGIN_KEYS[0])}
+        onDeactivateFriend={() => setFriendOriginWithTransition(null)}
         primaryDirectOnly={primaryDirectOnly}
         // Toggling "Direct" clears "Indirect" (and vice-versa below) — they're
         // mutually exclusive. Without this, a user could leave both ticked
@@ -5975,81 +6120,59 @@ export default function HikeMap() {
               RTT
             </button>
           )}
-          {/* Clear session — admin-only. Wipes every ttg:* localStorage
-              entry (primary origin, recent custom primaries, friend
-              origin, ratings cache, any future persisted UI state) and
-              reloads the page. Gives the admin a quick way to see the
-              site exactly as a first-time visitor would — no leftover
-              state from prior testing sessions. */}
+          {/* Clear-session step is now part of the combined
+              "Regenerate" button below — it wipes ttg:* localStorage
+              before kicking off the per-primary regen loop. No
+              standalone Clear-session button any more. */}
+          {/* Regenerate — admin-only. A single button that:
+                1. Wipes ttg:* localStorage (formerly the standalone
+                   "Clear session" button) so testing starts fresh.
+                2. For each slug in PRIMARY_SLUG:
+                   - deletes the existing on-disk snapshot so runtime
+                     can't short-circuit to stale data
+                   - switches primary to that coord + flags the
+                     precompute cache as bypassed
+                   - waits for the routing memo to live-compute (~10s)
+                   - builds a lean diff from the fresh routedStations
+                     (simplified polylines + only fields routing
+                     added/changed) + POSTs to /api/dev/save-routing
+                3. Restores the admin's original primary and clears
+                   the bypass flag.
+              When to use: after changing routing logic OR upstream
+              data (origin-routes.json, excluded stations, …) so the
+              cheat-sheet files reflect the new output. */}
           {devExcludeActive && (
             <button
-              onClick={() => {
-                // Confirm since wiping is irreversible (old recents are
-                // gone; the default seed repopulates on next load).
-                if (!confirm("Clear all ttg:* localStorage keys and reload? This simulates a fresh visit.")) return
+              onClick={async () => {
+                const slugEntries = Object.entries(PRIMARY_SLUG)
+                // Auto-clear the friend origin if one is active — the
+                // regen flow needs the memo's short-circuit gate
+                // (`!friendOrigin`) to be true so the precomputed
+                // diff can be saved for a friend-less state. Done
+                // before the confirm() dialog so if the admin cancels,
+                // the friend stays cleared anyway (cheaper than
+                // restoring after).
+                if (friendOrigin) setFriendOrigin(null)
+                if (!confirm(
+                  `Regenerate everything?\n\n`
+                  + `• Wipes ttg:* localStorage (simulates a fresh visit)\n`
+                  + `• Rebuilds all ${slugEntries.length} precomputed routing files\n\n`
+                  + `Live compute runs per primary (≈10s each, total ≈${10 * slugEntries.length}s).\n\n`
+                  + `Primaries: ${slugEntries.map(([, s]) => s).join(", ")}`,
+                )) return
+                // Step 0: wipe ttg:* localStorage (what "Clear session"
+                // used to do). We DON'T reload here — the regen loop
+                // below runs in-page so the admin can keep watching
+                // the spinner.
                 for (let i = localStorage.length - 1; i >= 0; i--) {
                   const k = localStorage.key(i)
                   if (k && k.startsWith("ttg:")) localStorage.removeItem(k)
                 }
-                location.reload()
-              }}
-              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
-              title="Wipe ttg:* localStorage + reload"
-            >
-              Clear session
-            </button>
-          )}
-          {/* Save routing snapshot — admin-only. Serialises the current
-              `routedStations` output to /routing/<key>.json via the
-              dev save endpoint. On subsequent page loads, if the
-              active primary is Central London and no friend is set,
-              the heavy routing memo short-circuits to the saved
-              snapshot instead of recomputing (~10s → near-instant).
-              Only meaningful when the currently-active primary IS
-              Central London with no friend — otherwise the live memo
-              output wouldn't match what the precompute gate expects. */}
-          {devExcludeActive && (
-            <button
-              onClick={async () => {
-                const isCentralLondon = primaryOrigin === CENTRAL_LONDON_COORD
-                if (!isCentralLondon || friendOrigin) {
-                  alert("Save routing: switch primary to Central London and clear the friend origin first.")
-                  return
-                }
-                if (!routedStations || !baseStations) {
-                  alert("Save routing: data isn't ready yet.")
-                  return
-                }
-                // Build a lean diff payload instead of dumping the full
-                // routedStations FeatureCollection. The diff only
-                // stores fields routing ADDED or CHANGED per coordKey,
-                // keyed as a flat object — runtime merges this back
-                // over baseStations at load time. This drops the raw
-                // 26 MB snapshot to only the routing deltas.
-                //
-                // The single biggest byte consumer is the added
-                // `journeys[CENTRAL_LONDON_COORD]` entry per routed
-                // feature, and inside that it's `polylineCoords`.
-                // Round each coord to 5 decimal places (~1 m at UK
-                // latitudes) to shrink polylines ~30% without any
-                // visible change at map display zooms.
-                // Plain object, not Map — `Map` is shadowed by the
-                // react-map-gl import at the top of this file.
-                const baseByCoord: Record<string, StationFeature> = {}
-                for (const f of baseStations.features) {
-                  baseByCoord[f.properties.coordKey as string] = f
-                }
+                const origPrimary = primaryOrigin
+                // ── helpers (hoisted per-click to keep the onclick
+                //    self-contained; same logic as before). ──
                 const roundCoord = (c: [number, number]): [number, number] =>
                   [Math.round(c[0] * 100000) / 100000, Math.round(c[1] * 100000) / 100000]
-                // Douglas–Peucker polyline simplification. Drops
-                // intermediate coords whose perpendicular distance
-                // from the chord between their flanking kept points
-                // is below `tol`. Tolerance 0.0005° ≈ 55m at UK
-                // latitudes — well below any zoom level where the
-                // line is inspected closely, so visually identical
-                // in practice. Drops polyline size ~10x on typical
-                // inter-city routes (488 pts → ~50 pts). Square-
-                // distance form avoids sqrt in the hot loop.
                 const simplifyPolyline = (
                   coords: [number, number][],
                   tol: number,
@@ -6059,7 +6182,6 @@ export default function HikeMap() {
                   const keep = new Uint8Array(coords.length)
                   keep[0] = 1
                   keep[coords.length - 1] = 1
-                  // Iterative stack to avoid recursion blowup on long lines.
                   const stack: [number, number][] = [[0, coords.length - 1]]
                   while (stack.length > 0) {
                     const [iStart, iEnd] = stack.pop()!
@@ -6073,7 +6195,6 @@ export default function HikeMap() {
                     let maxIdx = iStart
                     for (let i = iStart + 1; i < iEnd; i++) {
                       const [px, py] = coords[i]
-                      // Perpendicular-distance² from point to segment.
                       let distSq: number
                       if (segLenSq === 0) {
                         const ex = px - x0, ey = py - y0
@@ -6086,10 +6207,7 @@ export default function HikeMap() {
                         const ex = px - cx, ey = py - cy
                         distSq = ex * ex + ey * ey
                       }
-                      if (distSq > maxDistSq) {
-                        maxDistSq = distSq
-                        maxIdx = i
-                      }
+                      if (distSq > maxDistSq) { maxDistSq = distSq; maxIdx = i }
                     }
                     if (maxDistSq > tolSq) {
                       keep[maxIdx] = 1
@@ -6098,73 +6216,130 @@ export default function HikeMap() {
                     }
                   }
                   const out: [number, number][] = []
-                  for (let i = 0; i < coords.length; i++) {
-                    if (keep[i]) out.push(coords[i])
-                  }
+                  for (let i = 0; i < coords.length; i++) if (keep[i]) out.push(coords[i])
                   return out
                 }
-                const diff: Record<string, Record<string, unknown>> = {}
-                for (const rf of routedStations.features) {
-                  const coordKey = rf.properties.coordKey as string
-                  const bf = baseByCoord[coordKey]
-                  if (!bf) continue
-                  const baseProps = bf.properties as Record<string, unknown>
-                  const routedProps = rf.properties as Record<string, unknown>
-                  const delta: Record<string, unknown> = {}
-                  for (const k of Object.keys(routedProps)) {
-                    // Skip OSM / static metadata — it's in baseStations already.
-                    if (k in baseProps && JSON.stringify(baseProps[k]) === JSON.stringify(routedProps[k])) {
-                      continue
-                    }
-                    // Special-case `journeys`: only store entries the
-                    // routing pass added for our target primary coord.
-                    // Existing per-origin journeys are in baseStations
-                    // already and shouldn't be duplicated.
-                    if (k === "journeys") {
-                      const rj = routedProps[k] as Record<string, unknown> | undefined
-                      const bj = (baseProps[k] as Record<string, unknown> | undefined) ?? {}
-                      if (!rj) continue
-                      const addedOrChanged: Record<string, unknown> = {}
-                      for (const origin of Object.keys(rj)) {
-                        if (JSON.stringify(rj[origin]) === JSON.stringify(bj[origin])) continue
-                        // Simplify polyline (Douglas–Peucker at ~55m
-                        // tolerance) then round remaining coords to
-                        // 5 decimals. Order matters — simplify first
-                        // so rounding doesn't collapse near-duplicate
-                        // keypoints before the algorithm runs.
-                        const entry = { ...(rj[origin] as Record<string, unknown>) }
-                        const pc = entry.polylineCoords as [number, number][] | undefined
-                        if (Array.isArray(pc)) {
-                          const simplified = simplifyPolyline(pc, 0.0005)
-                          entry.polylineCoords = simplified.map(roundCoord)
+                const buildDiff = (rs: StationCollection, bs: StationCollection) => {
+                  const baseByCoord: Record<string, StationFeature> = {}
+                  for (const f of bs.features) baseByCoord[f.properties.coordKey as string] = f
+                  const diff: Record<string, Record<string, unknown>> = {}
+                  for (const rf of rs.features) {
+                    const coordKey = rf.properties.coordKey as string
+                    const bf = baseByCoord[coordKey]
+                    if (!bf) continue
+                    const baseProps = bf.properties as Record<string, unknown>
+                    const routedProps = rf.properties as Record<string, unknown>
+                    const delta: Record<string, unknown> = {}
+                    for (const k of Object.keys(routedProps)) {
+                      if (k in baseProps && JSON.stringify(baseProps[k]) === JSON.stringify(routedProps[k])) continue
+                      if (k === "journeys") {
+                        const rj = routedProps[k] as Record<string, unknown> | undefined
+                        const bj = (baseProps[k] as Record<string, unknown> | undefined) ?? {}
+                        if (!rj) continue
+                        const addedOrChanged: Record<string, unknown> = {}
+                        for (const origin of Object.keys(rj)) {
+                          if (JSON.stringify(rj[origin]) === JSON.stringify(bj[origin])) continue
+                          const entry = { ...(rj[origin] as Record<string, unknown>) }
+                          const pc = entry.polylineCoords as [number, number][] | undefined
+                          if (Array.isArray(pc)) {
+                            const simplified = simplifyPolyline(pc, 0.0005)
+                            entry.polylineCoords = simplified.map(roundCoord)
+                          }
+                          addedOrChanged[origin] = entry
                         }
-                        addedOrChanged[origin] = entry
+                        if (Object.keys(addedOrChanged).length > 0) delta[k] = addedOrChanged
+                        continue
                       }
-                      if (Object.keys(addedOrChanged).length > 0) delta[k] = addedOrChanged
-                      continue
+                      delta[k] = routedProps[k]
                     }
-                    delta[k] = routedProps[k]
+                    if (Object.keys(delta).length > 0) diff[coordKey] = delta
                   }
-                  if (Object.keys(delta).length > 0) diff[coordKey] = delta
+                  return diff
                 }
-                const resp = await fetch("/api/dev/save-routing", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ key: "central-london", payload: diff }),
-                })
-                const result = await resp.json()
-                if (!resp.ok) {
-                  alert(`Save routing failed: ${result.error ?? resp.status}`)
-                  return
+                // ── main loop ──
+                const results: { slug: string; mb?: string; error?: string }[] = []
+                for (let i = 0; i < slugEntries.length; i++) {
+                  const [coord, slug] = slugEntries[i]
+                  // Advertise "working on <slug>" before kicking off
+                  // the compute so the button shows the current step.
+                  setRegenProgress({ index: i + 1, total: slugEntries.length, slug })
+                  // Give React a chance to paint the progress label
+                  // BEFORE we start the blocking compute.
+                  await new Promise((r) => setTimeout(r, 0))
+                  // Step 1: delete the on-disk snapshot so a mid-flow
+                  // reload can't accidentally short-circuit to it.
+                  await fetch("/api/dev/delete-routing", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ key: slug }),
+                  }).catch(() => { /* ignore — next step handles missing files */ })
+                  // Step 2: bypass the in-memory cache for this slug
+                  // and switch primary. Use the raw setter (not
+                  // transition) so we can await subsequent ticks
+                  // directly. Setting both in the same tick means
+                  // React batches into one re-render.
+                  setBypassPrecomputeForSlug(slug)
+                  setPrimaryOriginRaw(coord)
+                  // Step 3: yield so React flushes the re-render and
+                  // the memo runs live. The compute blocks the main
+                  // thread for ~10s; a setTimeout yield after that
+                  // won't fire until the compute completes, so this
+                  // effectively awaits the compute.
+                  await new Promise((r) => setTimeout(r, 0))
+                  // Extra safety margin — give post-commit effects a
+                  // chance to sync routedStationsRef.
+                  await new Promise((r) => setTimeout(r, 250))
+                  const rs = routedStationsRef.current
+                  const bs = baseStationsRef.current
+                  if (!rs || !bs) { results.push({ slug, error: "data not ready" }); continue }
+                  // Step 4: save the lean diff.
+                  const diff = buildDiff(rs, bs)
+                  const resp = await fetch("/api/dev/save-routing", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ key: slug, payload: diff }),
+                  })
+                  const result = await resp.json()
+                  if (!resp.ok) {
+                    results.push({ slug, error: result.error ?? `HTTP ${resp.status}` })
+                  } else {
+                    results.push({ slug, mb: (result.bytes / (1024 * 1024)).toFixed(2) })
+                  }
                 }
-                const kb = (result.bytes / 1024).toFixed(1)
-                const mb = (result.bytes / (1024 * 1024)).toFixed(2)
-                alert(`Saved ${result.path}\nSize: ${mb} MB (${kb} KB)\nFeatures with routing deltas: ${Object.keys(diff).length}`)
+                // Step 5: restore the admin's original primary and
+                // clear the bypass. Clear cache too so the next runs
+                // fetch the newly-written files fresh.
+                setBypassPrecomputeForSlug(null)
+                setPrecomputedRoutingByPrimary({})
+                setPrimaryOriginRaw(origPrimary)
+                setRegenProgress(null)
+                const summary = results.map((r) =>
+                  r.error ? `  ${r.slug}: FAIL — ${r.error}` : `  ${r.slug}: ${r.mb} MB`,
+                ).join("\n")
+                alert(`Regen complete:\n${summary}\n\nReloading as a fresh visitor…`)
+                // Reload the page so the admin experiences the app
+                // exactly as a first-time visitor would: admin mode
+                // off (devExcludeActive is useState — reload resets
+                // to false), ttg:* localStorage already wiped at the
+                // start of this flow, and the newly-saved routing
+                // files in play.
+                location.reload()
               }}
-              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
-              title="Serialize current routedStations → public/routing/central-london.json"
+              disabled={regenProgress != null}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60 disabled:opacity-70 disabled:cursor-default inline-flex items-center gap-2"
+              title="Delete + regenerate all precomputed routing files"
             >
-              Save routing
+              {regenProgress ? (
+                <>
+                  {/* Logo-spinner in its compact form. CSS-animated
+                      (compositor layer) so the rod keeps rotating
+                      during each primary's 10s main-thread freeze. */}
+                  <LogoSpinner className="h-3" label="" />
+                  <span>{regenProgress.slug} ({regenProgress.index}/{regenProgress.total})</span>
+                </>
+              ) : (
+                <>Regenerate</>
+              )}
             </button>
           )}
         </div>
@@ -6796,9 +6971,12 @@ export default function HikeMap() {
                   "format",
                   ["get", "name"], { "font-scale": 1 },
                   "\n", {},
-                  // When friend mode is active, show both times separated by " & "
+                  // Friend-mode separator: "&" with two spaces on either
+                  // side. The double-space visually breathes the two
+                  // times apart so the label doesn't read as one run-on
+                  // figure.
                   ...(friendOrigin
-                    ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
+                    ? [["concat", timeExpression("londonMinutes"), "  &  ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
                     : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
                   ),
                 ],
@@ -6863,9 +7041,15 @@ export default function HikeMap() {
                         "format",
                         ["get", "name"], { "font-scale": 1 },
                         "\n", {},
+                        // Time-to-station label at font-scale 0.9 —
+                        // slightly smaller than the station name so
+                        // it reads as secondary info. Dual-origin
+                        // rendering uses "/" (was "&") to read as a
+                        // pair of alternatives rather than a
+                        // summation.
                         ...(friendOrigin
-                          ? [["concat", timeExpression("londonMinutes"), " & ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
-                          : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
+                          ? [["concat", timeExpression("londonMinutes"), "  &  ", timeExpression("friendMinutes")], { "font-scale": 0.9 }]
+                          : [timeExpression("londonMinutes"), { "font-scale": 0.9 }]
                         ),
                       ],
                   "text-size": 11,
@@ -7219,7 +7403,15 @@ export default function HikeMap() {
       <div
         aria-hidden={notificationPhase === "idle"}
         className={cn(
-          "pointer-events-none absolute inset-0 z-[50] flex items-center justify-center",
+          // Mobile: pin to bottom of viewport with matching pb-4
+          // (same visual margin as the horizontal px-4). Desktop
+          // (sm+): center vertically, no extra bottom padding.
+          "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0",
+          // `px-4` keeps the inner pill off the viewport edges on
+          // narrow mobile widths when the label is long (e.g.
+          // "Looking up trains from Kings Cross, St Pancras, & Euston"
+          // would otherwise touch both screen edges).
+          "px-4",
           // Bumped from 200ms → 700ms so the post-success fade
           // lingers long enough to register as "that worked, moving
           // on" rather than feeling abrupt. Fade-IN uses the same
@@ -7230,48 +7422,44 @@ export default function HikeMap() {
           notificationPhase !== "idle" ? "opacity-100" : "opacity-0",
         )}
       >
-        <div className="flex items-center gap-3 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
-          {notificationPhase !== "loading" ? (
-            /* Tick. Rendered whenever we're NOT actively loading —
-                i.e. during "success" AND "idle". Using "not loading"
-                rather than "success only" matters during the fade-out:
-                phase flips success→idle INSTANTLY, but the pill's
-                opacity takes 200ms to animate to 0. If the icon
-                swapped back to the spinner the moment phase became
-                "idle", the user would see the checkmark briefly
-                replaced by a spinner as the pill faded away. By
-                keeping the tick during "idle", it stays visible
-                throughout the fade-out. During the INITIAL idle
-                (before any interaction) the outer opacity-0 hides
-                the pill anyway, so there's no visual cost.
-
-                Same 20px footprint as the spinner so the pill
-                doesn't reflow when the icon swaps. Inline SVG
-                (rather than pulling in an icon lib for a single
-                glyph) — path is a classic Heroicons checkmark. */
-            <svg
-              aria-label="Done"
-              // text-primary maps to CSS --primary, the same token
-              // used for Heavenly (icon-highlight) and Good
-              // (icon-verified) map icons via colors.primary.
-              // Keeping success messaging on-brand instead of a
-              // generic green.
-              className="h-5 w-5 text-primary"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-              />
-            </svg>
-          ) : (
-            <span
-              aria-label="Loading"
-              className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-primary"
-            />
-          )}
+        <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
+          {/* Fixed-width icon slot. Width is the spinner's natural
+              rendered width at h-4 (viewBox aspect 132:50 →
+              4 × 132/50 ≈ 10.56 spacing units, rounded to w-11) so
+              swapping from spinner to tick doesn't reflow the pill.
+              The tick sits centred inside; the spinner fills the
+              width naturally. h-5 keeps the height consistent. */}
+          <span
+            className="inline-flex items-center justify-center text-primary"
+            // Explicit aspect-derived width — can't rely on a Tailwind
+            // step alone because the spinner is the authoritative
+            // reference (aspect 132:50 × h-4 ≈ 3.168rem). Slightly
+            // generous rounding (3.2rem) to avoid clipping halo/stroke.
+            style={{ width: "3.2rem", height: "1.25rem" }}
+          >
+            {notificationPhase !== "loading" ? (
+              /* Tick. Rendered whenever we're NOT actively loading —
+                  i.e. during "success" AND "idle". During the
+                  fade-out window (phase flips success→idle instantly
+                  but the pill's opacity takes 200ms to animate to 0)
+                  keeping the tick avoids a brief spinner flash.
+                  Path is a classic Heroicons checkmark. */
+              <svg
+                aria-label="Done"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  clipRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                />
+              </svg>
+            ) : (
+              <LogoSpinner className="h-4" label="Loading" />
+            )}
+          </span>
           {/* Label resolution, most-specific first:
                 1. menuName — used when the primary has a cluster
                    (KX→"Kings Cross, St Pancras, & Euston",
@@ -7290,17 +7478,31 @@ export default function HikeMap() {
                    practice; the outer opacity-0 hides the pill in
                    the idle phase anyway. */}
           <span className="text-sm font-medium">
-            Looking up trains from {pendingPrimaryCoord
-              ? (
-                  PRIMARY_ORIGIN_CLUSTER[pendingPrimaryCoord]
-                    ? (PRIMARY_ORIGINS[pendingPrimaryCoord]?.menuName
-                        ?? PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                        ?? pendingPrimaryCoord)
-                    : (PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                        ?? coordToName[pendingPrimaryCoord]
-                        ?? "new home")
-                )
-              : "new home"}
+            {goodbyeFriendCoord
+              ? `Saying goodbye to ${
+                  FRIEND_ORIGINS[goodbyeFriendCoord]?.displayName
+                  ?? PRIMARY_ORIGINS[goodbyeFriendCoord]?.displayName
+                  ?? coordToName[goodbyeFriendCoord]
+                  ?? "friend"
+                }`
+              : `Looking up trains from ${pendingFriendCoord
+                ? (
+                    FRIEND_ORIGINS[pendingFriendCoord]?.displayName
+                    ?? PRIMARY_ORIGINS[pendingFriendCoord]?.displayName
+                    ?? coordToName[pendingFriendCoord]
+                    ?? "friend"
+                  )
+                : (pendingPrimaryCoord
+                  ? (
+                      PRIMARY_ORIGIN_CLUSTER[pendingPrimaryCoord]
+                        ? (PRIMARY_ORIGINS[pendingPrimaryCoord]?.menuName
+                            ?? PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
+                            ?? pendingPrimaryCoord)
+                        : (PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
+                            ?? coordToName[pendingPrimaryCoord]
+                            ?? "new home")
+                    )
+                  : "new home")}`}
           </span>
         </div>
       </div>
