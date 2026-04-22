@@ -1906,7 +1906,12 @@ export default function HikeMap() {
   // Derived stations — overrides londonMinutes when primaryOrigin isn't Farringdon,
   // so slider filtering and Mapbox labels show the selected origin's travel times.
   // Recomputes when the user switches origin via the dropdown, without re-fetching.
-  const stations = useMemo(() => {
+  // Heavy routing pass — computes journeys, alt routes, effective
+  // minutes, etc. for every feature against the active primary.
+  // Deliberately NOT dependent on excludedStations / originStations:
+  // those flags are applied in a cheap downstream useMemo so admin
+  // toggles don't re-trigger this expensive pass (~10s stall).
+  const routedStations = useMemo(() => {
     if (!baseStations) return null
     // Build a CRS → { coord, name, coordKey, isLondon } lookup once per
     // baseStations load. RTT's direct-reachable data stores calling points as
@@ -2369,11 +2374,14 @@ export default function HikeMap() {
     return {
       ...baseStations,
       features: baseStations.features.map((f) => {
-        // Origin + exclusion sets are both coord-keyed now, so same-named stations
-        // (Glasgow vs London Charing Cross) stay independent.
         const coordKey = f.properties.coordKey as string
-        const shouldBeOrigin = originStations.has(coordKey)
-        const shouldBeExcluded = excludedStations.has(coordKey)
+        // NOTE: origin / excluded flags are applied in a SEPARATE thin
+        // useMemo downstream so toggling them via admin actions doesn't
+        // re-run this heavy routing pass (Extension A, alt routes,
+        // walking-hub composition across ~3700 features × 400+ hubs —
+        // previously caused ~10s UI freeze on exclude/origin toggle).
+        // Keep `coordKey` in scope because downstream routing code
+        // still needs it.
 
         // Apply primaryOrigin-dependent minute override.
         // Two data paths:
@@ -3528,12 +3536,13 @@ export default function HikeMap() {
           }
         }
 
-        // Build next properties — flip isOrigin + isExcluded flags, and optionally override londonMinutes
+        // Build next properties — optionally override londonMinutes,
+        // then stash routing results. isOrigin / isExcluded flags are
+        // intentionally NOT applied here — they get applied in a
+        // separate thin useMemo downstream (see
+        // `allStationsWithRatings` below) so toggling them doesn't
+        // force this heavy routing pass to re-run.
         const next: Record<string, unknown> = { ...f.properties }
-        if (shouldBeOrigin) next.isOrigin = true
-        else delete next.isOrigin
-        if (shouldBeExcluded) next.isExcluded = true
-        else delete next.isExcluded
         if (originMins != null) next.londonMinutes = originMins
         else if (rttClearLondonMinutes) next.londonMinutes = null
         // Stash the effective-changes count so the direct-trains filter can use
@@ -3822,7 +3831,31 @@ export default function HikeMap() {
         return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
-  }, [baseStations, primaryOrigin, originStations, excludedStations, coordToName])
+  }, [baseStations, primaryOrigin, coordToName])
+
+  // Thin wrapper that applies the isOrigin / isExcluded flags per
+  // feature. Cheap (a single Set.has + object spread per feature, no
+  // routing work), so toggling via admin actions is instant.
+  const stations = useMemo(() => {
+    if (!routedStations) return null
+    return {
+      ...routedStations,
+      features: routedStations.features.map((f) => {
+        const coordKey = f.properties.coordKey as string
+        const isOrigin = originStations.has(coordKey)
+        const isExcluded = excludedStations.has(coordKey)
+        // Skip allocation if nothing's changing — most features stay
+        // plain on every toggle.
+        const hadOrigin = !!f.properties.isOrigin
+        const hadExcluded = !!f.properties.isExcluded
+        if (isOrigin === hadOrigin && isExcluded === hadExcluded) return f
+        const next: Record<string, unknown> = { ...f.properties }
+        if (isOrigin) next.isOrigin = true; else delete next.isOrigin
+        if (isExcluded) next.isExcluded = true; else delete next.isExcluded
+        return { ...f, properties: next as typeof f.properties }
+      }),
+    }
+  }, [routedStations, originStations, excludedStations])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -3868,10 +3901,19 @@ export default function HikeMap() {
         const mins = f.properties.londonMinutes as number | null
 
         // Shared helper — returns true if the travel time passes both sliders.
-        // Stations with no time data pass (they can't be filtered by time).
         // When the max slider is at its admin ceiling (600), treat as unlimited.
+        //
+        // Stations with no time data (mins == null) are treated as
+        // "arbitrarily far" — they pass only when BOTH sliders are
+        // unconstrained (max at 600, min at 0). Any explicit constraint
+        // hides them. Previously null-time stations always passed in
+        // admin mode, which made the sliders appear broken for the
+        // many distant stations whose Google Routes fetch returned
+        // nothing.
         const passesTimeFilter = () => {
-          if (mins == null) return true
+          if (mins == null) {
+            return maxMinutes >= 600 && minMinutes <= 0
+          }
           if (maxMinutes < 600 && mins > maxMinutes) return false
           if (minMinutes > 0 && mins < minMinutes) return false
           return true
@@ -3905,15 +3947,14 @@ export default function HikeMap() {
 
         // Regular destination stations — must have time data in range,
         // EXCEPT in admin mode where stations with no journey data
-        // (e.g. Sheringham — too far for the Google Routes fetch
-        // budget) should still appear. That's how admin spots gaps in
-        // the dataset in the first place. Non-admin users stay filtered
-        // since a station with no time info has no actionable info.
+        // (Sheringham etc. — too far for the Google Routes fetch
+        // budget) can still appear. They show ONLY when both time
+        // sliders are unconstrained, so moving either slider actually
+        // filters these stations out the way an admin expects.
+        // Non-admin users stay filtered — no time info = no action.
         if (mins == null) {
           if (!devExcludeActive) return false
-          // In admin mode, fall through — the min/max sliders can't
-          // meaningfully filter a null-time station, so show it.
-          return true
+          return maxMinutes >= 600 && minMinutes <= 0
         }
         if (maxMinutes < 600 && mins > maxMinutes) return false
         if (minMinutes > 0 && mins < minMinutes) return false
@@ -4243,45 +4284,50 @@ export default function HikeMap() {
   // Dev action: toggle a station's excluded status. Excluded stations are hidden
   // from normal users; in admin mode they appear as crosses when the "Excluded"
   // rating checkbox is on. Mirrors the origin-toggle flow.
-  const handleToggleExclusion = useCallback(async (name: string, coordKey: string) => {
+  // Admin-only "pending" toggles for exclude / origin. We DELIBERATELY
+  // do NOT update excludedStations / originStations state at runtime —
+  // those Sets are the inputs to a big useMemo chain (stations →
+  // filteredStations → displayedStations → allStationsWithRatings →
+  // stationsForMap) and eventually Mapbox's setData which re-uploads
+  // ~3700 features to the map source. That cycle takes 5-10s of UI
+  // freeze on every toggle.
+  //
+  // Direct synchronous toggle: updates local state immediately so the
+  // modal button + map icon flip on the same render. This cascades
+  // through the heavy useMemo chain (routing → stations → filtered →
+  // map features → Mapbox re-upload), which causes a multi-second
+  // freeze on every toggle. Admin explicitly preferred the freeze-
+  // plus-instant-feedback trade-off over the previous fire-and-
+  // forget approach where the map only updated on next reload.
+  const handleToggleExclusion = useCallback((name: string, coordKey: string) => {
     let nowExcluded = false
     setExcludedStations((prev) => {
       const next = new Set(prev)
-      // The state set is keyed by coordKey only — legacy name entries were migrated
-      // to coordKeys in data/excluded-stations.json, so ambiguous names can no longer
-      // cascade across stations that share a display name.
-      if (next.has(coordKey)) {
-        next.delete(coordKey); nowExcluded = false
-      } else {
-        next.add(coordKey); nowExcluded = true
-      }
+      if (next.has(coordKey)) next.delete(coordKey); else next.add(coordKey)
+      nowExcluded = next.has(coordKey)
       return next
     })
-    // Use existing exclude/include routes so the JSON stays consistent
     const endpoint = nowExcluded ? "/api/dev/exclude-station" : "/api/dev/include-station"
-    await fetch(endpoint, {
+    fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, coordKey }),
-    })
+    }).catch((err) => console.error("toggle-exclusion POST failed:", err))
   }, [])
 
-  // Dev action: toggle a station's origin-station status.
-  // Optimistic local update + POST to API which updates data/origin-stations.json.
-  // `name` is sent alongside the coord key purely so the git commit message is readable.
-  const handleToggleOrigin = useCallback(async (coordKey: string, name: string) => {
+  const handleToggleOrigin = useCallback((coordKey: string, name: string) => {
     let nextIsOrigin = false
     setOriginStations((prev) => {
       const next = new Set(prev)
-      if (next.has(coordKey)) { next.delete(coordKey); nextIsOrigin = false }
-      else { next.add(coordKey); nextIsOrigin = true }
+      if (next.has(coordKey)) next.delete(coordKey); else next.add(coordKey)
+      nextIsOrigin = next.has(coordKey)
       return next
     })
-    await fetch("/api/dev/toggle-origin-station", {
+    fetch("/api/dev/toggle-origin-station", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, isOrigin: nextIsOrigin }),
-    })
+    }).catch((err) => console.error("toggle-origin POST failed:", err))
   }, [])
 
   // Dev action: set or clear a station's universal rating via the API
