@@ -1427,19 +1427,17 @@ export default function HikeMap() {
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
   // pick items beneath the main origin list so they can hop back easily.
-  // Seeded on first load (when localStorage is empty) with three commonly-
-  // used picks: the Kings Cross cluster primary, Farringdon, and Stratford.
-  // Gives new users something to click immediately rather than an empty
-  // recents section. Existing users keep whatever's in their localStorage.
+  // Seeded on first load (when localStorage is empty) with a single
+  // commonly-used pick: Stratford. Gives new users something to click
+  // immediately rather than an empty recents section. Existing users
+  // keep whatever's in their localStorage. More stations would only
+  // confuse non-admin users today — most non-terminal origins only
+  // cover direct-reachable destinations (no stitching), so their
+  // coverage would look much thinner than Central London's.
   const [recentCustomPrimaries, setRecentCustomPrimaries] = usePersistedState<string[]>(
     "ttg:recentCustomPrimaries",
     [
       "-0.0035472,51.541289",   // Stratford
-      // Farringdon and the Kings Cross cluster were seeded here earlier
-      // but pulled out now that the synthetic "Central London" primary
-      // covers the whole 15-terminus group automatically — exposing
-      // them as separate picks added noise without additional utility
-      // for the typical user.
     ],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
@@ -1658,8 +1656,9 @@ export default function HikeMap() {
       setPrimaryOriginRaw(resolved)
       setRecentCustomPrimaries((prev) => {
         const filtered = prev.filter((c) => c !== resolved)
-        // Last-10 slice: user-facing recents cap is 10 (was 5 previously).
-        return [resolved, ...filtered].slice(0, 10)
+        // Cap at 9 — matches the curated seed size so the dropdown stays
+        // compact even after the user has explored a few new stations.
+        return [resolved, ...filtered].slice(0, 9)
       })
     })
   }, [setPrimaryOriginRaw, setRecentCustomPrimaries, clusterMemberToPrimary])
@@ -2087,13 +2086,21 @@ export default function HikeMap() {
     //       cluster primaries, it's the cluster's menuName ("Kings Cross,
     //       St Pancras, & Euston"). For isolated stations, just the
     //       station name.
+    //   - hasData: true if the station (or its cluster primary, for cluster
+    //       members) has full RTT origin-routes data. Drives the dropdown's
+    //       "Coming soon" disabled state — rows without data are greyed out
+    //       and unselectable, with a tooltip on desktop hover.
     type SearchableStation = {
       coord: string
       name: string
       crs: string
       primaryCoord: string
       displayLabel: string
+      hasData: boolean
     }
+    // Set of coord keys that have fetched RTT data — check once per station
+    // rather than indexing into originRoutesData inside the loop.
+    const dataCoords = new Set(Object.keys(originRoutesData))
     const out: SearchableStation[] = []
     const isLondonBox = (lat: number, lng: number) =>
       lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
@@ -2103,7 +2110,12 @@ export default function HikeMap() {
       const [lng, lat] = f.geometry.coordinates
       if (!isLondonBox(lat, lng)) continue
       const network = f.properties?.["network"] as string | undefined
-      if (!network || !/National Rail|Elizabeth line/.test(network)) continue
+      // Include London Overground alongside NR/Elizabeth line — Overground
+      // stations have real CRS codes and plenty serve areas where hikes are
+      // reachable. Harrow & Wealdstone and Willesden Junction, which sit in
+      // our curated recents seed, are Overground-only in OSM and were
+      // invisible to search before this was widened.
+      if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
       const coord = `${lng},${lat}`
       if (excludedPrimariesSet.has(coord)) continue
       const stationName = f.properties.name as string
@@ -2116,12 +2128,17 @@ export default function HikeMap() {
       const displayLabel = hasCluster
         ? (PRIMARY_ORIGINS[primaryCoord]?.menuName ?? stationName)
         : stationName
+      // Check primaryCoord first so cluster members (St Pancras, Waterloo
+      // East, etc.) inherit their parent's data status — picking St Pancras
+      // redirects to the KX primary, which has data.
+      const hasData = dataCoords.has(primaryCoord) || dataCoords.has(coord)
       out.push({
         coord,
         name: stationName,
         crs,
         primaryCoord,
         displayLabel,
+        hasData,
       })
     }
     return out

@@ -218,6 +218,10 @@ type FilterPanelProps = {
     // members this is the cluster's menuName ("Waterloo & Waterloo
     // East"); for isolated stations it's the station's own name.
     displayLabel: string
+    // hasData: whether the station has full RTT origin-routes data.
+    // Rows without data render disabled (greyed out, not selectable)
+    // with a "Coming soon" tooltip on desktop hover.
+    hasData: boolean
   }[]
   /** Coord keys of custom primaries the user has previously selected via search. Shown as quick-picks beneath the main origin list in admin mode. */
   recentPrimaries?: string[]
@@ -484,15 +488,32 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         .replace(/\s+/g, " ")
         .trim()
     const q = normalise(primarySearch)
-    // Prefer name-starts-with over name-contains so the top matches feel
-    // relevant. Cap to 15 so the dropdown stays scannable.
-    const starts: typeof searchableStations = []
-    const contains: typeof searchableStations = []
+    // Split matches into four buckets so the final list is ordered:
+    //   1. hasData + starts-with
+    //   2. hasData + contains
+    //   3. disabled + starts-with
+    //   4. disabled + contains
+    // Available stations always appear above disabled ones regardless
+    // of how relevant the match is — the user's intent is to find a
+    // working home station, so offering a weaker-relevance "Richmond"
+    // above a stronger-relevance "Richmond-upon-Rosedale" (if it had
+    // no data) is correct. Within each bucket we still prefer
+    // starts-with over contains, because that ordering felt natural
+    // before we introduced the data tier.
+    const availStarts: typeof searchableStations = []
+    const availContains: typeof searchableStations = []
+    const disabledStarts: typeof searchableStations = []
+    const disabledContains: typeof searchableStations = []
     for (const s of searchableStations) {
       const n = normalise(s.name)
-      if (n.startsWith(q)) starts.push(s)
-      else if (n.includes(q)) contains.push(s)
-      if (starts.length + contains.length >= 40) break
+      const startsMatch = n.startsWith(q)
+      const containsMatch = !startsMatch && n.includes(q)
+      if (!startsMatch && !containsMatch) continue
+      const bucket = s.hasData
+        ? (startsMatch ? availStarts : availContains)
+        : (startsMatch ? disabledStarts : disabledContains)
+      bucket.push(s)
+      if (availStarts.length + availContains.length + disabledStarts.length + disabledContains.length >= 40) break
     }
     // Dedupe by primaryCoord — multiple cluster members matching the
     // same search (e.g. "waterloo" matching both "Waterloo" AND
@@ -502,7 +523,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     // the right cluster, but only ONE entry shows up.
     const seen = new Set<string>()
     const deduped: typeof searchableStations = []
-    for (const s of [...starts, ...contains]) {
+    for (const s of [...availStarts, ...availContains, ...disabledStarts, ...disabledContains]) {
       if (seen.has(s.primaryCoord)) continue
       seen.add(s.primaryCoord)
       deduped.push(s)
@@ -838,9 +859,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         the bottom of the list, where the search input
                         would normally be. Explains the short list and
                         signals that we're actively working on expanding
-                        coverage. Not clickable; small italic muted text
-                        to read as a status message rather than a
-                        selectable option. */}
+                        coverage. Not clickable; small muted text so it
+                        reads as a status message, not a selectable
+                        option. */}
                     {!adminMode && (
                       <div className="px-2 py-1.5 text-xs text-muted-foreground">
                         More stations coming soon
@@ -848,18 +869,16 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     )}
 
                     {/* Positions 4 + 5 (search input + match results) are
-                        gated behind adminMode. Non-admin users see only
-                        the synthetic "Any London terminus" option plus
-                        recents. Reasoning: until every reasonable home
-                        station has its own RTT data fetched, custom
-                        primaries give inconsistent routing quality
-                        (Richmond→Ascot via Waterloo detour, etc.), so
-                        rather than expose the search to everyone we're
-                        restricting it to admin use while the data
-                        coverage fills in. */}
+                        gated behind adminMode while data coverage is still
+                        filling in. Non-admin users currently only see the
+                        synthetic "Any London terminus" + the Stratford
+                        recents seed. Once every non-terminal primary has
+                        full RTT / stitched coverage, we can drop this gate
+                        and let everyone search — the disabled-row
+                        machinery below is already ready for that. */}
                     {adminMode && (
                       <>
-                        {/* Position 4: search input at the bottom.
+                        {/* Search input at the bottom of the dropdown.
                             stopPropagation on keydown keeps Radix's built-in
                             typeahead from hijacking our keystrokes. */}
                         <div className="px-1.5 py-1">
@@ -886,43 +905,83 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                           />
                         </div>
 
-                        {/* Position 5: search matches, rendered BELOW the
-                            input so the list flows naturally from where the
-                            user is typing. Only appears when the search is
-                            active (3+ chars); empty input keeps the dropdown
-                            to recents only. */}
+                        {/* Search matches — rendered BELOW the input so the
+                            list flows naturally from where the user is typing.
+                            Only appears when the search is active (3+ chars);
+                            empty input keeps the dropdown to recents only.
+                            Rows without data are wrapped in a Tooltip with
+                            "Coming soon" content, rendered disabled, and their
+                            onSelect is a no-op. */}
                         {isPrimarySearchActive && (
                           matchingStations.length > 0 ? (
-                            matchingStations.map((s) => (
-                              <DropdownMenuItem
-                                // key uses primaryCoord because dedupe collapses
-                                // multiple cluster members into a single row;
-                                // coord alone might still be unique but primaryCoord
-                                // reflects the row's real identity.
-                                key={s.primaryCoord}
-                                onSelect={() => {
-                                  // Pass the station's own coord (not primaryCoord) —
-                                  // selectCustomPrimary's clusterMemberToPrimary
-                                  // redirect handles the rest, and preserves the
-                                  // historical behaviour where a cluster-member
-                                  // pick routes to its parent primary.
-                                  onCustomPrimarySelect?.(s.coord)
-                                  setPrimarySearch("")
-                                }}
-                                className={cn(
-                                  "whitespace-normal leading-tight cursor-pointer",
-                                  // Highlight the row if EITHER the matched
-                                  // station's coord OR its cluster primary is
-                                  // currently active — handles both "user is
-                                  // already on Kings Cross" and "user is on a
-                                  // cluster sibling that was canonicalised".
-                                  (s.coord === primaryOrigin || s.primaryCoord === primaryOrigin)
-                                    && "bg-accent/50 focus:bg-accent/50"
-                                )}
-                              >
-                                {s.displayLabel}
-                              </DropdownMenuItem>
-                            ))
+                            matchingStations.map((s) => {
+                          const isActive =
+                            s.coord === primaryOrigin || s.primaryCoord === primaryOrigin
+                          // Disabled rendering path: DropdownMenuItem's
+                          // `disabled` prop handles keyboard/pointer
+                          // selection blocking and applies data-disabled
+                          // styling; we wrap it in a Tooltip for the
+                          // hover hint. asChild on the trigger keeps
+                          // the DOM flat.
+                          if (!s.hasData) {
+                            return (
+                              <Tooltip key={s.primaryCoord}>
+                                <TooltipTrigger asChild>
+                                  {/* span wrapper because disabled
+                                      DropdownMenuItems don't fire
+                                      pointer events — Radix's Tooltip
+                                      needs something focusable/hoverable
+                                      as the trigger. */}
+                                  <span className="block">
+                                    <DropdownMenuItem
+                                      disabled
+                                      onSelect={(e) => e.preventDefault()}
+                                      className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
+                                    >
+                                      <span>{s.name}</span>
+                                      {/* Inline "No data yet" suffix —
+                                          smaller + further muted than the
+                                          already-dimmed row text so it reads
+                                          as a secondary status label, not a
+                                          second line of the station name. */}
+                                      <span className="text-xs text-muted-foreground/70">
+                                        No data yet
+                                      </span>
+                                    </DropdownMenuItem>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">
+                                  Coming soon
+                                </TooltipContent>
+                              </Tooltip>
+                            )
+                          }
+                          return (
+                            <DropdownMenuItem
+                              // key uses primaryCoord because dedupe collapses
+                              // multiple cluster members into a single row.
+                              key={s.primaryCoord}
+                              onSelect={() => {
+                                // Pass the station's own coord (not primaryCoord) —
+                                // selectCustomPrimary's clusterMemberToPrimary
+                                // redirect handles the rest, and preserves the
+                                // historical behaviour where a cluster-member
+                                // pick routes to its parent primary.
+                                onCustomPrimarySelect?.(s.coord)
+                                setPrimarySearch("")
+                              }}
+                              className={cn(
+                                "whitespace-normal leading-tight cursor-pointer",
+                                // Highlight the row if EITHER the matched
+                                // station's coord OR its cluster primary is
+                                // currently active.
+                                isActive && "bg-accent/50 focus:bg-accent/50"
+                              )}
+                            >
+                              {s.displayLabel}
+                            </DropdownMenuItem>
+                          )
+                        })
                           ) : (
                             <div className="px-2 py-1.5 text-sm text-muted-foreground">
                               No matches
@@ -1451,31 +1510,56 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         >
           {isPrimarySearchActive ? (
             matchingStations.length > 0 ? (
-              matchingStations.map((s) => (
-                <button
-                  // key uses primaryCoord because dedupe may collapse
-                  // multiple cluster members to one row — primaryCoord
-                  // is the row's real identity.
-                  key={s.primaryCoord}
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => {
-                    // Pass the station's own coord — selectCustomPrimary
-                    // canonicalises to the cluster primary via
-                    // clusterMemberToPrimary.
-                    onCustomPrimarySelect?.(s.coord)
-                    closeAllAfterSelection()
-                  }}
-                  className={cn(
-                    "block w-full text-left px-4 py-3 text-sm border-b border-border/30",
-                    // Highlight when either the match's own coord OR its
-                    // cluster primary is the active primary.
-                    (s.coord === primaryOrigin || s.primaryCoord === primaryOrigin) && "bg-accent/50",
-                  )}
-                >
-                  {s.displayLabel}
-                </button>
-              ))
+              matchingStations.map((s) => {
+                // Stations without RTT data render as a non-interactive
+                // div instead of a button — no hover tooltip on mobile
+                // (touch has no hover), just the visual disabled state
+                // and the row showing only the station name. Per design:
+                // mobile users learn from context that grey rows aren't
+                // selectable yet.
+                if (!s.hasData) {
+                  return (
+                    <div
+                      key={s.primaryCoord}
+                      className="flex items-baseline gap-2 w-full text-left px-4 py-3 text-sm border-b border-border/30 text-muted-foreground opacity-60 cursor-not-allowed"
+                    >
+                      <span>{s.name}</span>
+                      {/* Same "No data yet" suffix as the desktop path —
+                          small + further muted than the row text. Mobile
+                          can't show a tooltip on hover, so this inline
+                          label is the only signal for why the row is
+                          disabled. */}
+                      <span className="text-xs text-muted-foreground/70">
+                        No data yet
+                      </span>
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    // key uses primaryCoord because dedupe may collapse
+                    // multiple cluster members to one row.
+                    key={s.primaryCoord}
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => {
+                      // Pass the station's own coord — selectCustomPrimary
+                      // canonicalises to the cluster primary via
+                      // clusterMemberToPrimary.
+                      onCustomPrimarySelect?.(s.coord)
+                      closeAllAfterSelection()
+                    }}
+                    className={cn(
+                      "block w-full text-left px-4 py-3 text-sm border-b border-border/30",
+                      // Highlight when either the match's own coord OR its
+                      // cluster primary is the active primary.
+                      (s.coord === primaryOrigin || s.primaryCoord === primaryOrigin) && "bg-accent/50",
+                    )}
+                  >
+                    {s.displayLabel}
+                  </button>
+                )
+              })
             ) : (
               <div className="px-4 py-3 text-sm text-muted-foreground">No matches</div>
             )
