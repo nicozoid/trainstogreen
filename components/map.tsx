@@ -1640,6 +1640,88 @@ export default function HikeMap() {
   // filter state). Value is a "lng,lat" coord key.
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
   const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
+  // Lazy-loader for per-origin journey files. When the user picks a
+  // friend (or switches home to one of the Routes-API primaries) the
+  // corresponding journeys/<slug>.json is fetched and its records
+  // merged into baseStations. Returns a promise that resolves once
+  // the merge is committed (useful if a caller wants to wait before
+  // triggering further state changes).
+  const ensureOriginLoaded = useCallback(
+    async (originCoord: string): Promise<void> => {
+      if (!originCoord) return
+      // No-op if already loaded.
+      if (loadedOriginsRef.current.has(originCoord)) return
+      // Dedupe concurrent requests for the same origin.
+      const existing = pendingOriginsRef.current[originCoord]
+      if (existing) return existing
+      // No slug → origin isn't one of the pre-fetched Routes origins,
+      // so there's nothing to lazy-load. Routing will fall back to
+      // RTT direct-reachable data for this origin.
+      const slug = ORIGIN_SLUGS[originCoord]
+      if (!slug) return
+      const p = (async () => {
+        try {
+          const res = await fetch(`/journeys/${slug}.json`)
+          if (!res.ok) return
+          const payload = await res.json() as {
+            origin: string
+            journeys: Record<string, unknown>
+          }
+          if (!payload?.journeys) return
+          // Merge into baseStations: for each feature whose coordKey
+          // appears in the loaded journeys map, add an entry under
+          // f.properties.journeys[originCoord]. Everything else in the
+          // app already reads journeys[origin] so no other code needs
+          // to change.
+          setBaseStations((prev) => {
+            if (!prev) return prev
+            const perCoord = payload.journeys
+            return {
+              ...prev,
+              features: prev.features.map((f) => {
+                const coordKey = f.properties.coordKey as string
+                const entry = perCoord[coordKey]
+                if (!entry) return f
+                const existingJourneys = (f.properties as Record<string, unknown>).journeys as Record<string, unknown> | undefined
+                return {
+                  ...f,
+                  properties: {
+                    ...f.properties,
+                    journeys: {
+                      ...(existingJourneys ?? {}),
+                      [originCoord]: entry,
+                    },
+                  } as StationFeature["properties"],
+                }
+              }),
+            }
+          })
+          loadedOriginsRef.current.add(originCoord)
+        } finally {
+          delete pendingOriginsRef.current[originCoord]
+        }
+      })()
+      pendingOriginsRef.current[originCoord] = p
+      return p
+    },
+    [],
+  )
+  // Whenever the friend origin changes to one of the 5 known
+  // pre-fetched Routes origins, kick off a lazy-load. The routing
+  // memo will re-run once the fetch completes and the merge lands
+  // in baseStations. For friends that AREN'T one of the known
+  // origins (e.g. user typed in a custom London NR station), no
+  // fetch fires and the routing falls back to RTT-based direct
+  // reachability.
+  useEffect(() => {
+    if (friendOrigin) ensureOriginLoaded(friendOrigin)
+  }, [friendOrigin, ensureOriginLoaded])
+  // Same for the home primary — switching to Farringdon / Kings
+  // Cross / Stratford eager-loads that origin's file so the live
+  // compute path has the Routes journeys it expects.
+  useEffect(() => {
+    if (primaryOrigin) ensureOriginLoaded(primaryOrigin)
+  }, [primaryOrigin, ensureOriginLoaded])
   // "Direct trains only" toggles — when true, only keep stations reachable
   // from the matching origin with zero interchanges (journeys[origin].changes === 0)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
@@ -1710,6 +1792,56 @@ export default function HikeMap() {
   // Reset to false when the style changes (theme toggle) so Sources/Layers
   // don't try to render before the new style has finished loading.
   const [mapReady, setMapReady] = useState(false)
+  // Per-origin Google-Routes journey files, lazy-loaded from
+  // /public/journeys/<slug>.json when the user picks a friend in
+  // one of the 5 pre-fetched origins, or switches home to one of
+  // the Routes-API primaries. The fat stations.json used to inline
+  // all 5 (~21 MB); stripping them out shrinks the initial
+  // stations.json from 28 MB to 0.68 MB. Keyed by the origin's
+  // coord (same string the routing code uses to look up
+  // f.properties.journeys[origin]).
+  //
+  // On arrival, the journey records merge into baseStations
+  // directly, so every other code path continues to read
+  // f.properties.journeys[origin] as before — no routing-logic
+  // changes required.
+  // Plain object rather than Map — `Map` is shadowed by the
+  // react-map-gl import at the top of this file.
+  const loadedOriginsRef = useRef<Set<string>>(new Set())
+  const pendingOriginsRef = useRef<Record<string, Promise<void>>>({})
+  // Coord → filename-slug mapping for the 5 pre-fetched Routes
+  // origins. Any origin not in this map isn't lazy-loadable and
+  // falls through to the RTT-based routing path.
+  const ORIGIN_SLUGS: Record<string, string> = {
+    "-0.104555,51.519964": "farringdon",
+    "-0.1239491,51.530609": "kings-cross",
+    "-0.0035472,51.541289": "stratford",
+    "-1.1449555,52.9473037": "nottingham",
+    "-1.898694,52.4776459": "birmingham",
+  }
+  // Precomputed routing diff — loaded from
+  // `/routing/central-london.json` when it exists. Shape:
+  //     { [coordKey]: { ...routing-added-or-changed-fields } }
+  // The diff only stores fields the routing pass ADDED or MODIFIED
+  // on top of baseStations (everything else is already in
+  // stations.json). When the active primary is Central London AND no
+  // friend is set, `routedStations` short-circuits and reconstructs a
+  // full FeatureCollection by merging this diff over baseStations
+  // instead of running the ~10s compute.
+  const [precomputedRouting, setPrecomputedRouting] = useState<
+    Record<string, Record<string, unknown>> | null
+  >(null)
+  // Coord of the Central London synthetic primary. Keeping this as a
+  // constant here so the precompute gate below is easy to grep for.
+  const CENTRAL_LONDON_COORD = "-0.1269,51.5196"
+  // `mapReady` flips true on the style's `load` event — style + icons
+  // are wired, but tiles / markers may not yet be painted. For the
+  // welcome-banner "is the map actually visible?" gate we want a
+  // stricter signal: the first `idle` event, which fires when Mapbox
+  // has finished rendering all requested tiles + sources. That's the
+  // earliest moment the user could tap "Find stations" and see a
+  // populated map.
+  const [mapFirstIdle, setMapFirstIdle] = useState(false)
   const prevStyleRef = useRef(mapStyle)
   useEffect(() => {
     if (prevStyleRef.current !== mapStyle) {
@@ -1913,6 +2045,45 @@ export default function HikeMap() {
   // toggles don't re-trigger this expensive pass (~10s stall).
   const routedStations = useMemo(() => {
     if (!baseStations) return null
+    // Short-circuit: if the active primary is Central London and no
+    // friend is set, AND we've got a precomputed routing diff loaded,
+    // reconstruct the full FeatureCollection by merging the diff over
+    // baseStations and skip the heavy compute below. Any other
+    // primary, any friend origin, or a missing snapshot → fall
+    // through to the live compute (current behaviour). This is a
+    // cheap O(features) spread — no routing work — so it's fine to
+    // do it here in the memo body.
+    if (
+      primaryOrigin === CENTRAL_LONDON_COORD &&
+      !friendOrigin &&
+      precomputedRouting
+    ) {
+      return {
+        ...baseStations,
+        features: baseStations.features.map((f) => {
+          const coordKey = f.properties.coordKey as string
+          const delta = precomputedRouting[coordKey]
+          if (!delta) return f
+          // Merge the routing deltas on top of base properties. For
+          // `journeys` we merge entries rather than replace, so
+          // base-fetched journeys (e.g. from Farringdon, Stratford)
+          // coexist with routing-added entries (e.g. the Central
+          // London cluster primary).
+          const nextProps: Record<string, unknown> = { ...f.properties }
+          for (const [k, v] of Object.entries(delta)) {
+            if (k === "journeys") {
+              nextProps.journeys = {
+                ...((f.properties as Record<string, unknown>).journeys as Record<string, unknown> | undefined),
+                ...(v as Record<string, unknown>),
+              }
+            } else {
+              nextProps[k] = v
+            }
+          }
+          return { ...f, properties: nextProps as StationFeature["properties"] }
+        }),
+      }
+    }
     // Build a CRS → { coord, name, coordKey, isLondon } lookup once per
     // baseStations load. RTT's direct-reachable data stores calling points as
     // CRS codes; we need each calling point's coordinate (for polyline
@@ -3831,7 +4002,7 @@ export default function HikeMap() {
         return { ...f, properties: next as StationFeature["properties"] }
       }),
     }
-  }, [baseStations, primaryOrigin, coordToName])
+  }, [baseStations, primaryOrigin, coordToName, precomputedRouting, friendOrigin])
 
   // Thin wrapper that applies the isOrigin / isExcluded flags per
   // feature. Cheap (a single Set.has + object spread per feature, no
@@ -4482,8 +4653,34 @@ export default function HikeMap() {
     })
   }, [])
 
-  // useEffect runs once after the component first renders (the empty [] means "run once only")
+  // useEffect runs once after the component first renders (the empty [] means "run once only").
+  // Gate BOTH the stations fetch AND the downstream heavy routing memo
+  // behind a double-requestAnimationFrame: this guarantees the browser
+  // has had one full composite cycle to paint the welcome-banner
+  // spinner AND kick its CSS animation onto the compositor layer
+  // BEFORE the routing pass fires and temporarily freezes the main
+  // thread. Without this, the spinner often doesn't visibly animate
+  // at all on first load — the heavy pass preempts the first paint.
   useEffect(() => {
+    let raf1 = 0
+    let raf2 = 0
+    // Fire the precomputed-routing fetch in parallel with the (also
+    // deferred) stations.json fetch. If the snapshot file exists,
+    // the heavy routedStations useMemo will short-circuit to its
+    // result instead of recomputing. If the snapshot is missing or
+    // 404s we just fall through to the live compute path — same
+    // behaviour as today. No need to block the stations fetch on
+    // this; the two resolve independently and the memo picks
+    // whichever arrives first.
+    fetch("/routing/central-london.json")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: Record<string, Record<string, unknown>> | null) => {
+        if (data && typeof data === "object") setPrecomputedRouting(data)
+      })
+      .catch(() => { /* swallow — fall through to live compute */ })
+
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
     fetch("/stations.json")
       .then((res) => res.json())
       .then((data: StationCollection) => {
@@ -4517,6 +4714,9 @@ export default function HikeMap() {
         })
         setBaseStations({ ...data, features: outside })
       })
+      })
+    })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
   }, [])
 
   // Remembers the last hovered position so the radius circles stay rendered
@@ -5527,6 +5727,11 @@ export default function HikeMap() {
       if (attribCtrl && bottomLeftCtrl) bottomLeftCtrl.appendChild(attribCtrl)
     }
 
+    // First `idle` event — all tiles / sources rendered. `once`
+    // gives us just the first one so subsequent pans/zooms don't
+    // retrigger the loader gate.
+    map.once('idle', () => setMapFirstIdle(true))
+
     // Register custom icon images for station markers.
     registerIcons(map)
 
@@ -5660,6 +5865,15 @@ export default function HikeMap() {
         }}
         originX={bannerOrigin?.x}
         originY={bannerOrigin?.y}
+        // Spinner disabled — after the stations.json slim-down
+        // (28 MB → 0.68 MB) + precomputed routing snapshot, the
+        // default home state renders essentially instantly. The
+        // banner just shows the CTA button from frame 1; data lands
+        // before the user finishes reading the heading. Kept the
+        // isLoading plumbing in welcome-banner.tsx in case we ever
+        // need to gate again (e.g. a slow-primary path), but for
+        // now always false.
+        isLoading={false}
       />
 
       {/* Help button — bottom-right on mobile (attribution © is moved to
@@ -5783,6 +5997,174 @@ export default function HikeMap() {
               title="Wipe ttg:* localStorage + reload"
             >
               Clear session
+            </button>
+          )}
+          {/* Save routing snapshot — admin-only. Serialises the current
+              `routedStations` output to /routing/<key>.json via the
+              dev save endpoint. On subsequent page loads, if the
+              active primary is Central London and no friend is set,
+              the heavy routing memo short-circuits to the saved
+              snapshot instead of recomputing (~10s → near-instant).
+              Only meaningful when the currently-active primary IS
+              Central London with no friend — otherwise the live memo
+              output wouldn't match what the precompute gate expects. */}
+          {devExcludeActive && (
+            <button
+              onClick={async () => {
+                const isCentralLondon = primaryOrigin === CENTRAL_LONDON_COORD
+                if (!isCentralLondon || friendOrigin) {
+                  alert("Save routing: switch primary to Central London and clear the friend origin first.")
+                  return
+                }
+                if (!routedStations || !baseStations) {
+                  alert("Save routing: data isn't ready yet.")
+                  return
+                }
+                // Build a lean diff payload instead of dumping the full
+                // routedStations FeatureCollection. The diff only
+                // stores fields routing ADDED or CHANGED per coordKey,
+                // keyed as a flat object — runtime merges this back
+                // over baseStations at load time. This drops the raw
+                // 26 MB snapshot to only the routing deltas.
+                //
+                // The single biggest byte consumer is the added
+                // `journeys[CENTRAL_LONDON_COORD]` entry per routed
+                // feature, and inside that it's `polylineCoords`.
+                // Round each coord to 5 decimal places (~1 m at UK
+                // latitudes) to shrink polylines ~30% without any
+                // visible change at map display zooms.
+                // Plain object, not Map — `Map` is shadowed by the
+                // react-map-gl import at the top of this file.
+                const baseByCoord: Record<string, StationFeature> = {}
+                for (const f of baseStations.features) {
+                  baseByCoord[f.properties.coordKey as string] = f
+                }
+                const roundCoord = (c: [number, number]): [number, number] =>
+                  [Math.round(c[0] * 100000) / 100000, Math.round(c[1] * 100000) / 100000]
+                // Douglas–Peucker polyline simplification. Drops
+                // intermediate coords whose perpendicular distance
+                // from the chord between their flanking kept points
+                // is below `tol`. Tolerance 0.0005° ≈ 55m at UK
+                // latitudes — well below any zoom level where the
+                // line is inspected closely, so visually identical
+                // in practice. Drops polyline size ~10x on typical
+                // inter-city routes (488 pts → ~50 pts). Square-
+                // distance form avoids sqrt in the hot loop.
+                const simplifyPolyline = (
+                  coords: [number, number][],
+                  tol: number,
+                ): [number, number][] => {
+                  if (coords.length <= 2) return coords
+                  const tolSq = tol * tol
+                  const keep = new Uint8Array(coords.length)
+                  keep[0] = 1
+                  keep[coords.length - 1] = 1
+                  // Iterative stack to avoid recursion blowup on long lines.
+                  const stack: [number, number][] = [[0, coords.length - 1]]
+                  while (stack.length > 0) {
+                    const [iStart, iEnd] = stack.pop()!
+                    if (iEnd - iStart < 2) continue
+                    const [x0, y0] = coords[iStart]
+                    const [x1, y1] = coords[iEnd]
+                    const dx = x1 - x0
+                    const dy = y1 - y0
+                    const segLenSq = dx * dx + dy * dy
+                    let maxDistSq = 0
+                    let maxIdx = iStart
+                    for (let i = iStart + 1; i < iEnd; i++) {
+                      const [px, py] = coords[i]
+                      // Perpendicular-distance² from point to segment.
+                      let distSq: number
+                      if (segLenSq === 0) {
+                        const ex = px - x0, ey = py - y0
+                        distSq = ex * ex + ey * ey
+                      } else {
+                        const t = ((px - x0) * dx + (py - y0) * dy) / segLenSq
+                        const tc = Math.max(0, Math.min(1, t))
+                        const cx = x0 + tc * dx
+                        const cy = y0 + tc * dy
+                        const ex = px - cx, ey = py - cy
+                        distSq = ex * ex + ey * ey
+                      }
+                      if (distSq > maxDistSq) {
+                        maxDistSq = distSq
+                        maxIdx = i
+                      }
+                    }
+                    if (maxDistSq > tolSq) {
+                      keep[maxIdx] = 1
+                      stack.push([iStart, maxIdx])
+                      stack.push([maxIdx, iEnd])
+                    }
+                  }
+                  const out: [number, number][] = []
+                  for (let i = 0; i < coords.length; i++) {
+                    if (keep[i]) out.push(coords[i])
+                  }
+                  return out
+                }
+                const diff: Record<string, Record<string, unknown>> = {}
+                for (const rf of routedStations.features) {
+                  const coordKey = rf.properties.coordKey as string
+                  const bf = baseByCoord[coordKey]
+                  if (!bf) continue
+                  const baseProps = bf.properties as Record<string, unknown>
+                  const routedProps = rf.properties as Record<string, unknown>
+                  const delta: Record<string, unknown> = {}
+                  for (const k of Object.keys(routedProps)) {
+                    // Skip OSM / static metadata — it's in baseStations already.
+                    if (k in baseProps && JSON.stringify(baseProps[k]) === JSON.stringify(routedProps[k])) {
+                      continue
+                    }
+                    // Special-case `journeys`: only store entries the
+                    // routing pass added for our target primary coord.
+                    // Existing per-origin journeys are in baseStations
+                    // already and shouldn't be duplicated.
+                    if (k === "journeys") {
+                      const rj = routedProps[k] as Record<string, unknown> | undefined
+                      const bj = (baseProps[k] as Record<string, unknown> | undefined) ?? {}
+                      if (!rj) continue
+                      const addedOrChanged: Record<string, unknown> = {}
+                      for (const origin of Object.keys(rj)) {
+                        if (JSON.stringify(rj[origin]) === JSON.stringify(bj[origin])) continue
+                        // Simplify polyline (Douglas–Peucker at ~55m
+                        // tolerance) then round remaining coords to
+                        // 5 decimals. Order matters — simplify first
+                        // so rounding doesn't collapse near-duplicate
+                        // keypoints before the algorithm runs.
+                        const entry = { ...(rj[origin] as Record<string, unknown>) }
+                        const pc = entry.polylineCoords as [number, number][] | undefined
+                        if (Array.isArray(pc)) {
+                          const simplified = simplifyPolyline(pc, 0.0005)
+                          entry.polylineCoords = simplified.map(roundCoord)
+                        }
+                        addedOrChanged[origin] = entry
+                      }
+                      if (Object.keys(addedOrChanged).length > 0) delta[k] = addedOrChanged
+                      continue
+                    }
+                    delta[k] = routedProps[k]
+                  }
+                  if (Object.keys(delta).length > 0) diff[coordKey] = delta
+                }
+                const resp = await fetch("/api/dev/save-routing", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ key: "central-london", payload: diff }),
+                })
+                const result = await resp.json()
+                if (!resp.ok) {
+                  alert(`Save routing failed: ${result.error ?? resp.status}`)
+                  return
+                }
+                const kb = (result.bytes / 1024).toFixed(1)
+                const mb = (result.bytes / (1024 * 1024)).toFixed(2)
+                alert(`Saved ${result.path}\nSize: ${mb} MB (${kb} KB)\nFeatures with routing deltas: ${Object.keys(diff).length}`)
+              }}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+              title="Serialize current routedStations → public/routing/central-london.json"
+            >
+              Save routing
             </button>
           )}
         </div>
