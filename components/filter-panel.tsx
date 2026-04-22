@@ -1121,12 +1121,35 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </div>
           )}
 
-          {/* Friend origin: show slider when active, button when not */}
+          {/* Friend origin: show slider when active, "Add friend" dropdown
+              when not. In the inactive state, clicking the button opens a
+              dropdown of the preloaded friend origins — the user picks
+              which friend, rather than auto-selecting the first. No
+              "Remove" in this state (there's nothing to remove). */}
           {!friendOrigin && (
-            <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground" onClick={onActivateFriend}>
-              <IconPlus size={14} />
-              Add friend&apos;s home station
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground">
+                  <IconPlus size={14} />
+                  Add friend&apos;s home station
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                collisionPadding={16}
+                className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem]"
+              >
+                {friendOrigins.map((origin) => (
+                  <DropdownMenuItem
+                    key={origin}
+                    onSelect={() => onFriendOriginChange(origin)}
+                    className="whitespace-normal leading-tight cursor-pointer"
+                  >
+                    {originMenuName(origin)}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           {friendOrigin && (
             <>
@@ -1167,7 +1190,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onSelect={() => onDeactivateFriend()}
-                        className="cursor-pointer"
+                        // text-muted-foreground signals the
+                        // destructive-ish intent is secondary — "Remove"
+                        // sits below the active options at reduced
+                        // visual weight.
+                        className="cursor-pointer text-muted-foreground"
                       >
                         Remove
                       </DropdownMenuItem>

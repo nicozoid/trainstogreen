@@ -1428,13 +1428,15 @@ export default function StationModal({
           )}
 
           {/* Loading state — logo-glyph spinner centered in the
-              photo-panel area. The spinner is shared with the
-              welcome banner (see components/logo-spinner.tsx); we
-              render it at 20% opacity here so it reads as "quiet
-              background activity" rather than a prominent focal
-              element. Replaces the previous shimmer-skeleton grid. */}
+              blank photo-grid area. min-height approximates the
+              3-row photo grid that lands here once loaded, so the
+              spinner sits visually where the photos will appear
+              rather than floating near the top. 20% opacity keeps
+              it as "quiet background activity" rather than a
+              prominent focal element. Replaces the previous
+              shimmer-skeleton grid. */}
           {hasApiKey && loading && (
-            <div className="flex items-center justify-center py-16 text-foreground opacity-20">
+            <div className="flex items-start justify-center pt-16 pb-[25vh] min-h-[50vh] text-muted">
               <LogoSpinner className="h-10" label="Loading photos" />
             </div>
           )}
