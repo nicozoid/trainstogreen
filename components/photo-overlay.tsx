@@ -152,10 +152,6 @@ type StationModalProps = {
   onExclude?: () => void
   /** True when this station is currently excluded (admin-only) */
   isExcluded?: boolean
-  /** True when this station is in the origin-stations list (admin-only) */
-  isOrigin?: boolean
-  /** Toggles this station's origin-station status (admin-only) */
-  onToggleOrigin?: () => void
   /** Photos the admin has approved for this station (always displayed) */
   approvedPhotos?: FlickrPhoto[]
   /** Flickr IDs the admin has rejected for this station (never displayed) */
@@ -418,8 +414,6 @@ export default function StationModal({
   onRate,
   onExclude,
   isExcluded = false,
-  isOrigin = false,
-  onToggleOrigin,
   approvedPhotos = [],
   rejectedIds = new Set(),
   onApprovePhoto,
@@ -576,8 +570,9 @@ export default function StationModal({
   // The broader tag set and extra buffer pages only kick in the *next* time the overlay opens.
   const hasCurationsRef = useRef(false)
   const rejectedCountRef = useRef(0)
-  // Snapshot isOrigin too — changing the station's origin status mid-session
-  // shouldn't re-fetch with different params until the overlay is re-opened.
+  // Snapshot whether this station uses the urban (origin-style) photo set —
+  // changing it mid-session shouldn't re-fetch with different params until
+  // the overlay is re-opened.
   const isOriginRef = useRef(false)
   // Snapshot of approved photo IDs at open time — photos approved *before* this
   // session get promoted to the top; photos approved *during* this session stay
@@ -595,9 +590,8 @@ export default function StationModal({
       hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
       rejectedCountRef.current = rejectedIds.size
       // Friend AND primary origins use the origin-specific Flickr algorithm
-      // (smaller radius, different tag set). Only admin-marked stations hit
-      // the raw `isOrigin` path; the other two now share it.
-      isOriginRef.current = isOrigin || isFriendOrigin || isPrimaryOrigin
+      // (smaller radius, different tag set, urban rather than rural).
+      isOriginRef.current = isFriendOrigin || isPrimaryOrigin
       initialApprovedIdsRef.current = new Set(approvedPhotos.map((p) => p.id))
     }
     // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
@@ -1256,31 +1250,14 @@ export default function StationModal({
                 }
               />
 
-              {/* Toggle origin — adds/removes this station from the origin-stations list.
-                  Active (filled green square) when the station is already an origin. */}
-              <DevActionButton
-                label={isOrigin ? "Unmark as origin" : "Mark as origin"}
-                active={isOrigin}
-                onClick={() => onToggleOrigin?.()}
-                icon={
-                  /* Square — matches the square glyph origin stations use on the map */
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill={isOrigin ? 'var(--primary)' : 'none'}
-                    stroke={isOrigin ? 'var(--primary)' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="4" y="4" width="16" height="16" />
-                  </svg>
-                }
-              />
-
               {/* Approve home→destination pair — admin-only journey
-                  testing flag. Hidden for excluded and origin stations
-                  (both classes keep their normal colour in admin mode
-                  and don't participate in the approval workflow). Only
-                  rendered when a toggle handler is wired (map.tsx
-                  passes one whenever the station is a normal
-                  destination). Active = approved (green check). */}
-              {!isExcluded && !isOrigin && onToggleApproved && (
+                  testing flag. Hidden for excluded stations (they keep
+                  their normal colour in admin mode and don't participate
+                  in the approval workflow). Only rendered when a toggle
+                  handler is wired (map.tsx passes one whenever the
+                  station is a normal destination). Active = approved
+                  (green check). */}
+              {!isExcluded && onToggleApproved && (
                 <DevActionButton
                   label={isApprovedForHome ? "Approved" : "Approve"}
                   active={isApprovedForHome}

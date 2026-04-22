@@ -150,17 +150,6 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    // Admin-only: shows origin stations (squares) that are normally hidden in the destination list.
-    key: "origin", label: "Origin stations", adminOnly: true,
-    tooltip: "Origin stations (squares) — visible only in admin mode",
-    icon: (
-      /* Square — matches the map's origin-station marker. Filled primary. */
-      <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
-        <rect x="4" y="4" width="16" height="16" />
-      </svg>
-    ),
-  },
-  {
     // Admin-only: shows stations that have been hidden from the destination list.
     key: "excluded", label: "Excluded", adminOnly: true,
     tooltip: "Stations removed from the list — visible only in admin mode",
