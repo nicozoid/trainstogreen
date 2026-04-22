@@ -44,6 +44,7 @@ async function fetchPhotosViaProxy(
   return data.photos ?? []
 }
 import { Button } from "@/components/ui/button"
+import { LogoSpinner } from "@/components/logo-spinner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
@@ -1426,24 +1427,15 @@ export default function StationModal({
             </div>
           )}
 
-          {/* Loading skeleton — grid of shimmering rectangles matching the photo grid layout. */}
+          {/* Loading state — logo-glyph spinner centered in the
+              photo-panel area. The spinner is shared with the
+              welcome banner (see components/logo-spinner.tsx); we
+              render it at 20% opacity here so it reads as "quiet
+              background activity" rather than a prominent focal
+              element. Replaces the previous shimmer-skeleton grid. */}
           {hasApiKey && loading && (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div
-                  key={i}
-                  /* bg-muted-foreground/20 is a clearly visible medium grey — much more contrast
-                     than bg-muted (near-white) so the shimmer sweep is obvious on bright screens */
-                  className="relative overflow-hidden aspect-[4/3] rounded-none sm:rounded-lg bg-muted-foreground/20"
-                >
-                  {/* via-white/80 is a very bright sweep — high contrast against the darker base.
-                      staggered animationDelay creates a cascading wave down the list. */}
-                  <div
-                    className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/80 to-transparent"
-                    style={{ animationDelay: `${(i * 0.12) - 0.8}s` }}
-                  />
-                </div>
-              ))}
+            <div className="flex items-center justify-center py-16 text-foreground opacity-20">
+              <LogoSpinner className="h-10" label="Loading photos" />
             </div>
           )}
 

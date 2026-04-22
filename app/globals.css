@@ -317,6 +317,31 @@
   to   { transform: translateX(100%); }
 }
 
+/* Loading-indicator "coupling rod" orbit — used by the welcome-banner
+   spinner to mimic the logo glyph. 12 keyframes approximate a 2.5px-
+   radius circular translation, sampled every 30°. We can't use a single
+   rotate() trick because we want pure translation (both endpoints of
+   the rod move in lockstep; the rod itself never tilts). This animation
+   is compositor-friendly — translate() on a transform is one of the
+   properties the browser can animate off the main thread, so the
+   spinner keeps moving even while the heavy routing pass on the main
+   thread temporarily freezes JS. */
+@keyframes orbit {
+  0%     { transform: translate(2.5px, 0px); }
+  8.33%  { transform: translate(2.165px, 1.25px); }
+  16.67% { transform: translate(1.25px, 2.165px); }
+  25%    { transform: translate(0px, 2.5px); }
+  33.33% { transform: translate(-1.25px, 2.165px); }
+  41.67% { transform: translate(-2.165px, 1.25px); }
+  50%    { transform: translate(-2.5px, 0px); }
+  58.33% { transform: translate(-2.165px, -1.25px); }
+  66.67% { transform: translate(-1.25px, -2.165px); }
+  75%    { transform: translate(0px, -2.5px); }
+  83.33% { transform: translate(1.25px, -2.165px); }
+  91.67% { transform: translate(2.165px, -1.25px); }
+  100%   { transform: translate(2.5px, 0px); }
+}
+
 /* --- Base layer -------------------------------------------
    @layer base tells Tailwind these styles sit in the "base" layer,
    which means they apply globally but can still be overridden by
