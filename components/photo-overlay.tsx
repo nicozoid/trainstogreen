@@ -1413,7 +1413,7 @@ export default function StationModal({
               prominent focal element. Replaces the previous
               shimmer-skeleton grid. */}
           {hasApiKey && loading && (
-            <div className="flex items-start justify-center pt-16 pb-[25vh] min-h-[50vh] text-muted">
+            <div className="flex items-start justify-center pt-16 pb-[25vh] min-h-[50vh] text-primary">
               <LogoSpinner className="h-10" label="Loading photos" />
             </div>
           )}
