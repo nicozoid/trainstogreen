@@ -516,5 +516,9 @@
   "1.4334122,51.360737": {
     "name": "Broadstairs",
     "algo": "landscapes"
+  },
+  "-0.3276687,51.7504966": {
+    "name": "St Albans City",
+    "algo": "hikes"
   }
 }
