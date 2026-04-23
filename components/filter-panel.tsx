@@ -252,9 +252,13 @@ type FilterPanelProps = {
    *  optional modal features they'd surface. "off" = no filter.
    *  "alt-routes" = only destinations with ≥1 alternative route.
    *  "private-notes" = only destinations with a non-empty admin
-   *  private note. More options may be added as modal features grow. */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes") => void
+   *  private note.
+   *  "sloppy-pics" = stations that aren't fully photo-curated yet
+   *  (< 12 approved photos — includes never-touched stations).
+   *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
+   *  curation at all (no approvals AND no rejections yet). */
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics") => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
@@ -1131,13 +1135,15 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="off">—</option>
                 <option value="alt-routes">Alternative routes</option>
                 <option value="private-notes">Private notes</option>
+                <option value="sloppy-pics">Sloppy pics</option>
+                <option value="all-sloppy-pics">All sloppy pics</option>
               </select>
             </div>
           )}

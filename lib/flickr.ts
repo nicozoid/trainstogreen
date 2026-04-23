@@ -28,7 +28,7 @@ const FLICKR_BASE = "https://www.flickr.com/services/rest/"
 // Two tiers: uncurated stations use conservative tags to avoid noise;
 // curated stations (where an admin has approved/rejected at least one photo)
 // use broader tags since photo quality is being actively managed.
-const SEARCH_TAGS_DEFAULT = "landscape, landmark"
+const SEARCH_TAGS_DEFAULT = "landscape"
 // Flickr allows max 20 tags per query — keep this at or under that limit
 const SEARCH_TAGS_CURATED = "landscape, landmark, hike, trail, walk, way, castle, ruins, garden, park, nature reserve, nature, cottage, village, thatch, tudor, medieval, ruins, estate"
 // Tags that disqualify a photo if present — applied client-side to the gallery.
@@ -145,7 +145,7 @@ export async function fetchFlickrPhotos(
       tag_mode: "any",
       // `tags` extra returns the photo's tag string — needed for exclusion filtering
       extras: "url_m,url_l,date_taken,owner_name,geo,tags",
-      sort: "relevance",
+      sort: "interestingness-desc",
       per_page: String(PER_PAGE),
       page: String(page),
       format: "json",
