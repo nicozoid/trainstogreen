@@ -168,8 +168,10 @@ type StationModalProps = {
   publicNote?: string
   /** Private note — only visible in admin mode */
   privateNote?: string
-  /** Saves both notes when the overlay closes */
-  onSaveNotes?: (publicNote: string, privateNote: string) => void
+  /** Rambler recommendations — visible to everyone, sourced from walkingclub.org.uk extractions */
+  ramblerNote?: string
+  /** Saves all three note types when the overlay closes */
+  onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
   /** Journey data keyed by origin station name (e.g. "Farringdon") */
   journeys?: Record<string, JourneyInfo>
   /** Friend origin station name — when set, shows dual journey info */
@@ -377,26 +379,70 @@ function autoResize(el: HTMLTextAreaElement) {
  * Turn markdown-style [text](url) links into clickable <a> elements.
  * Plain text passes through unchanged.
  */
-function renderWithLinks(text: string) {
-  // Match [link text](url) — the standard markdown link syntax
-  const parts = text.split(/(\[[^\]]+\]\([^)]+\))/)
-  return parts.map((part, i) => {
-    const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
-    if (match) {
-      return (
-        <a
-          key={i}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline text-primary hover:text-primary/80"
-        >
-          {match[1]}
-        </a>
-      )
-    }
-    return part
-  })
+// Render a short inline-markdown string into React nodes. Supports three
+// constructs:
+//   [text](url)   — external link
+//   **text**      — bold
+//   *text*        — italic
+//
+// Patterns may combine at the leaves (e.g. `[**bold**](url)` or
+// `**[link](url)**`) — the function recurses on the inner match so
+// nested formatting works. We intentionally DO NOT call into a full
+// markdown parser: notes are one-paragraph admin-editable strings and
+// keeping it React-rendered (no dangerouslySetInnerHTML) avoids XSS
+// without a sanitizer dependency.
+function renderWithLinks(text: string): React.ReactNode[] {
+  // Split on any of the three patterns. The regex engine picks the
+  // leftmost match at each position and tries alternatives in order,
+  // so longer patterns (link, **bold**) win against the single-asterisk
+  // italic pattern when they'd both match at the same position.
+  //
+  // `[^*]+` inside the bold/italic branches means "no asterisks in the
+  // span", which prevents `**a*b**` from mis-matching and lets the
+  // leaves contain only flat text + other patterns resolved recursively.
+  const parts = text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|\*[^*]+\*)/g)
+  return parts
+    .filter((p) => p !== "")
+    .map((part, i) => {
+      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/)
+      if (linkMatch) {
+        // No text-primary override — links inherit the surrounding text
+        // color by default (underline is the link indicator) and pick
+        // up the global a:hover rule in globals.css for hover feedback.
+        return (
+          <a
+            key={i}
+            href={linkMatch[2]}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            {renderWithLinks(linkMatch[1])}
+          </a>
+        )
+      }
+      const boldMatch = part.match(/^\*\*([^*]+)\*\*$/)
+      if (boldMatch) {
+        // Tailwind preflight resets <strong> to font-weight: bolder.
+        // We explicitly pin to font-medium (500) — the design calls for
+        // a lighter emphasis than the browser-default bold, so **…**
+        // reads as a gentle accent rather than heavy weight.
+        return (
+          <strong key={i} className="font-medium">
+            {renderWithLinks(boldMatch[1])}
+          </strong>
+        )
+      }
+      const italicMatch = part.match(/^\*([^*]+)\*$/)
+      if (italicMatch) {
+        return (
+          <em key={i} className="italic">
+            {renderWithLinks(italicMatch[1])}
+          </em>
+        )
+      }
+      return part
+    })
 }
 
 export default function StationModal({
@@ -422,6 +468,7 @@ export default function StationModal({
   onMovePhoto,
   publicNote = "",
   privateNote = "",
+  ramblerNote = "",
   onSaveNotes,
   journeys,
   friendOrigin,
@@ -481,10 +528,22 @@ export default function StationModal({
   // ── Local note editing state — synced from props when a new station opens ──
   const [localPublicNote, setLocalPublicNote] = useState(publicNote)
   const [localPrivateNote, setLocalPrivateNote] = useState(privateNote)
+  const [localRamblerNote, setLocalRamblerNote] = useState(ramblerNote)
+  // Per-note "is the admin currently editing?" flags. Default false so
+  // admins see the same formatted render a regular user does, and click
+  // into a note to enter edit mode. Blur (click-away) returns to view.
+  // Reset when a new station opens so each modal starts in view mode.
+  const [isEditingPublic, setIsEditingPublic] = useState(false)
+  const [isEditingRambler, setIsEditingRambler] = useState(false)
+  const [isEditingPrivate, setIsEditingPrivate] = useState(false)
   useEffect(() => {
     if (open) {
       setLocalPublicNote(publicNote)
       setLocalPrivateNote(privateNote)
+      setLocalRamblerNote(ramblerNote)
+      setIsEditingPublic(false)
+      setIsEditingRambler(false)
+      setIsEditingPrivate(false)
     }
   // Only reset when the dialog opens with new data, not on every prop change
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -508,15 +567,20 @@ export default function StationModal({
   const handleAnimatedClose = useCallback(() => {
     if (isClosing) return
     // Save notes if anything changed (fire-and-forget — optimistic update in parent)
-    if (onSaveNotes && (localPublicNote !== publicNote || localPrivateNote !== privateNote)) {
-      onSaveNotes(localPublicNote, localPrivateNote)
+    if (
+      onSaveNotes &&
+      (localPublicNote !== publicNote ||
+        localPrivateNote !== privateNote ||
+        localRamblerNote !== ramblerNote)
+    ) {
+      onSaveNotes(localPublicNote, localPrivateNote, localRamblerNote)
     }
     setIsClosing(true)
     closingTimer.current = setTimeout(() => {
       setIsClosing(false)
       onClose()
     }, ANIM_DURATION * 0.65)
-  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote])
+  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, localRamblerNote, publicNote, privateNote, ramblerNote])
 
   // Swipe-down-to-dismiss for the mobile sheet. Attached only to the drag
   // handle bar (see <div className="mx-auto ... bg-muted" /> near the top
@@ -1155,12 +1219,24 @@ export default function StationModal({
               textarea too. */}
           {(devMode || localPublicNote) && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Notes
+              {/* Singular when exactly one paragraph of content,
+                  plural otherwise (including the admin empty state). */}
+              Trains to Green recommendation{localPublicNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
             </p>
           )}
 
-          {/* Public note: editable textarea in admin mode, plain text for everyone else */}
-          {devMode ? (
+          {/* Public note — three render paths:
+               (a) devMode + editing → textarea with autoFocus, exits on blur.
+               (b) note has content → rendered markdown view; in devMode the
+                   wrapper is click-to-edit.
+               (c) devMode + empty + not editing → "Click to add" placeholder.
+               Non-admin with empty note: renders nothing (as before).
+
+               Split on any run of newlines into separate paragraphs. Users
+               author notes with a single Enter keypress (one \n), so we
+               treat each line as its own paragraph. `filter(Boolean)` drops
+               the empty strings that "\n\n" produces. */}
+          {devMode && isEditingPublic ? (
             <textarea
               ref={(el) => { if (el) autoResize(el) }}
               value={localPublicNote}
@@ -1168,32 +1244,89 @@ export default function StationModal({
                 setLocalPublicNote(e.target.value)
                 autoResize(e.target)
               }}
+              onBlur={() => setIsEditingPublic(false)}
+              autoFocus
               placeholder="Public notes..."
               className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
-          ) : (
-            /* Split on any run of newlines into separate paragraphs. Users
-               author notes with a single Enter keypress (one \n), so we
-               treat each line as its own paragraph. `filter(Boolean)` drops
-               the empty strings that "\n\n" produces. The inter-<p> gap
-               AND the gap from the Notes subheader to this first
-               paragraph both use --para-gap: `mt-[var(--para-gap)]` on
-               the div controls the subheader→first-child gap, and
-               `[&>p+p]:mt-[var(--para-gap)]` controls the inter-<p>
-               gap. Result: "Notes → first note" matches "Alternative
-               routes → first alt" exactly. */
-            localPublicNote && (
-              <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
-                {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
-                  <p key={i}>{renderWithLinks(para)}</p>
-                ))}
-              </div>
-            )
+          ) : localPublicNote ? (
+            <div
+              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""}`}
+              onClick={devMode ? () => setIsEditingPublic(true) : undefined}
+              role={devMode ? "button" : undefined}
+              tabIndex={devMode ? 0 : undefined}
+              onKeyDown={devMode ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } } : undefined}
+            >
+              {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
+                <p key={i}>{renderWithLinks(para)}</p>
+              ))}
+            </div>
+          ) : devMode ? (
+            <button
+              type="button"
+              onClick={() => setIsEditingPublic(true)}
+              className="mt-[var(--para-gap)] w-full cursor-text rounded-md border border-dashed border-border px-3 py-2 text-left text-sm italic text-muted-foreground hover:bg-muted/40"
+            >
+              Click to add public notes…
+            </button>
+          ) : null}
+
+          {/* ── Rambler recommendations: same format/behaviour as the
+              Trains to Green recommendations block above — subheader gated on
+              devMode || content so non-admins never see an empty
+              label, admins always do so they know where to type. */}
+          {(devMode || localRamblerNote) && (
+            <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
+              Rambler recommendation{localRamblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
+            </p>
           )}
 
-          {/* Private note: only visible in admin mode, always as a textarea */}
-          {devMode && (
+          {/* Rambler note — same three-path render as the public note above
+              (edit textarea / formatted view / empty placeholder). */}
+          {devMode && isEditingRambler ? (
+            <textarea
+              ref={(el) => { if (el) autoResize(el) }}
+              value={localRamblerNote}
+              onChange={(e) => {
+                setLocalRamblerNote(e.target.value)
+                autoResize(e.target)
+              }}
+              onBlur={() => setIsEditingRambler(false)}
+              autoFocus
+              placeholder="Rambler recommendations..."
+              className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+              rows={2}
+            />
+          ) : localRamblerNote ? (
+            <div
+              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""}`}
+              onClick={devMode ? () => setIsEditingRambler(true) : undefined}
+              role={devMode ? "button" : undefined}
+              tabIndex={devMode ? 0 : undefined}
+              onKeyDown={devMode ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingRambler(true) } } : undefined}
+            >
+              {localRamblerNote.split(/\n+/).filter(Boolean).map((para, i) => (
+                <p key={i}>{renderWithLinks(para)}</p>
+              ))}
+            </div>
+          ) : devMode ? (
+            <button
+              type="button"
+              onClick={() => setIsEditingRambler(true)}
+              className="mt-[var(--para-gap)] w-full cursor-text rounded-md border border-dashed border-border px-3 py-2 text-left text-sm italic text-muted-foreground hover:bg-muted/40"
+            >
+              Click to add Rambler recommendations…
+            </button>
+          ) : null}
+
+          {/* Private note — admin-only. Same click-to-edit pattern, with
+              the distinctive orange-dashed styling from before. The view
+              path renders markdown too so links inside the issue
+              annotations (appended by scripts/append-walk-issues-to-
+              private-notes.mjs) are clickable without entering edit
+              mode. */}
+          {devMode && isEditingPrivate ? (
             <textarea
               ref={(el) => { if (el) autoResize(el) }}
               value={localPrivateNote}
@@ -1201,11 +1334,33 @@ export default function StationModal({
                 setLocalPrivateNote(e.target.value)
                 autoResize(e.target)
               }}
+              onBlur={() => setIsEditingPrivate(false)}
+              autoFocus
               placeholder="Private notes (admin only)..."
               className="w-full resize-none overflow-hidden rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-orange-400 dark:bg-orange-950/20"
               rows={2}
             />
-          )}
+          ) : devMode && localPrivateNote ? (
+            <div
+              className="cursor-text rounded-md border border-dashed border-orange-400 bg-orange-50 px-3 py-2 text-sm text-foreground hover:bg-orange-100 [&>p+p]:mt-[var(--para-gap)] dark:bg-orange-950/20 dark:hover:bg-orange-950/40"
+              onClick={() => setIsEditingPrivate(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPrivate(true) } }}
+            >
+              {localPrivateNote.split(/\n+/).filter(Boolean).map((para, i) => (
+                <p key={i}>{renderWithLinks(para)}</p>
+              ))}
+            </div>
+          ) : devMode ? (
+            <button
+              type="button"
+              onClick={() => setIsEditingPrivate(true)}
+              className="w-full cursor-text rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-2 text-left text-sm italic text-muted-foreground hover:bg-orange-50 dark:bg-orange-950/10 dark:hover:bg-orange-950/20"
+            >
+              Click to add private notes…
+            </button>
+          ) : null}
 
           {/* Mobile-only Hike button, anchored at the bottom of all the text.
               Desktop uses the inline button in the title row above instead.
@@ -1257,17 +1412,27 @@ export default function StationModal({
                   handler is wired (map.tsx passes one whenever the
                   station is a normal destination). Active = approved
                   (green check). */}
-              {!isExcluded && onToggleApproved && (
+              {/* Issue flag — admin-only. Visible for every station (including
+                  excluded ones) so admins can triage without needing to
+                  un-exclude first. Active (highlighted) = "has issue" =
+                  NOT approved; inactive = "no issue" = approved. Clicking
+                  toggles the underlying approval for the current home. */}
+              {onToggleApproved && (
                 <DevActionButton
-                  label={isApprovedForHome ? "Approved" : "Approve"}
-                  active={isApprovedForHome}
+                  label={isApprovedForHome ? "Flag issue" : "Clear issue"}
+                  active={!isApprovedForHome}
                   onClick={() => onToggleApproved(!isApprovedForHome)}
                   icon={
-                    /* Check mark — fill green when approved, grey outline otherwise. */
+                    /* Exclamation mark — highlighted primary when flagged,
+                       grey outline when clear. Built from two rounded-cap
+                       line segments so the dot below the stem reads as a
+                       small disc (strokeLinecap="round" + a 0.01-long
+                       line = a disc of radius strokeWidth/2). */
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke={isApprovedForHome ? 'var(--primary)' : 'currentColor'}
+                      stroke={!isApprovedForHome ? 'var(--primary)' : 'currentColor'}
                       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="4 12 10 18 20 6" />
+                      <line x1="12" y1="4" x2="12" y2="14" />
+                      <line x1="12" y1="19" x2="12" y2="19.01" />
                     </svg>
                   }
                 />

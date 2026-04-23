@@ -1,0 +1,168 @@
+{
+  "abbey-line-abbey-trail": {
+    "slug": "abbey-line-abbey-trail",
+    "title": "Abbey Trail",
+    "url": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+    "favourite": false,
+    "region": "Hertfordshire",
+    "tags": [
+      "abbey-line-community-rail"
+    ],
+    "categories": [
+      "Linear",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Abbey Trail",
+        "startPlace": "Watford Junction",
+        "endPlace": "St Albans Abbey",
+        "startStation": "WFJ",
+        "endStation": "SAA",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 14.5,
+        "distanceMiles": 9,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Way-marked trail through the Ver and Colne Valleys, linking all seven Abbey Line stations — can be done end-to-end or as individual sections with a train hop back.",
+        "sights": [
+          {
+            "name": "Sopwell Nunnery",
+            "url": null
+          },
+          {
+            "name": "St Albans Abbey",
+            "url": null
+          }
+        ],
+        "warnings": "Sections can become waterlogged after heavy rain, sometimes without obvious alternative routes.",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "St Albans Abbey to Park Street",
+        "startPlace": "St Albans Abbey",
+        "endPlace": "Park Street",
+        "startStation": "SAA",
+        "endStation": "PKT",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 4.8,
+        "distanceMiles": 3,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Park Street to Bricket Wood",
+        "startPlace": "Park Street",
+        "endPlace": "Bricket Wood",
+        "startStation": "PKT",
+        "endStation": "BWO",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 4.4,
+        "distanceMiles": 2.75,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Bricket Wood to Garston",
+        "startPlace": "Bricket Wood",
+        "endPlace": "Garston",
+        "startStation": "BWO",
+        "endStation": "GSN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 4.4,
+        "distanceMiles": 2.75,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Garston to Watford North",
+        "startPlace": "Garston",
+        "endPlace": "Watford North",
+        "startStation": "GSN",
+        "endStation": "WFN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 4.0,
+        "distanceMiles": 2.5,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Watford North to Watford Junction",
+        "startPlace": "Watford North",
+        "endPlace": "Watford Junction",
+        "startStation": "WFN",
+        "endStation": "WFJ",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 2.8,
+        "distanceMiles": 1.75,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Park Street to How Wood",
+        "startPlace": "Park Street",
+        "endPlace": "How Wood",
+        "startStation": "PKT",
+        "endStation": "HWW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/"
+  }
+}

@@ -1,0 +1,1755 @@
+{
+  "leicester-ramblers-101": {
+    "slug": "leicester-ramblers-101",
+    "title": "Nottingham to East Midlands Parkway",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 101",
+        "startPlace": "Nottingham",
+        "endPlace": "East Midlands Parkway",
+        "startStation": "NOT",
+        "endStation": "EMD",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 14,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "refreshments",
+            "location": "Trentlock and Sawley Cut",
+            "url": null
+          }
+        ],
+        "terrain": "Flat, mostly on decent paths.",
+        "sights": [
+          {
+            "name": "Nottingham Canal",
+            "url": null
+          },
+          {
+            "name": "Beeston Canal",
+            "url": null
+          },
+          {
+            "name": "River Trent",
+            "url": null
+          },
+          {
+            "name": "Trentlock",
+            "url": null
+          },
+          {
+            "name": "Sawley Cut",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/101%20Nottingham%20to%20Parkway%20Station.gpx"
+  },
+  "leicester-ramblers-102": {
+    "slug": "leicester-ramblers-102",
+    "title": "East Midlands Parkway to Barrow upon Soar",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 102",
+        "startPlace": "East Midlands Parkway",
+        "endPlace": "Barrow Upon Soar",
+        "startStation": "EMD",
+        "endStation": "BWS",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 14,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "pubs",
+            "location": "Zouch, Loughborough, and Barrow",
+            "url": null
+          }
+        ],
+        "terrain": "Flat, mostly on decent paths, along the River Soar and Grand Union Canal.",
+        "sights": [
+          {
+            "name": "Redhill Boatyard",
+            "url": null
+          },
+          {
+            "name": "Kegworth",
+            "url": null
+          },
+          {
+            "name": "Zouch",
+            "url": null
+          },
+          {
+            "name": "River Soar",
+            "url": null
+          },
+          {
+            "name": "Grand Union Canal",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/102%20Parkway%20Station%20to%20Barrow%20on%20Soar.gpx"
+  },
+  "leicester-ramblers-103": {
+    "slug": "leicester-ramblers-103",
+    "title": "Barrow upon Soar to Leicester",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 103",
+        "startPlace": "Barrow Upon Soar",
+        "endPlace": "Leicester City Centre",
+        "startStation": "BWS",
+        "endStation": "LEI",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 12,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Flat, on decent paths.",
+        "sights": [
+          {
+            "name": "Cossington Lock",
+            "url": null
+          },
+          {
+            "name": "Watermead Country Park",
+            "url": null
+          },
+          {
+            "name": "National Space Centre",
+            "url": null
+          },
+          {
+            "name": "Abbey Park",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/103%20Barrow%20on%20Soar%20to%20Leicester.gpx"
+  },
+  "leicester-ramblers-105": {
+    "slug": "leicester-ramblers-105",
+    "title": "Market Harborough Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 105",
+        "startPlace": "Market Harborough",
+        "endPlace": "Market Harborough",
+        "startStation": "MHR",
+        "endStation": "MHR",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Views, old-railway cycle/walking path.",
+        "sights": [
+          {
+            "name": "Brampton Valley Way",
+            "url": null
+          },
+          {
+            "name": "Dingley Church",
+            "url": null
+          },
+          {
+            "name": "Braybrooke",
+            "url": null
+          },
+          {
+            "name": "Great Oxendon",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/105%20Mkt%20Hboro%20Circular%209m.gpx"
+  },
+  "leicester-ramblers-106": {
+    "slug": "leicester-ramblers-106",
+    "title": "Oakham Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 106",
+        "startPlace": "Oakham",
+        "endPlace": "Oakham",
+        "startStation": "OKM",
+        "endStation": "OKM",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 12,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Villages, churches, views across the Vale of Catmose.",
+        "sights": [
+          {
+            "name": "Rutland Water Nature Reserve",
+            "url": null
+          },
+          {
+            "name": "Egleton",
+            "url": null
+          },
+          {
+            "name": "Manton",
+            "url": null
+          },
+          {
+            "name": "Brooke",
+            "url": null
+          },
+          {
+            "name": "Braunston",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/106%20Oakham%20Circular%2012m.gpx"
+  },
+  "leicester-ramblers-107": {
+    "slug": "leicester-ramblers-107",
+    "title": "Syston to Melton Mowbray — A Wreake Valley Ramble",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 107",
+        "startPlace": "Syston",
+        "endPlace": "Melton Mowbray",
+        "startStation": "SYS",
+        "endStation": "MMO",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 13,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Flat, footpaths.",
+        "sights": [
+          {
+            "name": "Kirby Bellars Church",
+            "url": null
+          },
+          {
+            "name": "Rearsby",
+            "url": null
+          },
+          {
+            "name": "Brooksby",
+            "url": null
+          },
+          {
+            "name": "Rotherby",
+            "url": null
+          },
+          {
+            "name": "Frisby on the Wreake",
+            "url": null
+          }
+        ],
+        "warnings": "Winter flooding possible.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/107%20Syston%20to%20Melton%2013m.gpx"
+  },
+  "leicester-ramblers-108": {
+    "slug": "leicester-ramblers-108",
+    "title": "Melton Mowbray to Oakham via Whissendine",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 108",
+        "startPlace": "Melton Mowbray",
+        "endPlace": "Oakham",
+        "startStation": "MMO",
+        "endStation": "OKM",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 13,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "Grain Store",
+            "location": "Oakham",
+            "url": null
+          }
+        ],
+        "terrain": "Rural countryside.",
+        "sights": [
+          {
+            "name": "Whissendine Windmill",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/108%20Melton%20to%20Oakham%20v%20Whissendine%2012.gpx"
+  },
+  "leicester-ramblers-109": {
+    "slug": "leicester-ramblers-109",
+    "title": "East Midlands Parkway Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 109",
+        "startPlace": "East Midlands Parkway",
+        "endPlace": "East Midlands Parkway",
+        "startStation": "EMD",
+        "endStation": "EMD",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 11.5,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "pubs and seating by the church",
+            "location": "Gotham",
+            "url": null
+          }
+        ],
+        "terrain": "Rolling farmland.",
+        "sights": [
+          {
+            "name": "Cuckoo Tree",
+            "url": null
+          },
+          {
+            "name": "Ratcliffe-on-Soar",
+            "url": null
+          },
+          {
+            "name": "West Leake",
+            "url": null
+          },
+          {
+            "name": "Gotham",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/109%20Parkway%20Circular%20via%20Gotham%2011.gpx"
+  },
+  "leicester-ramblers-204": {
+    "slug": "leicester-ramblers-204",
+    "title": "Nottingham to East Midlands Parkway — South Bank of the River Trent",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 204",
+        "startPlace": "Nottingham",
+        "endPlace": "East Midlands Parkway",
+        "startStation": "NOT",
+        "endStation": "EMD",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 11,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "Barton in Fabis farm shop and cafe",
+            "location": "",
+            "url": null
+          }
+        ],
+        "terrain": "Canal, river, wooded track, roadside footpath.",
+        "sights": [
+          {
+            "name": "Trent Bridge",
+            "url": null
+          },
+          {
+            "name": "West Bridgford",
+            "url": null
+          },
+          {
+            "name": "Clifton Hall",
+            "url": null
+          },
+          {
+            "name": "Ratcliffe Power Station",
+            "url": null
+          },
+          {
+            "name": "River Trent",
+            "url": null
+          }
+        ],
+        "warnings": "Short stretch on busy A453.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/204%20Nottingham%20to%20Parkway%20South%20Bank.gpx"
+  },
+  "leicester-ramblers-206": {
+    "slug": "leicester-ramblers-206",
+    "title": "Atherstone — Bluebells & Beer",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 206",
+        "startPlace": "Atherstone",
+        "endPlace": "Atherstone",
+        "startStation": "ATH",
+        "endStation": "ATH",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 12.5,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "Church End Brewery",
+            "location": "Ridge Lane",
+            "url": null
+          }
+        ],
+        "terrain": "Woodlands, country park, valley views.",
+        "sights": [
+          {
+            "name": "Hartshill Country Park",
+            "url": null
+          },
+          {
+            "name": "Anker Valley",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": "Late April for bluebells."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/206%20Bluebells%20and%20Beer%2012.gpx"
+  },
+  "leicester-ramblers-210": {
+    "slug": "leicester-ramblers-210",
+    "title": "Derby to Long Eaton",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 210",
+        "startPlace": "Derby",
+        "endPlace": "Long Eaton",
+        "startStation": "DBY",
+        "endStation": "LGE",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Waterways — River Derwent, Derby & Sandiacre Canal, Erewash Canal.",
+        "sights": [
+          {
+            "name": "River Derwent",
+            "url": null
+          },
+          {
+            "name": "Derby & Sandiacre Canal",
+            "url": null
+          },
+          {
+            "name": "Erewash Canal",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/210%20Derby%20to%20Long%20Eaton.gpx"
+  },
+  "leicester-ramblers-212": {
+    "slug": "leicester-ramblers-212",
+    "title": "Atherstone Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 212",
+        "startPlace": "Atherstone",
+        "endPlace": "Atherstone",
+        "startStation": "ATH",
+        "endStation": "ATH",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 11,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Canal, villages.",
+        "sights": [
+          {
+            "name": "Coventry Canal",
+            "url": null
+          },
+          {
+            "name": "Sheepy Magna",
+            "url": null
+          },
+          {
+            "name": "Ratcliffe Culey",
+            "url": null
+          },
+          {
+            "name": "Witherley",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/212%20Atherstone%20Circular%2010.gpx"
+  },
+  "leicester-ramblers-311": {
+    "slug": "leicester-ramblers-311",
+    "title": "Fiskerton and Southwell",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 311",
+        "startPlace": "Fiskerton",
+        "endPlace": "Fiskerton",
+        "startStation": "FSK",
+        "endStation": "FSK",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 8,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "pubs and cafes",
+            "location": "Southwell",
+            "url": null
+          }
+        ],
+        "terrain": "River, lanes, racecourse.",
+        "sights": [
+          {
+            "name": "Southwell Minster",
+            "url": null
+          },
+          {
+            "name": "Southwell Racecourse",
+            "url": null
+          },
+          {
+            "name": "River Greet",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/311%20Fiskerton%20Southwell.gpx"
+  },
+  "leicester-ramblers-305": {
+    "slug": "leicester-ramblers-305",
+    "title": "Lichfield Trent Valley Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 305",
+        "startPlace": "Lichfield Trent Valley",
+        "endPlace": "Lichfield Trent Valley",
+        "startStation": "LTV",
+        "endStation": "LTV",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Golf club, heath, woodland, Heart of England Way.",
+        "sights": [
+          {
+            "name": "Hopwas Hayes Wood",
+            "url": null
+          },
+          {
+            "name": "Whittington Heath",
+            "url": null
+          }
+        ],
+        "warnings": "MOD firing range — check access.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/305%20Lichfield.gpx"
+  },
+  "leicester-ramblers-315": {
+    "slug": "leicester-ramblers-315",
+    "title": "Derby City",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 315",
+        "startPlace": "Derby",
+        "endPlace": "Derby",
+        "startStation": "DBY",
+        "endStation": "DBY",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 11,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Parks, river, heritage trail.",
+        "sights": [
+          {
+            "name": "Derby Cathedral",
+            "url": null
+          },
+          {
+            "name": "Markeaton Park",
+            "url": null
+          },
+          {
+            "name": "Allestree Park",
+            "url": null
+          },
+          {
+            "name": "Darley Abbey",
+            "url": null
+          },
+          {
+            "name": "Bonnie Prince Charlie Walk",
+            "url": null
+          },
+          {
+            "name": "Big Wood",
+            "url": null
+          },
+          {
+            "name": "River Derwent Heritage Trail",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/315%20Derby%20City%20Circular.gpx"
+  },
+  "leicester-ramblers-317": {
+    "slug": "leicester-ramblers-317",
+    "title": "Bingham Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 317",
+        "startPlace": "Bingham",
+        "endPlace": "Bingham",
+        "startStation": "BIN",
+        "endStation": "BIN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 8,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "Cafe Velo",
+            "location": "Car Colston",
+            "url": null
+          }
+        ],
+        "terrain": "Village greens, countryside.",
+        "sights": [
+          {
+            "name": "Scarrington Horseshoe Pile",
+            "url": null
+          },
+          {
+            "name": "Car Colston village green",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/317%20Bingham.gpx"
+  },
+  "leicester-ramblers-402": {
+    "slug": "leicester-ramblers-402",
+    "title": "Attenborough Nature Reserve, Beeston Canal & River Trent",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 402",
+        "startPlace": "Attenborough",
+        "endPlace": "Attenborough",
+        "startStation": "ATB",
+        "endStation": "ATB",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 8.5,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "cafe",
+            "location": "Attenborough Nature Reserve",
+            "url": null
+          }
+        ],
+        "terrain": "Good paths, nature reserve, canal, river.",
+        "sights": [
+          {
+            "name": "Attenborough Nature Reserve",
+            "url": null
+          },
+          {
+            "name": "Beeston Canal",
+            "url": null
+          },
+          {
+            "name": "River Trent",
+            "url": null
+          }
+        ],
+        "warnings": "Check for flooding.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/402%20Attenborough.gpx"
+  },
+  "leicester-ramblers-404": {
+    "slug": "leicester-ramblers-404",
+    "title": "Burton Joyce to Fiskerton — A Walk by the River Trent",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 404",
+        "startPlace": "Burton Joyce",
+        "endPlace": "Fiskerton",
+        "startStation": "BUJ",
+        "endStation": "FSK",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "pubs",
+            "location": "Gunthorpe",
+            "url": null
+          },
+          {
+            "name": "cafe at the lock",
+            "location": "Gunthorpe",
+            "url": null
+          },
+          {
+            "name": "pub",
+            "location": "Fiskerton",
+            "url": null
+          }
+        ],
+        "terrain": "Riverside, good paths, open views.",
+        "sights": [
+          {
+            "name": "Gunthorpe Lock",
+            "url": null
+          },
+          {
+            "name": "Gunthorpe village",
+            "url": null
+          },
+          {
+            "name": "River Trent",
+            "url": null
+          }
+        ],
+        "warnings": "Irregular train times.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/404%20Burton%20Joyce%20to%20Fiskerton.gpx"
+  },
+  "leicester-ramblers-409": {
+    "slug": "leicester-ramblers-409",
+    "title": "Loughborough Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 409",
+        "startPlace": "Loughborough",
+        "endPlace": "Loughborough",
+        "startStation": "LBO",
+        "endStation": "LBO",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Canal, footpaths, roadside footpath.",
+        "sights": [
+          {
+            "name": "Grand Union Canal",
+            "url": null
+          },
+          {
+            "name": "Cotes Bridge",
+            "url": null
+          },
+          {
+            "name": "Walton on the Wolds",
+            "url": null
+          }
+        ],
+        "warnings": "Last section on busy road.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/409%20Lboro%20Circular.gpx"
+  },
+  "leicester-ramblers-410": {
+    "slug": "leicester-ramblers-410",
+    "title": "Spondon Circular to Dale Abbey",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 410",
+        "startPlace": "Spondon",
+        "endPlace": "Spondon",
+        "startStation": "SPO",
+        "endStation": "SPO",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Villages, park grounds, ornamental lake.",
+        "sights": [
+          {
+            "name": "Dale Abbey",
+            "url": null
+          },
+          {
+            "name": "All Saints Church",
+            "url": null
+          },
+          {
+            "name": "Hermitage Cave",
+            "url": null
+          },
+          {
+            "name": "Ockbrook Moravian Settlement",
+            "url": null
+          },
+          {
+            "name": "Locko Park",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/410%20Spondon%20Circular.gpx"
+  },
+  "leicester-ramblers-411": {
+    "slug": "leicester-ramblers-411",
+    "title": "Nuneaton Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 411",
+        "startPlace": "Nuneaton",
+        "endPlace": "Nuneaton",
+        "startStation": "NUN",
+        "endStation": "NUN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10.5,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Parks, river, country park, canal.",
+        "sights": [
+          {
+            "name": "Hartshill Country Park",
+            "url": null
+          },
+          {
+            "name": "Coventry Canal",
+            "url": null
+          },
+          {
+            "name": "Sandon Park",
+            "url": null
+          },
+          {
+            "name": "River Anker",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/411%20Nuneaton%20Circular.gpx"
+  },
+  "leicester-ramblers-415": {
+    "slug": "leicester-ramblers-415",
+    "title": "Stamford Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 415",
+        "startPlace": "Stamford",
+        "endPlace": "Stamford",
+        "startStation": "SMD",
+        "endStation": "SMD",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10.5,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Old railway, Roman road, park grounds, meadows.",
+        "sights": [
+          {
+            "name": "Burghley Park",
+            "url": null
+          },
+          {
+            "name": "Wothorpe Towers",
+            "url": null
+          },
+          {
+            "name": "Torpel Way",
+            "url": null
+          },
+          {
+            "name": "Ermine Street",
+            "url": null
+          },
+          {
+            "name": "Hereward Way",
+            "url": null
+          },
+          {
+            "name": "Jurassic Way",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/415%20Stamford.gpx"
+  },
+  "leicester-ramblers-416": {
+    "slug": "leicester-ramblers-416",
+    "title": "Long Eaton to Ilkeston — The Erewash Valley",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 416",
+        "startPlace": "Long Eaton",
+        "endPlace": "Ilkeston",
+        "startStation": "LGE",
+        "endStation": "ILN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 10,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Canal, industrial towns, disused railway viaduct.",
+        "sights": [
+          {
+            "name": "Bennerley Viaduct",
+            "url": null
+          },
+          {
+            "name": "Erewash Canal",
+            "url": null
+          },
+          {
+            "name": "Erewash Valley Trail",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/416%20Erewash%20Valley.gpx"
+  },
+  "leicester-ramblers-417": {
+    "slug": "leicester-ramblers-417",
+    "title": "Lowdham to Burton Joyce",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 417",
+        "startPlace": "Lowdham",
+        "endPlace": "Burton Joyce",
+        "startStation": "LOW",
+        "endStation": "BUJ",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 9,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "pub",
+            "location": "Burton Joyce",
+            "url": null
+          }
+        ],
+        "terrain": "Countryside, river.",
+        "sights": [
+          {
+            "name": "River Trent",
+            "url": null
+          },
+          {
+            "name": "Gonalston",
+            "url": null
+          },
+          {
+            "name": "Caythorpe",
+            "url": null
+          },
+          {
+            "name": "Gunthorpe",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/417%20Lowdham%20to%20Burton%20Joyce.gpx"
+  },
+  "leicester-ramblers-418": {
+    "slug": "leicester-ramblers-418",
+    "title": "Kettering Circular",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 418",
+        "startPlace": "Kettering",
+        "endPlace": "Kettering",
+        "startStation": "KET",
+        "endStation": "KET",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 11,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Villages, countryside.",
+        "sights": [
+          {
+            "name": "Pytchley",
+            "url": null
+          },
+          {
+            "name": "Broughton",
+            "url": null
+          },
+          {
+            "name": "Great Cransley",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/418%20Kettering%20Circular.gpx"
+  },
+  "leicester-ramblers-419": {
+    "slug": "leicester-ramblers-419",
+    "title": "Ruddington to Loughborough (bus from Nottingham)",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 419",
+        "startPlace": "Nottingham",
+        "endPlace": "Loughborough",
+        "startStation": "NOT",
+        "endStation": "LBO",
+        "requiresBus": true,
+        "stationToStation": false,
+        "distanceKm": null,
+        "distanceMiles": 12,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Country park, villages, hall grounds, river.",
+        "sights": [
+          {
+            "name": "Rushcliffe Country Park",
+            "url": null
+          },
+          {
+            "name": "Stanford Hall",
+            "url": null
+          },
+          {
+            "name": "Cotes Bridge",
+            "url": null
+          },
+          {
+            "name": "East Leake",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": false,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/419%20Ruddington%20Lboro.gpx"
+  },
+  "leicester-ramblers-426": {
+    "slug": "leicester-ramblers-426",
+    "title": "Duffield to Derby",
+    "url": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+    "favourite": false,
+    "region": "East Midlands",
+    "tags": [
+      "leicester-ramblers"
+    ],
+    "categories": [],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Walk 426",
+        "startPlace": "Duffield",
+        "endPlace": "Derby",
+        "startStation": "DFI",
+        "endStation": "DBY",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Repurposed railway track along the Great Northern Greenway.",
+        "sights": [
+          {
+            "name": "Great Northern Greenway",
+            "url": null
+          },
+          {
+            "name": "Horsley Carr",
+            "url": null
+          },
+          {
+            "name": "Morley",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx"
+  }
+}

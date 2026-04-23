@@ -3,19 +3,24 @@ import { readDataFile, writeDataFile } from "@/lib/github-data"
 
 const FILE_PATH = "data/station-notes.json"
 
-type NotesEntry = { name: string; publicNote: string; privateNote: string }
+type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
 
 export async function POST(req: NextRequest) {
-  const { coordKey, name, publicNote, privateNote } = await req.json()
+  const { coordKey, name, publicNote, privateNote, ramblerNote } = await req.json()
   if (!coordKey) return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
 
   const { data: notes, sha } = await readDataFile<Record<string, NotesEntry>>(FILE_PATH)
 
-  if (publicNote || privateNote) {
+  if (publicNote || privateNote || ramblerNote) {
     // Upsert — store name alongside notes for human readability
-    notes[coordKey] = { name: name ?? coordKey, publicNote: publicNote ?? "", privateNote: privateNote ?? "" }
+    notes[coordKey] = {
+      name: name ?? coordKey,
+      publicNote: publicNote ?? "",
+      privateNote: privateNote ?? "",
+      ramblerNote: ramblerNote ?? "",
+    }
   } else {
-    // Both empty — remove the entry entirely
+    // All empty — remove the entry entirely
     delete notes[coordKey]
   }
 

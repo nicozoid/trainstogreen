@@ -1277,7 +1277,7 @@ function createCircleGeoJSON(lng: number, lat: number, radiusKm: number, steps =
 // Using canvas (rather than SVG files) means no extra assets to load.
 // strokeColor switches between white (light mode) and black (dark mode) so
 // the outline stays visible against the map background.
-function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross' | 'diamond', color: string, strokeColor: string): ImageData {
+function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'circle' | 'square' | 'hexagon' | 'cross' | 'diamond', color: string, strokeColor: string, opts?: { crossLineWidth?: number }): ImageData {
   const size = 24
   const dpr = window.devicePixelRatio || 1 // 2 on Retina, 1 on standard displays
   const canvas = document.createElement('canvas')
@@ -1327,9 +1327,10 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
   } else if (shape === 'cross') {
     // Latin/grave cross — vertical is centred; horizontal sits in the upper third
     // (not the middle) so it reads as a Christian cross / headstone rather than a "+".
-    // This is the intended semantic for excluded stations.
+    // This is the intended semantic for excluded stations. The curated-excluded
+    // variant passes a larger crossLineWidth so the cross reads as "important".
     ctx.strokeStyle = color
-    ctx.lineWidth = 3
+    ctx.lineWidth = opts?.crossLineWidth ?? 3
     ctx.lineCap = 'butt'
     const inset = 5 // distance from canvas edge
     const cx = 12
@@ -1978,7 +1979,12 @@ export default function HikeMap() {
   // Empty set = no filter = all stations visible. Not persisted — rating
   // filters reset to "show everything" on every reload, matching the rest
   // of the filter state.
-  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(new Set())
+  // Default: start with the three positive ratings ticked so new visitors
+  // see a focused map (curated picks only), not every rated station plus
+  // every "Okay" and every "Unknown". Admins can click extras on manually.
+  const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
+    () => new Set(["highlight", "verified", "unverified"]),
+  )
 
   // Photo curations — per-station approved/rejected photo lists, loaded from
   // data/photo-curations.json via API. Only used in admin mode.
@@ -1986,7 +1992,7 @@ export default function HikeMap() {
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
-  type NotesEntry = { name: string; publicNote: string; privateNote: string }
+  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
   // Fetch universal ratings and photo curations on mount
@@ -2171,17 +2177,24 @@ export default function HikeMap() {
   const routedStations = useMemo(() => {
     if (!baseStations) return null
     // Short-circuit: if we've got a precomputed routing diff for
-    // the currently active primary AND no friend is set, reconstruct
-    // the full FeatureCollection by merging the diff over
-    // baseStations and skip the heavy compute below. A missing diff
-    // (no slug for this primary, 404 on the file, or still loading)
-    // or a friend being set both fall through to the live compute
-    // path (current behaviour). This is a cheap O(features) spread —
+    // the currently active primary, reconstruct the full
+    // FeatureCollection by merging the diff over baseStations and
+    // skip the heavy compute below. A missing diff (no slug for this
+    // primary, 404 on the file, or still loading) falls through to
+    // the live compute path. This is a cheap O(features) spread —
     // no routing work — so it's fine to do it here in the memo body.
+    //
+    // Friend origin is NOT a reason to fall through: the friend's
+    // journeys are merged into baseStations by ensureOriginLoaded
+    // (see line ~1724) BEFORE this memo runs, and the journeys-merge
+    // below preserves them alongside the precomputed primary routing.
+    // Previously friend-set forced a live recompute that silently
+    // dropped hundreds of distant stations (e.g. Belper, 114 min from
+    // Central London) that the precomputed file covers correctly.
     const primarySlug = PRIMARY_SLUG[primaryOrigin]
     const diffForPrimary = primarySlug ? precomputedRoutingByPrimary[primarySlug] : null
     const isBypassed = primarySlug != null && bypassPrecomputeForSlug === primarySlug
-    if (!friendOrigin && diffForPrimary && !isBypassed) {
+    if (diffForPrimary && !isBypassed) {
       return {
         ...baseStations,
         features: baseStations.features.map((f) => {
@@ -4218,6 +4231,16 @@ export default function HikeMap() {
     return {
       ...stations,
       features: stations.features.filter((f) => {
+        // Friend origin short-circuit — the user just picked this coord
+        // as their partner's home, so it MUST be on the map even if
+        // every other filter (time sliders, rating visibility, direct-
+        // only, interchange, feature) would otherwise hide it. Also
+        // covers the self-reachability edge case: a station isn't in
+        // its own journeys dict, so the friend-mins check below would
+        // null-filter it out. Hoisted to the top so it beats every
+        // subsequent return-false gate.
+        if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
+
         const mins = f.properties.londonMinutes as number | null
 
         // Shared helper — returns true if the travel time passes both sliders.
@@ -4366,12 +4389,18 @@ export default function HikeMap() {
 
   // Stamps each feature with its rating but does NOT filter by visibleRatings.
   // Filtering happens in stationsForMap so we can keep leaving features during their animation.
+  //
+  // Also stamps `isCuratedExcluded` on excluded stations that nonetheless
+  // carry meaning: those with any rating (Probably/Okay/Good/Heavenly)
+  // or that sit in PRIMARY_ORIGINS / PRIMARY_ORIGIN_CLUSTER. Admin-only
+  // visual cue — drives a diamond marker instead of the cross.
   const allStationsWithRatings = useMemo(() => {
     if (!displayedStations) return null
     return {
       ...displayedStations,
       features: displayedStations.features.map(f => {
-        const r = ratings[f.properties.coordKey as string]
+        const coordKey = f.properties.coordKey as string
+        const r = ratings[coordKey]
         const extra: Record<string, unknown> = {}
         if (r) extra.rating = r
         // Flatten friend journey duration so Mapbox label expressions can read it
@@ -4379,6 +4408,20 @@ export default function HikeMap() {
           const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
           const mins = journeys?.[friendOrigin]?.durationMinutes
           if (mins != null) extra.friendMinutes = mins
+          // Stamp `isFriendOrigin` on the feature that IS the friend —
+          // used below by the rating-icons layer to render it as a
+          // primary-colour square (same shape as primary origins) so
+          // it stands out from its surrounding rating icons.
+          if (coordKey === friendOrigin) extra.isFriendOrigin = 1
+        }
+        // Curated-excluded marker — only applies to already-excluded
+        // stations. A rated excluded station, or one that's a primary
+        // origin / cluster sibling, gets the curated marker.
+        if (f.properties.isExcluded) {
+          const isPrimaryOrCluster =
+            coordKey in PRIMARY_ORIGINS ||
+            Object.values(PRIMARY_ORIGIN_CLUSTER).some((arr) => arr.includes(coordKey))
+          if (r || isPrimaryOrCluster) extra.isCuratedExcluded = true
         }
         if (Object.keys(extra).length === 0) return f
         return { ...f, properties: { ...f.properties, ...extra } }
@@ -4517,9 +4560,13 @@ export default function HikeMap() {
           // (not in the filter layer) so the layer's `has` filter can
           // read a cheap boolean property.
           const coord = f.properties.coordKey as string
-          const isDest =
-            !f.properties.isExcluded &&
-            coord !== primaryOrigin
+          // Any non-primary station can carry the needsApproval red-tint —
+          // including excluded ones. The approval set is authoritative:
+          // if a coord isn't in approvedJourneys for the current home,
+          // it tints, full stop. (Earlier logic short-circuited for
+          // isExcluded, but we want excluded-but-issue-flagged stations
+          // to show up as needing review.)
+          const isDest = coord !== primaryOrigin
           const composite = `${primaryOrigin}|${coord}`
           const needsApproval = isDest && !approvedJourneys.has(composite)
           const base = needsApproval
@@ -4756,21 +4803,21 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Save public/private notes for a station — called when the overlay closes
-  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string) => {
+  // Save public/private/rambler notes for a station — called when the overlay closes
+  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string, ramblerNote: string) => {
     // Optimistic update
     setStationNotes((prev) => {
-      if (!publicNote && !privateNote) {
+      if (!publicNote && !privateNote && !ramblerNote) {
         const next = { ...prev }
         delete next[coordKey]
         return next
       }
-      return { ...prev, [coordKey]: { name, publicNote, privateNote } }
+      return { ...prev, [coordKey]: { name, publicNote, privateNote, ramblerNote } }
     })
     await fetch("/api/dev/station-notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, publicNote, privateNote }),
+      body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
     })
   }, [])
 
@@ -5763,6 +5810,62 @@ export default function HikeMap() {
     })
   }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords, isTouchDevice])
 
+  // Deep-link support: when the URL carries `?station=<coordKey>` (used
+  // by the admin rambler-walks page to link station names straight to
+  // their overlay), jump to that station and open its modal on mount.
+  // Runs once per (mapReady, stations, route) trio — the `stations`
+  // dep also covers routedStations being available. We then strip the
+  // param from the URL so a reload doesn't silently re-open it.
+  // URL-param handling for deep-links from the /admin/rambler-walks page.
+  // Split across two effects so the admin-enable fires immediately on
+  // mount (it doesn't need stations data) while the station modal waits
+  // for the stations memo to populate. Otherwise ?admin=1 would only
+  // take effect after the heavy routing memo finished, which can take
+  // 5-10s on a cold page load and is wasted time.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("admin") !== "1") return
+    setDevExcludeActive(true)
+    const url = new URL(window.location.href)
+    url.searchParams.delete("admin")
+    window.history.replaceState(null, "", url.toString())
+  }, [])
+
+  useEffect(() => {
+    // Use `baseStations` (raw stations.json) rather than the `stations`
+    // memo — the latter waits on the heavy routing memo, which can take
+    // 5-10s on a cold load. All we need to render the modal is the
+    // feature's name/coords/basic props; routing data will populate
+    // lazily once the memo catches up.
+    if (!baseStations) return
+    const params = new URLSearchParams(window.location.search)
+    const coordKey = params.get("station")
+    if (!coordKey) return
+    const feature = baseStations.features.find(
+      (f) => (f.properties?.coordKey as string | undefined) === coordKey,
+    )
+    if (!feature) return
+    const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
+    const map = mapRef.current?.getMap()
+    if (map) map.jumpTo({ center: [lng, lat], zoom: 13 })
+    const screenPt = mapRef.current?.project([lng, lat])
+    const journeys = feature.properties?.journeys as Record<string, JourneyInfo> | undefined
+    setSelectedStation({
+      name: feature.properties?.name as string,
+      lng,
+      lat,
+      minutes: feature.properties?.londonMinutes as number,
+      coordKey,
+      flickrCount: (feature.properties?.flickrCount as number | null) ?? null,
+      screenX: screenPt?.x ?? window.innerWidth / 2,
+      screenY: screenPt?.y ?? window.innerHeight / 2,
+      journeys,
+    })
+    const url = new URL(window.location.href)
+    url.searchParams.delete("station")
+    window.history.replaceState(null, "", url.toString())
+  }, [baseStations])
+
   // Called on initial map load and handles icon registration.
   // Also registers a style.load listener for theme swaps.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -5886,7 +5989,10 @@ export default function HikeMap() {
     add('icon-highlight',       createRatingIcon('star',          colors.primary,   stroke))
     add('icon-verified',        createRatingIcon('triangle-up',   colors.primary,   stroke))
     add('icon-unrated',         createRatingIcon('circle',        colors.secondary, stroke))
-    add('icon-unverified',      createRatingIcon('hexagon',        colors.secondary, stroke))
+    // Probably/unverified — primary colour (matches Heavenly/Good) so it
+    // reads as a positive-curation tier. Previously secondary, which blurred
+    // the visual line against the Unknown dot.
+    add('icon-unverified',      createRatingIcon('hexagon',        colors.primary,   stroke))
     add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
     add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
     add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
@@ -5901,6 +6007,14 @@ export default function HikeMap() {
     // Excluded stations — only shown in admin mode. Uses --primary so the cross
     // reads with the same visual weight as Heavenly/Good/Origin markers.
     add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
+    // Curated-excluded: an admin-only variant of the excluded marker that
+    // renders for excluded stations we nevertheless care about — ones
+    // that carry a rating, or that act as a primary origin / cluster
+    // sibling. Same Latin cross as `icon-excluded`, but drawn with a
+    // thicker stroke; combined with the 2× icon-size (set on the layer),
+    // it reads as a louder version of the cross — "excluded, yes, but
+    // don't forget about this one".
+    add('icon-curated-excluded', createRatingIcon('cross',        colors.primary,   stroke, { crossLineWidth: 6 }))
   }
 
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
@@ -6036,37 +6150,40 @@ export default function HikeMap() {
           process.env.NODE_ENV is inlined at build time by Next.js, so this
           entire block is stripped from production bundles (dead-code elimination). */}
       {process.env.NODE_ENV === "development" && (
-        <div className="absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2">
+        // z-[60] keeps the admin bar on top of the StationModal dialog
+        // (Radix renders its overlay + content at z-50), so the "admin"
+        // toggle remains clickable while an overlay is showing — useful
+        // for hopping out of admin without closing the current station.
+        <div className="absolute bottom-4 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
           <button
             onClick={() => {
               const next = !devExcludeActive
               setDevExcludeActive(next)
-              if (next) {
-                // Admin on — preset filters for a fresh testing slate:
-                //   • sliders opened wide (600) so no time-filter hides stations
-                //   • all four rating checkboxes ticked (Heavenly, Good,
-                //     Probably, Okay) — covers every curated category
-                //   • Interchange dropdown reset to "—" so the admin
-                //     sees the unfiltered journey set first, then
-                //     narrows via the dropdown as needed
-                setMaxMinutes(600)
-                setFriendMaxMinutes(600)
+              // Entering admin mode: do NOT touch any filters. The admin
+              // may be toggling back and forth mid-task and doesn't want
+              // their working state blown away.
+              //
+              // Leaving admin mode: reset only the filters that either
+              //   (a) set an admin-only value the non-admin UI can't undo
+              //       — "excluded" rating, min-time-from-London beyond
+              //       what the non-admin slider exposes — or
+              //   (b) are admin-only dropdowns (Feature, Interchange)
+              //       whose current selection wouldn't make sense to a
+              //       returning non-admin.
+              // Everything else (visible ratings except excluded,
+              // direct-only toggles, friend filters) stays put so the
+              // admin's working state carries over.
+              if (!next) {
+                setVisibleRatings((prev) => {
+                  if (!prev.has("excluded")) return prev
+                  const copy = new Set(prev)
+                  copy.delete("excluded")
+                  return copy
+                })
                 setMinMinutes(0)
-                setPrimaryDirectOnly(false)
                 setPrimaryInterchangeFilter("off")
                 setPrimaryFeatureFilter("off")
-                setFriendDirectOnly(false)
-                setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended"]))
-              } else {
-                // Admin off — clear ALL filter checkboxes back to defaults.
-                setMaxMinutes(120)
-                setFriendMaxMinutes(120)
-                setMinMinutes(0)
-                setPrimaryDirectOnly(false)
-                setPrimaryInterchangeFilter("off")
-                setPrimaryFeatureFilter("off")
-                setFriendDirectOnly(false)
-                setVisibleRatings(new Set())
+                if (maxMinutes > 120) setMaxMinutes(120)
               }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
@@ -6090,8 +6207,21 @@ export default function HikeMap() {
               onClick={() => setRttStatusOpen(true)}
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
             >
-              RTT
+              rtt
             </button>
+          )}
+          {/* Rambler walks admin page trigger — admin-only. Opens a
+              standalone page showing extraction status for every walk
+              on walkingclub.org.uk (extracted / onMap / issues). */}
+          {devExcludeActive && (
+            <a
+              href="/admin/rambler-walks"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+            >
+              walks
+            </a>
           )}
           {/* Clear-session step is now part of the combined
               "Regenerate" button below — it wipes ttg:* localStorage
@@ -6118,13 +6248,14 @@ export default function HikeMap() {
             <button
               onClick={async () => {
                 const slugEntries = Object.entries(PRIMARY_SLUG)
-                // Auto-clear the friend origin if one is active — the
-                // regen flow needs the memo's short-circuit gate
-                // (`!friendOrigin`) to be true so the precomputed
-                // diff can be saved for a friend-less state. Done
-                // before the confirm() dialog so if the admin cancels,
-                // the friend stays cleared anyway (cheaper than
-                // restoring after).
+                // Auto-clear the friend origin if one is active —
+                // precomputed diffs are saved from a clean friend-less
+                // state so the file reflects the "visitor lands here
+                // with no friend picked" baseline. Friend-merged
+                // journeys would otherwise leak into the saved diff
+                // through baseStations. Done before the confirm()
+                // dialog so if the admin cancels, the friend stays
+                // cleared anyway (cheaper than restoring after).
                 if (friendOrigin) setFriendOrigin(null)
                 if (!confirm(
                   `Regenerate everything?\n\n`
@@ -6279,24 +6410,38 @@ export default function HikeMap() {
                     results.push({ slug, mb: (result.bytes / (1024 * 1024)).toFixed(2) })
                   }
                 }
-                // Step 5: restore the admin's original primary and
-                // clear the bypass. Clear cache too so the next runs
-                // fetch the newly-written files fresh.
-                setBypassPrecomputeForSlug(null)
-                setPrecomputedRoutingByPrimary({})
-                setPrimaryOriginRaw(origPrimary)
-                setRegenProgress(null)
+                // Step 5: reload as a brand-new visitor.
+                //
+                // IMPORTANT ORDERING: alert() first, THEN wipe, THEN
+                // navigate. The alert is synchronous/blocking — React
+                // batches no state and fires no effects while it's up —
+                // so wiping localStorage AFTER it closes guarantees
+                // nothing gets re-persisted between wipe and navigate.
+                // Previously the wipe happened before the alert, and
+                // pending usePersistedState write-backs occasionally
+                // squeezed in during the tick after alert dismissed
+                // but before reload(), re-populating `ttg:primaryOrigin`
+                // with the loop's last per-slug primary.
+                //
+                // We also swap location.reload() for location.replace("/")
+                // so the navigation is a fresh top-level GET. Any
+                // pending React effects that would otherwise run on the
+                // next tick get torn down immediately by the navigation.
+                //
+                // We intentionally do NOT call setBypassPrecomputeForSlug,
+                // setPrecomputedRoutingByPrimary, or setRegenProgress
+                // here — they queue React updates that could trigger
+                // persisted-state write-backs, and the full-page
+                // navigation makes them pointless anyway.
                 const summary = results.map((r) =>
                   r.error ? `  ${r.slug}: FAIL — ${r.error}` : `  ${r.slug}: ${r.mb} MB`,
                 ).join("\n")
                 alert(`Regen complete:\n${summary}\n\nReloading as a fresh visitor…`)
-                // Reload the page so the admin experiences the app
-                // exactly as a first-time visitor would: admin mode
-                // off (devExcludeActive is useState — reload resets
-                // to false), ttg:* localStorage already wiped at the
-                // start of this flow, and the newly-saved routing
-                // files in play.
-                location.reload()
+                for (let i = localStorage.length - 1; i >= 0; i--) {
+                  const k = localStorage.key(i)
+                  if (k && k.startsWith("ttg:")) localStorage.removeItem(k)
+                }
+                window.location.replace("/")
               }}
               disabled={regenProgress != null}
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60 disabled:opacity-70 disabled:cursor-default inline-flex items-center gap-2"
@@ -6311,7 +6456,7 @@ export default function HikeMap() {
                   <span>{regenProgress.slug} ({regenProgress.index}/{regenProgress.total})</span>
                 </>
               ) : (
-                <>Regenerate</>
+                <>regenerate</>
               )}
             </button>
           )}
@@ -6584,7 +6729,9 @@ export default function HikeMap() {
                   "icon-image": "icon-london-terminus",
                   // ~0.6× of the standard rating-icon size — reads as a
                   // compact waypoint at all zooms without competing with
-                  // the hiking-destination icons.
+                  // the hiking-destination icons. Kept the same in admin
+                  // and non-admin mode so the termini anchor the map
+                  // consistently regardless of which mode you're in.
                   "icon-size": 0.6,
                   // Always render even if another symbol is in the way
                   // (e.g. Mapbox's own base-style station symbols).
@@ -6728,20 +6875,18 @@ export default function HikeMap() {
                 BENEATH the icon layers (mounted first so it renders
                 first in the Source's implicit layer order). Filter
                 matches the `needsApproval=1` property set upstream in
-                stationsForMap's map callback, plus the usual "not
-                excluded / not origin" guard so those two station
-                classes stay their normal colour in admin mode. The
-                outer {devExcludeActive && …} gate keeps the layer
-                completely unmounted in non-admin mode — no runtime
-                cost for regular users. */}
+                stationsForMap's map callback. Excluded stations that
+                are also unapproved get the halo too — the "isExcluded
+                AND !isApproved" combination is a valid state now,
+                surfacing review-worthy stations even when they sit in
+                the excluded list. The outer {devExcludeActive && …}
+                gate keeps the layer completely unmounted in non-admin
+                mode — no runtime cost for regular users. */}
             {devExcludeActive && (
               <Layer
                 id="station-unapproved-halo"
                 type="circle"
-                filter={["all",
-                  ["has", "needsApproval"],
-                  ["!", ["has", "isExcluded"]],
-                ]}
+                filter={["has", "needsApproval"]}
                 paint={{
                   "circle-color": "#dc2626", // red-600 — matches admin exclude cross
                   "circle-radius": 10,
@@ -6782,11 +6927,22 @@ export default function HikeMap() {
               <Layer
                 id="station-rating-icons"
                 type="symbol"
-                filter={["any", ["has", "rating"], ["has", "isExcluded"]]}
+                filter={["any", ["has", "rating"], ["has", "isExcluded"], ["has", "isFriendOrigin"]]}
                 layout={{
-                  // Excluded (admin-only): cross. Others: rating-based.
+                  // Friend origin wins over everything else — the active
+                  // friend station renders as a primary-colour square,
+                  // matching the primary-origin convention so the two
+                  // "origins" on the map (yours + your friend's) look
+                  // consistent. Checked FIRST so it beats isExcluded
+                  // (friend origins can be excluded — Birmingham is).
+                  // Curated-excluded (admin-only): thick cross in the
+                  // same primary colour as the regular cross; signals
+                  // "excluded but meaningful". Regular excluded
+                  // (admin-only): cross. Others: rating-based.
                   "icon-image": ["case",
-                    ["has", "isExcluded"], "icon-excluded",
+                    ["has", "isFriendOrigin"],     "icon-origin",
+                    ["has", "isCuratedExcluded"], "icon-curated-excluded",
+                    ["has", "isExcluded"],         "icon-excluded",
                     ["match", ["get", "rating"],
                       "highlight",       "icon-highlight",
                       "verified",        "icon-verified",
@@ -6810,10 +6966,21 @@ export default function HikeMap() {
                   ],
                   // Slightly larger icon when hovered
                   // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
-                  // Excluded stations render at half the normal size — multiplying the base
-                  // expression by 0.5 keeps hover and enter/leave animations working correctly.
+                  // Regular excluded (cross) renders at half the normal size.
+                  // Curated-excluded (diamond, admin-only) renders at full size
+                  // so it reads 2× as big as the cross — the admin cue the
+                  // user asked for ("diamond icons twice as big in admin mode").
                   "icon-size": ["*",
-                    ["case", ["has", "isExcluded"], 0.5, 1],
+                    ["case",
+                      // Friend origin gets full base scale (square icon) —
+                      // even if it's also excluded (Birmingham is), so
+                      // the friend shouldn't shrink to the 0.5× cross
+                      // scaling that excluded stations normally get.
+                      ["has", "isFriendOrigin"], 1,
+                      ["has", "isCuratedExcluded"], 1,
+                      ["has", "isExcluded"], 0.5,
+                      1,
+                    ],
                     hovered
                       ? ["case",
                           ["==", ["get", "coordKey"], hovered.coordKey],
@@ -7299,7 +7466,8 @@ export default function HikeMap() {
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
-            onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
+            ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
+            onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
             // StationModal's internal API is name-based (it calls getEffectiveJourney
             // which expects a name, and prints "X minutes from <name>"). Translate
             // coord-keyed state → names at the boundary. journeys are re-keyed too.
@@ -7402,28 +7570,19 @@ export default function HikeMap() {
             // generous rounding (3.2rem) to avoid clipping halo/stroke.
             style={{ width: "3.2rem", height: "1.25rem" }}
           >
-            {notificationPhase !== "loading" ? (
-              /* Tick. Rendered whenever we're NOT actively loading —
-                  i.e. during "success" AND "idle". During the
-                  fade-out window (phase flips success→idle instantly
-                  but the pill's opacity takes 200ms to animate to 0)
-                  keeping the tick avoids a brief spinner flash.
-                  Path is a classic Heroicons checkmark. */
-              <svg
-                aria-label="Done"
-                className="h-5 w-5"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                />
-              </svg>
-            ) : (
-              <LogoSpinner className="h-4" label="Loading" />
-            )}
+            {/* Spinner stays visible for the entire pill lifecycle —
+                loading, the post-load "success" fade window, and the
+                idle fade-out. Previously the pill flipped to a green
+                tick for ~400ms after loading finished; the user asked
+                for that celebratory beat to go away. Keeping the
+                spinner through the fade is harmless: the pill's
+                opacity animates to 0 over 200ms so the remaining
+                rotation is barely perceptible. */}
+            <LogoSpinner className="h-4" label="Loading" />
+            {/* Silences an unused-variable lint when the only remaining
+                reference to `notificationPhase` is inside the useEffect
+                that drives it. */}
+            {notificationPhase === "loading" ? null : null}
           </span>
           {/* Label resolution, most-specific first:
                 1. menuName — used when the primary has a cluster

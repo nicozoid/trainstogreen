@@ -1,0 +1,27 @@
+{
+  "_readme": "Extra one-liner notes appended to a station's ramblerNote AFTER the auto-generated walk summaries. Keyed by coordKey ('lng,lat'). Each value is an array of strings; each string becomes its own paragraph separated by a blank line. Editable by hand — survives re-runs of build-rambler-notes.mjs (which reads this file in addition to the walks data).",
+  "-1.1449555,52.9473037": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.2075065,52.9207938": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.2311523,52.9064132": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.2872821,52.8849696": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.4108169,52.9120948": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.462612,52.9165243": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.4858584,52.9882284": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ],
+  "-1.4825631,53.0242729": [
+    "[Featured by Scenic Rail](https://scenicrailbritain.com/lines/derwent-valley-line/)"
+  ]
+}
