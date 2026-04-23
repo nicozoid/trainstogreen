@@ -201,13 +201,11 @@ type StationModalProps = {
    *  ("London"), not the coord — the comparison would be fragile if
    *  driven off the name. */
   isLondonHome?: boolean
-  /** Admin-only: true when the CURRENT home→destination pair has been
-   *  tested and approved. Drives the Approve toggle + its active state. */
-  isApprovedForHome?: boolean
-  /** Admin-only: toggles the approved flag for the active home→dest
-   *  pair. No-op (button hidden) when the station is excluded or an
-   *  origin station — those classes don't participate in approval. */
-  onToggleApproved?: (approved: boolean) => void
+  /** Admin-only: true when the station is flagged as having an issue.
+   *  Station-global — same flag regardless of which primary is selected. */
+  hasIssue?: boolean
+  /** Admin-only: toggles the hasIssue flag for this station. */
+  onToggleIssue?: (hasIssue: boolean) => void
 }
 
 // Canonical London-terminus names (+ their aliases) used by the
@@ -479,8 +477,8 @@ export default function StationModal({
   stationCrs,
   adminMode = false,
   isLondonHome = false,
-  isApprovedForHome = false,
-  onToggleApproved,
+  hasIssue = false,
+  onToggleIssue,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -1414,14 +1412,14 @@ export default function StationModal({
                   (green check). */}
               {/* Issue flag — admin-only. Visible for every station (including
                   excluded ones) so admins can triage without needing to
-                  un-exclude first. Active (highlighted) = "has issue" =
-                  NOT approved; inactive = "no issue" = approved. Clicking
-                  toggles the underlying approval for the current home. */}
-              {onToggleApproved && (
+                  un-exclude first. Active (highlighted) = "has issue".
+                  Station-global: toggling affects this station under every
+                  primary, not just the current home. */}
+              {onToggleIssue && (
                 <DevActionButton
-                  label={isApprovedForHome ? "Flag issue" : "Clear issue"}
-                  active={!isApprovedForHome}
-                  onClick={() => onToggleApproved(!isApprovedForHome)}
+                  label={hasIssue ? "Clear issue" : "Flag issue"}
+                  active={hasIssue}
+                  onClick={() => onToggleIssue(!hasIssue)}
                   icon={
                     /* Exclamation mark — highlighted primary when flagged,
                        grey outline when clear. Built from two rounded-cap
@@ -1429,7 +1427,7 @@ export default function StationModal({
                        small disc (strokeLinecap="round" + a 0.01-long
                        line = a disc of radius strokeWidth/2). */
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                      stroke={!isApprovedForHome ? 'var(--primary)' : 'currentColor'}
+                      stroke={hasIssue ? 'var(--primary)' : 'currentColor'}
                       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="12" y1="4" x2="12" y2="14" />
                       <line x1="12" y1="19" x2="12" y2="19.01" />

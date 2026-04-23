@@ -91,9 +91,11 @@ for (const [slug, entry] of Object.entries(walks)) {
   // (a) identify which walk page the issue refers to and (b) click
   // through to the source. URL is the walk entry's primary URL —
   // for SWC/Leicester it's the per-walk page; for Heart it's the
-  // PDF URL. Falls back to just slug if no url is stored.
-  const urlPart = entry.url ? ` <${entry.url}>` : ""
-  const line = `[${slug}${urlPart}]: ${noteText}`
+  // PDF URL. Emitted as markdown `[slug](url)` so renderWithLinks in
+  // photo-overlay.tsx turns it into a clickable anchor; falls back to
+  // plain slug if no url is stored.
+  const prefix = entry.url ? `[${slug}](${entry.url})` : slug
+  const line = `${prefix}: ${noteText}`
   for (const coord of touchedCoords) {
     if (!notesByStation.has(coord)) notesByStation.set(coord, [])
     notesByStation.get(coord).push(line)
