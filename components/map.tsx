@@ -1858,7 +1858,15 @@ export default function HikeMap() {
   //   "private-notes"   — only destinations with a non-empty private
   //                       note (admin-authored). Helps the admin find
   //                       stations where they've stashed context.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes"
+  //   "sloppy-pics"     — stations whose photo curation isn't "full"
+  //                       yet: approved.length < MAX_PHOTOS (12). This
+  //                       INCLUDES stations that have never been touched
+  //                       (approved=0 counts as < 12).
+  //   "all-sloppy-pics" — the subset of sloppy-pics that have zero
+  //                       curation at all (no approvals AND no
+  //                       rejections). These are the stations still
+  //                       using the broad Flickr algorithm by default.
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
@@ -1999,6 +2007,21 @@ export default function HikeMap() {
   type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
+  // Per-station Flickr-algorithm override. Admin picks one of four algos for a
+  // station; "custom" lets them fully control tags/exclusions/radius. Stations
+  // without an entry here use the auto-fallback (isOrigin → station,
+  // else landscapes). Curation state no longer promotes to hikes — that's manual.
+  type FlickrAlgo = "landscapes" | "hikes" | "station" | "custom"
+  type FlickrSort = "relevance" | "interestingness-desc"
+  type FlickrSettings = {
+    name?: string
+    algo: FlickrAlgo
+    // Custom payload only includes `sort` when the admin has explicitly
+    // picked one; default (when absent) is "relevance" server-side.
+    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }
+  }
+  const [flickrSettings, setFlickrSettings] = useState<Record<string, FlickrSettings>>({})
+
   // Fetch universal ratings and photo curations on mount
   useEffect(() => {
     fetch("/api/dev/rate-station")
@@ -2010,6 +2033,9 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
+    fetch("/api/dev/flickr-settings")
+      .then((res) => res.json())
+      .then((data) => setFlickrSettings(data))
     // Stations flagged as "has issue" (admin triage). Server returns a
     // flat string[] of coordKeys; we wrap it in a Set for O(1) lookups.
     fetch("/api/dev/has-issue-station")
@@ -4357,6 +4383,20 @@ export default function HikeMap() {
             // string doesn't count — we require actual content.
             const entry = stationNotes[f.properties.coordKey as string]
             if (!entry?.privateNote?.trim()) return false
+          } else if (primaryFeatureFilter === "sloppy-pics") {
+            // "Not fully curated yet" — fewer than MAX_PHOTOS (12) approved.
+            // Stations never touched (entry undefined → approved.length = 0)
+            // satisfy this, which is intentional.
+            const entry = curations[f.properties.coordKey as string]
+            const approvedCount = entry?.approved.length ?? 0
+            if (approvedCount >= 12) return false
+          } else if (primaryFeatureFilter === "all-sloppy-pics") {
+            // "Never touched" — no approvals AND no rejections. These are
+            // the stations still on the broad (no-curation) Flickr algo.
+            const entry = curations[f.properties.coordKey as string]
+            const approvedCount = entry?.approved.length ?? 0
+            const rejectedCount = entry?.rejected.length ?? 0
+            if (approvedCount > 0 || rejectedCount > 0) return false
           }
         }
         // When friend mode is active, also require the station to be reachable
@@ -4375,7 +4415,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, interchangeLookups, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -4701,17 +4741,28 @@ export default function HikeMap() {
   }, [])
 
   // Dev action: approve a photo for a station — persists to data/photo-curations.json
+  //
+  // Newly approved photos land at the BOTTOM of the approved list. The list is
+  // capped at 12 (matching MAX_PHOTOS in photo-overlay.tsx): once that cap is
+  // hit, a new approval replaces the existing 12th (last) photo. The dropped
+  // photo returns to neutral state (not rejected), so it can be re-approved
+  // later or surface again as a Flickr candidate.
   const handleApprovePhoto = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
+    const MAX_APPROVED = 12
     // Optimistic update
     setCurations((prev) => {
       const entry = prev[coordKey] ?? { name, approved: [], rejected: [] }
       if (entry.approved.some((p) => p.id === photo.id)) return prev // already approved
+      // If already at cap, drop the last existing approval so the new one takes slot 12.
+      const base = entry.approved.length >= MAX_APPROVED
+        ? entry.approved.slice(0, MAX_APPROVED - 1)
+        : entry.approved
       return {
         ...prev,
         [coordKey]: {
           ...entry,
           name,
-          approved: [...entry.approved, photo],
+          approved: [...base, photo],
           rejected: entry.rejected.filter((id) => id !== photo.id),
         },
       }
@@ -4746,9 +4797,20 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: move an approved photo up or down in the display order
-  const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top") => {
-    // Optimistic update — swap with neighbour, or splice to front for "top"
+  // Dev action: move an approved photo within the approved list.
+  //   "up" / "down" — swap with the neighbour one slot away.
+  //   "top"         — jump to the front of the approved list.
+  //   "bottom"      — jump to the 12th slot (index 11). Because the overlay
+  //                   only ever shows the first 12 approved photos, "bottom"
+  //                   means "bottom of what's visible". On legacy stations
+  //                   with >12 approved this is NOT the true end of the list;
+  //                   it's slot 12. If there are <12 approved, it degrades
+  //                   gracefully to "append to end" (same slot either way).
+  //   "end"         — true end of the approved list (past the visible 12).
+  //                   Used by the refresh button on approved photos to demote
+  //                   them off-screen — distinct from "bottom" (slot 12).
+  const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top" | "bottom" | "end") => {
+    // Optimistic update — swap with neighbour, or splice for "top"/"bottom"
     setCurations((prev) => {
       const entry = prev[coordKey]
       if (!entry) return prev
@@ -4758,6 +4820,18 @@ export default function HikeMap() {
       if (direction === "top") {
         const [photo] = approved.splice(idx, 1)
         approved.unshift(photo)
+      } else if (direction === "bottom") {
+        // Remove first, then insert at index 11 (12th slot). If the list is
+        // shorter than that after removal, splice clamps to the end — which
+        // is the intuitive fallback when there are <12 approved photos.
+        const [photo] = approved.splice(idx, 1)
+        const targetIdx = Math.min(11, approved.length)
+        approved.splice(targetIdx, 0, photo)
+      } else if (direction === "end") {
+        // True end of the approved list (past the visible 12). Used to demote
+        // a refreshed-away approved photo off-screen.
+        const [photo] = approved.splice(idx, 1)
+        approved.push(photo)
       } else {
         const targetIdx = direction === "up" ? idx - 1 : idx + 1
         if (targetIdx < 0 || targetIdx >= approved.length) return prev
@@ -4813,6 +4887,37 @@ export default function HikeMap() {
       body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
     })
   }, [])
+
+  // Save / clear per-station Flickr settings (admin only). Pass algo=null to
+  // clear and revert to auto-fallback. `custom` is only meaningful when
+  // algo==="custom"; for the other algos it's ignored.
+  const handleSaveFlickrSettings = useCallback(
+    async (
+      coordKey: string,
+      name: string,
+      algo: FlickrAlgo | null,
+      custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort },
+    ) => {
+      // Optimistic update
+      setFlickrSettings((prev) => {
+        const next = { ...prev }
+        if (!algo) {
+          delete next[coordKey]
+        } else {
+          next[coordKey] = algo === "custom" && custom
+            ? { name, algo, custom }
+            : { name, algo }
+        }
+        return next
+      })
+      await fetch("/api/dev/flickr-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coordKey, name, algo, custom }),
+      })
+    },
+    [],
+  )
 
   // useEffect runs once after the component first renders (the empty [] means "run once only").
   // Gate BOTH the stations fetch AND the downstream heavy routing memo
@@ -7512,6 +7617,10 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            flickrSettings={flickrSettings[displayStation.coordKey] ?? null}
+            onSaveFlickrSettings={(algo, custom) =>
+              handleSaveFlickrSettings(displayStation.coordKey, displayStation.name, algo, custom)
+            }
             // StationModal's internal API is name-based (it calls getEffectiveJourney
             // which expects a name, and prints "X minutes from <name>"). Translate
             // coord-keyed state → names at the boundary. journeys are re-keyed too.
