@@ -510,7 +510,9 @@
     "algo": "custom",
     "custom": {
       "includeTags": [
-        "waterbeach"
+        "landmark",
+        "fens",
+        "marsh"
       ],
       "excludeTags": [
         "people",
