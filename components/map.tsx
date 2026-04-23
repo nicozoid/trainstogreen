@@ -8,6 +8,7 @@ import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { HelpButton } from "@/components/help-button"
+import { AdminPublishButton } from "@/components/admin-publish-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import excludedStationsList from "@/data/excluded-stations.json"
@@ -6033,6 +6034,31 @@ export default function HikeMap() {
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
   // hiding, label visibility, and zoom ranges baked in at the style level.
 
+  // Declarative icon-registration retry. The imperative path in
+  // handleMapLoad (run on Mapbox's `load` event) registers icons
+  // synchronously and is the primary code path — but on some slow/
+  // cold Vercel loads, a race was observed where symbol layers
+  // rendered before Mapbox had associated the freshly-added images
+  // with their names, leaving destination markers invisible until a
+  // hover/zoom triggered a repaint. Belt-and-braces: React effect
+  // that fires whenever `mapReady` flips (post-load) or theme
+  // changes, re-registers all icons against the current map style,
+  // and forces a repaint. `registerIcons` is idempotent
+  // (`hasImage`-checked `removeImage` + `addImage`), so calling it
+  // an extra time is cheap and safe.
+  useEffect(() => {
+    if (!mapReady) return
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    registerIcons(map)
+    map.triggerRepaint()
+    // `registerIcons` is stable across renders (defined inside the
+    // component body, but captures themeRef which we read via .current).
+    // Depending on `theme` is the meaningful trigger — a re-run on
+    // `mapReady` alone would only matter on the first transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, theme])
+
   return (
     <div className="relative h-full w-full">
       <FilterPanel
@@ -6155,6 +6181,18 @@ export default function HikeMap() {
           }}
         />
       </div>
+
+      {/* Admin Publish button — renders whenever admin mode is active
+          (including on production, unlike the dev-mode toggle below
+          which is dev-only). Positioned top-center on all breakpoints
+          so it doesn't clash with the filter panel (top-left) or the
+          help/theme buttons (top-right). Gated behind devExcludeActive
+          so non-admin visitors never see it. */}
+      {devExcludeActive && (
+        <div className="pointer-events-none absolute top-4 left-1/2 z-50 -translate-x-1/2">
+          <AdminPublishButton />
+        </div>
+      )}
 
 
       {/* Dev mode toggle + zoom badge — only rendered in local development.
