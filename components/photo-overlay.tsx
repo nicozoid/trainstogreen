@@ -1708,51 +1708,57 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
         />
       </a>
 
-      {/* Approved badge — clickable to un-approve (admin only, always visible) */}
-      {devMode && isApproved && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onUnapprove() }}
-          title="Remove approval"
-          className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/30 shadow-sm cursor-pointer hover:bg-black/50 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-            fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.6">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </button>
-      )}
-
-      {/* Admin hover actions — approve and reject buttons, top-left so they don't overlap the attribution.
-          On mobile (< md) the buttons are always visible since touch devices have no hover;
-          from md up they fade in only on hover of the parent .group (the photo card). */}
+      {/* Admin actions — two clusters, so moderation and reorder don't crowd each other:
+            - top-left: approve + reject (moderation)
+            - top-right: reorder controls (only on approved photos — reordering the curated set)
+          Visibility rules (per button, because the approve button breaks the pattern when approved):
+            - mobile (< md): always visible (touch devices have no hover)
+            - md and up: fade in only on hover of the parent .group (the photo card)
+          EXCEPTION: the approve button on an already-approved photo gets a solid emerald background
+          (same colour as its hover state) and stays fully visible at every breakpoint, to act as
+          the approval indicator. Clicking it un-approves. */}
       {devMode && (
-        <div className="absolute top-0 left-0 flex gap-1 p-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100">
-          {/* Approve button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onApprove() }}
-            title="Approve photo"
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-emerald-600/90 cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </button>
-          {/* Reject button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onReject() }}
-            title="Reject photo"
-            className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-red-600/90 cursor-pointer"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-              fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-          {/* Reorder — only shown on approved photos (reordering the curated set) */}
+        <>
+          {/* Top-left cluster: approve / reject. Wrapper has no opacity classes — visibility is
+              controlled per-button below so the approved-state approve button can override. */}
+          <div className="absolute top-0 left-0 flex gap-1 p-2">
+            {/* Approve button — doubles as the approval indicator when isApproved.
+                When approved: solid emerald bg (same colour as unapproved-hover), always visible,
+                click un-approves. When not approved: semi-opaque black, hover-only on desktop,
+                click approves. */}
+            <button
+              onClick={(e) => { e.stopPropagation(); (isApproved ? onUnapprove() : onApprove()) }}
+              title={isApproved ? 'Remove approval' : 'Approve photo'}
+              className={
+                isApproved
+                  // Approved state: emerald always, darker emerald on hover for affordance
+                  ? 'flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600/90 text-white backdrop-blur-sm transition-colors hover:bg-emerald-700 cursor-pointer opacity-100'
+                  // Unapproved state: matches the old look, hover-only visibility on desktop
+                  : 'flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-emerald-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100'
+              }
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </button>
+            {/* Reject button — standard hover-only-on-desktop behaviour regardless of approval state */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onReject() }}
+              title="Reject photo"
+              className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-red-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Top-right cluster: reorder controls — only on approved photos */}
           {isApproved && (
-            <>
+            <div className="absolute top-0 right-0 flex gap-1 p-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100">
               {/* Jump to top — double chevron icon */}
               <button
                 onClick={(e) => { e.stopPropagation(); onMoveToTop?.() }}
@@ -1790,9 +1796,9 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-            </>
+            </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Attribution overlay — slides up on hover */}
