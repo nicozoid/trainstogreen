@@ -389,5 +389,9 @@
   "-0.8857875,52.7610228": {
     "name": "Melton Mowbray",
     "algo": "landscapes"
+  },
+  "0.1033213,51.6717759": {
+    "name": "Theydon Bois",
+    "algo": "hikes"
   }
 }
