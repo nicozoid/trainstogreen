@@ -3565,11 +3565,5 @@
     "publicNote": "",
     "privateNote": "-- Rambler-walk issues (auto-generated) --\n[aldeburgh-to-saxmundham](https://www.walkingclub.org.uk/walk/aldeburgh-to-saxmundham/): The walk starts at Aldeburgh, which is not a train station — access is by bus from Saxmundham or Ipswich. The end point, Saxmundham, is a mainline station. requiresBus=true is set for the main walk accordingly. | The circular walk distance of 12.9 km is mentioned in 'Shortening the Walk' but the exact route description draws on SWC Walk 205 (Wickham Market to Aldeburgh), making the full variant description incomplete on this page alone.\n[wickham-market-to-aldeburgh](https://www.walkingclub.org.uk/walk/wickham-market-to-aldeburgh/): The walk ends at Aldeburgh which has no mainline railway station — a bus to Saxmundham (or Ipswich) is required. The page suggests cutting to B1122 for a bus if time is short, or catching First Bus 64 or Borderbus 521/522 from Aldeburgh High Street. No clear station-to-station variant is described; both variants require a bus. | The shorter variant distance (omitting section 4, saving 2.3 km) is derived from the text ('reduce the distance by 2.3 kms') applied to the stated 22.8 km total, giving approximately 20.5 km — not explicitly stated on the page.\n-- end Rambler-walk issues --",
     "ramblerNote": ""
-  },
-  "-1.0937301,53.9577037": {
-    "name": "York",
-    "publicNote": "",
-    "privateNote": "i used to live here innit",
-    "ramblerNote": ""
   }
 }
