@@ -6013,6 +6013,31 @@ export default function HikeMap() {
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
   // hiding, label visibility, and zoom ranges baked in at the style level.
 
+  // Declarative icon-registration retry. The imperative path in
+  // handleMapLoad (run on Mapbox's `load` event) registers icons
+  // synchronously and is the primary code path — but on some slow/
+  // cold Vercel loads, a race was observed where symbol layers
+  // rendered before Mapbox had associated the freshly-added images
+  // with their names, leaving destination markers invisible until a
+  // hover/zoom triggered a repaint. Belt-and-braces: React effect
+  // that fires whenever `mapReady` flips (post-load) or theme
+  // changes, re-registers all icons against the current map style,
+  // and forces a repaint. `registerIcons` is idempotent
+  // (`hasImage`-checked `removeImage` + `addImage`), so calling it
+  // an extra time is cheap and safe.
+  useEffect(() => {
+    if (!mapReady) return
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    registerIcons(map)
+    map.triggerRepaint()
+    // `registerIcons` is stable across renders (defined inside the
+    // component body, but captures themeRef which we read via .current).
+    // Depending on `theme` is the meaningful trigger — a re-run on
+    // `mapReady` alone would only matter on the first transition.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapReady, theme])
+
   return (
     <div className="relative h-full w-full">
       <FilterPanel
