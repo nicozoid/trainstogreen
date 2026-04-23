@@ -20,8 +20,9 @@ const SEARCH_TAGS_CURATED =
   "landscape, landmark, hike, trail, walk, way, castle, ruins, garden, park, nature reserve, nature, cottage, village, thatch, tudor, medieval, ruins, estate"
 // Origin stations (e.g. Farringdon, Stratford) — urban imagery instead of rural.
 // Radius is also tighter (1km vs 7km) since origins are city centres.
+// Named `_ORIGIN` for historical reasons — this is the "station" algo preset.
 const SEARCH_TAGS_ORIGIN =
-  "city, cityscape, landmark, crowd, traffic, urban, busy, crowded, commute"
+  "station, city, cityscape, landmark, urban, architecture, building"
 
 // Destination (hiking) stations exclude anything urban/transit — these photos
 // would drown out the countryside imagery we're actually looking for.
@@ -82,14 +83,19 @@ export async function GET(req: NextRequest) {
 
   // ── Admin-set algo override ────────────────────────────────────────────────
   // `algo` (if present) supersedes the auto fallback (isOrigin / hasCurations).
-  // Values: "landscapes" | "hikes" | "station-focus" | "custom".
+  // Values: "landscapes" | "hikes" | "station" | "custom".
   // When algo === "custom", `includeTags`, `excludeTags`, and `radius` must
   // also be supplied — those three fully override the preset for this station.
   const algoParam = searchParams.get("algo") as
-    | "landscapes" | "hikes" | "station-focus" | "custom" | null
+    | "landscapes" | "hikes" | "station" | "custom" | null
   const customIncludeTags = searchParams.get("includeTags") // already a comma-joined string
   const customExcludeTags = searchParams.get("excludeTags")
   const customRadius = searchParams.get("radius")
+  // Optional per-station sort override (only honoured when algo === "custom").
+  // Falls back to "relevance" for custom, "interestingness-desc" for others.
+  const customSortParam = searchParams.get("sort")
+  const customSort: "relevance" | "interestingness-desc" | null =
+    customSortParam === "relevance" || customSortParam === "interestingness-desc" ? customSortParam : null
 
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return NextResponse.json({ error: "missing or invalid lat/lng" }, { status: 400 })
@@ -136,14 +142,16 @@ export async function GET(req: NextRequest) {
     tags = rawIncludes.slice(0, FLICKR_TAG_LIMIT).join(", ")
     radius = customRadius ?? "7"
     excludeSet = new Set((customExcludeTags ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean))
-    // Hash the truncated include list into the cache key so edits bust the cache.
-    modeKey = `custom:${tags}:${radius}:${customExcludeTags ?? ""}`
-    sort = "relevance"
-  } else if (algoParam === "station-focus") {
+    // Admin can override sort for custom algos — default "relevance".
+    sort = customSort ?? "relevance"
+    // Hash the truncated include list + sort into the cache key so edits
+    // (and sort flips) bust the cache correctly.
+    modeKey = `custom:${tags}:${radius}:${customExcludeTags ?? ""}:${sort}`
+  } else if (algoParam === "station") {
     tags = SEARCH_TAGS_ORIGIN
     radius = "1"
     excludeSet = EXCLUDE_TAGS_ORIGIN
-    modeKey = "station-focus"
+    modeKey = "station"
     sort = "interestingness-desc"
   } else if (algoParam === "hikes") {
     tags = SEARCH_TAGS_CURATED
@@ -172,10 +180,9 @@ export async function GET(req: NextRequest) {
     sort = "interestingness-desc"
   }
 
-  // v2: sort order now varies per-algo (interestingness for generic, relevance
-  // for custom). Bumping the version bit invalidates entries cached under the
-  // previous universal-relevance behaviour.
-  const cacheKey = `photos:v2:${lat.toFixed(3)},${lng.toFixed(3)}:${modeKey}:p${pagesToFetch}`
+  // v3: station preset tags changed + renamed from "station-focus" to
+  // "station". Bumping invalidates entries cached under the old preset.
+  const cacheKey = `photos:v3:${lat.toFixed(3)},${lng.toFixed(3)}:${modeKey}:p${pagesToFetch}`
   const cached = cache.get(cacheKey)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return NextResponse.json({ photos: cached.photos })

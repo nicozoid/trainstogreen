@@ -33,8 +33,8 @@ async function fetchPhotosViaProxy(
   isOrigin: boolean,
   // Admin-set algo override — takes priority over the auto fallback on the server.
   // `custom` is only read when algo === "custom".
-  algo?: "landscapes" | "hikes" | "station-focus" | "custom" | null,
-  custom?: { includeTags: string[]; excludeTags: string[]; radius: number },
+  algo?: "landscapes" | "hikes" | "station" | "custom" | null,
+  custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" },
 ): Promise<FlickrPhoto[]> {
   const params = new URLSearchParams({
     lat: String(lat),
@@ -48,6 +48,7 @@ async function fetchPhotosViaProxy(
     params.set("includeTags", custom.includeTags.join(", "))
     params.set("excludeTags", custom.excludeTags.join(", "))
     params.set("radius", String(custom.radius))
+    if (custom.sort) params.set("sort", custom.sort)
   }
   const res = await fetch(`/api/flickr/photos?${params}`)
   if (!res.ok) throw new Error(`photos proxy ${res.status}`)
@@ -185,13 +186,14 @@ type StationModalProps = {
   onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
   /** Per-station Flickr-algorithm override. null = no override (auto fallback). */
   flickrSettings?: {
-    algo: "landscapes" | "hikes" | "station-focus" | "custom"
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number }
+    algo: "landscapes" | "hikes" | "station" | "custom"
+    // Custom's `sort` is optional; when absent the server defaults to "relevance".
+    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" }
   } | null
   /** Persists a new algo choice for this station; pass algo=null to revert to auto. */
   onSaveFlickrSettings?: (
-    algo: "landscapes" | "hikes" | "station-focus" | "custom" | null,
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number },
+    algo: "landscapes" | "hikes" | "station" | "custom" | null,
+    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" },
   ) => void
   /** Journey data keyed by origin station name (e.g. "Farringdon") */
   journeys?: Record<string, JourneyInfo>
@@ -1819,11 +1821,11 @@ export default function StationModal({
 // ── Flickr settings panel ──────────────────────────────────────────────────
 // Admin-only. Lives below the photo grid. Lets the admin pick which Flickr
 // search algorithm drives this station's gallery (landscapes / hikes /
-// station-focus / custom), and edit the tags and radius directly when Custom
+// station / custom), and edit the tags and radius directly when Custom
 // is selected. Settings persist via the /api/dev/flickr-settings endpoint.
 //
 // When no setting is saved, the UI still displays a selected algo — the
-// "auto fallback" (isOrigin → station-focus, else landscapes). Curation state
+// "auto fallback" (isOrigin → station, else landscapes). Curation state
 // no longer influences the auto algo — that's a manual override only.
 // Picking anything in the dropdown promotes that choice to an explicit override.
 
@@ -1841,14 +1843,17 @@ const PRESET_HIKES = {
   excludes: PRESET_LANDSCAPES.excludes, // same destination-exclude list
   radius: 7,
 }
-const PRESET_STATION_FOCUS = {
-  tags: "city, cityscape, landmark, crowd, traffic, urban, busy, crowded, commute",
+const PRESET_STATION = {
+  tags: "station, city, cityscape, landmark, urban, architecture, building",
   excludes:
     "portrait, portraits, countryfashion, countryoutfit, countrystyle, paddleboarding, baby, taps, reading, sexy, midjourney, protest, demonstration, demo, march, band, music, musicians",
   radius: 1,
 }
 
-type Algo = "landscapes" | "hikes" | "station-focus" | "custom"
+// Keeping `Algo` values as kebab-case (or single word) to match the persisted
+// settings file; `station` replaced the original `station-focus`.
+type Algo = "landscapes" | "hikes" | "station" | "custom"
+type FlickrSort = "relevance" | "interestingness-desc"
 
 function FlickrSettingsPanel({
   stationName,
@@ -1865,10 +1870,10 @@ function FlickrSettingsPanel({
   publicNote: string
   ramblerNote: string
   approvedCount: number
-  settings: { algo: Algo; custom?: { includeTags: string[]; excludeTags: string[]; radius: number } } | null
+  settings: { algo: Algo; custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort } } | null
   hasCurations: boolean
   isOrigin: boolean
-  onSave: (algo: Algo | null, custom?: { includeTags: string[]; excludeTags: string[]; radius: number }) => void
+  onSave: (algo: Algo | null, custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }) => void
   // Called when the admin wants to preview the gallery as a non-admin would
   // see it (clears this session's hidden-via-refresh + broken-image tracking).
   onRefreshGallery?: () => void
@@ -1878,7 +1883,7 @@ function FlickrSettingsPanel({
   // Auto-fallback used to promote curated stations to "hikes" automatically.
   // That's now a manual choice only — curated stations still default to
   // "landscapes" unless the admin explicitly picks another algo.
-  const autoAlgo: Algo = isOrigin ? "station-focus" : "landscapes"
+  const autoAlgo: Algo = isOrigin ? "station" : "landscapes"
   const effectiveAlgo: Algo = settings?.algo ?? autoAlgo
   const hasOverride = settings != null
 
@@ -1891,12 +1896,16 @@ function FlickrSettingsPanel({
     settings?.custom?.excludeTags.join(", ") ?? "",
   )
   const [customRadius, setCustomRadius] = useState(settings?.custom?.radius ?? 7)
+  // Sort selection for custom mode. Default "relevance" matches what the
+  // server falls back to when the field is absent from the stored payload.
+  const [customSort, setCustomSort] = useState<FlickrSort>(settings?.custom?.sort ?? "relevance")
 
   // Keep local state in sync when the parent pushes new settings (e.g. a reset).
   useEffect(() => {
     setCustomInclude(settings?.custom?.includeTags.join(", ") ?? "")
     setCustomExclude(settings?.custom?.excludeTags.join(", ") ?? "")
     setCustomRadius(settings?.custom?.radius ?? 7)
+    setCustomSort(settings?.custom?.sort ?? "relevance")
   }, [settings])
 
   // Seed payload when the admin switches to Custom for the first time on this
@@ -1910,7 +1919,7 @@ function FlickrSettingsPanel({
   //   5. settlement names (Bruton, Batcombe)
   // Lunch venues (Inn/Arms/Kitchen/…) are dropped by the extractor itself.
   // No landscapes defaults — per spec, custom starts "clean" from notes alone.
-  const buildInitialCustom = (): { includeTags: string[]; excludeTags: string[]; radius: number } => {
+  const buildInitialCustom = (): { includeTags: string[]; excludeTags: string[]; radius: number; sort: FlickrSort } => {
     const { trails, terrains, sights, settlements } = categorizePlaceNames(publicNote, ramblerNote)
     const stationTag = stationName.toLowerCase().replace(/\s+station$/, "").trim()
     // Dedupe while preserving order across the five buckets.
@@ -1930,7 +1939,7 @@ function FlickrSettingsPanel({
     // and makes the seeded list match what'll actually be queried.
     const TRUNCATED = includeTags.slice(0, 20)
     const excludeTags = PRESET_LANDSCAPES.excludes.split(",").map((t) => t.trim()).filter(Boolean)
-    return { includeTags: TRUNCATED, excludeTags, radius: PRESET_LANDSCAPES.radius }
+    return { includeTags: TRUNCATED, excludeTags, radius: PRESET_LANDSCAPES.radius, sort: "relevance" }
   }
 
   const handleAlgoChange = (next: Algo) => {
@@ -1945,12 +1954,14 @@ function FlickrSettingsPanel({
   }
 
   // Persist custom textareas on blur. Whatever the admin types is what's saved —
-  // no station-name enforcement.
-  const commitCustom = () => {
+  // no station-name enforcement. Sort is carried through so flipping it in the
+  // dropdown persists immediately (that path calls this after setCustomSort).
+  const commitCustom = (overrides?: { sort?: FlickrSort }) => {
     if (effectiveAlgo !== "custom") return
     const includeTags = customInclude.split(",").map((t) => t.trim()).filter(Boolean)
     const excludeTags = customExclude.split(",").map((t) => t.trim()).filter(Boolean)
-    onSave("custom", { includeTags, excludeTags, radius: customRadius })
+    const sort = overrides?.sort ?? customSort
+    onSave("custom", { includeTags, excludeTags, radius: customRadius, sort })
   }
 
   const preset =
@@ -1958,8 +1969,8 @@ function FlickrSettingsPanel({
       ? PRESET_LANDSCAPES
       : effectiveAlgo === "hikes"
         ? PRESET_HIKES
-        : effectiveAlgo === "station-focus"
-          ? PRESET_STATION_FOCUS
+        : effectiveAlgo === "station"
+          ? PRESET_STATION
           : null
 
   // When the gallery is at MAX_PHOTOS (12) approved, Flickr isn't fetched —
@@ -1978,7 +1989,7 @@ function FlickrSettingsPanel({
         >
           <option value="landscapes">Landscapes</option>
           <option value="hikes">Hikes</option>
-          <option value="station-focus">Station-focus</option>
+          <option value="station">Station</option>
           <option value="custom">Custom</option>
         </select>
       </div>
@@ -2017,7 +2028,7 @@ function FlickrSettingsPanel({
             <textarea
               value={customInclude}
               onChange={(e) => setCustomInclude(e.target.value)}
-              onBlur={commitCustom}
+              onBlur={() => commitCustom()}
               rows={3}
               className="w-full resize-y rounded border border-input bg-background px-2 py-1 font-mono text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
@@ -2039,7 +2050,7 @@ function FlickrSettingsPanel({
             <textarea
               value={customExclude}
               onChange={(e) => setCustomExclude(e.target.value)}
-              onBlur={commitCustom}
+              onBlur={() => commitCustom()}
               rows={3}
               className="w-full resize-y rounded border border-input bg-background px-2 py-1 font-mono text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
@@ -2053,10 +2064,28 @@ function FlickrSettingsPanel({
               step={0.5}
               value={customRadius}
               onChange={(e) => setCustomRadius(Number(e.target.value))}
-              onBlur={commitCustom}
+              onBlur={() => commitCustom()}
               className="w-16 rounded border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
             <span className="text-xs text-muted-foreground">km</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="custom-sort" className="text-xs font-medium">Sort</label>
+            <select
+              id="custom-sort"
+              value={customSort}
+              onChange={(e) => {
+                const next = e.target.value as FlickrSort
+                setCustomSort(next)
+                // Persist immediately — no blur trigger on a select. Pass the
+                // new value through directly to avoid reading stale state.
+                commitCustom({ sort: next })
+              }}
+              className="cursor-pointer rounded border border-input bg-background px-1 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            >
+              <option value="relevance">Relevance (tag match)</option>
+              <option value="interestingness-desc">Interestingness (engagement)</option>
+            </select>
           </div>
         </div>
       ) : preset ? (

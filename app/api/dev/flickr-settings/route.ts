@@ -5,14 +5,15 @@ const FILE_PATH = "data/photo-flickr-settings.json"
 
 // Per-station override of the Flickr photo-search algorithm. When a station
 // has no entry in this file, the auto-fallback logic applies (isOrigin →
-// station-focus, else landscapes). When an entry exists, its `algo` supersedes
+// station, else landscapes). When an entry exists, its `algo` supersedes
 // the auto logic. Note: curation state no longer promotes to hikes — the
 // admin must pick hikes (or custom) manually.
 //
 // `custom` is only populated when algo === "custom". It's a full override of
 // include tags / exclude tags / radius — no partial overrides, the whole
 // algorithm switches when you pick Custom.
-export type FlickrAlgo = "landscapes" | "hikes" | "station-focus" | "custom"
+export type FlickrAlgo = "landscapes" | "hikes" | "station" | "custom"
+export type FlickrSort = "relevance" | "interestingness-desc"
 export type FlickrSettings = {
   name?: string
   algo: FlickrAlgo
@@ -20,6 +21,10 @@ export type FlickrSettings = {
     includeTags: string[]
     excludeTags: string[]
     radius: number // km
+    // Optional. Default "relevance" (tag-match quality — matters when the
+    // admin's tags are specific). Admin can flip to "interestingness-desc"
+    // for stations where they want Flickr's engagement score to dominate.
+    sort?: FlickrSort
   }
 }
 
@@ -48,7 +53,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "cleared" })
   }
 
-  const validAlgos: FlickrAlgo[] = ["landscapes", "hikes", "station-focus", "custom"]
+  const validAlgos: FlickrAlgo[] = ["landscapes", "hikes", "station", "custom"]
   if (!validAlgos.includes(algo)) {
     return NextResponse.json({ error: `algo must be one of ${validAlgos.join(", ")}` }, { status: 400 })
   }
@@ -59,10 +64,13 @@ export async function POST(req: NextRequest) {
     if (!custom || !Array.isArray(custom.includeTags) || !Array.isArray(custom.excludeTags) || typeof custom.radius !== "number") {
       return NextResponse.json({ error: "custom algo requires { includeTags, excludeTags, radius }" }, { status: 400 })
     }
+    const sort: FlickrSort | undefined =
+      custom.sort === "interestingness-desc" || custom.sort === "relevance" ? custom.sort : undefined
     entry.custom = {
       includeTags: custom.includeTags.map((t) => t.trim()).filter(Boolean),
       excludeTags: custom.excludeTags.map((t) => t.trim()).filter(Boolean),
       radius: Math.max(0.1, Math.min(30, custom.radius)),
+      ...(sort ? { sort } : {}),
     }
   }
 

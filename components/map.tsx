@@ -2009,13 +2009,16 @@ export default function HikeMap() {
 
   // Per-station Flickr-algorithm override. Admin picks one of four algos for a
   // station; "custom" lets them fully control tags/exclusions/radius. Stations
-  // without an entry here use the auto-fallback (isOrigin → station-focus,
+  // without an entry here use the auto-fallback (isOrigin → station,
   // else landscapes). Curation state no longer promotes to hikes — that's manual.
-  type FlickrAlgo = "landscapes" | "hikes" | "station-focus" | "custom"
+  type FlickrAlgo = "landscapes" | "hikes" | "station" | "custom"
+  type FlickrSort = "relevance" | "interestingness-desc"
   type FlickrSettings = {
     name?: string
     algo: FlickrAlgo
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number }
+    // Custom payload only includes `sort` when the admin has explicitly
+    // picked one; default (when absent) is "relevance" server-side.
+    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }
   }
   const [flickrSettings, setFlickrSettings] = useState<Record<string, FlickrSettings>>({})
 
@@ -4893,7 +4896,7 @@ export default function HikeMap() {
       coordKey: string,
       name: string,
       algo: FlickrAlgo | null,
-      custom?: { includeTags: string[]; excludeTags: string[]; radius: number },
+      custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort },
     ) => {
       // Optimistic update
       setFlickrSettings((prev) => {

@@ -381,5 +381,13 @@
       "excludeTags": [],
       "radius": 7
     }
+  },
+  "-1.2872821,52.8849696": {
+    "name": "Long Eaton",
+    "algo": "landscapes"
+  },
+  "-0.8857875,52.7610228": {
+    "name": "Melton Mowbray",
+    "algo": "landscapes"
   }
 }
