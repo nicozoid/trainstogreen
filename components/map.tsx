@@ -5947,12 +5947,33 @@ export default function HikeMap() {
 
     // Register custom icon images for station markers.
     registerIcons(map)
+    // Force a repaint on the next frame so the symbol layers pick up
+    // the freshly-added images on the first render. Without this, on
+    // slower first-paint environments (notably Vercel cold loads) the
+    // layers sometimes mount before Mapbox has associated the image
+    // names with the layer — icons appear invisible until a hover or
+    // zoom triggers a repaint.
+    map.triggerRepaint()
+
+    // Safety net: if a layer requests an icon image that isn't
+    // registered yet (race on first paint), re-register all icons
+    // and repaint. Mapbox fires 'styleimagemissing' exactly for this
+    // recovery path.
+    map.on('styleimagemissing', (e: { id: string }) => {
+      // Only our own icon names — ignore anything Mapbox's basemap
+      // might ask for.
+      if (typeof e.id === 'string' && e.id.startsWith('icon-')) {
+        registerIcons(map)
+        map.triggerRepaint()
+      }
+    })
 
     // Re-register icons on every subsequent style change (dark/light theme swap).
     // The flat styles already have road/label hiding baked in, so no basemap
     // configuration is needed — just icon re-registration.
     map.on('style.load', () => {
       registerIcons(map)
+      map.triggerRepaint()
       setMapReady(true)
     })
 
@@ -6089,15 +6110,13 @@ export default function HikeMap() {
         }}
         originX={bannerOrigin?.x}
         originY={bannerOrigin?.y}
-        // Spinner disabled — after the stations.json slim-down
-        // (28 MB → 0.68 MB) + precomputed routing snapshot, the
-        // default home state renders essentially instantly. The
-        // banner just shows the CTA button from frame 1; data lands
-        // before the user finishes reading the heading. Kept the
-        // isLoading plumbing in welcome-banner.tsx in case we ever
-        // need to gate again (e.g. a slow-primary path), but for
-        // now always false.
-        isLoading={false}
+        // Spinner gated on `mapFirstIdle` — flips true on Mapbox's
+        // first `idle` event (all tiles + icons rendered). Shows the
+        // LogoSpinner while the map is still doing its initial paint
+        // and crossfades to the "Find stations" CTA once the map has
+        // fully settled. Vercel cold loads are noticeably slower
+        // than local dev, so the gate earns its keep there.
+        isLoading={!mapFirstIdle}
       />
 
       {/* Help button — bottom-right on mobile (attribution © is moved to
