@@ -5607,5 +5607,20 @@
     "rejected": [
       "51503674473"
     ]
+  },
+  "1.4334122,51.360737": {
+    "name": "Broadstairs",
+    "approved": [
+      {
+        "id": "55176016124",
+        "title": "UK - Kent - Near Kingsgate - Coast",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/55176016124_e72838561d.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/55176016124_e72838561d_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/55176016124",
+        "dateTaken": "2026-03-28 15:02:52"
+      }
+    ],
+    "rejected": []
   }
 }
