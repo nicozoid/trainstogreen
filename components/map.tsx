@@ -1973,7 +1973,10 @@ export default function HikeMap() {
   // and approved. Controls the red-tint overlay on the map in admin
   // mode (any non-approved destination for the current primary gets a
   // red dot) and the "Approved for this home" checkbox in the modal.
-  const [approvedJourneys, setApprovedJourneys] = useState<Set<string>>(new Set())
+  // Station-global "has issue" flag — a Set of coordKeys flagged via the
+  // admin issue button. Drives the red halo overlay regardless of which
+  // primary is selected.
+  const [issueStations, setIssueStations] = useState<Set<string>>(new Set())
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
   // Empty set = no filter = all stations visible. Not persisted — rating
@@ -2006,11 +2009,11 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
-    // Approved home→dest pairs. Server returns a flat string[] of
-    // composite keys; we wrap it in a Set for O(1) lookups at render.
-    fetch("/api/dev/approve-journey")
+    // Stations flagged as "has issue" (admin triage). Server returns a
+    // flat string[] of coordKeys; we wrap it in a Set for O(1) lookups.
+    fetch("/api/dev/has-issue-station")
       .then((res) => res.json())
-      .then((keys: string[]) => setApprovedJourneys(new Set(keys)))
+      .then((keys: string[]) => setIssueStations(new Set(keys)))
   }, [])
 
 
@@ -4553,24 +4556,16 @@ export default function HikeMap() {
         })
         .map(f => {
           const category = (f.properties.rating as string | undefined) ?? 'unrated'
-          // Admin-only "needsApproval" flag — true when the current
-          // home→dest pair has NOT been admin-approved AND the station
-          // is a normal destination (not excluded / not the primary
-          // itself). Drives the red-tint overlay layer. Computed here
-          // (not in the filter layer) so the layer's `has` filter can
-          // read a cheap boolean property.
+          // Admin-only "hasIssue" flag — true when the station has been
+          // explicitly flagged via the issue button. Station-global, so
+          // the halo follows the station across primary switches. Computed
+          // here (not in the filter layer) so the layer's `has` filter
+          // can read a cheap boolean property.
           const coord = f.properties.coordKey as string
-          // Any non-primary station can carry the needsApproval red-tint —
-          // including excluded ones. The approval set is authoritative:
-          // if a coord isn't in approvedJourneys for the current home,
-          // it tints, full stop. (Earlier logic short-circuited for
-          // isExcluded, but we want excluded-but-issue-flagged stations
-          // to show up as needing review.)
           const isDest = coord !== primaryOrigin
-          const composite = `${primaryOrigin}|${coord}`
-          const needsApproval = isDest && !approvedJourneys.has(composite)
-          const base = needsApproval
-            ? { ...f.properties, needsApproval: 1 }
+          const hasIssue = isDest && issueStations.has(coord)
+          const base = hasIssue
+            ? { ...f.properties, hasIssue: 1 }
             : f.properties
           if (newlyAddedRatings.has(category)) {
             return { ...f, properties: { ...base, isNew: 1 } }
@@ -4581,7 +4576,7 @@ export default function HikeMap() {
           return { ...f, properties: base }
         }),
     }
-  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, approvedJourneys, primaryOrigin])
+  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
   // no state delay, so icons don't flash before the shrink starts.
@@ -4687,23 +4682,20 @@ export default function HikeMap() {
   // Admin-only: toggle "approved for this home" for a (home, dest) pair.
   // Keyed by the composite "homeCoord|destCoord" string so the backing
   // file's JSON keys are unambiguous and lookups are O(1).
-  const handleToggleApproved = useCallback(async (
-    homeCoord: string,
-    destCoord: string,
-    homeName: string,
-    destName: string,
-    approved: boolean,
+  const handleToggleIssue = useCallback(async (
+    coordKey: string,
+    name: string,
+    hasIssue: boolean,
   ) => {
-    const key = `${homeCoord}|${destCoord}`
-    setApprovedJourneys((prev) => {
+    setIssueStations((prev) => {
       const next = new Set(prev)
-      if (approved) next.add(key); else next.delete(key)
+      if (hasIssue) next.add(coordKey); else next.delete(coordKey)
       return next
     })
-    await fetch("/api/dev/approve-journey", {
+    await fetch("/api/dev/has-issue-station", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ homeCoord, destCoord, homeName, destName, approved }),
+      body: JSON.stringify({ coordKey, name, hasIssue }),
     })
   }, [])
 
@@ -6871,22 +6863,19 @@ export default function HikeMap() {
 
         {stationsForMap && (
           <Source id="stations" type="geojson" data={stationsForMap}>
-            {/* Admin-only red halo for unapproved destinations. Sits
-                BENEATH the icon layers (mounted first so it renders
-                first in the Source's implicit layer order). Filter
-                matches the `needsApproval=1` property set upstream in
-                stationsForMap's map callback. Excluded stations that
-                are also unapproved get the halo too — the "isExcluded
-                AND !isApproved" combination is a valid state now,
-                surfacing review-worthy stations even when they sit in
-                the excluded list. The outer {devExcludeActive && …}
-                gate keeps the layer completely unmounted in non-admin
-                mode — no runtime cost for regular users. */}
+            {/* Admin-only red halo for stations explicitly flagged as
+                having an issue. Station-global (no longer scoped to a
+                home→dest pair). Sits BENEATH the icon layers so the
+                halo reads as a backdrop. Filter matches the `hasIssue=1`
+                property set upstream in stationsForMap's map callback.
+                Excluded stations that are also flagged get the halo too.
+                The outer {devExcludeActive && …} gate keeps the layer
+                completely unmounted in non-admin mode. */}
             {devExcludeActive && (
               <Layer
-                id="station-unapproved-halo"
+                id="station-issue-halo"
                 type="circle"
-                filter={["has", "needsApproval"]}
+                filter={["has", "hasIssue"]}
                 paint={{
                   "circle-color": "#dc2626", // red-600 — matches admin exclude cross
                   "circle-radius": 10,
@@ -7446,13 +7435,11 @@ export default function HikeMap() {
               )?.properties?.["ref:crs"] as string | undefined
             }
             isLondonHome={primaryOrigin === "-0.1269,51.5196"}
-            isApprovedForHome={approvedJourneys.has(`${primaryOrigin}|${displayStation.coordKey}`)}
-            onToggleApproved={(approved: boolean) => handleToggleApproved(
-              primaryOrigin,
+            hasIssue={issueStations.has(displayStation.coordKey)}
+            onToggleIssue={(hasIssue: boolean) => handleToggleIssue(
               displayStation.coordKey,
-              coordToName[primaryOrigin] ?? primaryOrigin,
               displayStation.name,
-              approved,
+              hasIssue,
             )}
             currentRating={ratings[displayStation.coordKey] ?? null}
             onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
