@@ -2856,15 +2856,6 @@
         "dateTaken": "2021-10-30 12:06:44"
       },
       {
-        "id": "52060581002",
-        "title": "Untitled",
-        "ownerName": "hikinginlondon",
-        "thumbnailUrl": "https://live.staticflickr.com/65535/52060581002_3c9750d666.jpg",
-        "largeUrl": "https://live.staticflickr.com/65535/52060581002_3c9750d666_b.jpg",
-        "flickrUrl": "https://www.flickr.com/photos/142413493@N02/52060581002",
-        "dateTaken": "2022-05-08 11:00:20"
-      },
-      {
         "id": "52063420133",
         "title": "Untitled",
         "ownerName": "hikinginlondon",
@@ -3034,7 +3025,8 @@
       "7159116438",
       "54866069536",
       "51567111422",
-      "52062216114"
+      "52062216114",
+      "52060581002"
     ]
   },
   "0.1377154,52.1941089": {
