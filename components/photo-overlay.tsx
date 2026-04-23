@@ -1722,9 +1722,11 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
         </button>
       )}
 
-      {/* Admin hover actions — approve and reject buttons, top-left so they don't overlap the attribution */}
+      {/* Admin hover actions — approve and reject buttons, top-left so they don't overlap the attribution.
+          On mobile (< md) the buttons are always visible since touch devices have no hover;
+          from md up they fade in only on hover of the parent .group (the photo card). */}
       {devMode && (
-        <div className="absolute top-0 left-0 flex gap-1 p-2 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <div className="absolute top-0 left-0 flex gap-1 p-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100">
           {/* Approve button */}
           <button
             onClick={(e) => { e.stopPropagation(); onApprove() }}
