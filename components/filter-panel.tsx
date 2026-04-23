@@ -108,7 +108,7 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 // `adminOnly` entries only render when admin mode is active.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
-    key: "highlight", label: "Heavenly", tooltip: "One of my favourite hiking spots —TrainToGreen creator",
+    key: "highlight", label: "Heavenly", tooltip: "A personal favourite of mine — T2G creator",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +117,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Good", tooltip: "A hiking spot I can personally recommend —TrainToGreen creator",
+    key: "verified", label: "Good", tooltip: "Strongly recommended by ramblers",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,7 +130,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Probably", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
+    key: "unverified", label: "Probably", tooltip: "Recommended by ramblers",
     icon: (
       <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
@@ -139,7 +139,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but I personally wouldn't bother going here again —TrainToGreen creator",
+    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but I wouldn't go again — T2G creator",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -147,7 +147,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unrated", label: "Unknown", secondary: true, tooltip: "I have no opinion about this area —TrainToGreen creator",
+    key: "unrated", label: "Unknown", secondary: true, tooltip: "No rambling verdict on this area yet",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <circle cx="12" cy="12" r="9" />
@@ -157,7 +157,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
   {
     // Admin-only: shows stations that have been hidden from the destination list.
     key: "excluded", label: "Excluded", adminOnly: true,
-    tooltip: "Stations removed from the list — visible only in admin mode",
+    tooltip: "Visible only in admin mode",
     icon: (
       /* Latin/grave cross — horizontal raised to the upper third so it reads as a
          headstone (appropriate for "excluded") rather than a generic "+" add icon. */
