@@ -507,61 +507,6 @@
   },
   "0.1967655,52.2622818": {
     "name": "Waterbeach",
-    "algo": "custom",
-    "custom": {
-      "includeTags": [
-        "landmark",
-        "fens",
-        "marsh"
-      ],
-      "excludeTags": [
-        "people",
-        "girls",
-        "boys",
-        "children",
-        "portrait",
-        "portraits",
-        "countryfashion",
-        "countryoutfit",
-        "countrystyle",
-        "train",
-        "tank",
-        "railway",
-        "trains",
-        "railways",
-        "station",
-        "engine",
-        "locomotive",
-        "bus",
-        "buses",
-        "airbus",
-        "airport",
-        "airways",
-        "airliner",
-        "flight",
-        "motorbike",
-        "motorcycle",
-        "paddleboarding",
-        "object",
-        "baby",
-        "plane",
-        "taps",
-        "city",
-        "town",
-        "great western railways",
-        "reading",
-        "sexy",
-        "midjourney",
-        "protest",
-        "demonstration",
-        "demo",
-        "march",
-        "band",
-        "music",
-        "musicians"
-      ],
-      "radius": 7,
-      "sort": "relevance"
-    }
+    "algo": "hikes"
   }
 }
