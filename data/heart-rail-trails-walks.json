@@ -1,0 +1,3308 @@
+{
+  "heart-rail-trail-warwick": {
+    "slug": "heart-rail-trail-warwick",
+    "title": "Warwick Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-683",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Moderate"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Warwick Circular Walk",
+        "startPlace": "Warwick",
+        "endPlace": "Warwick",
+        "startStation": "WRW",
+        "endStation": "WRW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 7.8,
+        "hours": 4,
+        "lunchStops": [
+          {
+            "name": "Pasteleria Portuguesa",
+            "location": "Warwick",
+            "url": "https://www.pastelariaportugesa.co.uk"
+          },
+          {
+            "name": "Saxon Mill",
+            "location": "Guy's Cliffe",
+            "url": "https://www.saxonmill.co.uk"
+          },
+          {
+            "name": "Cape of Good Hope",
+            "location": "The Cape",
+            "url": null
+          },
+          {
+            "name": "Smithery",
+            "location": "Smith Street, Warwick",
+            "url": null
+          },
+          {
+            "name": "Golden Tea Monkey",
+            "location": "Smith Street, Warwick",
+            "url": null
+          }
+        ],
+        "terrain": "Historic market town, River Avon, Grand Union Canal towpath, open fields, racecourse, golf course, woodland.",
+        "sights": [
+          {
+            "name": "Warwick Castle",
+            "url": "https://www.warwick-castle.com"
+          },
+          {
+            "name": "Collegiate Church of St Mary",
+            "url": "https://www.stmaryswarwick.org.uk"
+          },
+          {
+            "name": "Lord Leycester Hospital",
+            "url": null
+          },
+          {
+            "name": "Market Hall Museum",
+            "url": "https://www.visitwarwick.co.uk/market-hall-museum/"
+          },
+          {
+            "name": "Guy's Cliffe Estate",
+            "url": "https://www.guyscliffewalledgarden.org.uk"
+          },
+          {
+            "name": "Mill Garden",
+            "url": "https://www.visitwarwick.co.uk/the-mill-garden/"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-wythall": {
+    "slug": "heart-rail-trail-wythall",
+    "title": "Wythall to Shirley",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-830",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Wythall to Shirley",
+        "startPlace": "Wythall",
+        "endPlace": "Wythall",
+        "startStation": "WYT",
+        "endStation": "WYT",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Beckett's Farm",
+            "location": "Wythall",
+            "url": "http://www.beckettsfarm.co.uk"
+          },
+          {
+            "name": "Drawbridge Inn",
+            "location": "Major's Green",
+            "url": "http://www.greeneking-pubs.co.uk"
+          },
+          {
+            "name": "Colebrook",
+            "location": "Shirley",
+            "url": "http://www.emberinns.co.uk"
+          }
+        ],
+        "terrain": "Pasture, meadows, fields, riding school, canal aqueduct, River Cole, suburban streets.",
+        "sights": [
+          {
+            "name": "Transport Museum",
+            "url": "http://www.wythall.org.uk"
+          },
+          {
+            "name": "Wythall Park",
+            "url": "http://www.wythall-park.org.uk"
+          },
+          {
+            "name": "Berry Mound Iron Age Hill Fort",
+            "url": "http://www.historicengland.org.uk"
+          },
+          {
+            "name": "Berry Mound Pastures",
+            "url": null
+          }
+        ],
+        "warnings": "Broken stile; horses present.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-wootton-wawen": {
+    "slug": "heart-rail-trail-wootton-wawen",
+    "title": "Wootton Wawen to Wilmcote",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-871",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Wootton Wawen to Wilmcote",
+        "startPlace": "Wootton Wawen",
+        "endPlace": "Wootton Wawen",
+        "startStation": "WWW",
+        "endStation": "WWW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 4.5,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Bulls Head",
+            "location": "Wootton Wawen",
+            "url": "www.thebullshead.pub"
+          },
+          {
+            "name": "Navigation Inn",
+            "location": "Wootton Wawen",
+            "url": "www.v4navigation.co.uk"
+          },
+          {
+            "name": "View, The",
+            "location": "nr Edstone Aqueduct",
+            "url": "www.theview-eat.co.uk"
+          },
+          {
+            "name": "General Stores",
+            "location": "Wootton Wawen",
+            "url": null
+          },
+          {
+            "name": "Inn",
+            "location": "Wilmcote",
+            "url": null
+          }
+        ],
+        "terrain": "Canal towpath, aqueduct, open fields, hedgerows, working farm.",
+        "sights": [
+          {
+            "name": "St Peter's Church",
+            "url": "www.saxonsanctuary.org.uk"
+          },
+          {
+            "name": "Edstone Aqueduct",
+            "url": "www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Mary Arden's Farm",
+            "url": "www.shakespeare.org.uk"
+          },
+          {
+            "name": "Yew Tree Farm",
+            "url": null
+          }
+        ],
+        "warnings": "Can be boggy/muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-wilmcote": {
+    "slug": "heart-rail-trail-wilmcote",
+    "title": "Wilmcote to Wootton Wawen",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-828",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Wilmcote to Wootton Wawen",
+        "startPlace": "Wilmcote",
+        "endPlace": "Wilmcote",
+        "startStation": "WMC",
+        "endStation": "WMC",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5.5,
+        "hours": 3,
+        "lunchStops": [
+          {
+            "name": "Mary Arden Inn",
+            "location": "Wilmcote",
+            "url": "https://www.mary-arden.co.uk"
+          },
+          {
+            "name": "Kings Head",
+            "location": "Aston Cantlow",
+            "url": "https://www.thekingshead.co"
+          },
+          {
+            "name": "View",
+            "location": "near Edstone Aqueduct",
+            "url": "https://www.theview-eat.co.uk"
+          },
+          {
+            "name": "Wilmcote Village Stores",
+            "location": "Wilmcote",
+            "url": null
+          },
+          {
+            "name": "Island Meadow Caravan Park Shop",
+            "location": "Aston Cantlow",
+            "url": null
+          },
+          {
+            "name": "Yew Tree Farm coffee shop and chocolaterie",
+            "location": "Wootton Wawen",
+            "url": "https://www.yew-tree-farm.co.uk"
+          }
+        ],
+        "terrain": "River Alne banks, canal village, old railway track, open fields, ridge and furrow, flood bank, historic villages.",
+        "sights": [
+          {
+            "name": "Mary Arden's Farm",
+            "url": "https://www.shakespeare.org.uk"
+          },
+          {
+            "name": "St John the Baptist Church",
+            "url": "https://www.warwickshirechurches.weebly.com"
+          },
+          {
+            "name": "Yew Tree Farm",
+            "url": "https://www.yew-tree-farm.co.uk"
+          },
+          {
+            "name": "Edstone Aqueduct",
+            "url": null
+          },
+          {
+            "name": "Palmer's Farm",
+            "url": null
+          },
+          {
+            "name": "Stratford-upon-Avon Canal",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-whitlocks-end": {
+    "slug": "heart-rail-trail-whitlocks-end",
+    "title": "Whitlocks End to Shirley",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-827",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Whitlocks End to Shirley",
+        "startPlace": "Whitlocks End",
+        "endPlace": "Whitlocks End",
+        "startStation": "WTE",
+        "endStation": "WTE",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 1.75,
+        "hours": 1,
+        "lunchStops": [
+          {
+            "name": "Akamba Heritage Centre",
+            "location": "Whitlocks End",
+            "url": "https://www.akamba.co.uk"
+          },
+          {
+            "name": "Moreton's Kitchen",
+            "location": "Dickens Heath",
+            "url": "https://www.mortonskitchen.co.uk"
+          },
+          {
+            "name": "Coffee Cloud",
+            "location": "Dickens Heath",
+            "url": "https://www.coffeecloud.co.uk"
+          },
+          {
+            "name": "Frankie's Café",
+            "location": "Shirley",
+            "url": "https://www.frankiescafeshirley.com"
+          },
+          {
+            "name": "Fiesta del Asado",
+            "location": "Shirley",
+            "url": "https://www.fiestadelasado.co.uk"
+          }
+        ],
+        "terrain": "Farmland, Christmas tree plantation, canal crossing, suburban pavements and footpaths.",
+        "sights": [
+          {
+            "name": "Akamba Heritage Centre",
+            "url": "https://www.akamba.co.uk"
+          },
+          {
+            "name": "Shirley Park",
+            "url": "https://www.solihull.gov.uk/Parks-and-open-spaces/Shirley-Park"
+          },
+          {
+            "name": "Stratford-upon-Avon Canal",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-warwick-parkway": {
+    "slug": "heart-rail-trail-warwick-parkway",
+    "title": "Warwick Parkway Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-826",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Leisurely"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Warwick Parkway Circular Walk",
+        "startPlace": "Warwick Parkway",
+        "endPlace": "Warwick Parkway",
+        "startStation": "WRP",
+        "endStation": "WRP",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5.1,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Hatton Arms",
+            "location": "Hatton",
+            "url": "https://www.hattonarms.com"
+          },
+          {
+            "name": "Hatton Locks Cafe",
+            "location": "Hatton",
+            "url": "https://www.facebook.com/Hatton-Locks-287533011322479"
+          }
+        ],
+        "terrain": "Rolling farmland, Grand Union Canal towpath, woodland, farm tracks.",
+        "sights": [
+          {
+            "name": "Hatton Locks",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Hatton Country World",
+            "url": "https://www.hattonworld.com"
+          },
+          {
+            "name": "St Michael's, Budbrooke",
+            "url": "https://www.stmichaels-budbrooke.org.uk"
+          },
+          {
+            "name": "Church Farm Brewery",
+            "url": "https://www.churchfarmbrewery.co.uk"
+          }
+        ],
+        "warnings": "Busy A road crossing.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-the-lakes": {
+    "slug": "heart-rail-trail-the-lakes",
+    "title": "The Lakes Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-825",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "The Lakes Circular Walk",
+        "startPlace": "The Lakes",
+        "endPlace": "The Lakes",
+        "startStation": "TLK",
+        "endStation": "TLK",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 4,
+        "hours": 2,
+        "lunchStops": [
+          {
+            "name": "Red Lion",
+            "location": "Earlswood",
+            "url": "https://www.vintageinn.co.uk"
+          },
+          {
+            "name": "Reservoir",
+            "location": "Earlswood",
+            "url": null
+          },
+          {
+            "name": "Manor House Tearooms",
+            "location": "Earlswood Lakes Craft Centre",
+            "url": "https://www.facebook.com/earlswoodlakescraftcentre/"
+          },
+          {
+            "name": "Limes Country Lodge",
+            "location": "Earlswood",
+            "url": "https://www.limescountrylodge.co.uk"
+          }
+        ],
+        "terrain": "Reservoirs, lakeside paths, ancient woodland, meadows, heathland remnant, field edges.",
+        "sights": [
+          {
+            "name": "Earlswood Lakes",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Clowes Wood",
+            "url": "https://www.warwickshirewildlifetrust.org.uk"
+          },
+          {
+            "name": "Earlswood Moathouse",
+            "url": "https://www.warwickshirewildlifetrust.org.uk"
+          },
+          {
+            "name": "Earlswood Lakes Craft Centre",
+            "url": "https://www.facebook.com/earlswoodlakescraftcentre/"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": "Best in spring or autumn."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-tile-hill": {
+    "slug": "heart-rail-trail-tile-hill",
+    "title": "Tile Hill Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-913",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Tile Hill Circular Walk",
+        "startPlace": "Tile Hill",
+        "endPlace": "Tile Hill",
+        "startStation": "THL",
+        "endStation": "THL",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3.8,
+        "hours": 2,
+        "lunchStops": [
+          {
+            "name": "Auction House",
+            "location": "Tile Hill",
+            "url": "https://www.blackrosepubs.com/theauctionhouse"
+          },
+          {
+            "name": "Penny Farthing",
+            "location": "Tile Hill",
+            "url": "https://www.pennyfarthingpubcoventry.co.uk"
+          },
+          {
+            "name": "Rupee Lounge",
+            "location": "Tile Hill",
+            "url": "https://www.therupeelounge.co.uk"
+          },
+          {
+            "name": "Subway",
+            "location": "Tile Hill",
+            "url": null
+          },
+          {
+            "name": "Hickory's Smokehouse",
+            "location": "Burton Green",
+            "url": "https://www.hickorys.co.uk"
+          }
+        ],
+        "terrain": "Suburban streets, deciduous and coniferous woodland, open fields, scrub grassland, sports ground.",
+        "sights": [
+          {
+            "name": "Tile Hill Wood",
+            "url": "https://www.coventry.gov.uk"
+          },
+          {
+            "name": "Plants Hill Wood",
+            "url": null
+          },
+          {
+            "name": "Pig Wood",
+            "url": null
+          },
+          {
+            "name": "St Oswald's Church",
+            "url": "https://www.stoswalds.co.uk"
+          },
+          {
+            "name": "Massey Ferguson Factory (plaque)",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-stratford-upon-avon": {
+    "slug": "heart-rail-trail-stratford-upon-avon",
+    "title": "Shakespeare's Stratford",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1237",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Shakespeare's Stratford",
+        "startPlace": "Stratford-upon-Avon",
+        "endPlace": "Stratford-upon-Avon",
+        "startStation": "SAV",
+        "endStation": "SAV",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.5,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Dirty Duck",
+            "location": "Stratford-upon-Avon",
+            "url": "https://www.greeneking-pubs.co.uk/pubs/warwickshire/dirty-duck/"
+          },
+          {
+            "name": "Shakespaw Cat Cafe",
+            "location": "Stratford-upon-Avon",
+            "url": "https://www.shakespawcatcafe.com"
+          }
+        ],
+        "terrain": "Medieval market town, canal basin, riverside path, parks and gardens, historic streets.",
+        "sights": [
+          {
+            "name": "Shakespeare's Birthplace",
+            "url": "https://www.shakespeare.org.uk"
+          },
+          {
+            "name": "New Place",
+            "url": null
+          },
+          {
+            "name": "Shakespeare's Schoolroom & Guildhall",
+            "url": "https://www.shakespearesschoolroom.org"
+          },
+          {
+            "name": "Royal Shakespeare Theatre",
+            "url": null
+          },
+          {
+            "name": "Swan Theatre",
+            "url": null
+          },
+          {
+            "name": "Holy Trinity Church",
+            "url": "https://www.stratford-upon-avon.org"
+          },
+          {
+            "name": "Bancroft Gardens",
+            "url": "https://www.visitstratforduponavon.co.uk"
+          },
+          {
+            "name": "Gower Memorial",
+            "url": null
+          },
+          {
+            "name": "Shakespeare Memorial Fountain",
+            "url": null
+          },
+          {
+            "name": "Hall's Croft",
+            "url": null
+          },
+          {
+            "name": "Guild Chapel",
+            "url": null
+          },
+          {
+            "name": "Nash's House",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-stratford-upon-avon-parkway": {
+    "slug": "heart-rail-trail-stratford-upon-avon-parkway",
+    "title": "Stratford-upon-Avon Parkway Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-823",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Stratford-upon-Avon Parkway Circular Walk",
+        "startPlace": "Stratford-upon-Avon Parkway",
+        "endPlace": "Stratford-upon-Avon Parkway",
+        "startStation": "STY",
+        "endStation": "STY",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.25,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Mary Arden Inn",
+            "location": "Wilmcote",
+            "url": "https://www.mary-arden.co.uk"
+          },
+          {
+            "name": "Wilmcote stores",
+            "location": "Wilmcote",
+            "url": null
+          }
+        ],
+        "terrain": "Canal towpath, village streets, kissing gate, lock-side path.",
+        "sights": [
+          {
+            "name": "Stratford-upon-Avon Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "St Andrew's Church",
+            "url": "https://www.britishlistedbuildings.co.uk"
+          },
+          {
+            "name": "Mary Arden's Farm",
+            "url": "https://www.shakespeare.org.uk"
+          },
+          {
+            "name": "Stratford Armouries",
+            "url": "https://www.stratfordarmouries.co.uk"
+          },
+          {
+            "name": "Shakespeare Distillery",
+            "url": "https://www.shakespearedistillery.com"
+          }
+        ],
+        "warnings": "Limited refreshment options.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-shirley": {
+    "slug": "heart-rail-trail-shirley",
+    "title": "Shirley Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-822",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Shirley Circular Walk",
+        "startPlace": "Shirley",
+        "endPlace": "Shirley",
+        "startStation": "SRL",
+        "endStation": "SRL",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5,
+        "hours": 3,
+        "lunchStops": [
+          {
+            "name": "Two Mugs",
+            "location": "Shirley",
+            "url": null
+          },
+          {
+            "name": "Frankie's Café",
+            "location": "Shirley",
+            "url": null
+          },
+          {
+            "name": "Moreton's Kitchen Bar & Deli",
+            "location": "Dickens Heath",
+            "url": null
+          },
+          {
+            "name": "Coffee Cloud",
+            "location": "Dickens Heath",
+            "url": null
+          },
+          {
+            "name": "Bulls Head",
+            "location": "Earlswood",
+            "url": "https://www.bullsheadearlswood.co.uk"
+          },
+          {
+            "name": "Blue Bell Cider House",
+            "location": "Earlswood",
+            "url": "https://www.bluebellciderhouse.org"
+          },
+          {
+            "name": "Reservoir",
+            "location": "Earlswood",
+            "url": "https://www.hungryhorse.co.uk"
+          }
+        ],
+        "terrain": "Canal towpath, Christmas tree plantations, farmland, forest, lakeside paths.",
+        "sights": [
+          {
+            "name": "Stratford-upon-Avon Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Earlswood Lakes",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Earlswood Lakes Craft Centre",
+            "url": "https://www.facebook.com/earlswoodlakescraftcentre/"
+          }
+        ],
+        "warnings": "Trip hazard: anchored cable.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-rugby": {
+    "slug": "heart-rail-trail-rugby",
+    "title": "Rugby Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-821",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Rugby Circular Walk",
+        "startPlace": "Rugby",
+        "endPlace": "Rugby",
+        "startStation": "RUG",
+        "endStation": "RUG",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Victoria Inn",
+            "location": "Rugby",
+            "url": "www.atomicbrewery.co.uk"
+          },
+          {
+            "name": "Clifton Village Stores",
+            "location": "Clifton-upon-Dunsmore",
+            "url": "www.facebook.com/cliftonvillagestores/"
+          },
+          {
+            "name": "Bull Inn",
+            "location": "Clifton-upon-Dunsmore",
+            "url": null
+          },
+          {
+            "name": "Canal Lounge",
+            "location": "Oxford Canal bridge 66",
+            "url": "www.cliftoncruisers.com/cafe/"
+          }
+        ],
+        "terrain": "Town streets, river valley, Oxford Canal towpath, open fields, village.",
+        "sights": [
+          {
+            "name": "Oxford Canal",
+            "url": "www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Rugby Art Gallery & Museum",
+            "url": "https://www.ragm.co.uk/"
+          },
+          {
+            "name": "St Mary's Church",
+            "url": "www.warwickshirechurches.weebly.com"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-nuneaton": {
+    "slug": "heart-rail-trail-nuneaton",
+    "title": "George Eliot's Nuneaton",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-820",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "George Eliot's Nuneaton",
+        "startPlace": "Nuneaton",
+        "endPlace": "Nuneaton",
+        "startStation": "NUN",
+        "endStation": "NUN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 1.8,
+        "hours": 1,
+        "lunchStops": [
+          {
+            "name": "George Eliot",
+            "location": "Bridge Street, Nuneaton",
+            "url": "www.thegeorgeelliothotelnuneaton.co.uk"
+          },
+          {
+            "name": "Mo's Bubble Tea Shop",
+            "location": "Queens Road, Nuneaton",
+            "url": null
+          }
+        ],
+        "terrain": "Market town, river, parkland, pedestrianised shopping area, tarmac paths.",
+        "sights": [
+          {
+            "name": "Nuneaton Museum & Art Gallery",
+            "url": "www.nuneatonandbedworth.gov.uk/museum"
+          },
+          {
+            "name": "George Eliot Memorial Gardens",
+            "url": "https://exploringeliot.org/"
+          },
+          {
+            "name": "Enterprise Zone at Saints Nuneaton",
+            "url": "https://saintsnuneaton.org/"
+          },
+          {
+            "name": "All Saints' Church",
+            "url": "www.ourwarwickshire.org.uk/chilvers-coton"
+          },
+          {
+            "name": "Riversley Park",
+            "url": null
+          },
+          {
+            "name": "Saint Nicolas Parish Church",
+            "url": null
+          },
+          {
+            "name": "George Eliot Statue",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-marston-green": {
+    "slug": "heart-rail-trail-marston-green",
+    "title": "Marston Green Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-819",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy / Flat"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Marston Green Circular Walk",
+        "startPlace": "Marston Green",
+        "endPlace": "Marston Green",
+        "startStation": "MGN",
+        "endStation": "MGN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5.5,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Picnic Basket",
+            "location": "Marston Green",
+            "url": "https://www.thepicnicbasket.co.uk"
+          },
+          {
+            "name": "Tradita Cafe & restaurant",
+            "location": "Sheldon",
+            "url": "https://www.tradita.co.uk"
+          }
+        ],
+        "terrain": "Suburban paths, airport perimeter fence, woodland, open parkland, country park, lakes, meadows.",
+        "sights": [
+          {
+            "name": "Aircraft Spotting (Runway 15 viewing area)",
+            "url": "https://www.airportspotting.com/where-to-spot-birmingham-airport/"
+          },
+          {
+            "name": "Sheldon Country Park",
+            "url": "https://www.birmingham.gov.uk/sheldonpark"
+          },
+          {
+            "name": "Elmdon Park",
+            "url": "https://www.solihull.gov.uk/Parks-and-open-spaces/Elmdon-Nature-Park"
+          },
+          {
+            "name": "Elmdon Hall (remains)",
+            "url": null
+          },
+          {
+            "name": "St Nicolas's Church",
+            "url": null
+          },
+          {
+            "name": "Old Walled Garden (Local Nature Reserve)",
+            "url": null
+          },
+          {
+            "name": "Landrover Experience",
+            "url": "https://www.experience.landrover.com"
+          }
+        ],
+        "warnings": "Can be noisy (airport).",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-leamington-spa": {
+    "slug": "heart-rail-trail-leamington-spa",
+    "title": "Royal Leamington Spa Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-678",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Moderate"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Royal Leamington Spa Circular Walk",
+        "startPlace": "Leamington Spa",
+        "endPlace": "Leamington Spa",
+        "startStation": "LMS",
+        "endStation": "LMS",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 7.2,
+        "hours": 4,
+        "lunchStops": [
+          {
+            "name": "Stag at Offchurch",
+            "location": "Offchurch",
+            "url": "https://www.thestagatoffchurch.com"
+          },
+          {
+            "name": "Cenu Cacao",
+            "location": "Leamington Spa",
+            "url": "https://www.cenucacao.co.uk"
+          }
+        ],
+        "terrain": "Spa town, Grand Union Canal towpath, River Leam, local nature reserve, country park, open fields, village paths.",
+        "sights": [
+          {
+            "name": "Leam Valley Nature Reserve",
+            "url": "https://www.warwickshirewildlifetrust.org.uk/LeamValley"
+          },
+          {
+            "name": "Newbold Comyn",
+            "url": "https://www.royal-leamington-spa.co.uk/visiting/parks-gardens/newbold-comyn/"
+          },
+          {
+            "name": "Jephson Gardens",
+            "url": "https://www.warwickdc.gov.uk/info/20312/jephson_gardens"
+          },
+          {
+            "name": "Royal Pump Rooms",
+            "url": "https://www.warwickdc.gov.uk/royalpumprooms"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-henley-in-arden": {
+    "slug": "heart-rail-trail-henley-in-arden",
+    "title": "Henley-in-Arden Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-817",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Henley-in-Arden Circular Walk",
+        "startPlace": "Henley-in-Arden",
+        "endPlace": "Henley-in-Arden",
+        "startStation": "HNL",
+        "endStation": "HNL",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5.5,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Henley Kitchen & Bakery",
+            "location": "Henley-in-Arden",
+            "url": "https://www.facebook.com/hkandb/"
+          },
+          {
+            "name": "BD Sandwiches",
+            "location": "Henley-in-Arden",
+            "url": null
+          },
+          {
+            "name": "Henley Butchers & Deli",
+            "location": "Henley-in-Arden",
+            "url": null
+          },
+          {
+            "name": "White Swan",
+            "location": "Henley-in-Arden",
+            "url": "https://www.thewhiteswanhotel.com"
+          },
+          {
+            "name": "Nag's Head",
+            "location": "Henley-in-Arden",
+            "url": null
+          },
+          {
+            "name": "Henley Ice Cream",
+            "location": "Henley-in-Arden",
+            "url": "https://www.henleyicecream.co.uk"
+          }
+        ],
+        "terrain": "Historic high street, farmland, Millennium Way, rural lanes, fields, woodland edges.",
+        "sights": [
+          {
+            "name": "Henley Mount",
+            "url": "https://www.visit-henley.co.uk/the-mount/"
+          },
+          {
+            "name": "Beaudesert Castle",
+            "url": null
+          },
+          {
+            "name": "Henley's Churches",
+            "url": "https://www.visit-henley.co.uk/heritage-trail/"
+          },
+          {
+            "name": "Henley Museum",
+            "url": "https://www.heritagehenley.org.uk"
+          },
+          {
+            "name": "Henley Mile",
+            "url": null
+          },
+          {
+            "name": "St John the Baptist Church",
+            "url": null
+          },
+          {
+            "name": "Guildhall",
+            "url": null
+          }
+        ],
+        "warnings": "Can be overgrown summer.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-hatton": {
+    "slug": "heart-rail-trail-hatton",
+    "title": "Hatton to Lapworth Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1238",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Hatton to Lapworth Walk",
+        "startPlace": "Hatton",
+        "endPlace": "Hatton",
+        "startStation": "HTN",
+        "endStation": "HTN",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Shrewley Village Store",
+            "location": "Shrewley",
+            "url": null
+          },
+          {
+            "name": "Canal Shop and Moorings",
+            "location": "Kingswood Junction",
+            "url": null
+          },
+          {
+            "name": "Lapworth Village Shop",
+            "location": "Lapworth",
+            "url": null
+          },
+          {
+            "name": "Navigation Inn",
+            "location": "Kingswood",
+            "url": null
+          },
+          {
+            "name": "Punchbowl",
+            "location": "Kingswood",
+            "url": null
+          },
+          {
+            "name": "Boot Inn",
+            "location": "Kingswood",
+            "url": null
+          },
+          {
+            "name": "Tom O' the Wood",
+            "location": "Rowington",
+            "url": "https://www.tomothewood.co.uk"
+          },
+          {
+            "name": "Durham Ox",
+            "location": "Shrewley",
+            "url": "https://www.durhamoxshrewley.co.uk"
+          }
+        ],
+        "terrain": "Canal towpath, tunnel sections, narrow path sections, low bridges, Warwickshire countryside.",
+        "sights": [
+          {
+            "name": "Hatton Locks",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Church of St. Mary the Virgin",
+            "url": null
+          },
+          {
+            "name": "Baddesley Clinton",
+            "url": "https://www.nationaltrust.org.uk/baddesley-clinton"
+          },
+          {
+            "name": "The Grand Union Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Hay Wood",
+            "url": "https://www.forestryengland.uk/hay-wood"
+          },
+          {
+            "name": "Shakespeare Hall",
+            "url": null
+          }
+        ],
+        "warnings": "Narrow path sections.",
+        "bestTime": "Best in spring."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-earlswood": {
+    "slug": "heart-rail-trail-earlswood",
+    "title": "Earlswood to Wythall",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-818",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Earlswood to Wythall",
+        "startPlace": "Earlswood",
+        "endPlace": "Earlswood",
+        "startStation": "EWD",
+        "endStation": "EWD",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 1.75,
+        "hours": 1,
+        "lunchStops": [
+          {
+            "name": "Wythall Fish Bar",
+            "location": "Wythall",
+            "url": "http://www.facebook.com/WythallFB"
+          },
+          {
+            "name": "Select & Save",
+            "location": "Wythall",
+            "url": null
+          },
+          {
+            "name": "Becketts Farm Shop and Restaurant",
+            "location": "Wythall",
+            "url": "http://www.wythall-park.org.uk"
+          }
+        ],
+        "terrain": "Farm, heathland, ancient woodland, river crossing, golf course, suburban road.",
+        "sights": [
+          {
+            "name": "River Cole",
+            "url": "http://www.birminghamweare.com"
+          },
+          {
+            "name": "Clowes Wood & New Fallings Coppice",
+            "url": "http://www.warwickshirewildlifetrust.org.uk"
+          },
+          {
+            "name": "Fulford Heath Golf Club",
+            "url": "http://www.fulfordheathgolfclub.co.uk"
+          },
+          {
+            "name": "Transport Museum Wythall",
+            "url": "http://www.wythall.org.uk"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": "Best in spring."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-claverdon": {
+    "slug": "heart-rail-trail-claverdon",
+    "title": "Claverdon to Hatton",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-816",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Claverdon to Hatton",
+        "startPlace": "Claverdon",
+        "endPlace": "Claverdon",
+        "startStation": "CLV",
+        "endStation": "CLV",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Crown Inn",
+            "location": "Claverdon",
+            "url": "https://www.thecrownclaverdon.co.uk"
+          },
+          {
+            "name": "Durham Ox",
+            "location": "Shrewley",
+            "url": "https://www.durhamoxshrewley.co.uk"
+          }
+        ],
+        "terrain": "Gently rolling farmland, small pockets of woodland, Grand Union Canal towpath, motorway bridge crossing.",
+        "sights": [
+          {
+            "name": "St Michaels Church",
+            "url": "https://www.churchesofarden.org.uk/claverdon"
+          },
+          {
+            "name": "Pinley Abbey",
+            "url": null
+          },
+          {
+            "name": "Grand Union Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Hatton Locks",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Hatton Estate",
+            "url": "https://www.hattonworld.com"
+          }
+        ],
+        "warnings": "Nettles and brambles.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-canley": {
+    "slug": "heart-rail-trail-canley",
+    "title": "Canley to Coventry Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-869",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Canley to Coventry Walk",
+        "startPlace": "Canley",
+        "endPlace": "Canley",
+        "startStation": "CNL",
+        "endStation": "CNL",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.5,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Farmhouse",
+            "location": "Canley",
+            "url": "https://www.thefarmhouserestaurant.co.uk"
+          },
+          {
+            "name": "Millsy's Café Bar",
+            "location": "Earlsdon",
+            "url": "https://www.millsys.co.uk"
+          },
+          {
+            "name": "Angelito Cafe & Tapas Bar",
+            "location": "Earlsdon",
+            "url": null
+          },
+          {
+            "name": "Cottage",
+            "location": "Earlsdon",
+            "url": null
+          },
+          {
+            "name": "Park Bistro",
+            "location": "War Memorial Park",
+            "url": "https://www.warmemorialparkbistro.co.uk"
+          },
+          {
+            "name": "Warwick Row Espresso",
+            "location": "Coventry",
+            "url": "https://www.warwickrowespresso.com"
+          }
+        ],
+        "terrain": "Suburban streets, nature reserve, meadows, woodland, city park, small urban park.",
+        "sights": [
+          {
+            "name": "Canley Ford Local Nature Reserve",
+            "url": null
+          },
+          {
+            "name": "Top Green Park",
+            "url": null
+          },
+          {
+            "name": "War Memorial Park",
+            "url": "https://www.coventry.gov.uk/war-memorial-park"
+          },
+          {
+            "name": "Canley Ford Nature Reserve",
+            "url": "https://www.woodlandtrust.org.uk"
+          },
+          {
+            "name": "Resting Kestrel sculpture",
+            "url": null
+          },
+          {
+            "name": "Bablake School",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-bermuda-park": {
+    "slug": "heart-rail-trail-bermuda-park",
+    "title": "Bermuda Park to Bedworth",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-814",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Bermuda Park to Bedworth",
+        "startPlace": "Bermuda Park",
+        "endPlace": "Bermuda Park",
+        "startStation": "BEP",
+        "endStation": "BEP",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3.5,
+        "hours": 2,
+        "lunchStops": [
+          {
+            "name": "Rhubarb & Mustard Cafe",
+            "location": "Chilvers Coton",
+            "url": "https://www.rhubarbandmustard.co.uk"
+          },
+          {
+            "name": "Middlemarch Farmhouse Inn",
+            "location": "Bermuda Park",
+            "url": "https://www.farmhouseinns.co.uk"
+          },
+          {
+            "name": "Griff House Beefeater",
+            "location": "Bermuda Park",
+            "url": null
+          },
+          {
+            "name": "Cornerhouse",
+            "location": "Nuneaton",
+            "url": "https://www.cornerhousepubnuneaton.co.uk"
+          }
+        ],
+        "terrain": "Canal towpath, field paths, suburban town.",
+        "sights": [
+          {
+            "name": "Coventry Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Marston Junction",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Chilvers Coton Craft Centre",
+            "url": null
+          },
+          {
+            "name": "Bedworth Heritage Centre",
+            "url": "https://www.bedworth-society.co.uk/heritage-centre"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-bedworth": {
+    "slug": "heart-rail-trail-bedworth",
+    "title": "Bedworth Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-831",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Bedworth Circular Walk",
+        "startPlace": "Bedworth",
+        "endPlace": "Bedworth",
+        "startStation": "BEH",
+        "endStation": "BEH",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 6.3,
+        "hours": 3,
+        "lunchStops": [
+          {
+            "name": "Harry's Bakery",
+            "location": "Bedworth",
+            "url": null
+          },
+          {
+            "name": "Latte Artist Coffee Shop",
+            "location": "Bedworth",
+            "url": null
+          },
+          {
+            "name": "Fishnet",
+            "location": "Bulkington",
+            "url": "https://www.thefishnetbulkington.com"
+          },
+          {
+            "name": "Village Café",
+            "location": "Bulkington",
+            "url": null
+          },
+          {
+            "name": "Weavers Arms",
+            "location": "Bulkington",
+            "url": "https://www.facebook.com/theweaversbulko/"
+          }
+        ],
+        "terrain": "Market town, field paths, Coventry Canal towpath, Ashby Canal towpath, village streets, suburban roads, woodland edge.",
+        "sights": [
+          {
+            "name": "Coventry Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Marston Junction",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "St James Church",
+            "url": "https://www.stjameschurchbulkington.org.uk"
+          },
+          {
+            "name": "Miners Welfare Park",
+            "url": "https://www.facebook.com/bedworthcommunitygardens/"
+          },
+          {
+            "name": "Weston Hall Hotel",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-bearley": {
+    "slug": "heart-rail-trail-bearley",
+    "title": "Bearley to Claverdon",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-813",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Bearley to Claverdon",
+        "startPlace": "Bearley",
+        "endPlace": "Bearley",
+        "startStation": "BER",
+        "endStation": "BER",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 4.75,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Red Lion Claverdon",
+            "location": "Claverdon",
+            "url": "https://www.redlionclaverdon.co.uk"
+          },
+          {
+            "name": "Claverdon Community Shop",
+            "location": "Claverdon",
+            "url": null
+          }
+        ],
+        "terrain": "Ancient villages, leafy woodland, open fields, canal aqueduct, nature reserve, country lanes.",
+        "sights": [
+          {
+            "name": "St Mary's Church",
+            "url": "https://www.bearley.org/st-marys-church/"
+          },
+          {
+            "name": "Edstone Aqueduct",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "St Michael's Church",
+            "url": "https://www.churchesofarden.org.uk/claverdon"
+          },
+          {
+            "name": "Snitterfield Bushes Nature Reserve",
+            "url": "https://www.warwickshirewildlifetrust.org.uk"
+          },
+          {
+            "name": "Warwickshire Flight Experience",
+            "url": "https://www.warwickshireflightexperience.co.uk"
+          }
+        ],
+        "warnings": "Electric fence near stables.",
+        "bestTime": "Best in spring."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-birmingham-international": {
+    "slug": "heart-rail-trail-birmingham-international",
+    "title": "Birmingham International to Marston Green",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-675",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy / Flat"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Birmingham International to Marston Green",
+        "startPlace": "Birmingham International",
+        "endPlace": "Birmingham International",
+        "startStation": "BHI",
+        "endStation": "BHI",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 4,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Marston Green Tavern",
+            "location": "Marston Green",
+            "url": "https://www.sizzlingpubs.co.uk"
+          },
+          {
+            "name": "Simla Restaurant and Takeaway",
+            "location": "Marston Green",
+            "url": null
+          }
+        ],
+        "terrain": "Suburban paths, brook-side walking, oak woodland, wildflower meadow, parkland, sports fields.",
+        "sights": [
+          {
+            "name": "Alcott Wood",
+            "url": "https://www.woodlandtrust.org.uk"
+          },
+          {
+            "name": "Marston Green Park",
+            "url": "https://www.solihull.gov.uk/Parks-and-open-spaces/Marston-Green-Park"
+          },
+          {
+            "name": "Aircraft Spotting (Birmingham Airport)",
+            "url": "https://www.airportspotting.com/where-to-spot-birmingham-airport/"
+          },
+          {
+            "name": "National Motorcycle Museum",
+            "url": "https://www.nationalmotorcyclemuseum.co.uk"
+          },
+          {
+            "name": "Sheldon Country Park",
+            "url": "https://www.birmingham.gov.uk/sheldonpark"
+          },
+          {
+            "name": "National Exhibition Centre (NEC)",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-coventry": {
+    "slug": "heart-rail-trail-coventry",
+    "title": "Coventry Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-701",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Coventry Circular Walk",
+        "startPlace": "Coventry",
+        "endPlace": "Coventry",
+        "startStation": "COV",
+        "endStation": "COV",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Old Windmill",
+            "location": "Spon Street, Coventry",
+            "url": "https://www.facebook.com/TheOldWindmill.Coventry"
+          }
+        ],
+        "terrain": "Historic city centre, pedestrian boulevards, cobbled streets, canal basin, city walls, ring road underpasses.",
+        "sights": [
+          {
+            "name": "Herbert Art Gallery & Museum",
+            "url": "https://www.theherbert.org"
+          },
+          {
+            "name": "Holy Trinity Church",
+            "url": "https://www.holytrinitycoventry.org.uk"
+          },
+          {
+            "name": "Coventry Cathedral",
+            "url": "https://www.coventrycathedral.org.uk"
+          },
+          {
+            "name": "Coventry Transport Museum",
+            "url": "https://www.transport-museum.com"
+          },
+          {
+            "name": "FarGo Village",
+            "url": "https://www.fargovillage.co.uk"
+          },
+          {
+            "name": "Canal Basin",
+            "url": null
+          },
+          {
+            "name": "Coventry Watch Museum",
+            "url": null
+          },
+          {
+            "name": "St John's Church",
+            "url": null
+          },
+          {
+            "name": "Bonds Hospital",
+            "url": null
+          },
+          {
+            "name": "Cook Street Gatehouse",
+            "url": null
+          },
+          {
+            "name": "Whittle Arches",
+            "url": null
+          },
+          {
+            "name": "Frank Whittle Statue",
+            "url": null
+          },
+          {
+            "name": "Priory Undercroft",
+            "url": null
+          },
+          {
+            "name": "St Michael and Devil Statue",
+            "url": null
+          },
+          {
+            "name": "St Mary's Guildhall",
+            "url": null
+          },
+          {
+            "name": "Priory Gardens",
+            "url": null
+          },
+          {
+            "name": "Lady Godiva Statue",
+            "url": null
+          },
+          {
+            "name": "Ford's Hospital",
+            "url": null
+          },
+          {
+            "name": "Christchurch Spire",
+            "url": null
+          },
+          {
+            "name": "Cheylesmore Manor",
+            "url": null
+          },
+          {
+            "name": "Starley Memorial",
+            "url": null
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-coventry-arena": {
+    "slug": "heart-rail-trail-coventry-arena",
+    "title": "Coventry Arena to Bedworth",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1236",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy / Flat"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Coventry Arena to Bedworth",
+        "startPlace": "Coventry Arena",
+        "endPlace": "Coventry Arena",
+        "startStation": "CAA",
+        "endStation": "CAA",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3.5,
+        "hours": 2,
+        "lunchStops": [
+          {
+            "name": "Arena Shopping Park",
+            "location": "Coventry Arena",
+            "url": "www.arenashopping.com"
+          },
+          {
+            "name": "Harry's Bakery",
+            "location": "Bedworth",
+            "url": "www.facebook.com/HarrysBakery/"
+          },
+          {
+            "name": "JoJo's Bistro",
+            "location": "Bedworth",
+            "url": "https://www.facebook.com/joannecharley1971/"
+          }
+        ],
+        "terrain": "Canal towpath, former colliery park, formal gardens, wildflower meadows, market town streets.",
+        "sights": [
+          {
+            "name": "Coventry Canal",
+            "url": "www.canalrivertrust.org.uk/coventry-canal"
+          },
+          {
+            "name": "Miners Welfare Park",
+            "url": "www.facebook.com/bedworthcommunitygardens/"
+          },
+          {
+            "name": "Nicholas Chamberlain Almshouses",
+            "url": null
+          },
+          {
+            "name": "Bedworth Heritage Centre",
+            "url": "www.bedworth-society.co.uk/heritage-centre"
+          },
+          {
+            "name": "Hawkesbury Junction",
+            "url": null
+          }
+        ],
+        "warnings": "Point-to-point trail.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-berkswell": {
+    "slug": "heart-rail-trail-berkswell",
+    "title": "Berkswell Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-853",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Berkswell Circular Walk",
+        "startPlace": "Berkswell",
+        "endPlace": "Berkswell",
+        "startStation": "BKW",
+        "endStation": "BKW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.7,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Store & Stove",
+            "location": "Berkswell",
+            "url": "https://www.facebook.com/Store-Stove-110291947813048/"
+          },
+          {
+            "name": "Bear Inn",
+            "location": "Berkswell",
+            "url": "https://www.chefandbrewer.com"
+          },
+          {
+            "name": "Brickmakers Arms",
+            "location": "Berkswell",
+            "url": "https://www.thebrickmakersberkswell.com"
+          },
+          {
+            "name": "Oakes Farm Shop",
+            "location": "Berkswell",
+            "url": "https://www.oakesfarmshop.co.uk"
+          },
+          {
+            "name": "Barn at Berryfields",
+            "location": "Berryfields",
+            "url": "https://www.thebarnatberryfields.co.uk"
+          }
+        ],
+        "terrain": "Rural countryside, farmland, fields, farm driveways, quiet lanes, village green.",
+        "sights": [
+          {
+            "name": "St. John the Baptist",
+            "url": "https://www.berkswellchurch.org.uk"
+          },
+          {
+            "name": "Bercul's Well",
+            "url": null
+          },
+          {
+            "name": "Rams Hall Farm",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-danzey": {
+    "slug": "heart-rail-trail-danzey",
+    "title": "Danzey Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-851",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Danzey Circular Walk",
+        "startPlace": "Danzey",
+        "endPlace": "Danzey",
+        "startStation": "DZY",
+        "endStation": "DZY",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.7,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Bell Inn",
+            "location": "Tanworth-in-Arden",
+            "url": "http://www.thebellattanworthinarden.co.uk"
+          },
+          {
+            "name": "Warwickshire Lad",
+            "location": "Wood End",
+            "url": "http://www.thewarwickshirelad.co.uk"
+          }
+        ],
+        "terrain": "Farmland, woodland edge, country lanes, stream crossings, open fields.",
+        "sights": [
+          {
+            "name": "Mockley Wood",
+            "url": null
+          },
+          {
+            "name": "St. Mary Magdalene",
+            "url": "http://www.tanworthchurch.co.uk"
+          },
+          {
+            "name": "Umberslade Estate",
+            "url": "http://www.umberslade-estate.com"
+          },
+          {
+            "name": "The Vintage Barn",
+            "url": "http://www.facebook.com/thevintagebarnhenley"
+          },
+          {
+            "name": "Middle England Farm",
+            "url": "http://www.middleenglandfarm.co.uk"
+          },
+          {
+            "name": "Avoncroft Museum",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": "Best in spring."
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-olton": {
+    "slug": "heart-rail-trail-olton",
+    "title": "Olton to Shirley",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-856",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Olton to Shirley",
+        "startPlace": "Olton",
+        "endPlace": "Olton",
+        "startStation": "OLT",
+        "endStation": "OLT",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 8,
+        "hours": 3.5,
+        "lunchStops": [
+          {
+            "name": "Happy Heart Café",
+            "location": "Olton",
+            "url": "https://www.happyheartcafe.co.uk"
+          },
+          {
+            "name": "Journey's End",
+            "location": "Acocks Green",
+            "url": null
+          },
+          {
+            "name": "Hungry Hobbit",
+            "location": "Hall Green",
+            "url": "https://www.facebook.com/hungryhobbitz/"
+          }
+        ],
+        "terrain": "Canal towpath, River Cole valley, country park, wetlands, grasslands, woodland, heath, urban paths.",
+        "sights": [
+          {
+            "name": "Saxon King on Horse sculpture",
+            "url": null
+          },
+          {
+            "name": "Shire Country Park",
+            "url": "https://www.birmingham.gov.uk"
+          },
+          {
+            "name": "Sarehole Mill Museum",
+            "url": "https://www.birminghammuseums.org.uk/sarehole"
+          },
+          {
+            "name": "Ackers Adventure",
+            "url": "https://www.ackers-adventure.co.uk"
+          },
+          {
+            "name": "Vintage Trains",
+            "url": "https://www.vintagetrains.co.uk"
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-kenilworth": {
+    "slug": "heart-rail-trail-kenilworth",
+    "title": "Kenilworth Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-852",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Kenilworth Circular Walk",
+        "startPlace": "Kenilworth",
+        "endPlace": "Kenilworth",
+        "startStation": "KNW",
+        "endStation": "KNW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 7.4,
+        "hours": 3.5,
+        "lunchStops": [
+          {
+            "name": "Virgins & Castle",
+            "location": "Kenilworth",
+            "url": "https://www.virginsandcastle.com"
+          },
+          {
+            "name": "Cross",
+            "location": "Kenilworth",
+            "url": null
+          },
+          {
+            "name": "Pomeroy's",
+            "location": "Kenilworth",
+            "url": "https://www.pomeroysbistro.co.uk"
+          }
+        ],
+        "terrain": "Historic market town, farmland, open countryside, woodland, brooks, bridleways.",
+        "sights": [
+          {
+            "name": "Abbey Fields",
+            "url": "https://www.friendsofabbeyfields.org.uk"
+          },
+          {
+            "name": "Kenilworth Castle",
+            "url": "https://www.english-heritage.org.uk"
+          },
+          {
+            "name": "WW2 Anti Aircraft Battery (Bannerhill Battery, Goodrest Farm)",
+            "url": "https://www.kenilworth-ww2.co.uk"
+          },
+          {
+            "name": "Faerie Tale Farm",
+            "url": "https://www.faerietalealpacas.co.uk"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-hampton-in-arden": {
+    "slug": "heart-rail-trail-hampton-in-arden",
+    "title": "Hampton-in-Arden Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-850",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Hampton-in-Arden Circular Walk",
+        "startPlace": "Hampton-in-Arden",
+        "endPlace": "Hampton-in-Arden",
+        "startStation": "HIA",
+        "endStation": "HIA",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3.6,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "White Lion",
+            "location": "Hampton-in-Arden",
+            "url": "https://www.thewhitelioninn.com"
+          },
+          {
+            "name": "Hampton Corner Shop",
+            "location": "Hampton-in-Arden",
+            "url": "https://www.hamptoncornershop.com"
+          },
+          {
+            "name": "Sandwiches @ No.6",
+            "location": "Hampton-in-Arden",
+            "url": "https://www.facebook.com/sandwichesatnumbersix"
+          },
+          {
+            "name": "Peel's at Hampton Manor",
+            "location": "Hampton-in-Arden",
+            "url": "https://www.hamptonmanor.com"
+          }
+        ],
+        "terrain": "Ancient village, tarmacked lanes, River Blythe crossing, nature reserve pools and hides, packhorse bridge, open countryside.",
+        "sights": [
+          {
+            "name": "Marsh Lane Nature Reserve",
+            "url": "https://www.packingtonestate.co.uk"
+          },
+          {
+            "name": "St. Mary & St. Bartholomew",
+            "url": "https://www.hamptoninardenchurch.org.uk"
+          },
+          {
+            "name": "Hampton Manor",
+            "url": "https://www.hamptonmanor.com"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-lapworth": {
+    "slug": "heart-rail-trail-lapworth",
+    "title": "Lapworth Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-854",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Lapworth Circular Walk",
+        "startPlace": "Lapworth",
+        "endPlace": "Lapworth",
+        "startStation": "LPW",
+        "endStation": "LPW",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 3.75,
+        "hours": 2,
+        "lunchStops": [
+          {
+            "name": "Punch Bowl",
+            "location": "Lapworth",
+            "url": "https://www.punchbowllapworth.co.uk"
+          },
+          {
+            "name": "Navigation Inn",
+            "location": "Lapworth",
+            "url": "https://www.navigationlapworth.co.uk"
+          },
+          {
+            "name": "Boot",
+            "location": "Lapworth",
+            "url": "https://www.bootinnlapworth.co.uk"
+          }
+        ],
+        "terrain": "Rural fields, canal towpath, flight of locks, Kingswood Arm, country lanes, Tudor mansion grounds.",
+        "sights": [
+          {
+            "name": "Church of St. Mary the Virgin",
+            "url": null
+          },
+          {
+            "name": "Packwood House",
+            "url": "https://www.nationaltrust.org.uk/packwood-house"
+          },
+          {
+            "name": "Kingswood Arm",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Baddesley Clinton",
+            "url": "https://www.nationaltrust.org.uk/baddesley-clinton"
+          }
+        ],
+        "warnings": "Can be very muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-solihull": {
+    "slug": "heart-rail-trail-solihull",
+    "title": "Solihull Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-855",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Solihull Circular Walk",
+        "startPlace": "Solihull",
+        "endPlace": "Solihull",
+        "startStation": "SOL",
+        "endStation": "SOL",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 5.5,
+        "hours": 3,
+        "lunchStops": [
+          {
+            "name": "Taste Collective",
+            "location": "Solihull",
+            "url": "http://www.tastecollectivesolihull.co.uk"
+          },
+          {
+            "name": "Jamaya",
+            "location": "Solihull",
+            "url": "http://www.jamaya.co.uk"
+          },
+          {
+            "name": "Tap & Tandoor",
+            "location": "Solihull",
+            "url": null
+          },
+          {
+            "name": "Manor House Tea Room",
+            "location": "Solihull",
+            "url": "http://www.themanorhousesolihull.com"
+          },
+          {
+            "name": "Vita",
+            "location": "Solihull",
+            "url": null
+          },
+          {
+            "name": "Parkridge Café",
+            "location": "Brueton Park, Solihull",
+            "url": null
+          }
+        ],
+        "terrain": "Town centre, parks, ornamental gardens, lake, River Blythe, woodland, open fields.",
+        "sights": [
+          {
+            "name": "St. Alphege Church",
+            "url": "http://www.solihullparish.org.uk"
+          },
+          {
+            "name": "Manor House",
+            "url": "http://www.themanorhousesolihull.com"
+          },
+          {
+            "name": "Malvern Park",
+            "url": "http://www.solihull.gov.uk/Parks-and-open-spaces/"
+          },
+          {
+            "name": "Parkridge Nature Reserve",
+            "url": "http://www.solihull.gov.uk/Parks-and-open-spaces/"
+          },
+          {
+            "name": "Malvern & Brueton Park",
+            "url": "http://www.solihull.gov.uk/Parks-and-open-spaces/"
+          },
+          {
+            "name": "Tudor Grange Park",
+            "url": "http://www.solihull.gov.uk/Parks-and-open-spaces/"
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-dorridge": {
+    "slug": "heart-rail-trail-dorridge",
+    "title": "Dorridge to Lapworth Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-885",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Dorridge to Lapworth Walk",
+        "startPlace": "Dorridge",
+        "endPlace": "Dorridge",
+        "startStation": "DDG",
+        "endStation": "DDG",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 4.5,
+        "hours": 2.5,
+        "lunchStops": [
+          {
+            "name": "Espresso",
+            "location": "Dorridge",
+            "url": null
+          },
+          {
+            "name": "Skogen",
+            "location": "Dorridge",
+            "url": null
+          },
+          {
+            "name": "Rigby's Black Boy",
+            "location": "Knowle",
+            "url": "https://www.theblackboyknowle.co.uk"
+          },
+          {
+            "name": "Navigation Inn",
+            "location": "Lapworth",
+            "url": "https://www.navigationlapworth.co.uk"
+          }
+        ],
+        "terrain": "Wealthy suburbia, country lanes, Grand Union Canal towpath, open fields.",
+        "sights": [
+          {
+            "name": "Brook Meadow",
+            "url": "https://www.warwickshirewildlifetrust.org.uk"
+          },
+          {
+            "name": "Grand Union Canal",
+            "url": "https://www.canalrivertrust.org.uk"
+          },
+          {
+            "name": "Baddesley Clinton",
+            "url": "https://www.nationaltrust.org.uk/baddesley-clinton"
+          },
+          {
+            "name": "Dorridge Wood",
+            "url": "https://www.solihull.gov.uk/Parks-and-open-spaces/"
+          },
+          {
+            "name": "Packwood House",
+            "url": null
+          },
+          {
+            "name": "Kingswood Junction",
+            "url": null
+          }
+        ],
+        "warnings": "Can be muddy.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-widney-manor": {
+    "slug": "heart-rail-trail-widney-manor",
+    "title": "Widney Manor to Dorridge Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-888",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Widney Manor to Dorridge Walk",
+        "startPlace": "Widney Manor",
+        "endPlace": "Widney Manor",
+        "startStation": "WMR",
+        "endStation": "WMR",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.75,
+        "hours": 1.5,
+        "lunchStops": [
+          {
+            "name": "Fieldhouse",
+            "location": "Widney Manor",
+            "url": "https://www.emberinns.co.uk"
+          },
+          {
+            "name": "Dark Horse Espresso",
+            "location": "on route",
+            "url": "https://www.dhespresso.com"
+          },
+          {
+            "name": "Drum and Monkey",
+            "location": "on route",
+            "url": "https://www.chefandbrewer.com"
+          },
+          {
+            "name": "Butchers Social",
+            "location": "Dorridge",
+            "url": "https://www.thebutchers.social"
+          },
+          {
+            "name": "Skogen",
+            "location": "Dorridge",
+            "url": null
+          }
+        ],
+        "terrain": "Suburban streets, open fields, M42 motorway bridge crossing, River Blythe, parkland.",
+        "sights": [
+          {
+            "name": "Widney Manor Cemetery",
+            "url": null
+          },
+          {
+            "name": "River Blythe",
+            "url": "https://en.wikipedia.org/wiki/River_Blythe"
+          },
+          {
+            "name": "Blythe Valley Nature Reserve",
+            "url": null
+          },
+          {
+            "name": "Malvern & Brueton Park",
+            "url": "https://www.solihull.gov.uk/Parks-and-open-spaces/"
+          }
+        ],
+        "warnings": "",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  },
+  "heart-rail-trail-wood-end": {
+    "slug": "heart-rail-trail-wood-end",
+    "title": "Wood End Circular Walk",
+    "url": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-887",
+    "favourite": false,
+    "region": "Warwickshire",
+    "tags": [
+      "heart-community-rail"
+    ],
+    "categories": [
+      "Circular",
+      "Easy"
+    ],
+    "places": {
+      "villages": [],
+      "landmarks": [],
+      "historic": [],
+      "modern": [],
+      "nature": [],
+      "paths": []
+    },
+    "features": [],
+    "walks": [
+      {
+        "role": "main",
+        "name": "Wood End Circular Walk",
+        "startPlace": "Wood End",
+        "endPlace": "Wood End",
+        "startStation": "WDE",
+        "endStation": "WDE",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": 2.5,
+        "hours": 1,
+        "lunchStops": [
+          {
+            "name": "Warwickshire Lad",
+            "location": "Wood End",
+            "url": "https://www.thewarwickshirelad.co.uk"
+          },
+          {
+            "name": "Bell Inn",
+            "location": "Tanworth-in-Arden",
+            "url": "https://www.thebellattanworthinarden.co.uk"
+          },
+          {
+            "name": "Umberslade's Pizzeria",
+            "location": "Umberslade",
+            "url": "https://www.umberslade-estate.com"
+          },
+          {
+            "name": "Espresso Farm",
+            "location": "Umberslade",
+            "url": "https://www.umberslade-estate.com"
+          },
+          {
+            "name": "Straight From the Cow",
+            "location": "Carpenters Hill Farm",
+            "url": "https://www.straightfromthecow.co.uk"
+          }
+        ],
+        "terrain": "Warwickshire countryside, river crossing, fields, kissing gates, village roads, railway crossing.",
+        "sights": [
+          {
+            "name": "St. Mary Magdalene",
+            "url": "https://www.tanworthchurch.co.uk"
+          },
+          {
+            "name": "Umberslade Estate",
+            "url": "https://www.umberslade-estate.com"
+          },
+          {
+            "name": "River Alne",
+            "url": null
+          }
+        ],
+        "warnings": "No shops en route.",
+        "bestTime": ""
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+  }
+}

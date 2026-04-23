@@ -125,9 +125,14 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unverified", label: "Probably", secondary: true, tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
+    // "Probably" was previously styled with --secondary (grey-green) to
+    // group it with Okay/Unknown. It now uses --primary so it reads as a
+    // positive-curation tier alongside Heavenly and Good — distinct from
+    // the duller Unknown dot beneath it. `secondary: true` would still
+    // drive a secondary-tinted checkbox, so drop that flag too.
+    key: "unverified", label: "Probably", tooltip: "Reputably recommended, but unvisited by me —TrainToGreen creator",
     icon: (
-      <svg viewBox="1 2 22 20" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
+      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
         <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
       </svg>
