@@ -453,26 +453,7 @@
     "algo": "custom",
     "custom": {
       "includeTags": [
-        "epping forest",
-        "manor park",
-        "chingford",
-        "epping",
-        "wanstead flats",
-        "hollow pond",
-        "boating lake",
-        "highams park",
-        "queen elizabeth's hunting lodge",
-        "view epping forest visitor centre",
-        "lakeside diner",
-        "whipps cross",
-        "humphry's caf",
-        "larder",
-        "butler's retreat",
-        "rangers road",
-        "leytonstone",
-        "loughton",
-        "queen elizabeth hunting lodge",
-        "apr"
+        "epping forest"
       ],
       "excludeTags": [
         "people",
