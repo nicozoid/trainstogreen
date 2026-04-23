@@ -4613,6 +4613,15 @@
     "name": "Princes Risborough",
     "approved": [
       {
+        "id": "50625453477",
+        "title": "Village green in quiet Westlington, Buckinghamshire, England",
+        "ownerName": "Banburyshire Photos",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/50625453477_76893030af.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/50625453477_76893030af_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/163363024@N04/50625453477",
+        "dateTaken": "2018-10-22 12:38:13"
+      },
+      {
         "id": "54315704649",
         "title": "Shirburn Hill",
         "ownerName": "Bruce Clarke",
@@ -4782,15 +4791,6 @@
         "largeUrl": "https://live.staticflickr.com/4850/46326421751_790bd01e55_b.jpg",
         "flickrUrl": "https://www.flickr.com/photos/163363024@N04/46326421751",
         "dateTaken": "2018-10-22 13:17:38"
-      },
-      {
-        "id": "50625453477",
-        "title": "Village green in quiet Westlington, Buckinghamshire, England",
-        "ownerName": "Banburyshire Photos",
-        "thumbnailUrl": "https://live.staticflickr.com/65535/50625453477_76893030af.jpg",
-        "largeUrl": "https://live.staticflickr.com/65535/50625453477_76893030af_b.jpg",
-        "flickrUrl": "https://www.flickr.com/photos/163363024@N04/50625453477",
-        "dateTaken": "2018-10-22 12:38:13"
       }
     ],
     "rejected": [
