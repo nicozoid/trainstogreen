@@ -508,5 +508,9 @@
   "0.1967655,52.2622818": {
     "name": "Waterbeach",
     "algo": "hikes"
+  },
+  "0.2664989,52.3906885": {
+    "name": "Ely",
+    "algo": "station"
   }
 }
