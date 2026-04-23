@@ -395,16 +395,8 @@
     "algo": "custom",
     "custom": {
       "includeTags": [
-        "theydon bois",
-        "epping",
-        "marshland",
-        "theydon oak",
-        "dog house",
-        "woodhatch",
-        "kings head",
-        "north weald",
-        "garnon bushes",
-        "theydon garnon"
+        "epping forest",
+        "wood"
       ],
       "excludeTags": [
         "people",
