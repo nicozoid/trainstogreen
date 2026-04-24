@@ -793,5 +793,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.3061936,51.2931422": {
+    "name": "Borough Green & Wrotham",
+    "custom": {
+      "includeTags": [
+        "greensand way",
+        "mereworth woods",
+        "gower hill",
+        "plaxtol parish church",
+        "church",
+        "st michaels church",
+        "st dunstan's church",
+        "borough green & wrotham",
+        "borough green",
+        "sevenoaks",
+        "ightham mote",
+        "knole house",
+        "south east",
+        "wrotham",
+        "greensand",
+        "fairlawne house",
+        "knole park",
+        "shipbourne",
+        "yalding",
+        "st lawrence"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
