@@ -224,6 +224,8 @@ function formatLunchStops(stops) {
 //   longer      → "A longer variant of [Page](url)."
 //   alternative → "An alternative variant of [Page](url)."
 //   variant     → "A variant of [Page](url)."
+//   similar     → "Similar to [Page](url)."
+//   adapted     → "Adapted from [Page](url)."
 //
 // Capitalised at sentence start (follows the opening colon). Returns
 // null only if the walk has no identifiable source — in practice this
@@ -243,6 +245,8 @@ function formatSourceClause(variant, entry) {
     case "longer":      phrase = "A longer variant of"; break
     case "alternative": phrase = "An alternative variant of"; break
     case "variant":     phrase = "A variant of"; break
+    case "similar":     phrase = "Similar to"; break
+    case "adapted":     phrase = "Adapted from"; break
     default:            phrase = "From"; break
   }
   return `${phrase} [${pageName}](${pageURL}).`

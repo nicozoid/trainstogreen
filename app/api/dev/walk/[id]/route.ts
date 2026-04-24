@@ -35,7 +35,7 @@ const EDITABLE_FIELDS = [
 ] as const
 
 const LUNCH_RATINGS = new Set(["good", "fine", "poor"])
-const SOURCE_TYPES = new Set(["main", "shorter", "longer", "alternative", "variant"])
+const SOURCE_TYPES = new Set(["main", "shorter", "longer", "alternative", "variant", "similar", "adapted"])
 
 // Month codes accepted inside the bestSeasons array. Keep in sync with
 // the month alphabet used by scripts/build-rambler-notes.mjs.
