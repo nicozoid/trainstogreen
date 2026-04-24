@@ -708,5 +708,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "1.07582,51.274185": {
+    "name": "Canterbury East",
+    "custom": {
+      "includeTags": [
+        "river",
+        "canterbury cathedral",
+        "st mary's church",
+        "apostle church",
+        "canterbury chartham garden centre",
+        "canterbury east",
+        "chilham",
+        "canterbury",
+        "westgate",
+        "old weavers",
+        "house",
+        "blackfriars gallery",
+        "old synagogue",
+        "kings school",
+        "dane john mound",
+        "blean woods nature reserve",
+        "university",
+        "kent",
+        "chartham vineyard",
+        "st peter"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
