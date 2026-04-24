@@ -83,6 +83,12 @@
       "Autumn"
     ]
   },
+  "-0.1485149,51.651366": {
+    "name": "Cockfosters",
+    "seasons": [
+      "Autumn"
+    ]
+  },
   "-0.150065,51.2641687": {
     "name": "Merstham",
     "seasons": [
@@ -98,7 +104,8 @@
   "-0.1791837,51.6307163": {
     "name": "Totteridge & Whetstone",
     "seasons": [
-      "Spring"
+      "Spring",
+      "Autumn"
     ]
   },
   "-0.187051,51.8670421": {
@@ -321,6 +328,7 @@
   "-0.5630828,51.763646": {
     "name": "Berkhamsted",
     "seasons": [
+      "Spring",
       "Autumn"
     ]
   },
@@ -371,6 +379,7 @@
   "-0.6224578,51.800672": {
     "name": "Tring",
     "seasons": [
+      "Spring",
       "Autumn"
     ]
   },
@@ -436,6 +445,7 @@
   "-0.7222499,51.5573685": {
     "name": "Cookham",
     "seasons": [
+      "Summer",
       "Autumn"
     ]
   },
@@ -500,7 +510,8 @@
     "seasons": [
       "Spring",
       "Summer",
-      "Autumn"
+      "Autumn",
+      "Winter"
     ]
   },
   "-0.9417209,51.0065237": {
@@ -520,7 +531,8 @@
     "seasons": [
       "Spring",
       "Summer",
-      "Autumn"
+      "Autumn",
+      "Winter"
     ]
   },
   "-1.1586983,51.5704082": {
@@ -674,6 +686,13 @@
       "Spring"
     ]
   },
+  "0.1000064,50.7729203": {
+    "name": "Seaford",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
   "0.1139888,51.6936318": {
     "name": "Epping",
     "seasons": [
@@ -720,6 +739,12 @@
     "seasons": [
       "Spring",
       "Autumn"
+    ]
+  },
+  "0.2009551,51.0892394": {
+    "name": "Eridge",
+    "seasons": [
+      "Spring"
     ]
   },
   "0.2181092,51.5538747": {

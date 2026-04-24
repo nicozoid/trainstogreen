@@ -1,5 +1,5 @@
 {
-  "_readme": "Organisations that walk data is sourced from. Keyed by orgSlug, which is referenced by every walk's `source.orgSlug` field. Adding a new source: add an entry here, then reference its slug in the walk's source object. The name + url here are the ones displayed in the UI (e.g. 'Saturday Walkers Club' as the author, the url as the publisher link).",
+  "_readme": "Organisations that walk data is sourced from. Keyed by orgSlug, which is referenced by every walk's `source.orgSlug` field. Adding a new source: add an entry here, then reference its slug in the walk's source object. The name + url here are the ones displayed in the UI (e.g. 'Saturday Walkers Club' as the author, the url as the publisher link). For book sources, omit `url` or point it at an authoritative landing page (publisher / bookshop).",
   "saturday-walkers-club": {
     "name": "Saturday Walkers Club",
     "url": "https://www.walkingclub.org.uk/"
@@ -15,5 +15,13 @@
   "abbey-line": {
     "name": "Abbey Line Community Rail Partnership",
     "url": "https://www.abbeyline.org.uk/"
+  },
+  "trains-to-green": {
+    "name": "Trains to Green",
+    "url": "https://trainstogreen.com/"
+  },
+  "rough-guide-walks-london-south-east-3rd": {
+    "name": "The Rough Guide to Walks in London & the South East (3rd ed.)",
+    "url": "https://www.roughguides.com/"
   }
 }

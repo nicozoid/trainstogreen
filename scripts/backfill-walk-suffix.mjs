@@ -92,7 +92,10 @@ function main() {
         }
 
         const isCircular = v.startStation === v.endStation
-        const exact = isCircular ? [`${start} circular`, `${start} Circular`] : [`${start} to ${end}`]
+        // Accept both capitalisations of "circular" since pre-April
+        // data mixed them — either form on disk collapses to the
+        // canonical derived "Start Circular" after backfill.
+        const exact = isCircular ? [`${start} Circular`, `${start} circular`] : [`${start} to ${end}`]
 
         if (exact.some((pat) => name === pat)) {
           v.name = ""

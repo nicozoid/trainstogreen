@@ -23,15 +23,16 @@ const EDITABLE_FIELDS = [
   "rating",
   "terrain",
   "distanceKm",
-  "distanceMiles",
   "hours",
   "name",
   "suffix",
   "sights",
   "lunchStops",
+  "source",
 ] as const
 
 const LUNCH_RATINGS = new Set(["good", "fine", "poor"])
+const SOURCE_TYPES = new Set(["main", "shorter", "longer", "alternative", "variant"])
 
 // Month codes accepted inside the bestSeasons array. Keep in sync with
 // the month alphabet used by scripts/build-rambler-notes.mjs.
@@ -92,14 +93,13 @@ function cleanField(key: string, value: unknown): unknown | undefined {
       return rounded
     }
     case "distanceKm":
-    case "distanceMiles":
     case "hours": {
       // Numeric fields — null or non-finite drops the field. Negative
       // values are treated as garbage (sanity floor).
       if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined
       return value
     }
-    case "mudWarning": {
+case "mudWarning": {
       // Only store `true` — absence means "not muddy", so false collapses
       // to "remove the field" to keep the file diff-friendly.
       return value === true ? true : undefined
@@ -131,9 +131,32 @@ function cleanField(key: string, value: unknown): unknown | undefined {
         .filter((x): x is NonNullable<ReturnType<typeof cleanLunchStop>> => x !== null)
       return cleaned
     }
+    // `source` is handled separately in the PATCH loop so invalid
+    // payloads can be a no-op rather than deleting the field.
     default:
       return undefined
   }
+}
+
+// Source provenance — all four keys required (we've already backfilled
+// every walk with a source, so missing orgSlug/pageName/pageURL on a
+// PATCH means the admin accidentally cleared a required field; drop
+// the update silently rather than corrupting the record).
+function cleanSource(raw: unknown): {
+  orgSlug: string
+  pageName: string
+  pageURL: string
+  type: string
+} | null {
+  if (!raw || typeof raw !== "object") return null
+  const r = raw as Record<string, unknown>
+  const orgSlug = typeof r.orgSlug === "string" ? r.orgSlug.trim() : ""
+  const pageName = typeof r.pageName === "string" ? r.pageName.trim() : ""
+  const pageURL = typeof r.pageURL === "string" ? r.pageURL.trim() : ""
+  const typeRaw = typeof r.type === "string" ? r.type.trim() : ""
+  if (!orgSlug || !pageName || !pageURL) return null
+  const type = SOURCE_TYPES.has(typeRaw) ? typeRaw : "variant"
+  return { orgSlug, pageName, pageURL, type }
 }
 
 // Row-level cleaners for sights/lunch. Drop rows with an empty name
@@ -157,6 +180,7 @@ function cleanLunchStop(raw: unknown): {
   url?: string
   notes?: string
   rating?: "good" | "fine" | "poor"
+  busy?: true
 } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
@@ -168,6 +192,7 @@ function cleanLunchStop(raw: unknown): {
     url?: string
     notes?: string
     rating?: "good" | "fine" | "poor"
+    busy?: true
   } = { name }
   if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
   if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
@@ -175,6 +200,9 @@ function cleanLunchStop(raw: unknown): {
   if (typeof r.rating === "string" && LUNCH_RATINGS.has(r.rating)) {
     out.rating = r.rating as "good" | "fine" | "poor"
   }
+  // `busy` collapses to absence when false so the JSON file stays
+  // tidy — presence of the key is the signal.
+  if (r.busy === true) out.busy = true
   return out
 }
 
@@ -197,15 +225,45 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const variant = entry.walks![variantIndex] as WalkVariant
 
   // Apply every whitelisted field present in the body. Fields not in
-  // the body are left alone — PATCH is partial, not PUT.
+  // the body are left alone — PATCH is partial, not PUT. Track
+  // whether anything actually changed so we only stamp updatedAt (and
+  // trigger a write + rebuild) on real edits.
+  let changed = false
   for (const key of EDITABLE_FIELDS) {
     if (!(key in body)) continue
-    const cleaned = cleanField(key, body[key])
-    if (cleaned === undefined) {
-      delete variant[key]
-    } else {
-      variant[key] = cleaned
+
+    // `source` is special-cased: invalid payloads are a no-op (the
+    // field stays intact). All other fields treat an undefined clean
+    // result as "delete this key" so empty strings/arrays don't
+    // linger in the file. Source is always expected to be present,
+    // so deleting on a bad PATCH would corrupt the record.
+    if (key === "source") {
+      const cleaned = cleanSource(body[key])
+      if (cleaned && JSON.stringify(variant.source) !== JSON.stringify(cleaned)) {
+        variant.source = cleaned
+        changed = true
+      }
+      continue
     }
+
+    const cleaned = cleanField(key, body[key])
+    const before = variant[key]
+    if (cleaned === undefined) {
+      if (key in variant) {
+        delete variant[key]
+        changed = true
+      }
+    } else if (JSON.stringify(before) !== JSON.stringify(cleaned)) {
+      variant[key] = cleaned
+      changed = true
+    }
+  }
+
+  // Stamp updatedAt on every successful edit so the build script + UI
+  // can order walks by "most recently touched first" within a tier.
+  // ISO string is precise enough (ms) for the tiebreaker to be stable.
+  if (changed) {
+    variant.updatedAt = new Date().toISOString()
   }
 
   await writeDataFile(file, data, `Update walk ${id} (${slug})`, sha)

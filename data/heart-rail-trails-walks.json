@@ -31,8 +31,7 @@
         "endStation": "WRW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.8,
+        "distanceKm": 12.6,
         "hours": 4,
         "lunchStops": [
           {
@@ -133,15 +132,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wythall to Shirley",
         "startPlace": "Wythall",
         "endPlace": "Wythall",
         "startStation": "WYT",
         "endStation": "WYT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -222,15 +219,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wootton Wawen to Wilmcote",
         "startPlace": "Wootton Wawen",
         "endPlace": "Wootton Wawen",
         "startStation": "WWW",
         "endStation": "WWW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.5,
+        "distanceKm": 7.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -322,15 +317,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wilmcote to Wootton Wawen",
         "startPlace": "Wilmcote",
         "endPlace": "Wilmcote",
         "startStation": "WMC",
         "endStation": "WMC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 3,
         "lunchStops": [
           {
@@ -435,15 +428,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Whitlocks End to Shirley",
         "startPlace": "Whitlocks End",
         "endPlace": "Whitlocks End",
         "startStation": "WTE",
         "endStation": "WTE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.75,
+        "distanceKm": 2.8,
         "hours": 1,
         "lunchStops": [
           {
@@ -537,8 +528,7 @@
         "endStation": "WRP",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.1,
+        "distanceKm": 8.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -622,8 +612,7 @@
         "endStation": "TLK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4,
+        "distanceKm": 6.4,
         "hours": 2,
         "lunchStops": [
           {
@@ -726,8 +715,7 @@
         "endStation": "THL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.8,
+        "distanceKm": 6.1,
         "hours": 2,
         "lunchStops": [
           {
@@ -824,15 +812,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Shakespeare's Stratford",
         "startPlace": "Stratford-upon-Avon",
         "endPlace": "Stratford-upon-Avon",
         "startStation": "SAV",
         "endStation": "SAV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -947,8 +933,7 @@
         "endStation": "STY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.25,
+        "distanceKm": 3.6,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1036,8 +1021,7 @@
         "endStation": "SRL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5,
+        "distanceKm": 8,
         "hours": 3,
         "lunchStops": [
           {
@@ -1142,8 +1126,7 @@
         "endStation": "RUG",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -1227,15 +1210,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "George Eliot's Nuneaton",
         "startPlace": "Nuneaton",
         "endPlace": "Nuneaton",
         "startStation": "NUN",
         "endStation": "NUN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.8,
+        "distanceKm": 2.9,
         "hours": 1,
         "lunchStops": [
           {
@@ -1288,7 +1269,8 @@
           "pageName": "George Eliot's Nuneaton",
           "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-820",
           "type": "main"
-        }
+        },
+        "suffix": "via Nuneaton Museum & Art Gallery"
       }
     ],
     "extracted": true,
@@ -1330,8 +1312,7 @@
         "endStation": "MGN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1420,15 +1401,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Royal Leamington Spa Circular Walk",
         "startPlace": "Leamington Spa",
         "endPlace": "Leamington Spa",
         "startStation": "LMS",
         "endStation": "LMS",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.2,
+        "distanceKm": 11.6,
         "hours": 4,
         "lunchStops": [
           {
@@ -1512,8 +1491,7 @@
         "endStation": "HNL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1622,15 +1600,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Hatton to Lapworth Walk",
         "startPlace": "Hatton",
         "endPlace": "Hatton",
         "startStation": "HTN",
         "endStation": "HTN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5,
+        "distanceKm": 8,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1749,15 +1725,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Earlswood to Wythall",
         "startPlace": "Earlswood",
         "endPlace": "Earlswood",
         "startStation": "EWD",
         "endStation": "EWD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.75,
+        "distanceKm": 2.8,
         "hours": 1,
         "lunchStops": [
           {
@@ -1844,15 +1818,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Claverdon to Hatton",
         "startPlace": "Claverdon",
         "endPlace": "Claverdon",
         "startStation": "CLV",
         "endStation": "CLV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -1932,15 +1904,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Canley to Coventry Walk",
         "startPlace": "Canley",
         "endPlace": "Canley",
         "startStation": "CNL",
         "endStation": "CNL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2045,15 +2015,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Bermuda Park to Bedworth",
         "startPlace": "Bermuda Park",
         "endPlace": "Bermuda Park",
         "startStation": "BEP",
         "endStation": "BEP",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.5,
+        "distanceKm": 5.6,
         "hours": 2,
         "lunchStops": [
           {
@@ -2147,8 +2115,7 @@
         "endStation": "BEH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 6.3,
+        "distanceKm": 10.1,
         "hours": 3,
         "lunchStops": [
           {
@@ -2245,15 +2212,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Bearley to Claverdon",
         "startPlace": "Bearley",
         "endPlace": "Bearley",
         "startStation": "BER",
         "endStation": "BER",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.75,
+        "distanceKm": 7.6,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -2338,15 +2303,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Birmingham International to Marston Green",
         "startPlace": "Birmingham International",
         "endPlace": "Birmingham International",
         "startStation": "BHI",
         "endStation": "BHI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4,
+        "distanceKm": 6.4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2437,8 +2400,7 @@
         "endStation": "COV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2578,15 +2540,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Coventry Arena to Bedworth",
         "startPlace": "Coventry Arena",
         "endPlace": "Coventry Arena",
         "startStation": "CAA",
         "endStation": "CAA",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.5,
+        "distanceKm": 5.6,
         "hours": 2,
         "lunchStops": [
           {
@@ -2678,8 +2638,7 @@
         "endStation": "BKW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.7,
+        "distanceKm": 4.3,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2775,8 +2734,7 @@
         "endStation": "DZY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.7,
+        "distanceKm": 4.3,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2867,15 +2825,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Olton to Shirley",
         "startPlace": "Olton",
         "endPlace": "Olton",
         "startStation": "OLT",
         "endStation": "OLT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 8,
+        "distanceKm": 12.9,
         "hours": 3.5,
         "lunchStops": [
           {
@@ -2967,8 +2923,7 @@
         "endStation": "KNW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.4,
+        "distanceKm": 11.9,
         "hours": 3.5,
         "lunchStops": [
           {
@@ -3058,8 +3013,7 @@
         "endStation": "HIA",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.6,
+        "distanceKm": 5.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -3150,8 +3104,7 @@
         "endStation": "LPW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.75,
+        "distanceKm": 6,
         "hours": 2,
         "lunchStops": [
           {
@@ -3241,8 +3194,7 @@
         "endStation": "SOL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 3,
         "lunchStops": [
           {
@@ -3348,15 +3300,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Dorridge to Lapworth Walk",
         "startPlace": "Dorridge",
         "endPlace": "Dorridge",
         "startStation": "DDG",
         "endStation": "DDG",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.5,
+        "distanceKm": 7.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -3451,15 +3401,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Widney Manor to Dorridge Walk",
         "startPlace": "Widney Manor",
         "endPlace": "Widney Manor",
         "startStation": "WMR",
         "endStation": "WMR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.75,
+        "distanceKm": 4.4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -3557,8 +3505,7 @@
         "endStation": "WDE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1,
         "lunchStops": [
           {

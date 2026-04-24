@@ -51,7 +51,6 @@ type WalkPayload = {
   endPlace: string
   stationToStation: boolean
   distanceKm: number | null
-  distanceMiles: number | null
   hours: number | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
@@ -63,6 +62,7 @@ type WalkPayload = {
   bestSeasons: string[]
   komootUrl: string
   rating: number | null
+  updatedAt: string | null
   // provenance (read-only in v1 — populated by
   // scripts/backfill-walk-source-metadata.mjs)
   source?: {
@@ -75,14 +75,31 @@ type WalkPayload = {
   previousWalkDates?: string[]
 }
 
-// Returns every walk variant whose startStation OR endStation matches
-// the given CRS, across all four walk files. Results are ordered:
-//   Rambler-favourite pages first, then by role priority
-//   (main → shorter → longer → alternative → variant).
-// This matches the order the build script uses to stack walks into
-// each station's ramblerNote so the admin cards appear in the same
-// order as the rendered prose.
-const ROLE_PRIORITY = ["main", "shorter", "longer", "alternative", "variant"]
+// Walk ordering — automatic, not admin-overridable.
+// Sort keys (ASC — lower value wins):
+//   1. ratingTier     (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
+//   2. !komootUrl     (walks with a Komoot route come first)
+//   3. !isMain        (main walks before variants)
+//   4. distanceScore  (|distanceKm - IDEAL_LENGTH_KM| — closer to ideal first;
+//                      walks without a distance sort last via Infinity)
+//   5. -updatedAt     (most recently edited first; missing sorts last)
+//   6. pageTitle      (deterministic tiebreaker)
+// Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
+const IDEAL_LENGTH_KM = 13
+// Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
+// so the admin cards appear in the same order as the rendered prose.
+const RATING_TIERS: Record<string, number> = {
+  "4": 0,
+  "3": 1,
+  "2": 2,
+  unrated: 3,
+  "1": 4,
+}
+function ratingTier(rating: number | null | undefined): number {
+  if (rating == null) return RATING_TIERS.unrated
+  const key = String(Math.round(rating))
+  return RATING_TIERS[key] ?? RATING_TIERS.unrated
+}
 
 export async function GET(req: NextRequest) {
   const crs = req.nextUrl.searchParams.get("crs")
@@ -121,7 +138,6 @@ export async function GET(req: NextRequest) {
           endPlace: v.endPlace ?? "",
           stationToStation: !!v.stationToStation,
           distanceKm: v.distanceKm ?? null,
-          distanceMiles: v.distanceMiles ?? null,
           hours: v.hours ?? null,
           terrain: v.terrain ?? "",
           sights: v.sights ?? [],
@@ -132,6 +148,7 @@ export async function GET(req: NextRequest) {
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",
           rating: typeof v.rating === "number" ? v.rating : null,
+          updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,
           previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
         })
@@ -139,12 +156,37 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Sort: favourites first, then role priority, then by pageTitle for stable ties
+  // Ordering: ratingTier → komoot first → most-recently-updated →
+  // alphabetic pageTitle. See RATING_TIERS comment above for the
+  // explicit tier mapping.
+  const distanceScore = (km: number | null) =>
+    typeof km === "number" && Number.isFinite(km)
+      ? Math.abs(km - IDEAL_LENGTH_KM)
+      : Number.POSITIVE_INFINITY
+
   out.sort((a, b) => {
-    if (a.favourite !== b.favourite) return a.favourite ? -1 : 1
-    const ra = ROLE_PRIORITY.indexOf(a.role)
-    const rb = ROLE_PRIORITY.indexOf(b.role)
-    if (ra !== rb) return ra - rb
+    const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
+    if (ta !== tb) return ta - tb
+    const ka = a.komootUrl ? 0 : 1
+    const kb = b.komootUrl ? 0 : 1
+    if (ka !== kb) return ka - kb
+    // Main walks before variants within a tier. source.type is the
+    // modern home; fall back to legacy role for walks that haven't
+    // been touched since the source backfill.
+    const typeA = a.source?.type ?? a.role
+    const typeB = b.source?.type ?? b.role
+    const ma = typeA === "main" ? 0 : 1
+    const mb = typeB === "main" ? 0 : 1
+    if (ma !== mb) return ma - mb
+    // Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
+    const da = distanceScore(a.distanceKm)
+    const db = distanceScore(b.distanceKm)
+    if (da !== db) return da - db
+    // updatedAt: most recent first. Missing timestamps sort last
+    // (they predate the updatedAt stamp; newer edits bubble above).
+    const ua = a.updatedAt ?? ""
+    const ub = b.updatedAt ?? ""
+    if (ua !== ub) return ub.localeCompare(ua) // DESC
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 

@@ -557,7 +557,10 @@ export default function StationModal({
   // ── Local note editing state — synced from props when a new station opens ──
   const [localPublicNote, setLocalPublicNote] = useState(publicNote)
   const [localPrivateNote, setLocalPrivateNote] = useState(privateNote)
-  const [localRamblerNote, setLocalRamblerNote] = useState(ramblerNote)
+  // ramblerNote is read-only here (prose is a build output; admins
+  // edit the structured walk data via WalksAdminPanel below). Read
+  // the prop directly so a post-save refetch of stationNotes flows
+  // through immediately without needing a local copy to be resynced.
   // Per-note "is the admin currently editing?" flags. Default false so
   // admins see the same formatted render a regular user does, and click
   // into a note to enter edit mode. Blur (click-away) returns to view.
@@ -568,7 +571,6 @@ export default function StationModal({
     if (open) {
       setLocalPublicNote(publicNote)
       setLocalPrivateNote(privateNote)
-      setLocalRamblerNote(ramblerNote)
       setIsEditingPublic(false)
       setIsEditingPrivate(false)
     }
@@ -1416,9 +1418,9 @@ export default function StationModal({
               Trains to Green recommendations block above — subheader gated on
               devMode || content so non-admins never see an empty
               label, admins always do so they know where to type. */}
-          {(devMode || localRamblerNote) && (
+          {(devMode || ramblerNote) && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Rambler recommendation{localRamblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
+              Rambler recommendation{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
             </p>
           )}
 
@@ -1426,14 +1428,21 @@ export default function StationModal({
               structured walk data by scripts/build-rambler-notes.mjs
               and written to station-notes.json, so admins no longer
               edit it directly here. Structured editing lives in the
-              WalksAdminPanel below (admin only). */}
-          {localRamblerNote ? (
-            <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
-              {localRamblerNote.split(/\n+/).filter(Boolean).map((para, i) => (
-                <p key={i}>{renderWithLinks(para)}</p>
-              ))}
-            </div>
-          ) : null}
+              WalksAdminPanel below (admin only).
+              Public visitors see at most the top 3 paragraphs (already
+              sorted top-first by the build pipeline); admins see every
+              paragraph so they can review what's being trimmed. */}
+          {ramblerNote ? (() => {
+            const allParas = ramblerNote.split(/\n+/).filter(Boolean)
+            const shownParas = devMode ? allParas : allParas.slice(0, 3)
+            return (
+              <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
+                {shownParas.map((para, i) => (
+                  <p key={i}>{renderWithLinks(para)}</p>
+                ))}
+              </div>
+            )
+          })() : null}
 
           {/* Structured walk editor — admin only. Fetches every walk
               variant attached to this station's CRS and surfaces the

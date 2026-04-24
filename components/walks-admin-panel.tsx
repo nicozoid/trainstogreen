@@ -31,6 +31,10 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+// Static import: the sources registry is tiny (a handful of orgs) and
+// changes rarely. Importing directly lets the admin UI render the
+// dropdown without a separate fetch round-trip.
+import sourcesJson from "@/data/sources.json"
 
 // Shape matches the payload from /api/dev/walks-for-station.
 export type WalkPayload = {
@@ -50,11 +54,10 @@ export type WalkPayload = {
   endPlace: string
   stationToStation: boolean
   distanceKm: number | null
-  distanceMiles: number | null
   hours: number | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string }[]
+  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
   warnings: string
   bestTime: string
   mudWarning: boolean
@@ -85,6 +88,7 @@ type LunchDraft = {
   url: string
   notes: string
   rating: LunchRating
+  busy: boolean
 }
 
 type EditableFields = {
@@ -98,10 +102,32 @@ type EditableFields = {
   rating: number | null
   terrain: string
   distanceKm: number | null
-  distanceMiles: number | null
   hours: number | null
   sights: SightDraft[]
   lunchStops: LunchDraft[]
+  // Source provenance — all four fields editable. orgSlug comes from
+  // sources.json (organisation registry); type is a small enum
+  // (main/shorter/longer/alternative/variant). We default missing
+  // fields to empty strings so the form stays controlled; the server
+  // rejects blanks on save.
+  source: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
+}
+
+// Swap two items in an array by index. Returns a NEW array — never
+// mutates. Used by the up/down reorder arrows on sights/lunch/walks
+// list editors. Bounds checks are the caller's responsibility
+// (button is disabled at edges).
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  if (from === to) return arr
+  const next = [...arr]
+  const [item] = next.splice(from, 1)
+  next.splice(to, 0, item)
+  return next
 }
 
 // Hydrate the list-editor draft from the server payload. We fill in
@@ -124,6 +150,7 @@ function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
     rating: (s.rating === "good" || s.rating === "fine" || s.rating === "poor"
       ? s.rating
       : "") as LunchRating,
+    busy: s.busy === true,
   }))
 }
 
@@ -139,7 +166,7 @@ function derivedTitleOf(
   if (w.startStationName && w.endStationName) {
     base =
       w.startStation === w.endStation
-        ? `${w.startStationName} circular`
+        ? `${w.startStationName} Circular`
         : `${w.startStationName} to ${w.endStationName}`
   } else {
     base = w.source?.pageName ?? w.pageTitle
@@ -147,6 +174,24 @@ function derivedTitleOf(
   const s = suffix.trim()
   return s ? `${base} ${s}` : base
 }
+
+// Derived orgs list from sources.json — filters out the `_readme`
+// documentation key so the dropdown only shows real organisations.
+const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson)
+  .filter(([k]) => k !== "_readme")
+  .map(([slug, meta]) => ({
+    slug,
+    name: (meta as { name?: string })?.name ?? slug,
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name))
+
+const SOURCE_TYPES: { value: string; label: string }[] = [
+  { value: "main",        label: "Main walk" },
+  { value: "shorter",     label: "Shorter variant" },
+  { value: "longer",      label: "Longer variant" },
+  { value: "alternative", label: "Alternative variant" },
+  { value: "variant",     label: "Variant" },
+]
 
 // Rating-level icons — mirror the map marker shapes used in the
 // filter panel (components/filter-panel.tsx:109). Kept inline here
@@ -189,11 +234,15 @@ function RatingIcon({ n, filled }: { n: 1 | 2 | 3 | 4; filled: boolean }) {
   }
 }
 
+// Walk-rating labels. Deliberately distinct from the station-rating
+// tier names in components/filter-panel.tsx (Okay/Probably/Good/
+// Heavenly) — these label walks, those label stations, and the user
+// wants the vocabulary to read differently.
 const RATING_LABELS: Record<1 | 2 | 3 | 4, string> = {
-  1: "Okay",
-  2: "Probably",
-  3: "Rambler favourite",
-  4: "Heavenly",
+  1: "Flawed",
+  2: "Pleasant",
+  3: "Charming",
+  4: "Sublime",
 }
 
 const MONTHS = [
@@ -211,19 +260,6 @@ const MONTHS = [
 function cardHeadline(w: WalkPayload) {
   if (w.name?.trim()) return w.name.trim()
   return derivedTitleOf(w, w.suffix ?? "")
-}
-
-// Human label for the SWC-derived role/type. Covers "main" too so the
-// provenance chip reads uniformly ("SWC main" vs "SWC shorter variant").
-function sourceTypeLabel(type: string) {
-  switch (type) {
-    case "main":        return "main walk"
-    case "shorter":     return "shorter variant"
-    case "longer":      return "longer variant"
-    case "alternative": return "alternative variant"
-    case "variant":     return "variant"
-    default:            return type
-  }
 }
 
 export default function WalksAdminPanel({
@@ -266,6 +302,7 @@ export default function WalksAdminPanel({
     } catch { /* best-effort */ }
     if (onSaved) await onSaved()
   }, [stationCrs, onSaved])
+
 
   return (
     <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-3 dark:bg-orange-950/10">
@@ -318,16 +355,22 @@ function WalkCard({
       rating: walk.rating,
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
-      distanceMiles: walk.distanceMiles,
       hours: walk.hours,
       sights: sightsToDraft(walk.sights),
       lunchStops: lunchToDraft(walk.lunchStops),
+      source: {
+        orgSlug: walk.source?.orgSlug ?? "",
+        pageName: walk.source?.pageName ?? "",
+        pageURL: walk.source?.pageURL ?? "",
+        type: walk.source?.type ?? "variant",
+      },
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
       walk.bestTime, walk.warnings, walk.rating, walk.terrain,
-      walk.distanceKm, walk.distanceMiles, walk.hours,
+      walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
+      walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
     ],
   )
   const [draft, setDraft] = useState<EditableFields>(serverState)
@@ -348,7 +391,6 @@ function WalkCard({
       draft.rating !== serverState.rating ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
-      draft.distanceMiles !== serverState.distanceMiles ||
       draft.hours !== serverState.hours ||
       // Array compare — order-sensitive but the server returns them in
       // calendar order, so both sides are stable.
@@ -359,7 +401,8 @@ function WalkCard({
       // drafts by hydrating the server state through the same helpers
       // via useMemo above.
       JSON.stringify(draft.sights) !== JSON.stringify(serverState.sights) ||
-      JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops)
+      JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops) ||
+      JSON.stringify(draft.source) !== JSON.stringify(serverState.source)
     )
   }, [draft, serverState])
 
@@ -399,13 +442,13 @@ function WalkCard({
           rating: draft.rating,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
-          distanceMiles: draft.distanceMiles,
           hours: draft.hours,
           // The server cleanSight/cleanLunchStop drop rows with empty
           // names and strip empty optional fields — we send the raw
           // drafts as-is and trust the server-side filter.
           sights: draft.sights,
           lunchStops: draft.lunchStops,
+          source: draft.source,
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
@@ -419,10 +462,9 @@ function WalkCard({
 
   return (
     <div className="rounded border border-border bg-background">
-      {/* Card header — collapsed view, click to expand. Shows id +
-          route headline, a star count if rated, and a dirty dot for
-          unsaved changes. Role is gone from here — it lives in the
-          source provenance chip inside the expanded body instead. */}
+      {/* Card header — click to expand. Walk ordering is automatic
+          (rating tier → komoot → most-recently-edited) and can't be
+          overridden from here, so the row is purely a toggle. */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -447,27 +489,80 @@ function WalkCard({
 
       {expanded && (
         <div className="border-t border-border px-3 py-3 text-xs">
-          {/* Source provenance chip — read-only. Tells the admin where
-              this walk came from (SWC, a ramblers group, etc.) and
-              what the extractor thought its role was (main / shorter /
-              longer / alternative / variant). Used to live in the
-              header; now sits at the top of the body as a contextual
-              caption since it's metadata about origin, not content. */}
-          {walk.source && (
-            <div className="mb-3 text-muted-foreground">
-              <span className="text-[10px] uppercase tracking-wide">Source:</span>{" "}
-              <a
-                href={walk.source.pageURL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline-offset-2 hover:underline"
-              >
-                {walk.source.pageName}
-              </a>
-              {" · "}
-              <span>{sourceTypeLabel(walk.source.type)}</span>
+          {/* Source — editable block: which organisation this walk
+              came from, the original page title + URL, and the
+              walk's type relative to that page (main / variant). The
+              render pipeline uses source.type to emit the "A shorter
+              variant of [X](url)." clause; source.pageName/pageURL
+              populate the link. */}
+          <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
+            <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+              Source
             </div>
-          )}
+            <div className="grid grid-cols-2 gap-1.5">
+              {/* Organisation — dropdown of slugs from sources.json.
+                  Adding a new org requires editing data/sources.json
+                  by hand (no UI for that yet). */}
+              <div>
+                <Label htmlFor={`src-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                  Organisation
+                </Label>
+                <select
+                  id={`src-org-${walk.id}`}
+                  value={draft.source.orgSlug}
+                  onChange={(e) => setDraft((d) => ({
+                    ...d, source: { ...d.source, orgSlug: e.target.value },
+                  }))}
+                  className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                >
+                  {!SOURCE_ORGS.some((o) => o.slug === draft.source.orgSlug) && draft.source.orgSlug && (
+                    <option value={draft.source.orgSlug}>{draft.source.orgSlug} (unknown)</option>
+                  )}
+                  {SOURCE_ORGS.map((o) => (
+                    <option key={o.slug} value={o.slug}>{o.name}</option>
+                  ))}
+                </select>
+              </div>
+              {/* Type — fixed enum. Drives the "A longer variant
+                  of…" clause in the rendered prose. */}
+              <div>
+                <Label htmlFor={`src-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                  Type
+                </Label>
+                <select
+                  id={`src-type-${walk.id}`}
+                  value={draft.source.type}
+                  onChange={(e) => setDraft((d) => ({
+                    ...d, source: { ...d.source, type: e.target.value },
+                  }))}
+                  className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                >
+                  {SOURCE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-1.5 space-y-1.5">
+              <Input
+                value={draft.source.pageName}
+                onChange={(e) => setDraft((d) => ({
+                  ...d, source: { ...d.source, pageName: e.target.value },
+                }))}
+                placeholder="Page name (e.g. Milford to Haslemere)"
+                className="h-7 text-xs"
+              />
+              <Input
+                type="url"
+                value={draft.source.pageURL}
+                onChange={(e) => setDraft((d) => ({
+                  ...d, source: { ...d.source, pageURL: e.target.value },
+                }))}
+                placeholder="Page URL"
+                className="h-7 text-xs"
+              />
+            </div>
+          </div>
 
           {/* Title preview (read-only) + Suffix input + Custom-title
               override. The title is normally derived from the start
@@ -624,7 +719,7 @@ function WalkCard({
           {/* Distance + hours — three number inputs side by side. Empty
               input maps to null (clears the field). Komoot URL, when
               set, suppresses these clauses in the rendered prose. */}
-          <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="mb-3 grid grid-cols-2 gap-2">
             <div>
               <Label htmlFor={`km-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
                 km
@@ -637,22 +732,6 @@ function WalkCard({
                 onChange={(e) => {
                   const v = e.target.value
                   setDraft((d) => ({ ...d, distanceKm: v === "" ? null : Number(v) }))
-                }}
-                className="h-7 text-xs"
-              />
-            </div>
-            <div>
-              <Label htmlFor={`mi-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                miles
-              </Label>
-              <Input
-                id={`mi-${walk.id}`}
-                type="number"
-                step="0.1"
-                value={draft.distanceMiles ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setDraft((d) => ({ ...d, distanceMiles: v === "" ? null : Number(v) }))
                 }}
                 className="h-7 text-xs"
               />
@@ -813,22 +892,56 @@ function SightsEditor({
             key={i}
             className="rounded border border-border/60 bg-background px-2 py-1.5"
           >
-            {/* Row header: drag handle (visual only for now) on the
-                left, delete button on the right. The index number is
-                shown faintly as a sanity check when the admin is
-                cross-referencing with the source page. */}
+            {/* Row header: index label on the left, then up/down
+                reorder arrows and a delete button. Arrows swap this
+                row with its neighbour in the draft array; they're
+                disabled at the edges (first row can't move up, last
+                can't move down). */}
             <div className="mb-1 flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Sight {i + 1}
               </span>
-              <button
-                type="button"
-                onClick={() => onChange(sights.filter((_, j) => j !== i))}
-                className="text-muted-foreground hover:text-destructive"
-                aria-label={`Delete sight ${i + 1}`}
-              >
-                ×
-              </button>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(sights, i, 0))}
+                  disabled={i === 0}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move sight ${i + 1} to top`}
+                  title="Move to top"
+                >
+                  ⇈
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(sights, i, i - 1))}
+                  disabled={i === 0}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move sight ${i + 1} up`}
+                  title="Move up"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(sights, i, i + 1))}
+                  disabled={i === sights.length - 1}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move sight ${i + 1} down`}
+                  title="Move down"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(sights.filter((_, j) => j !== i))}
+                  className="ml-0.5 rounded px-1 text-muted-foreground hover:text-destructive"
+                  aria-label={`Delete sight ${i + 1}`}
+                  title="Delete"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Input
@@ -918,14 +1031,47 @@ function LunchStopsEditor({
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
                 Lunch {i + 1}
               </span>
-              <button
-                type="button"
-                onClick={() => onChange(stops.filter((_, j) => j !== i))}
-                className="text-muted-foreground hover:text-destructive"
-                aria-label={`Delete lunch stop ${i + 1}`}
-              >
-                ×
-              </button>
+              <div className="flex items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(stops, i, 0))}
+                  disabled={i === 0}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move lunch ${i + 1} to top`}
+                  title="Move to top"
+                >
+                  ⇈
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(stops, i, i - 1))}
+                  disabled={i === 0}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move lunch ${i + 1} up`}
+                  title="Move up"
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(arrayMove(stops, i, i + 1))}
+                  disabled={i === stops.length - 1}
+                  className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
+                  aria-label={`Move lunch ${i + 1} down`}
+                  title="Move down"
+                >
+                  ▼
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(stops.filter((_, j) => j !== i))}
+                  className="ml-0.5 rounded px-1 text-muted-foreground hover:text-destructive"
+                  aria-label={`Delete lunch stop ${i + 1}`}
+                  title="Delete"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             <div className="space-y-1.5">
               <Input
@@ -969,35 +1115,50 @@ function LunchStopsEditor({
                 placeholder="Notes (optional, admin-only for now)"
                 className="h-7 text-xs"
               />
-              {/* Rating — three small buttons. Clicking the active one
-                  clears the rating (same UX as the walk-level rating
-                  stars). Colours: green/amber/red for good/fine/poor. */}
-              <div className="flex items-center gap-1">
-                <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Rating
-                </span>
-                {LUNCH_RATINGS.map((r) => {
-                  const active = s.rating === r.value
-                  return (
-                    <button
-                      key={r.value}
-                      type="button"
-                      onClick={() => {
-                        const next = [...stops]
-                        next[i] = { ...next[i], rating: active ? "" : r.value }
-                        onChange(next)
-                      }}
-                      className={
-                        "rounded px-1.5 py-0.5 text-[10px] transition-colors " +
-                        (active
-                          ? r.classes
-                          : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
-                      }
-                    >
-                      {r.label}
-                    </button>
-                  )
-                })}
+              {/* Rating + busy flag — small controls on one row.
+                  Clicking the active rating clears it; busy is a
+                  single checkbox (presence-only — stored as `true`
+                  or absent in the JSON). */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <div className="flex items-center gap-1">
+                  <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Rating
+                  </span>
+                  {LUNCH_RATINGS.map((r) => {
+                    const active = s.rating === r.value
+                    return (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => {
+                          const next = [...stops]
+                          next[i] = { ...next[i], rating: active ? "" : r.value }
+                          onChange(next)
+                        }}
+                        className={
+                          "rounded px-1.5 py-0.5 text-[10px] transition-colors " +
+                          (active
+                            ? r.classes
+                            : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                        }
+                      >
+                        {r.label}
+                      </button>
+                    )
+                  })}
+                </div>
+                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Checkbox
+                    checked={s.busy}
+                    onCheckedChange={(v) => {
+                      const next = [...stops]
+                      next[i] = { ...next[i], busy: v === true }
+                      onChange(next)
+                    }}
+                    className="cursor-pointer"
+                  />
+                  Busy
+                </label>
               </div>
             </div>
           </div>
@@ -1008,7 +1169,7 @@ function LunchStopsEditor({
         onClick={() =>
           onChange([
             ...stops,
-            { name: "", location: "", url: "", notes: "", rating: "" },
+            { name: "", location: "", url: "", notes: "", rating: "", busy: false },
           ])
         }
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
