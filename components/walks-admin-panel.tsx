@@ -20,7 +20,6 @@
 //   - komootUrl (text)
 //   - bestSeasons (12 month chips)
 //   - mudWarning (checkbox)
-//   - bestTime (free-text fallback, shown when bestSeasons is empty)
 //   - warnings (free-text, for non-mud warnings)
 // Everything else (sights, lunchStops, terrain, distance, etc.) is
 // view-only for now — list editors are a bigger lift and haven't been
@@ -60,7 +59,6 @@ export type WalkPayload = {
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
   warnings: string
   trainTips: string
-  bestTime: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
@@ -98,7 +96,6 @@ type EditableFields = {
   komootUrl: string
   bestSeasons: string[]
   mudWarning: boolean
-  bestTime: string
   warnings: string
   trainTips: string
   rating: number | null
@@ -352,7 +349,6 @@ function WalkCard({
       komootUrl: walk.komootUrl,
       bestSeasons: walk.bestSeasons,
       mudWarning: walk.mudWarning,
-      bestTime: walk.bestTime,
       warnings: walk.warnings,
       trainTips: walk.trainTips,
       rating: walk.rating,
@@ -370,7 +366,7 @@ function WalkCard({
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.bestTime, walk.warnings, walk.trainTips, walk.rating, walk.terrain,
+      walk.warnings, walk.trainTips, walk.rating, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
@@ -389,7 +385,6 @@ function WalkCard({
       draft.suffix.trim() !== serverState.suffix.trim() ||
       draft.komootUrl.trim() !== serverState.komootUrl.trim() ||
       draft.mudWarning !== serverState.mudWarning ||
-      draft.bestTime.trim() !== serverState.bestTime.trim() ||
       draft.warnings.trim() !== serverState.warnings.trim() ||
       draft.trainTips.trim() !== serverState.trainTips.trim() ||
       draft.rating !== serverState.rating ||
@@ -441,7 +436,6 @@ function WalkCard({
           komootUrl: draft.komootUrl,
           bestSeasons: draft.bestSeasons,
           mudWarning: draft.mudWarning,
-          bestTime: draft.bestTime,
           warnings: draft.warnings,
           trainTips: draft.trainTips,
           rating: draft.rating,
@@ -847,25 +841,6 @@ function WalkCard({
               className="h-7 text-xs"
             />
           </div>
-
-          {/* Legacy free-text bestTime — only used when bestSeasons is
-              empty. Will eventually go away once every walk has month
-              codes. Shown here as a reference for walks the backfill
-              couldn't parse (e.g. "Best at high tide"). */}
-          {!draft.bestSeasons.length && (
-            <div className="mb-3">
-              <Label htmlFor={`bt-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Best time (free text — fallback)
-              </Label>
-              <Input
-                id={`bt-${walk.id}`}
-                value={draft.bestTime}
-                onChange={(e) => setDraft((d) => ({ ...d, bestTime: e.target.value }))}
-                placeholder="e.g. Best at high tide"
-                className="h-7 text-xs"
-              />
-            </div>
-          )}
 
           {/* Save / error footer */}
           <div className="mt-3 flex items-center gap-2">

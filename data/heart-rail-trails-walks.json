@@ -88,7 +88,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "f73u",
         "mudWarning": true,
         "source": {
@@ -177,7 +176,6 @@
           }
         ],
         "warnings": "Broken stile; horses present.",
-        "bestTime": "",
         "id": "qin7",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -274,7 +272,6 @@
           }
         ],
         "warnings": "Can be boggy/muddy.",
-        "bestTime": "",
         "id": "6b09",
         "mudWarning": true,
         "source": {
@@ -385,7 +382,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "wb0s",
         "mudWarning": true,
         "source": {
@@ -479,7 +475,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "dagm",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -562,7 +557,6 @@
           }
         ],
         "warnings": "Busy A road crossing.",
-        "bestTime": "",
         "id": "gfu9",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -656,7 +650,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring or autumn.",
         "id": "16ej",
         "mudWarning": true,
         "bestSeasons": [
@@ -768,7 +761,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "8o92",
         "mudWarning": true,
         "source": {
@@ -884,7 +876,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "cpuy",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -971,7 +962,6 @@
           }
         ],
         "warnings": "Limited refreshment options.",
-        "bestTime": "",
         "id": "qq91",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1076,7 +1066,6 @@
           }
         ],
         "warnings": "Trip hazard: anchored cable.",
-        "bestTime": "",
         "id": "zrtu",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1166,7 +1155,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "qqa6",
         "mudWarning": true,
         "source": {
@@ -1262,7 +1250,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "jrm6",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1358,7 +1345,6 @@
           }
         ],
         "warnings": "Can be noisy (airport).",
-        "bestTime": "",
         "id": "epap",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1441,7 +1427,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "n6jd",
         "mudWarning": true,
         "source": {
@@ -1557,7 +1542,6 @@
           }
         ],
         "warnings": "Can be overgrown summer.",
-        "bestTime": "",
         "id": "v5oq",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1678,7 +1662,6 @@
           }
         ],
         "warnings": "Narrow path sections.",
-        "bestTime": "Best in spring.",
         "id": "i6dq",
         "bestSeasons": [
           "mar",
@@ -1770,7 +1753,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring.",
         "id": "ipk9",
         "mudWarning": true,
         "bestSeasons": [
@@ -1862,7 +1844,6 @@
           }
         ],
         "warnings": "Nettles and brambles.",
-        "bestTime": "",
         "id": "jq7j",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1972,7 +1953,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "5rpr",
         "mudWarning": true,
         "source": {
@@ -2065,7 +2045,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "1jet",
         "mudWarning": true,
         "source": {
@@ -2168,7 +2147,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "64wy",
         "mudWarning": true,
         "source": {
@@ -2256,7 +2234,6 @@
           }
         ],
         "warnings": "Electric fence near stables.",
-        "bestTime": "Best in spring.",
         "id": "atv4",
         "bestSeasons": [
           "mar",
@@ -2351,7 +2328,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "u9zy",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2497,7 +2473,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "s86p",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2589,7 +2564,6 @@
           }
         ],
         "warnings": "Point-to-point trail.",
-        "bestTime": "",
         "id": "8e7t",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2683,7 +2657,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "k5ji",
         "mudWarning": true,
         "source": {
@@ -2776,7 +2749,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring.",
         "id": "35nt",
         "mudWarning": true,
         "bestSeasons": [
@@ -2874,7 +2846,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "dcoh",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2962,7 +2933,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "hlok",
         "mudWarning": true,
         "source": {
@@ -3053,7 +3023,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "p3um",
         "mudWarning": true,
         "source": {
@@ -3143,7 +3112,6 @@
           }
         ],
         "warnings": "Can be very muddy.",
-        "bestTime": "",
         "id": "yhud",
         "mudWarning": true,
         "source": {
@@ -3256,7 +3224,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "n04c",
         "mudWarning": true,
         "source": {
@@ -3358,7 +3325,6 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "",
         "id": "tm5h",
         "mudWarning": true,
         "source": {
@@ -3456,7 +3422,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "gfml",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -3550,7 +3515,6 @@
           }
         ],
         "warnings": "No shops en route.",
-        "bestTime": "",
         "id": "vw13",
         "source": {
           "orgSlug": "heart-rail-trails",

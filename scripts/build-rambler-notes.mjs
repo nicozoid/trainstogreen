@@ -266,7 +266,7 @@ function formatSights(sights) {
 // "January, February and December". The rotation finds the largest
 // gap between selected months (circularly) and starts listing
 // immediately after it. Dedupes; empty/invalid → null so the caller
-// can fall back to free-text `bestTime`.
+// Empty/invalid → null.
 function formatBestSeasons(months) {
   if (!Array.isArray(months) || months.length === 0) return null
   const set = new Set()
@@ -335,7 +335,7 @@ function withPeriod(s) {
 // Compose the markdown string for one walk variant attached to a station.
 // Structure (each clause omitted if the source field is empty):
 //
-//   <opener><fav><terrain> <sights sentence><warnings><trainTips><bestTime><lunch><km><hours>
+//   <opener><fav><terrain> <sights sentence><warnings><trainTips><bestSeasons><lunch><km><hours>
 //
 // Separators between clauses are single spaces; every clause ends with a
 // period. Every walk renders identically — no "main vs variant"
@@ -441,12 +441,10 @@ function buildSummary(variant, entry, crsIndex) {
   const trainTipsText = variant.trainTips?.trim() ?? ""
   if (trainTipsText) parts.push(withPeriod(trainTipsText))
 
-  // Best time — prefer the structured month-code array when present;
-  // fall back to the free-text `bestTime` field otherwise. Once the
-  // migration backfills bestSeasons everywhere, bestTime can be removed.
+  // Best seasons — the structured month-code array. Legacy free-text
+  // bestTime has been migrated into warnings and the field removed.
   const structuredSeasons = formatBestSeasons(variant.bestSeasons)
   if (structuredSeasons) parts.push(structuredSeasons)
-  else if (variant.bestTime?.trim()) parts.push(withPeriod(variant.bestTime))
 
   // Lunch stops — compact list
   const lunch = formatLunchStops(variant.lunchStops)
@@ -574,10 +572,8 @@ function buildRamblerNotes(args) {
         })
 
         // Aggregate this variant's structured bestSeasons into the
-        // station's derived season set. Only structured month codes
-        // contribute — free-text `bestTime` is intentionally ignored
-        // here (if a walk hasn't been migrated to month codes yet, its
-        // seasonality simply doesn't flow into the filters).
+        // station's derived season set. Walks without month codes don't
+        // contribute — they simply don't flow into the seasonality filters.
         if (Array.isArray(variant.bestSeasons)) {
           let set = perStationSeasons.get(station.coordKey)
           if (!set) {

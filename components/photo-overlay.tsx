@@ -416,6 +416,35 @@ function autoResize(el: HTMLTextAreaElement) {
 }
 
 /**
+ * Invoke `cb` while pinning the dialog's scroll position in place.
+ *
+ * Why: admin curation actions (pin/unpin/approve/move) trigger a React
+ * re-render of the photo grid. Even when the photo's array index doesn't
+ * change, focus shifts and layout micro-adjustments (pin badge
+ * appearing, button style flipping) can cause the browser to auto-scroll
+ * — most noticeably jumping the viewport to the top. Capturing scrollTop
+ * on both scroll containers (inner `[data-modal-scroll]` on desktop,
+ * outer `[data-slot="dialog-content"]` on mobile) and restoring it in
+ * the next animation frame makes the scroll position immovable across
+ * the action, so the admin keeps their place in the gallery.
+ */
+function withPreservedScroll(cb: () => void) {
+  if (typeof document === "undefined") { cb(); return }
+  const inner = document.querySelector('[data-modal-scroll]')
+  const outer = document.querySelector('[data-slot="dialog-content"]')
+  const snapshots: Array<{ el: HTMLElement; top: number }> = []
+  if (inner instanceof HTMLElement) snapshots.push({ el: inner, top: inner.scrollTop })
+  if (outer instanceof HTMLElement) snapshots.push({ el: outer, top: outer.scrollTop })
+  cb()
+  // rAF runs after React commits the update, so setting scrollTop here
+  // lands on the post-render layout — any browser-triggered jump during
+  // the commit is undone on the very next frame.
+  requestAnimationFrame(() => {
+    for (const { el, top } of snapshots) el.scrollTop = top
+  })
+}
+
+/**
  * Turn markdown-style [text](url) links into clickable <a> elements.
  * Plain text passes through unchanged.
  */
@@ -1444,7 +1473,7 @@ export default function StationModal({
           {/* Structured walk editor — admin only. Fetches every walk
               variant attached to this station's CRS and surfaces the
               Phase 5 editable fields (Komoot URL, mud warning, best
-              seasons, free-text warnings/bestTime). Saving a card
+              seasons, free-text warnings, train tips). Saving a card
               rewrites the source JSON and re-runs the build, so the
               prose above refreshes on the next station-notes fetch. */}
           {devMode && stationCrs && (
@@ -1776,6 +1805,10 @@ export default function StationModal({
                     if (isApproved) onMovePhoto?.(photo.id, "top")
                     else onApprovePhotoAtTop?.(photo)
                   }
+                  // All curation actions reorder or re-style the grid,
+                  // which can jolt the viewport — wrap every click in
+                  // withPreservedScroll so the admin's scroll position
+                  // survives pin / unpin / approve / move operations.
                   return (
                     <PhotoCard
                       key={photo.id}
@@ -1785,14 +1818,14 @@ export default function StationModal({
                       isPinned={isPinned}
                       showPin={showPin}
                       showReorder={reorderable && approvedIndex >= 0}
-                      onApprove={() => onApprovePhoto?.(photo)}
-                      onUnapprove={() => onUnapprovePhoto?.(photo.id)}
-                      onPin={() => onPinPhoto?.(photo)}
-                      onUnpin={() => onUnpinPhoto?.(photo.id)}
-                      onMoveToTop={handleJumpToTop}
-                      onMoveToBottom={() => onMovePhoto?.(photo.id, "bottom")}
-                      onMoveUp={() => onMovePhoto?.(photo.id, "up")}
-                      onMoveDown={() => onMovePhoto?.(photo.id, "down")}
+                      onApprove={() => withPreservedScroll(() => onApprovePhoto?.(photo))}
+                      onUnapprove={() => withPreservedScroll(() => onUnapprovePhoto?.(photo.id))}
+                      onPin={() => withPreservedScroll(() => onPinPhoto?.(photo))}
+                      onUnpin={() => withPreservedScroll(() => onUnpinPhoto?.(photo.id))}
+                      onMoveToBottom={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "bottom"))}
+                      onMoveUp={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "up"))}
+                      onMoveDown={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "down"))}
+                      onMoveToTop={() => withPreservedScroll(handleJumpToTop)}
                       canMoveUp={canMoveUp}
                       canMoveDown={canMoveDown}
                       onImageError={() => handleImageError(photo.id)}

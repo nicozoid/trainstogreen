@@ -58,7 +58,6 @@ type WalkPayload = {
   // editable
   warnings: string
   trainTips: string
-  bestTime: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
@@ -149,7 +148,6 @@ export async function GET(req: NextRequest) {
           lunchStops: v.lunchStops ?? [],
           warnings: v.warnings ?? "",
           trainTips: v.trainTips ?? "",
-          bestTime: v.bestTime ?? "",
           mudWarning: !!v.mudWarning,
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",

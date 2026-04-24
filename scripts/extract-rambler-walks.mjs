@@ -259,7 +259,7 @@ const EXTRACT_TOOL = {
           required: [
             "role", "name", "startPlace", "endPlace", "requiresBus",
             "distanceKm", "distanceMiles", "hours", "lunchStops",
-            "terrain", "sights", "warnings", "bestTime",
+            "terrain", "sights", "warnings",
           ],
           properties: {
             role: {
@@ -334,12 +334,6 @@ const EXTRACT_TOOL = {
               description:
                 "ONE ultra-short warning — 2 to 4 words max. Examples: 'Can be muddy.' / 'Crumbly cliff edges.' / 'Check tide timings.' / 'MOD closures apply.' / 'Steep descents.' Do NOT name specific sections, seasons, or weather conditions. Empty string if nothing warrants flagging.",
             },
-            bestTime: {
-              type: "string",
-              maxLength: 40,
-              description:
-                "ONE ultra-short season recommendation — 2 to 5 words max. Use abbreviated months (Oct/Nov, not October). Examples: 'Best in Oct/Nov.' / 'Best in spring.' / 'Avoid midsummer.' Do NOT explain why. Empty string if no season is recommended on the page.",
-            },
           },
         },
       },
@@ -383,7 +377,6 @@ Key rules:
    a. terrain: one clipped sentence listing terrain types and atmosphere (commas, not prose). Example: "Hills, sloping fields, beech woods, hamlets, upmarket farms, and cottages." Do NOT mention hazards (mud, cliffs, etc.) — those belong in the warnings field.
    b. sights: EVERY linked sight (with URL). PLUS all additional non-linked sights that reward a visit — museums, castles, stately homes, churches, gardens, ruins, famous landmarks. No fixed cap. Skip trivia (plaques, small markers, generic "pretty village"). Just the name — NO location suffix (NOT "Holy Trinity Church, Bledlow" — just "Holy Trinity Church").
    c. warnings: 2-4 words MAX. Just the hazard type. "Can be muddy." — NOT "Path through Dunsmore Woods can be very muddy in winter." Empty string if none.
-   d. bestTime: 2-5 words MAX. Abbreviated months. "Best in Oct/Nov." — NOT "Best in late October or early November for autumn colours." Empty string if no season mentioned.
    CRITICAL: Do NOT describe route flow (A to B to C to D). Do NOT mention lunch timing. Do NOT reference "the book" or "Book 2". Do NOT include distances or walking times in these fields. Do NOT include the "Rambler favourite!" flourish. Terser is always better.
 
 6. places: include every named place mentioned (villages passed through, landmarks seen, historic sites visited, nature reserves crossed). Be generous — don't filter to "notable" only. Group by type per the schema.
@@ -496,7 +489,6 @@ function mergeExtraction(entry, extracted, lookup) {
       terrain: w.terrain ?? "",
       sights: Array.isArray(w.sights) ? w.sights : [],
       warnings: w.warnings ?? "",
-      bestTime: w.bestTime ?? "",
     }
   })
 

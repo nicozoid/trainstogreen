@@ -18,7 +18,6 @@ const EDITABLE_FIELDS = [
   "komootUrl",
   "bestSeasons",
   "mudWarning",
-  "bestTime",
   "warnings",
   "trainTips",
   "rating",
@@ -75,7 +74,6 @@ async function locateWalk(id: string): Promise<
 function cleanField(key: string, value: unknown): unknown | undefined {
   switch (key) {
     case "komootUrl":
-    case "bestTime":
     case "warnings":
     case "trainTips":
     case "terrain":
