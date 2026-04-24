@@ -6109,5 +6109,19 @@
         "dateTaken": "2025-12-31 13:33:49"
       }
     ]
+  },
+  "0.1971759,51.3129318": {
+    "name": "Otford",
+    "approved": [
+      {
+        "id": "53232590203",
+        "title": "River Darent @ Shoreham Village Kent",
+        "ownerName": "Adam Swaine",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/53232590203_84f25514e8.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/53232590203_84f25514e8_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/43499552@N03/53232590203",
+        "dateTaken": "2023-10-01 01:35:32"
+      }
+    ]
   }
 }
