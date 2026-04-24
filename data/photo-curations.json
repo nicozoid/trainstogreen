@@ -5173,5 +5173,19 @@
         "dateTaken": "2019-09-01 12:13:44"
       }
     ]
+  },
+  "0.9760562,51.2444245": {
+    "name": "Chilham",
+    "approved": [
+      {
+        "id": "54045402478",
+        "title": "UK - Kent - Near Crundale - View over fields of stubble",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54045402478_f301ed133c.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54045402478_f301ed133c_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/54045402478",
+        "dateTaken": "2024-10-05 12:25:23"
+      }
+    ]
   }
 }
