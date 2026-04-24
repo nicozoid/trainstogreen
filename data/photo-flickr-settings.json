@@ -823,5 +823,33 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.6105638,51.4832744": {
+    "name": "Windsor and Eton Central",
+    "custom": {
+      "includeTags": [
+        "long walk",
+        "holy trinity sunningdale church",
+        "valley gardens",
+        "obelisk",
+        "savill gardens",
+        "windsor castle",
+        "windsor and eton central",
+        "sunningdale",
+        "windsor",
+        "eton central",
+        "coworth park",
+        "virginia water lake",
+        "totem pole",
+        "cow pond",
+        "royal lodge",
+        "copper horse",
+        "guildhall",
+        "apr"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
