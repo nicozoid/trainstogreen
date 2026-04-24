@@ -1883,7 +1883,7 @@ export default function HikeMap() {
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
-  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter"
+  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
   // Public "[current-season] highlights" checkbox — when on, only stations
   // recommended for the current season are shown. Coexists with seasonFilter
@@ -4440,13 +4440,21 @@ export default function HikeMap() {
         // station's recommended seasons in stationSeasons:
         //   • seasonFilter (admin dropdown) — hides stations whose seasons
         //     don't include the selected value.
+        //     Special case: "None" INVERTS the match — keeps only stations
+        //     with zero month-flagged walks (missing entry OR empty array),
+        //     useful for finding destinations that still need seasonality
+        //     data.
         //   • currentSeasonHighlight (public checkbox) — hides stations
         //     whose seasons don't include the current calendar season.
         // AND semantics — both apply when both are active.
         if (seasonFilter !== "off" || currentSeasonHighlight) {
           const entry = stationSeasons[f.properties.coordKey as string]
           const seasons = entry?.seasons ?? []
-          if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) return false
+          if (seasonFilter === "None") {
+            if (seasons.length > 0) return false
+          } else if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) {
+            return false
+          }
           if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
         }
         // When friend mode is active, also require the station to be reachable

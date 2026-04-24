@@ -59,6 +59,7 @@ export type WalkPayload = {
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
   warnings: string
+  trainTips: string
   bestTime: string
   mudWarning: boolean
   bestSeasons: string[]
@@ -99,6 +100,7 @@ type EditableFields = {
   mudWarning: boolean
   bestTime: string
   warnings: string
+  trainTips: string
   rating: number | null
   terrain: string
   distanceKm: number | null
@@ -352,6 +354,7 @@ function WalkCard({
       mudWarning: walk.mudWarning,
       bestTime: walk.bestTime,
       warnings: walk.warnings,
+      trainTips: walk.trainTips,
       rating: walk.rating,
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
@@ -367,7 +370,7 @@ function WalkCard({
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.bestTime, walk.warnings, walk.rating, walk.terrain,
+      walk.bestTime, walk.warnings, walk.trainTips, walk.rating, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
@@ -388,6 +391,7 @@ function WalkCard({
       draft.mudWarning !== serverState.mudWarning ||
       draft.bestTime.trim() !== serverState.bestTime.trim() ||
       draft.warnings.trim() !== serverState.warnings.trim() ||
+      draft.trainTips.trim() !== serverState.trainTips.trim() ||
       draft.rating !== serverState.rating ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
@@ -439,6 +443,7 @@ function WalkCard({
           mudWarning: draft.mudWarning,
           bestTime: draft.bestTime,
           warnings: draft.warnings,
+          trainTips: draft.trainTips,
           rating: draft.rating,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
@@ -823,6 +828,22 @@ function WalkCard({
               value={draft.warnings}
               onChange={(e) => setDraft((d) => ({ ...d, warnings: e.target.value }))}
               placeholder="e.g. MOD closures apply"
+              className="h-7 text-xs"
+            />
+          </div>
+
+          {/* Train tips — booking advice (singles vs returns, off-peak
+              windows etc). Renders in the public prose as its own
+              sentence right after warnings. */}
+          <div className="mb-3">
+            <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+              Train tips (free text)
+            </Label>
+            <Input
+              id={`tips-${walk.id}`}
+              value={draft.trainTips}
+              onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
+              placeholder="e.g. Buy two singles — cheaper than a return"
               className="h-7 text-xs"
             />
           </div>

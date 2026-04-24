@@ -261,8 +261,8 @@ type FilterPanelProps = {
   onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
-  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter"
-  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter") => void
+  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
+  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
   /** The calendar-derived current season — labels the public checkbox
    *  ("Spring highlights", etc) and is what that checkbox filters against. */
   currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
@@ -1171,7 +1171,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-season-filter"
                 value={seasonFilter}
                 onChange={(e) => onSeasonFilterChange(
-                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter",
+                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1180,6 +1180,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="Summer">Summer</option>
                 <option value="Autumn">Autumn</option>
                 <option value="Winter">Winter</option>
+                {/* "None" = stations with zero month-flagged walks. Useful for
+                    finding destinations that still need seasonality data. */}
+                <option value="None">None</option>
               </select>
             </div>
           )}

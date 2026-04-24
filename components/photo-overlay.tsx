@@ -1411,13 +1411,13 @@ export default function StationModal({
             </button>
           ) : null}
 
-          {/* ── Rambler recommendations: same format/behaviour as the
+          {/* ── Walks: same format/behaviour as the
               Trains to Green recommendations block above — subheader gated on
               devMode || content so non-admins never see an empty
               label, admins always do so they know where to type. */}
           {(devMode || ramblerNote) && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Rambler recommendation{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
+              Walk{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
             </p>
           )}
 

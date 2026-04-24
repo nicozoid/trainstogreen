@@ -329,7 +329,7 @@ function withPeriod(s) {
 // Compose the markdown string for one walk variant attached to a station.
 // Structure (each clause omitted if the source field is empty):
 //
-//   <opener><fav><terrain> <sights sentence><warnings><bestTime><lunch><km><hours>
+//   <opener><fav><terrain> <sights sentence><warnings><trainTips><bestTime><lunch><km><hours>
 //
 // Separators between clauses are single spaces; every clause ends with a
 // period. Every walk renders identically — no "main vs variant"
@@ -428,6 +428,12 @@ function buildSummary(variant, entry, crsIndex) {
   // Free-text warnings — one ultra-short clause (for anything not
   // captured by the structured mudWarning flag, e.g. MOD closures).
   if (warningsText) parts.push(withPeriod(warningsText))
+
+  // Train tips — booking advice (singles vs returns, off-peak windows
+  // etc). Sits immediately after warnings so practical "before you go"
+  // info is grouped together in the prose.
+  const trainTipsText = variant.trainTips?.trim() ?? ""
+  if (trainTipsText) parts.push(withPeriod(trainTipsText))
 
   // Best time — prefer the structured month-code array when present;
   // fall back to the free-text `bestTime` field otherwise. Once the
