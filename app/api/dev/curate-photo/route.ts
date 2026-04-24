@@ -20,10 +20,15 @@ type CurationEntry = {
 }
 
 // Bubble a photo at `idx` in `arr` one slot toward `end` (either "up" = lower
-// index or "down" = higher index), skipping over any index whose photo is in
-// `pinnedSet` (unless that photo IS the one being moved). Returns the new
-// index, or `idx` if no move was possible. Mutates `arr` via swap — so pinned
-// photos we skip over keep their absolute positions.
+// index or "down" = higher index). Pin semantics are asymmetric:
+//   - If the moving photo is itself PINNED, it can freely swap with the
+//     immediately adjacent photo, pinned or not. Pins only block non-pinned
+//     movers; they don't block each other.
+//   - If the moving photo is NOT pinned, we skip over any pinned occupants
+//     and swap with the first non-pinned slot in that direction. Pinned
+//     photos keep their absolute positions — non-pinned photos flow around
+//     them.
+// Returns the new index, or `idx` if no move was possible. Mutates `arr`.
 function moveOne(
   arr: FlickrPhoto[],
   idx: number,
@@ -33,10 +38,13 @@ function moveOne(
   const step = direction === "up" ? -1 : 1
   const end = direction === "up" ? -1 : arr.length
   const movingId = arr[idx].id
+  const isMovingPinned = pinnedSet.has(movingId)
   let t = idx + step
   while (t !== end) {
     const occupantId = arr[t].id
-    if (!pinnedSet.has(occupantId) || occupantId === movingId) {
+    // Moving-pinned can swap with any neighbour; non-pinned must find a
+    // non-pinned slot (or itself) to land in.
+    if (isMovingPinned || !pinnedSet.has(occupantId) || occupantId === movingId) {
       ;[arr[idx], arr[t]] = [arr[t], arr[idx]]
       return t
     }

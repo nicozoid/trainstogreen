@@ -36,7 +36,7 @@
             "url": null
           }
         ],
-        "terrain": "Flat, mostly on decent paths.",
+        "terrain": "Flat, mostly on decent paths",
         "sights": [
           {
             "name": "Nottingham Canal",
@@ -60,7 +60,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "y1yy",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -115,7 +114,7 @@
             "url": null
           }
         ],
-        "terrain": "Flat, mostly on decent paths, along the River Soar and Grand Union Canal.",
+        "terrain": "Flat, mostly on decent paths, along the River Soar and Grand Union Canal",
         "sights": [
           {
             "name": "Redhill Boatyard",
@@ -139,7 +138,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "ksj8",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -187,7 +185,7 @@
         "distanceKm": 19.3,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Flat, on decent paths.",
+        "terrain": "Flat, on decent paths",
         "sights": [
           {
             "name": "Cossington Lock",
@@ -207,7 +205,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "l8op",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -256,7 +253,7 @@
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Views, old-railway cycle/walking path.",
+        "terrain": "Views, old-railway cycle/walking path",
         "sights": [
           {
             "name": "Brampton Valley Way",
@@ -276,7 +273,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "5xoh",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -324,7 +320,7 @@
         "distanceKm": 19.3,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Villages, churches, views across the Vale of Catmose.",
+        "terrain": "Villages, churches, views across the Vale of Catmose",
         "sights": [
           {
             "name": "Rutland Water Nature Reserve",
@@ -348,7 +344,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "svv0",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -396,7 +391,7 @@
         "distanceKm": 20.9,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Flat, footpaths.",
+        "terrain": "Flat, footpaths",
         "sights": [
           {
             "name": "Kirby Bellars Church",
@@ -419,8 +414,7 @@
             "url": null
           }
         ],
-        "warnings": "Winter flooding possible.",
-        "bestTime": "",
+        "warnings": "Winter flooding possible",
         "id": "0m35",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -474,7 +468,7 @@
             "url": null
           }
         ],
-        "terrain": "Rural countryside.",
+        "terrain": "Rural countryside",
         "sights": [
           {
             "name": "Whissendine Windmill",
@@ -482,7 +476,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "yf05",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -536,7 +529,7 @@
             "url": null
           }
         ],
-        "terrain": "Rolling farmland.",
+        "terrain": "Rolling farmland",
         "sights": [
           {
             "name": "Cuckoo Tree",
@@ -556,7 +549,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "av1x",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -610,7 +602,7 @@
             "url": null
           }
         ],
-        "terrain": "Canal, river, wooded track, roadside footpath.",
+        "terrain": "Canal, river, wooded track, roadside footpath",
         "sights": [
           {
             "name": "Trent Bridge",
@@ -633,8 +625,7 @@
             "url": null
           }
         ],
-        "warnings": "Short stretch on busy A453.",
-        "bestTime": "",
+        "warnings": "Short stretch on busy A453",
         "id": "6byj",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -689,7 +680,7 @@
             "url": null
           }
         ],
-        "terrain": "Woodlands, country park, valley views.",
+        "terrain": "Woodlands, country park, valley views",
         "sights": [
           {
             "name": "Hartshill Country Park",
@@ -701,7 +692,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "Late April for bluebells.",
         "id": "m0l7",
         "bestSeasons": [
           "apr"
@@ -754,7 +744,7 @@
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Waterways — River Derwent, Derby & Sandiacre Canal, Erewash Canal.",
+        "terrain": "Waterways — River Derwent, Derby & Sandiacre Canal, Erewash Canal",
         "sights": [
           {
             "name": "River Derwent",
@@ -770,7 +760,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "cizo",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -818,7 +807,7 @@
         "distanceKm": 17.7,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Canal, villages.",
+        "terrain": "Canal, villages",
         "sights": [
           {
             "name": "Coventry Canal",
@@ -838,7 +827,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "1su2",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -893,7 +881,7 @@
             "url": null
           }
         ],
-        "terrain": "River, lanes, racecourse.",
+        "terrain": "River, lanes, racecourse",
         "sights": [
           {
             "name": "Southwell Minster",
@@ -909,7 +897,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "161n",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -957,7 +944,7 @@
         "distanceKm": 16.1,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Golf club, heath, woodland, Heart of England Way.",
+        "terrain": "Golf club, heath, woodland, Heart of England Way",
         "sights": [
           {
             "name": "Hopwas Hayes Wood",
@@ -968,8 +955,7 @@
             "url": null
           }
         ],
-        "warnings": "MOD firing range — check access.",
-        "bestTime": "",
+        "warnings": "MOD firing range — check access",
         "id": "1zci",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1017,7 +1003,7 @@
         "distanceKm": 17.7,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Parks, river, heritage trail.",
+        "terrain": "Parks, river, heritage trail",
         "sights": [
           {
             "name": "Derby Cathedral",
@@ -1049,7 +1035,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "hzjr",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1103,7 +1088,7 @@
             "url": null
           }
         ],
-        "terrain": "Village greens, countryside.",
+        "terrain": "Village greens, countryside",
         "sights": [
           {
             "name": "Scarrington Horseshoe Pile",
@@ -1115,7 +1100,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "n32c",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1169,7 +1153,7 @@
             "url": null
           }
         ],
-        "terrain": "Good paths, nature reserve, canal, river.",
+        "terrain": "Good paths, nature reserve, canal, river",
         "sights": [
           {
             "name": "Attenborough Nature Reserve",
@@ -1184,8 +1168,7 @@
             "url": null
           }
         ],
-        "warnings": "Check for flooding.",
-        "bestTime": "",
+        "warnings": "Check for flooding",
         "id": "g5r0",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1250,7 +1233,7 @@
             "url": null
           }
         ],
-        "terrain": "Riverside, good paths, open views.",
+        "terrain": "Riverside, good paths, open views",
         "sights": [
           {
             "name": "Gunthorpe Lock",
@@ -1265,8 +1248,7 @@
             "url": null
           }
         ],
-        "warnings": "Irregular train times.",
-        "bestTime": "",
+        "warnings": "Irregular train times",
         "id": "wy9h",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1314,7 +1296,7 @@
         "distanceKm": 16.1,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Canal, footpaths, roadside footpath.",
+        "terrain": "Canal, footpaths, roadside footpath",
         "sights": [
           {
             "name": "Grand Union Canal",
@@ -1329,8 +1311,7 @@
             "url": null
           }
         ],
-        "warnings": "Last section on busy road.",
-        "bestTime": "",
+        "warnings": "Last section on busy road",
         "id": "k5x6",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1378,7 +1359,7 @@
         "distanceKm": 16.1,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Villages, park grounds, ornamental lake.",
+        "terrain": "Villages, park grounds, ornamental lake",
         "sights": [
           {
             "name": "Dale Abbey",
@@ -1402,7 +1383,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "f7jc",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1450,7 +1430,7 @@
         "distanceKm": 16.9,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Parks, river, country park, canal.",
+        "terrain": "Parks, river, country park, canal",
         "sights": [
           {
             "name": "Hartshill Country Park",
@@ -1470,7 +1450,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "bsg8",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1519,7 +1498,7 @@
         "distanceKm": 16.9,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Old railway, Roman road, park grounds, meadows.",
+        "terrain": "Old railway, Roman road, park grounds, meadows",
         "sights": [
           {
             "name": "Burghley Park",
@@ -1547,7 +1526,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "5yz8",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1595,7 +1573,7 @@
         "distanceKm": 16.1,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Canal, industrial towns, disused railway viaduct.",
+        "terrain": "Canal, industrial towns, disused railway viaduct",
         "sights": [
           {
             "name": "Bennerley Viaduct",
@@ -1611,7 +1589,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "o799",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1665,7 +1642,7 @@
             "url": null
           }
         ],
-        "terrain": "Countryside, river.",
+        "terrain": "Countryside, river",
         "sights": [
           {
             "name": "River Trent",
@@ -1685,7 +1662,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "13j4",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1733,7 +1709,7 @@
         "distanceKm": 17.7,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Villages, countryside.",
+        "terrain": "Villages, countryside",
         "sights": [
           {
             "name": "Pytchley",
@@ -1749,7 +1725,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "t8ed",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1797,7 +1772,7 @@
         "distanceKm": 19.3,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Country park, villages, hall grounds, river.",
+        "terrain": "Country park, villages, hall grounds, river",
         "sights": [
           {
             "name": "Rushcliffe Country Park",
@@ -1817,7 +1792,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "cd3u",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1866,7 +1840,7 @@
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Repurposed railway track along the Great Northern Greenway.",
+        "terrain": "Repurposed railway track along the Great Northern Greenway",
         "sights": [
           {
             "name": "Great Northern Greenway",
@@ -1882,7 +1856,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "xus2",
         "source": {
           "orgSlug": "leicester-ramblers",

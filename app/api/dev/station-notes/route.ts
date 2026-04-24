@@ -3,14 +3,15 @@ import { readDataFile, writeDataFile } from "@/lib/github-data"
 
 const FILE_PATH = "data/station-notes.json"
 
-type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
+type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
 
-// POST accepts publicNote and privateNote only. `ramblerNote` is a pure
-// build output (scripts/build-rambler-notes.mjs) and is NOT writable
-// through this endpoint — structured edits happen via
-// /api/dev/walk/[id] which rewrites the source walk JSON and re-runs
-// the build. Any existing `ramblerNote` on the entry is preserved so
-// writes to the other two notes don't clobber it.
+// POST accepts publicNote and privateNote only. `ramblerNote` and its
+// sidecar `publicRamblerNote` are pure build outputs
+// (scripts/build-rambler-notes.mjs) and are NOT writable through this
+// endpoint — structured edits happen via /api/dev/walk/[id] which
+// rewrites the source walk JSON and re-runs the build. Existing
+// build-output fields are preserved so writes to the other notes
+// don't clobber them.
 export async function POST(req: NextRequest) {
   const { coordKey, name, publicNote, privateNote } = await req.json()
   if (!coordKey) return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
 
   const existing = notes[coordKey]
   const existingRambler = existing?.ramblerNote ?? ""
+  const existingPublicRambler = existing?.publicRamblerNote ?? ""
 
   if (publicNote || privateNote || existingRambler) {
     notes[coordKey] = {
@@ -26,6 +28,7 @@ export async function POST(req: NextRequest) {
       publicNote: publicNote ?? "",
       privateNote: privateNote ?? "",
       ramblerNote: existingRambler,
+      publicRamblerNote: existingPublicRambler,
     }
   } else {
     // Everything empty — remove the entry entirely

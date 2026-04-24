@@ -8,7 +8,6 @@ import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { HelpButton } from "@/components/help-button"
-import { AdminPublishButton } from "@/components/admin-publish-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
@@ -1374,10 +1373,13 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else if (shape === 'hexagon') {
-    // Regular hexagon — 6 vertices evenly spaced, flat top edge
-    // Smaller radius (7) so it reads as a more compact shape
+    // Regular hexagon — 6 vertices evenly spaced, flat top edge.
+    // Radius tuned so the hexagon reads as visually balanced against
+    // the other rating shapes (triangle, star, circle) — a touch
+    // smaller than the natural bounding radius so its flat sides
+    // don't overpower the sparser silhouettes.
     ctx.beginPath()
-    const cx = 12, cy = 12, hexR = 5.8
+    const cx = 12, cy = 12, hexR = 5.22
     for (let i = 0; i < 6; i++) {
       // -π/6 rotates so the hexagon has a flat top edge (not a pointy top)
       const angle = (i * Math.PI) / 3 - Math.PI / 6
@@ -1879,11 +1881,16 @@ export default function HikeMap() {
   //                       curation at all (no approvals AND no
   //                       rejections). These are the stations still
   //                       using the broad Flickr algorithm by default.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
+  // `undiscovered` hides any station where at least one attached walk
+  // has a populated `previousWalkDates` — surfaces destinations still
+  // to explore. Lives on the Feature dropdown (rather than a separate
+  // checkbox) so admin-only filters that exclude stations all share a
+  // single UI control.
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
-  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter"
+  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
   // Public "[current-season] highlights" checkbox — when on, only stations
   // recommended for the current season are shown. Coexists with seasonFilter
@@ -2027,8 +2034,16 @@ export default function HikeMap() {
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
-  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
+  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
+
+  // Free-form "rambler extras" — admin-editable markdown paragraphs
+  // that render AFTER the walk summaries in each station's ramblerNote
+  // prose. Keyed by coordKey. Lives in data/station-rambler-extras.json;
+  // derived into station-notes.json by the build script. We store it
+  // client-side as `Record<coordKey, string[]>` and thread the current
+  // station's entry into the photo overlay for editing.
+  const [ramblerExtras, setRamblerExtras] = useState<Record<string, string[]>>({})
 
   // Seasons metadata per station. Purely a build output derived from each
   // walk variant's structured `bestSeasons` field (aggregated in
@@ -2038,6 +2053,12 @@ export default function HikeMap() {
   type Season = "Spring" | "Summer" | "Autumn" | "Winter"
   type SeasonsEntry = { name: string; seasons: Season[] }
   const [stationSeasons, setStationSeasons] = useState<Record<string, SeasonsEntry>>({})
+
+  // Set of coordKeys for stations with at least one personally-walked
+  // variant. Derived from `previousWalkDates` by the build script and
+  // served as a flat string[]; we wrap in a Set for O(1) lookups in the
+  // "Undiscovered" admin filter (which hides anything in this set).
+  const [stationsHiked, setStationsHiked] = useState<Set<string>>(new Set())
 
   // Per-station custom Flickr tag config (the "custom" fallback step). Only
   // stations with an entry participate in that step — everything else skips
@@ -2065,9 +2086,15 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
+    fetch("/api/dev/station-rambler-extras")
+      .then((res) => res.json())
+      .then((data: Record<string, string[]>) => setRamblerExtras(data))
     fetch("/api/dev/station-seasons")
       .then((res) => res.json())
       .then((data) => setStationSeasons(data))
+    fetch("/api/dev/stations-hiked")
+      .then((res) => res.json())
+      .then((data: string[]) => setStationsHiked(new Set(data)))
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
@@ -4434,19 +4461,32 @@ export default function HikeMap() {
             const entry = curations[f.properties.coordKey as string]
             const approvedCount = entry?.approved.length ?? 0
             if (approvedCount > 0) return false
+          } else if (primaryFeatureFilter === "undiscovered") {
+            // "Undiscovered" — hide stations we've personally walked any
+            // variant from. Membership in stationsHiked is single .has()
+            // lookup; stations never walked don't appear in the set.
+            if (stationsHiked.has(f.properties.coordKey as string)) return false
           }
         }
         // Season filters. Two independent filters both look up this
         // station's recommended seasons in stationSeasons:
         //   • seasonFilter (admin dropdown) — hides stations whose seasons
         //     don't include the selected value.
+        //     Special case: "None" INVERTS the match — keeps only stations
+        //     with zero month-flagged walks (missing entry OR empty array),
+        //     useful for finding destinations that still need seasonality
+        //     data.
         //   • currentSeasonHighlight (public checkbox) — hides stations
         //     whose seasons don't include the current calendar season.
         // AND semantics — both apply when both are active.
         if (seasonFilter !== "off" || currentSeasonHighlight) {
           const entry = stationSeasons[f.properties.coordKey as string]
           const seasons = entry?.seasons ?? []
-          if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) return false
+          if (seasonFilter === "None") {
+            if (seasons.length > 0) return false
+          } else if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) {
+            return false
+          }
           if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
         }
         // When friend mode is active, also require the station to be reachable
@@ -4465,7 +4505,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -4827,15 +4867,21 @@ export default function HikeMap() {
       const idx = approved.findIndex((p) => p.id === photoId)
       if (idx < 0) return prev
       const pinnedSet = new Set(entry.pinnedIds ?? [])
-      // skipSwap does one step in `dir`, skipping over pins that aren't the
-      // photo being moved. Returns the new index (or `from` if no move).
+      const isMovingPinned = pinnedSet.has(photoId)
+      // skipSwap does one step in `dir`. Pin semantics are asymmetric:
+      //   - If the moving photo is PINNED, it can swap with any adjacent
+      //     photo (pins don't block pins).
+      //   - If the moving photo is NOT pinned, it skips over any pinned
+      //     occupants and swaps with the first non-pinned slot in that
+      //     direction — pins hold their absolute positions for non-pins.
+      // Returns the new index (or `from` if no move).
       const skipSwap = (from: number, dir: "up" | "down"): number => {
         const step = dir === "up" ? -1 : 1
         const stop = dir === "up" ? -1 : approved.length
         let t = from + step
         while (t !== stop) {
           const occ = approved[t].id
-          if (!pinnedSet.has(occ) || occ === photoId) {
+          if (isMovingPinned || !pinnedSet.has(occ) || occ === photoId) {
             ;[approved[from], approved[t]] = [approved[t], approved[from]]
             return t
           }
@@ -4975,6 +5021,32 @@ export default function HikeMap() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
     })
+  }, [])
+
+  // Save the free-form "rambler extras" for a station. Accepts the
+  // full replacement array; empty array clears the entry. The server
+  // trims + drops blanks and re-runs the build, so we also refetch
+  // stationNotes afterwards to pick up the regenerated prose.
+  const handleSaveRamblerExtras = useCallback(async (coordKey: string, lines: string[]) => {
+    // Optimistic update of the local map so the photo-overlay
+    // re-renders with the new list immediately. Server will strip
+    // empties; mirror that here so the optimistic state matches.
+    const cleaned = lines.map((s) => s.trim()).filter(Boolean)
+    setRamblerExtras((prev) => {
+      const next = { ...prev }
+      if (cleaned.length === 0) delete next[coordKey]
+      else next[coordKey] = cleaned
+      return next
+    })
+    await fetch("/api/dev/station-rambler-extras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, lines: cleaned }),
+    })
+    // The server rebuilt station-notes.json as part of the write —
+    // refetch so the overlay's ramblerNote prose reflects the change.
+    const notes = await fetch("/api/dev/station-notes").then((r) => r.json())
+    setStationNotes(notes)
   }, [])
 
   // Refresh stationNotes + stationSeasons after a structured walk edit.
@@ -5921,8 +5993,12 @@ export default function HikeMap() {
         if (real) feature = real as unknown as typeof feature
       }
     }
-    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France)
-    if (feature.properties?.isSecretAdmin) {
+    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France).
+    // Dev-only: on production deployments the admin API is disabled at the
+    // middleware layer, so we also refuse to flip the client-side state.
+    // process.env.NODE_ENV is inlined at build time — this branch is dead-
+    // code-eliminated from production bundles entirely.
+    if (process.env.NODE_ENV === "development" && feature.properties?.isSecretAdmin) {
       // Boulogne (hidden secret-admin marker) toggles admin mode WITHOUT
       // touching any filter UI state. This entry point is meant for
       // quick peeking — I'm already looking at a particular slice of
@@ -6044,6 +6120,11 @@ export default function HikeMap() {
   // take effect after the heavy routing memo finished, which can take
   // 5-10s on a cold page load and is wasted time.
   useEffect(() => {
+    // Dev-only deep-link: `?admin=1` flips admin on at mount. Ignored in
+    // production so that sharing an admin URL with someone doesn't give
+    // them admin-mode UI (the server blocks the writes too, but the UI
+    // affordances should also stay hidden on the live site).
+    if (process.env.NODE_ENV !== "development") return
     const params = new URLSearchParams(window.location.search)
     if (params.get("admin") !== "1") return
     setDevExcludeActive(true)
@@ -6414,19 +6495,6 @@ export default function HikeMap() {
           }}
         />
       </div>
-
-      {/* Admin Publish button — renders whenever admin mode is active
-          (including on production, unlike the dev-mode toggle below
-          which is dev-only). Positioned top-center on all breakpoints
-          so it doesn't clash with the filter panel (top-left) or the
-          help/theme buttons (top-right). Gated behind devExcludeActive
-          so non-admin visitors never see it. */}
-      {devExcludeActive && (
-        <div className="pointer-events-none absolute top-4 left-1/2 z-50 -translate-x-1/2">
-          <AdminPublishButton />
-        </div>
-      )}
-
 
       {/* Dev mode toggle + zoom badge — only rendered in local development.
           process.env.NODE_ENV is inlined at build time by Next.js, so this
@@ -7750,7 +7818,10 @@ export default function HikeMap() {
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
+            publicRamblerNote={stationNotes[displayStation.coordKey]?.publicRamblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            ramblerExtras={ramblerExtras[displayStation.coordKey] ?? []}
+            onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}
             onWalkSaved={refreshStationDerivedData}
             defaultAlgo={
               // Central London terminals (18 + synthetic) and excluded stations

@@ -20,7 +20,6 @@
 //   - komootUrl (text)
 //   - bestSeasons (12 month chips)
 //   - mudWarning (checkbox)
-//   - bestTime (free-text fallback, shown when bestSeasons is empty)
 //   - warnings (free-text, for non-mud warnings)
 // Everything else (sights, lunchStops, terrain, distance, etc.) is
 // view-only for now — list editors are a bigger lift and haven't been
@@ -31,6 +30,8 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 // Static import: the sources registry is tiny (a handful of orgs) and
 // changes rarely. Importing directly lets the admin UI render the
 // dropdown without a separate fetch round-trip.
@@ -59,12 +60,30 @@ export type WalkPayload = {
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
   warnings: string
-  bestTime: string
+  trainTips: string
+  /** Admin-only free-text scratchpad, never rendered to the public. */
+  privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
+  // Entry-level GPX URL (shared across every variant of this walk's
+  // source page). Undefined when the source doesn't publish one.
+  gpx?: string
+  // True when the walk needs a bus / taxi / heritage rail on the
+  // return leg, or when one end isn't a mainline station. Rendered
+  // as a destructive `bus` chip and sorts to the bottom of the CMS
+  // list — these walks are NEVER shown to the public.
+  requiresBus?: boolean
   rating: number | null
   source?: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
+  /** Admin-only cross-reference. Same shape as `source` but
+   *  optional. Never rendered in public prose. */
+  relatedSource?: {
     orgSlug: string
     pageName: string
     pageURL: string
@@ -97,8 +116,9 @@ type EditableFields = {
   komootUrl: string
   bestSeasons: string[]
   mudWarning: boolean
-  bestTime: string
   warnings: string
+  trainTips: string
+  privateNote: string
   rating: number | null
   terrain: string
   distanceKm: number | null
@@ -111,6 +131,17 @@ type EditableFields = {
   // fields to empty strings so the form stays controlled; the server
   // rejects blanks on save.
   source: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
+  // Related source — admin cross-reference, same shape as `source`
+  // but deletable. Draft-level this is always a fully-populated
+  // object (defaulting to empty strings) so the form stays
+  // controlled; the server deletes the field when all strings are
+  // blank via the cleanSource → no-op path.
+  relatedSource: {
     orgSlug: string
     pageName: string
     pageURL: string
@@ -185,12 +216,19 @@ const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson
   }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
+// Type priority — dictates BOTH the dropdown order and the walk
+// sort order (higher-priority types bubble up). Keep this single
+// source of truth in step with TYPE_PRIORITY on the server
+// (app/api/dev/walks-for-station/route.ts) and the build script
+// (scripts/build-rambler-notes.mjs).
 const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: "main",        label: "Main walk" },
   { value: "shorter",     label: "Shorter variant" },
-  { value: "longer",      label: "Longer variant" },
   { value: "alternative", label: "Alternative variant" },
   { value: "variant",     label: "Variant" },
+  { value: "longer",      label: "Longer variant" },
+  { value: "similar",     label: "Similar to" },
+  { value: "adapted",     label: "Adapted from" },
 ]
 
 // Rating-level icons — mirror the map marker shapes used in the
@@ -274,6 +312,10 @@ export default function WalksAdminPanel({
   const [walks, setWalks] = useState<WalkPayload[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Dialog visibility flags — plain local booleans so we don't
+  // need a whole state machine.
+  const [infoOpen, setInfoOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   // Fetch walks whenever the station CRS changes. The endpoint returns
   // [] for stations with no attached walks — still a valid response, so
@@ -303,12 +345,62 @@ export default function WalksAdminPanel({
     if (onSaved) await onSaved()
   }, [stationCrs, onSaved])
 
+  // Create a new manual walk at this station (circular — start + end
+  // default to the current station's CRS). The admin fills in the
+  // details via the normal card editor after it appears in the list.
+  const handleCreate = useCallback(async () => {
+    setCreating(true)
+    try {
+      const r = await fetch("/api/dev/walk/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startStation: stationCrs, endStation: stationCrs }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      await handleSaved()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("create walk failed:", e)
+    } finally {
+      setCreating(false)
+    }
+  }, [stationCrs, handleSaved])
+
+  // Delete a walk. Called from inside a WalkCard's confirm flow.
+  const handleDelete = useCallback(async (id: string) => {
+    const r = await fetch(`/api/dev/walk/${id}`, { method: "DELETE" })
+    if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    await handleSaved()
+  }, [handleSaved])
+
 
   return (
     <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-3 dark:bg-orange-950/10">
-      <p className="text-xs font-medium text-muted-foreground">
-        Walks{walks ? ` (${walks.length})` : ""}
-      </p>
+      {/* Header row — label on the left, info button + "+ New walk"
+          button on the right. flex + items-center keeps the buttons
+          baseline-aligned with the label. */}
+      <div className="flex items-center gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Walks{walks ? ` (${walks.length})` : ""}
+        </p>
+        <button
+          type="button"
+          onClick={() => setInfoOpen(true)}
+          className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-muted-foreground/40 text-[10px] text-muted-foreground hover:bg-muted/60"
+          title="How are walks ordered and filtered?"
+          aria-label="How are walks ordered and filtered?"
+        >
+          i
+        </button>
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={creating}
+          className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted/40 disabled:opacity-40"
+        >
+          {creating ? "Creating…" : "+ New walk"}
+        </button>
+      </div>
       {loading && <p className="mt-1 text-xs italic text-muted-foreground">Loading…</p>}
       {error && <p className="mt-1 text-xs text-destructive">Failed to load: {error}</p>}
       {walks && walks.length === 0 && (
@@ -319,10 +411,53 @@ export default function WalksAdminPanel({
       {walks && walks.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5">
           {walks.map((w) => (
-            <WalkCard key={w.id} walk={w} onSaved={handleSaved} />
+            <WalkCard key={w.id} walk={w} onSaved={handleSaved} onDelete={handleDelete} />
           ))}
         </div>
       )}
+
+      {/* Info dialog — explains the ordering + filtering rules so
+          the admin can reconcile what they see against what a
+          visitor sees. Kept in sync with
+          scripts/build-rambler-notes.mjs (filter) and
+          app/api/dev/walks-for-station/route.ts (CMS sort). */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Walks — order + visibility</DialogTitle>
+            <DialogDescription>
+              How the app decides which walks to show, and in what order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-foreground">
+            <div>
+              <p className="mb-1 font-medium">CMS order (admin-only, this panel)</p>
+              <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
+                <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
+                <li>Komoot-linked walks come first</li>
+                <li>Main walks first (no further subtype ordering)</li>
+                <li>Higher rating first (4 → 3 → 2 → unrated → 1)</li>
+                <li>Distance closest to 10 km first</li>
+                <li>Alphabetic tiebreak</li>
+              </ol>
+            </div>
+            <div>
+              <p className="mb-1 font-medium">What the public sees</p>
+              <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+                <li><strong>Always shown:</strong> every main walk + every Note.</li>
+                <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
+                <li>
+                  <strong>Variants fill the list up to 5 walks total:</strong>
+                  <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
+                    <li>If the station has <strong>5+ main walks</strong>, no variants are shown.</li>
+                    <li>Otherwise we add top-ranked variants until there are 5 walks shown, or until there are no more variants.</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -333,13 +468,24 @@ export default function WalksAdminPanel({
 function WalkCard({
   walk,
   onSaved,
+  onDelete,
 }: {
   walk: WalkPayload
   onSaved: () => void | Promise<void>
+  /** Delete this walk by id. Wrapped in a ConfirmDialog so the
+   *  admin can't nuke a walk with a single misclick. */
+  onDelete?: (id: string) => void | Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  // Related Source section — admin cross-reference, collapsed by
+  // default. Auto-expand when the walk already has a related source
+  // set so the admin sees it on open.
+  const [relatedSourceExpanded, setRelatedSourceExpanded] = useState(
+    !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
+  )
 
   // Draft state — initialised from the walk prop. useMemo keeps a
   // stable reference to the "server shape" for dirty-comparison.
@@ -350,8 +496,9 @@ function WalkCard({
       komootUrl: walk.komootUrl,
       bestSeasons: walk.bestSeasons,
       mudWarning: walk.mudWarning,
-      bestTime: walk.bestTime,
       warnings: walk.warnings,
+      trainTips: walk.trainTips,
+      privateNote: walk.privateNote ?? "",
       rating: walk.rating,
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
@@ -364,13 +511,20 @@ function WalkCard({
         pageURL: walk.source?.pageURL ?? "",
         type: walk.source?.type ?? "variant",
       },
+      relatedSource: {
+        orgSlug: walk.relatedSource?.orgSlug ?? "",
+        pageName: walk.relatedSource?.pageName ?? "",
+        pageURL: walk.relatedSource?.pageURL ?? "",
+        type: walk.relatedSource?.type ?? "variant",
+      },
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.bestTime, walk.warnings, walk.rating, walk.terrain,
+      walk.warnings, walk.trainTips, walk.privateNote, walk.rating, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
+      walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
     ],
   )
   const [draft, setDraft] = useState<EditableFields>(serverState)
@@ -386,8 +540,9 @@ function WalkCard({
       draft.suffix.trim() !== serverState.suffix.trim() ||
       draft.komootUrl.trim() !== serverState.komootUrl.trim() ||
       draft.mudWarning !== serverState.mudWarning ||
-      draft.bestTime.trim() !== serverState.bestTime.trim() ||
       draft.warnings.trim() !== serverState.warnings.trim() ||
+      draft.trainTips.trim() !== serverState.trainTips.trim() ||
+      draft.privateNote.trim() !== serverState.privateNote.trim() ||
       draft.rating !== serverState.rating ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
@@ -402,7 +557,8 @@ function WalkCard({
       // via useMemo above.
       JSON.stringify(draft.sights) !== JSON.stringify(serverState.sights) ||
       JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops) ||
-      JSON.stringify(draft.source) !== JSON.stringify(serverState.source)
+      JSON.stringify(draft.source) !== JSON.stringify(serverState.source) ||
+      JSON.stringify(draft.relatedSource) !== JSON.stringify(serverState.relatedSource)
     )
   }, [draft, serverState])
 
@@ -437,8 +593,9 @@ function WalkCard({
           komootUrl: draft.komootUrl,
           bestSeasons: draft.bestSeasons,
           mudWarning: draft.mudWarning,
-          bestTime: draft.bestTime,
           warnings: draft.warnings,
+          trainTips: draft.trainTips,
+          privateNote: draft.privateNote,
           rating: draft.rating,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
@@ -449,6 +606,7 @@ function WalkCard({
           sights: draft.sights,
           lunchStops: draft.lunchStops,
           source: draft.source,
+          relatedSource: draft.relatedSource,
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
@@ -475,6 +633,46 @@ function WalkCard({
           {walk.id}
         </code>
         <span className="truncate font-medium text-foreground">{cardHeadline(walk)}</span>
+        {/* Inline metadata chips, visible while the card is collapsed
+            so admins can scan walk properties at a glance without
+            expanding each one.
+            - variant / shorter / longer / alternative (nothing for
+              "main" — main is the default, no flag needed)
+            - komoot / GPX — flag which external route is available
+            - distance — floored to km to match the public prose
+              rendering in scripts/build-rambler-notes.mjs
+            flex-shrink-0 keeps them from being squeezed when the
+            title string gets long; the title's `truncate` absorbs
+            the overflow instead. */}
+        {(() => {
+          const walkType = walk.source?.type ?? walk.role
+          const isVariant = walkType && walkType !== "main"
+          // Base pill styling — muted grey, shared across chip types.
+          // Destructive chips (variant, bus) override the bg/text via
+          // the same token pair used by the destructive Button variant
+          // so the color stays on-theme in both light + dark mode via
+          // CSS custom properties.
+          const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
+          const neutralChip = `${chipBase} bg-muted text-muted-foreground`
+          const destructiveChip = `${chipBase} bg-destructive/10 text-destructive`
+          return (
+            <>
+              {walk.requiresBus && (
+                <span className={destructiveChip} title="Requires a bus / taxi / heritage rail — never shown publicly">
+                  bus
+                </span>
+              )}
+              {isVariant && <span className={destructiveChip} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {walk.komootUrl && <span className={neutralChip} title="Has a Komoot tour URL">komoot</span>}
+              {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
+              {typeof walk.distanceKm === "number" && (
+                <span className={neutralChip} title={`${walk.distanceKm} km (floored for display)`}>
+                  {Math.floor(walk.distanceKm)} km
+                </span>
+              )}
+            </>
+          )
+        })()}
         {typeof walk.rating === "number" && walk.rating >= 1 && walk.rating <= 4 && (
           <span
             className="flex items-center text-orange-600"
@@ -561,6 +759,99 @@ function WalkCard({
                 placeholder="Page URL"
                 className="h-7 text-xs"
               />
+            </div>
+
+            {/* Related Source — collapsible admin-only cross-reference.
+                Same four fields as the primary Source, but entirely
+                optional: the server drops the whole `relatedSource`
+                key when all fields are blank. Never rendered in
+                public prose; purely a curation aid to link related
+                walk pages together. */}
+            <div className="mt-2 border-t border-border/60 pt-2">
+              <button
+                type="button"
+                onClick={() => setRelatedSourceExpanded((v) => !v)}
+                aria-expanded={relatedSourceExpanded}
+                aria-controls={`related-source-body-${walk.id}`}
+                className="flex w-full items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block transition-transform ${relatedSourceExpanded ? "rotate-90" : ""}`}
+                >
+                  ▸
+                </span>
+                Related source
+                {(draft.relatedSource.orgSlug || draft.relatedSource.pageName || draft.relatedSource.pageURL) && (
+                  <span className="italic text-muted-foreground/70 normal-case">(set)</span>
+                )}
+              </button>
+              {relatedSourceExpanded && (
+                <div id={`related-source-body-${walk.id}`} className="mt-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div>
+                      <Label htmlFor={`rsrc-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                        Organisation
+                      </Label>
+                      <select
+                        id={`rsrc-org-${walk.id}`}
+                        value={draft.relatedSource.orgSlug}
+                        onChange={(e) => setDraft((d) => ({
+                          ...d, relatedSource: { ...d.relatedSource, orgSlug: e.target.value },
+                        }))}
+                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                      >
+                        {/* Empty option so the admin can clear the
+                            whole related-source block; server then
+                            deletes the field on save. */}
+                        <option value="">— none —</option>
+                        {!SOURCE_ORGS.some((o) => o.slug === draft.relatedSource.orgSlug) && draft.relatedSource.orgSlug && (
+                          <option value={draft.relatedSource.orgSlug}>{draft.relatedSource.orgSlug} (unknown)</option>
+                        )}
+                        {SOURCE_ORGS.map((o) => (
+                          <option key={o.slug} value={o.slug}>{o.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor={`rsrc-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                        Type
+                      </Label>
+                      <select
+                        id={`rsrc-type-${walk.id}`}
+                        value={draft.relatedSource.type}
+                        onChange={(e) => setDraft((d) => ({
+                          ...d, relatedSource: { ...d.relatedSource, type: e.target.value },
+                        }))}
+                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                      >
+                        {SOURCE_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-1.5 space-y-1.5">
+                    <Input
+                      value={draft.relatedSource.pageName}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, pageName: e.target.value },
+                      }))}
+                      placeholder="Related page name"
+                      className="h-7 text-xs"
+                    />
+                    <Input
+                      type="url"
+                      value={draft.relatedSource.pageURL}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, pageURL: e.target.value },
+                      }))}
+                      placeholder="Related page URL"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -685,8 +976,8 @@ function WalkCard({
           <div className="mb-3">
             <Label htmlFor={`terrain-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
               Terrain
-              <span className="ml-1 italic text-muted-foreground/70">
-                (comma-separated, no punctuation)
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                comma-separated, no punctuation
               </span>
             </Label>
             <Input
@@ -816,7 +1107,10 @@ function WalkCard({
               "MOD closures apply" or "Chalk paths can be slippery". */}
           <div className="mb-3">
             <Label htmlFor={`warn-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Warnings (free text)
+              Warnings
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                free text
+              </span>
             </Label>
             <Input
               id={`warn-${walk.id}`}
@@ -827,26 +1121,50 @@ function WalkCard({
             />
           </div>
 
-          {/* Legacy free-text bestTime — only used when bestSeasons is
-              empty. Will eventually go away once every walk has month
-              codes. Shown here as a reference for walks the backfill
-              couldn't parse (e.g. "Best at high tide"). */}
-          {!draft.bestSeasons.length && (
-            <div className="mb-3">
-              <Label htmlFor={`bt-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Best time (free text — fallback)
-              </Label>
-              <Input
-                id={`bt-${walk.id}`}
-                value={draft.bestTime}
-                onChange={(e) => setDraft((d) => ({ ...d, bestTime: e.target.value }))}
-                placeholder="e.g. Best at high tide"
-                className="h-7 text-xs"
-              />
-            </div>
-          )}
+          {/* Train tips — booking advice (singles vs returns, off-peak
+              windows etc). Renders in the public prose as its own
+              sentence right after warnings. */}
+          <div className="mb-3">
+            <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+              Train tips
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                free text
+              </span>
+            </Label>
+            <Input
+              id={`tips-${walk.id}`}
+              value={draft.trainTips}
+              onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
+              placeholder="e.g. Buy two singles — cheaper than a return"
+              className="h-7 text-xs"
+            />
+          </div>
 
-          {/* Save / error footer */}
+          {/* Private note — admin-only scratchpad. Never rendered in
+              public prose. Useful for curation TODOs ("distance
+              conflicts between Komoot and SWC", "check after bridge
+              reopens", etc). */}
+          <div className="mb-3">
+            <Label htmlFor={`priv-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+              Private note
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                admin-only
+              </span>
+            </Label>
+            <Input
+              id={`priv-${walk.id}`}
+              value={draft.privateNote}
+              onChange={(e) => setDraft((d) => ({ ...d, privateNote: e.target.value }))}
+              placeholder="e.g. distance figures disagree with Komoot"
+              className="h-7 text-xs"
+            />
+          </div>
+
+          {/* Save / delete footer — delete sits on the right and is
+              gated behind a ConfirmDialog so a misclick doesn't
+              nuke a walk. Delete only renders when the parent wired
+              onDelete (it's the only surface that knows how to
+              refresh the list afterwards). */}
           <div className="mt-3 flex items-center gap-2">
             <Button
               size="sm"
@@ -857,7 +1175,27 @@ function WalkCard({
               {saving ? "Saving…" : "Save"}
             </Button>
             {saveError && <span className="text-xs text-destructive">{saveError}</span>}
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setConfirmDeleteOpen(true)}
+                className="ml-auto h-7 text-xs"
+              >
+                Delete walk
+              </Button>
+            )}
           </div>
+          {onDelete && (
+            <ConfirmDialog
+              open={confirmDeleteOpen}
+              onOpenChange={setConfirmDeleteOpen}
+              title="Delete this walk?"
+              description={<>This removes <span className="font-mono">{walk.id}</span> from the source data entirely. Can't be undone from the UI.</>}
+              confirmLabel="Delete walk"
+              onConfirm={() => onDelete(walk.id)}
+            />
+          )}
         </div>
       )}
     </div>
@@ -878,15 +1216,35 @@ function SightsEditor({
   sights: SightDraft[]
   onChange: (next: SightDraft[]) => void
 }) {
+  // Collapsed by default — sights can bloat the card and most edits
+  // happen on the scalar fields above. Clicking the header toggles.
+  const [expanded, setExpanded] = useState(false)
   return (
     <div className="mb-3">
-      <Label className="mb-1 block text-xs text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls={`sights-body-${walkId}`}
+        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
+      >
+        {/* Chevron rotates 0° collapsed / 90° expanded. `inline-block` so
+            the transform applies; matches the arrow iconography used
+            elsewhere in the card. */}
+        <span
+          aria-hidden="true"
+          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
+        >
+          ▸
+        </span>
         Sights
         {sights.length > 0 && (
-          <span className="ml-1 italic text-muted-foreground/70">({sights.length})</span>
+          <span className="italic text-muted-foreground/70">({sights.length})</span>
         )}
-      </Label>
-      <div className="flex flex-col gap-2">
+      </button>
+      {expanded && (
+      <div id={`sights-body-${walkId}`}>
+      <div className="mt-1 flex flex-col gap-2">
         {sights.map((s, i) => (
           <div
             key={i}
@@ -990,6 +1348,8 @@ function SightsEditor({
           we later wire the first input up to it; not strictly required
           since each row has its own label via placeholder. */}
       <span id={`sights-${walkId}`} className="sr-only" />
+      </div>
+      )}
     </div>
   )
 }
@@ -1013,15 +1373,31 @@ function LunchStopsEditor({
   stops: LunchDraft[]
   onChange: (next: LunchDraft[]) => void
 }) {
+  // Collapsed by default — same reasoning as SightsEditor above.
+  const [expanded, setExpanded] = useState(false)
   return (
     <div className="mb-3">
-      <Label className="mb-1 block text-xs text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls={`lunch-body-${walkId}`}
+        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
+      >
+        <span
+          aria-hidden="true"
+          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
+        >
+          ▸
+        </span>
         Lunch stops
         {stops.length > 0 && (
-          <span className="ml-1 italic text-muted-foreground/70">({stops.length})</span>
+          <span className="italic text-muted-foreground/70">({stops.length})</span>
         )}
-      </Label>
-      <div className="flex flex-col gap-2">
+      </button>
+      {expanded && (
+      <div id={`lunch-body-${walkId}`}>
+      <div className="mt-1 flex flex-col gap-2">
         {stops.map((s, i) => (
           <div
             key={i}
@@ -1177,6 +1553,8 @@ function LunchStopsEditor({
         + Add lunch stop
       </button>
       <span id={`lunch-${walkId}`} className="sr-only" />
+      </div>
+      )}
     </div>
   )
 }

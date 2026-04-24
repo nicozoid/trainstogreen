@@ -257,12 +257,12 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
-  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter"
-  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter") => void
+  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
+  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
   /** The calendar-derived current season — labels the public checkbox
    *  ("Spring highlights", etc) and is what that checkbox filters against. */
   currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
@@ -1145,7 +1145,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1154,6 +1154,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="private-notes">Private notes</option>
                 <option value="sloppy-pics">Sloppy pics</option>
                 <option value="all-sloppy-pics">All sloppy pics</option>
+                {/* "Undiscovered" — hides any station with at least one walk
+                    we've personally logged in previousWalkDates. Surfaces
+                    destinations still to explore. */}
+                <option value="undiscovered">Undiscovered</option>
               </select>
             </div>
           )}
@@ -1171,7 +1175,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-season-filter"
                 value={seasonFilter}
                 onChange={(e) => onSeasonFilterChange(
-                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter",
+                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1180,6 +1184,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="Summer">Summer</option>
                 <option value="Autumn">Autumn</option>
                 <option value="Winter">Winter</option>
+                {/* "None" = stations with zero month-flagged walks. Useful for
+                    finding destinations that still need seasonality data. */}
+                <option value="None">None</option>
               </select>
             </div>
           )}

@@ -5,7 +5,7 @@
 // Attachment rule: every station-to-station walk variant gets its own
 // paragraph at its start and end stations (no per-source-URL dedup).
 // Paragraph order within a station is determined by compareRamblerParts:
-//   ratingTier → hasKomoot → isMain → -updatedAt → pageTitle
+//   hasKomoot → isMain → ratingTier → distanceScore → pageTitle
 // The admin has no manual override — curation happens via rating/
 // komoot/suffix edits on individual walks.
 //
@@ -31,6 +31,10 @@ const EXTRA_WALKS_PATHS = [
   join(PROJECT_ROOT, "data", "leicester-ramblers-walks.json"),
   join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json"),
   join(PROJECT_ROOT, "data", "abbey-line-walks.json"),
+  // Manual walks created through the admin UI ("+ New walk") —
+  // same entry shape as rambler-walks.json, one entry per walk
+  // keyed `manual-{id}`.
+  join(PROJECT_ROOT, "data", "manual-walks.json"),
 ]
 // Free-form one-liner extras appended to each station's ramblerNote
 // AFTER the walk paragraphs. Keyed by coordKey ("lng,lat"). Each value
@@ -46,6 +50,12 @@ const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // variant's structured `bestSeasons` month codes. No longer editable in
 // the admin UI (used to be, via /api/dev/station-seasons POST).
 const SEASONS_PATH = join(PROJECT_ROOT, "data", "station-seasons.json")
+
+// Derived list of stations where at least one attached walk has a
+// populated `previousWalkDates` array — i.e. we've personally walked
+// it. Drives the admin-only "Undiscovered" filter, which inverts the
+// match to surface destinations still to explore.
+const HIKED_PATH = join(PROJECT_ROOT, "data", "stations-hiked.json")
 
 // Month codes used in each variant's structured `bestSeasons` field.
 // Order matters — renders in calendar order regardless of how the source
@@ -81,13 +91,15 @@ function ratingTierOf(rating) {
   return RATING_TIER[key] ?? RATING_TIER.unrated
 }
 
-// Ideal walk length for ordering. Walks closer to this figure sort
-// higher (|distanceKm - IDEAL_LENGTH_KM| ASC). Tweak the constant to
-// shift the bias — e.g. 13 prefers a full-day hike, 8 prefers a
-// half-day stroll. Walks with no distance recorded fall to the
-// bottom of this tier (Infinity score).
-const IDEAL_LENGTH_KM = 13
+// Ideal walk length for ordering — proximity to this value is the
+// distance sort key. Tweak to shift the bias (e.g. 13 prefers a
+// full-day hike, 8 a half-day stroll). Keep in sync with
+// IDEAL_LENGTH_KM in app/api/dev/walks-for-station/route.ts.
+const IDEAL_LENGTH_KM = 10
 
+// Distance score — |distanceKm - IDEAL_LENGTH_KM|. Closer to ideal
+// sorts higher; walks without a recorded distance fall to the
+// bottom of their tier (Infinity).
 function distanceScore(distanceKm) {
   if (typeof distanceKm !== "number" || !Number.isFinite(distanceKm)) {
     return Number.POSITIVE_INFINITY
@@ -95,21 +107,24 @@ function distanceScore(distanceKm) {
   return Math.abs(distanceKm - IDEAL_LENGTH_KM)
 }
 
+
 // Order ramblerParts at a station:
 //   1. walks before extras (kind ASC)
-//   2. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
-//   3. hasKomoot DESC (walks with a Komoot route come first)
-//   4. isMain DESC (main walks before variants)
-//   5. distanceScore ASC (closer to IDEAL_LENGTH_KM first; missing sorts last)
-//   6. updatedAt DESC (most recently touched first; "" sorts last)
-//   7. pageTitle ASC for stable alphabetic tiebreak
+//   2. hasKomoot DESC (walks with a Komoot route come first)
+//   3. isMain DESC (main walks first; non-mains don't get a
+//                   further subtype ordering among themselves)
+//   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
+//   5. distanceScore ASC (closest to IDEAL_LENGTH_KM first; missing
+//                         sorts last)
+//   6. pageTitle ASC for stable alphabetic tiebreak
+// Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
+// keep both in step.
 function compareRamblerParts(a, b) {
   if (a.kind !== b.kind) return a.kind - b.kind
-  if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
+  if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
-  if (a.updatedAt !== b.updatedAt) return (b.updatedAt).localeCompare(a.updatedAt) // DESC
   return (a.pageTitle || "").localeCompare(b.pageTitle || "")
 }
 
@@ -214,6 +229,8 @@ function formatLunchStops(stops) {
 //   longer      → "A longer variant of [Page](url)."
 //   alternative → "An alternative variant of [Page](url)."
 //   variant     → "A variant of [Page](url)."
+//   similar     → "Similar to [Page](url)."
+//   adapted     → "Adapted from [Page](url)."
 //
 // Capitalised at sentence start (follows the opening colon). Returns
 // null only if the walk has no identifiable source — in practice this
@@ -233,6 +250,8 @@ function formatSourceClause(variant, entry) {
     case "longer":      phrase = "A longer variant of"; break
     case "alternative": phrase = "An alternative variant of"; break
     case "variant":     phrase = "A variant of"; break
+    case "similar":     phrase = "Similar to"; break
+    case "adapted":     phrase = "Adapted from"; break
     default:            phrase = "From"; break
   }
   return `${phrase} [${pageName}](${pageURL}).`
@@ -260,7 +279,7 @@ function formatSights(sights) {
 // "January, February and December". The rotation finds the largest
 // gap between selected months (circularly) and starts listing
 // immediately after it. Dedupes; empty/invalid → null so the caller
-// can fall back to free-text `bestTime`.
+// Empty/invalid → null.
 function formatBestSeasons(months) {
   if (!Array.isArray(months) || months.length === 0) return null
   const set = new Set()
@@ -329,7 +348,7 @@ function withPeriod(s) {
 // Compose the markdown string for one walk variant attached to a station.
 // Structure (each clause omitted if the source field is empty):
 //
-//   <opener><fav><terrain> <sights sentence><warnings><bestTime><lunch><km><hours>
+//   <opener><fav><terrain> <sights sentence><warnings><trainTips><bestSeasons><lunch><km><hours>
 //
 // Separators between clauses are single spaces; every clause ends with a
 // period. Every walk renders identically — no "main vs variant"
@@ -360,15 +379,25 @@ function buildSummary(variant, entry, crsIndex) {
   const rawName = (variant.name ?? "").trim()
   const suffix = (variant.suffix ?? "").trim()
   let displayName
+  // Base title = the derived name WITHOUT the suffix. Used by the
+  // downstream "hide duplicate variants" filter: a variant is hidden
+  // from public view when its baseDisplayName matches any other walk's
+  // full displayName at the same station (so two variants that differ
+  // only in their suffix don't both clutter the list).
+  let baseDisplayName
   if (rawName) {
     // Admin-curated override — use as-is. Suffix is ignored in this
-    // branch (override is meant to be the final title).
+    // branch (override is meant to be the final title). The base for
+    // the duplicate check is the override itself (no suffix to strip).
     displayName = rawName
+    baseDisplayName = rawName
   } else if (start && end) {
     const base = isCircular ? `${start.name} Circular` : `${start.name} to ${end.name}`
     displayName = suffix ? `${base} ${suffix}` : base
+    baseDisplayName = base
   } else {
     displayName = entry.title
+    baseDisplayName = entry.title
   }
   // Title linking is conditional on variant type:
   //  - MAIN walks link the title directly to source.pageURL so the
@@ -429,12 +458,16 @@ function buildSummary(variant, entry, crsIndex) {
   // captured by the structured mudWarning flag, e.g. MOD closures).
   if (warningsText) parts.push(withPeriod(warningsText))
 
-  // Best time — prefer the structured month-code array when present;
-  // fall back to the free-text `bestTime` field otherwise. Once the
-  // migration backfills bestSeasons everywhere, bestTime can be removed.
+  // Train tips — booking advice (singles vs returns, off-peak windows
+  // etc). Sits immediately after warnings so practical "before you go"
+  // info is grouped together in the prose.
+  const trainTipsText = variant.trainTips?.trim() ?? ""
+  if (trainTipsText) parts.push(withPeriod(trainTipsText))
+
+  // Best seasons — the structured month-code array. Legacy free-text
+  // bestTime has been migrated into warnings and the field removed.
   const structuredSeasons = formatBestSeasons(variant.bestSeasons)
   if (structuredSeasons) parts.push(structuredSeasons)
-  else if (variant.bestTime?.trim()) parts.push(withPeriod(variant.bestTime))
 
   // Lunch stops — compact list
   const lunch = formatLunchStops(variant.lunchStops)
@@ -463,7 +496,10 @@ function buildSummary(variant, entry, crsIndex) {
   // variant rather than the entry.
   if (variant.komootUrl) parts.push(`[Komoot route](${variant.komootUrl}).`)
 
-  return parts.join(" ")
+  // Return the rendered string PLUS the title pieces — callers need
+  // `displayName` / `baseDisplayName` to run the duplicate-variant
+  // filter without re-implementing the derivation logic.
+  return { summary: parts.join(" "), displayName, baseDisplayName }
 }
 
 // ── Main build ─────────────────────────────────────────────────────────────
@@ -498,6 +534,11 @@ function buildRamblerNotes(args) {
   // variant. Written out to data/station-seasons.json at the end —
   // derived data, never hand-edited.
   const perStationSeasons = new Map()
+  // coordKey → true. Any station whose attached walks include at least
+  // one variant with a non-empty `previousWalkDates` array. Written to
+  // data/stations-hiked.json as a sorted array; the admin "Undiscovered"
+  // filter hides these to surface the stations still to visit.
+  const perStationHiked = new Set()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
   const urlsUsed = new Set()
@@ -510,21 +551,25 @@ function buildRamblerNotes(args) {
     urlsConsidered.add(slug)
 
     // Every station-to-station variant gets its own paragraph. We no
-    // longer dedup by source URL: the automatic sort (rating →
-    // komoot → main-first → updatedAt) orders them and keeps the
+    // longer dedup by source URL: the automatic sort (komoot →
+    // main-first → rating → distance) orders them and keeps the
     // reader from drowning in redundant siblings, and admins curate
     // via ratings/suffixes if they want any one walk demoted.
     const stationToStation = entry.walks.filter((v) => v.stationToStation)
 
     for (const variant of stationToStation) {
-      const summary = buildSummary(variant, entry, crsIndex)
-      if (!summary) continue
-      // For circular walks startStation === endStation, so the inner
-      // loop would otherwise push the same paragraph twice at the
-      // same station. Track per-variant which coord keys have already
-      // been attached.
+      const built = buildSummary(variant, entry, crsIndex)
+      if (!built) continue
+      const { summary, displayName, baseDisplayName } = built
+      // Each walk attaches ONLY to its starting station in the public
+      // overlay prose — a visitor lands on the walk's natural starting
+      // point rather than seeing it duplicated on both ends. Circular
+      // walks still appear once (start === end); walks whose end
+      // station is the "more famous" stop are the main trade-off.
+      // seenStations is kept to defensively dedupe in case a future
+      // change re-introduces a secondary attachment key.
       const seenStations = new Set()
-      for (const crs of [variant.startStation, variant.endStation]) {
+      for (const crs of [variant.startStation]) {
         if (!crs) continue
         const station = crsIndex.get(crs)
         if (!station) continue
@@ -536,28 +581,33 @@ function buildRamblerNotes(args) {
           perStation.set(station.coordKey, { name: station.name, ramblerParts: [] })
         }
         // kind: 0 = walk paragraph, 1 = free-form extra. Walks always
-        // render before extras. Within walks, we sort on a 3-key tuple:
-        //   ratingTier (4→0, 3→1, 2→2, unrated→3, 1→4 — Flawed demoted)
-        //   komoot flag (walks with a komootUrl first)
-        //   -updatedAt (newest first; missing sorts last within the tier)
-        // The admin cannot override this order — all three keys come
-        // from the data itself.
+        // render before extras. Within walks, the sort order is defined
+        // by compareRamblerParts — admins don't override it; all keys
+        // come from the walk data itself (main/variant, komoot, rating,
+        // distance).
+        const sourceType = variant.source?.type ?? variant.role ?? "main"
         perStation.get(station.coordKey).ramblerParts.push({
           summary,
           kind: 0,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
-          isMain: (variant.source?.type ?? variant.role) === "main",
+          isMain: sourceType === "main",
+          // Raw source type kept for possible future per-subtype
+          // filtering. Current filter only cares about isMain.
+          sourceType,
           distanceScore: distanceScore(variant.distanceKm),
-          updatedAt: typeof variant.updatedAt === "string" ? variant.updatedAt : "",
           pageTitle: entry.title ?? "",
+          // Legacy title pieces from the old duplicate-variant filter.
+          // Current rule keys off mainCount + sourceType only; leaving
+          // them on the struct for now in case we reintroduce the
+          // dedup later without a rebuild.
+          displayName,
+          baseDisplayName,
         })
 
         // Aggregate this variant's structured bestSeasons into the
-        // station's derived season set. Only structured month codes
-        // contribute — free-text `bestTime` is intentionally ignored
-        // here (if a walk hasn't been migrated to month codes yet, its
-        // seasonality simply doesn't flow into the filters).
+        // station's derived season set. Walks without month codes don't
+        // contribute — they simply don't flow into the seasonality filters.
         if (Array.isArray(variant.bestSeasons)) {
           let set = perStationSeasons.get(station.coordKey)
           if (!set) {
@@ -568,6 +618,13 @@ function buildRamblerNotes(args) {
             const season = MONTH_TO_SEASON[String(m).toLowerCase()]
             if (season) set.seasons.add(season)
           }
+        }
+
+        // Track stations with at least one personally-walked variant.
+        // Any non-empty previousWalkDates flips the station from
+        // "undiscovered" to "hiked" in the derived output.
+        if (Array.isArray(variant.previousWalkDates) && variant.previousWalkDates.length > 0) {
+          perStationHiked.add(station.coordKey)
         }
       }
     }
@@ -605,9 +662,13 @@ function buildRamblerNotes(args) {
         ratingTier: Number.POSITIVE_INFINITY,
         hasKomoot: false,
         isMain: false,
+        // Extras aren't walks — these fields are unused at kind=1 but
+        // kept on the struct so all parts share the same shape.
+        sourceType: "",
         distanceScore: Number.POSITIVE_INFINITY,
-        updatedAt: "",
         pageTitle: "",
+        displayName: "",
+        baseDisplayName: "",
       })
     }
   }
@@ -624,12 +685,44 @@ function buildRamblerNotes(args) {
     // Stable sort by priority: favourites first, then regular walks, then extras.
     const ordered = [...ramblerParts].sort(compareRamblerParts)
     const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
+    // Public visibility rules (admin always sees the full list):
+    //   • Mains are always shown.
+    //   • Notes (free-form extras, kind=1) are always shown and
+    //     don't count toward the 5-walk cap.
+    //   • Bus-requiring walks never reach this filter — they're
+    //     excluded upstream by `stationToStation !== true`, which
+    //     buildSummary returns null for. (Admin CMS still shows them.)
+    //   • Variants: if the station already has 5+ mains, NONE are
+    //     shown. Otherwise we take the top-ranked variants (they
+    //     follow the mains in `ordered`) until the total walk count
+    //     would reach 5, or until there are no more variants. So a
+    //     station with 2 mains gets up to 3 variants, a station with
+    //     0 mains gets up to 5, and so on.
+    const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
+    const variantQuota = mainCount >= 5 ? 0 : 5 - mainCount
+    let variantsAdded = 0
+    const publicParts = ordered.filter((p) => {
+      if (p.kind !== 0) return true // notes always pass
+      if (p.isMain) return true // mains always pass
+      // Variant — gated by quota. Because `ordered` has mains before
+      // variants and variants already sorted by the main comparator,
+      // the first `variantQuota` variants we see ARE the top-ranked
+      // ones.
+      if (variantsAdded >= variantQuota) return false
+      variantsAdded++
+      return true
+    })
+    const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const before = notes[coordKey].ramblerNote
       notes[coordKey].ramblerNote = ramblerNote
+      notes[coordKey].publicRamblerNote = publicRamblerNote
+      // Drop the legacy sidecar field from the earlier "mainCount"
+      // rule so it doesn't linger in the JSON.
+      if ("ramblerMainCount" in notes[coordKey]) delete notes[coordKey].ramblerMainCount
       if (before !== ramblerNote) changes.updated++
     } else {
-      notes[coordKey] = { name, publicNote: "", privateNote: "", ramblerNote }
+      notes[coordKey] = { name, publicNote: "", privateNote: "", ramblerNote, publicRamblerNote }
       changes.added++
     }
   }
@@ -638,8 +731,12 @@ function buildRamblerNotes(args) {
     if (perStation.has(coordKey)) continue
     if (entry.ramblerNote) {
       entry.ramblerNote = ""
+      entry.publicRamblerNote = ""
       changes.cleared++
     }
+    // Tidy up the legacy sidecar field left behind by the earlier
+    // "mainCount-based" visibility rule. No longer read by the client.
+    if ("ramblerMainCount" in entry) delete entry.ramblerMainCount
   }
 
   for (const [coordKey, entry] of Object.entries(notes)) {
@@ -697,6 +794,15 @@ function buildRamblerNotes(args) {
   writeFileSync(SEASONS_PATH, JSON.stringify(seasonsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${Object.keys(seasonsOut).length} entries to ${SEASONS_PATH}`)
+
+  // ── Derived file: stations-hiked.json ──────────────────────────────
+  // Sorted array of coordKeys for stations we've personally walked at
+  // least one attached walk from. The client fetches this into a Set<string>
+  // and the "Undiscovered" admin filter hides anything in it.
+  const hikedOut = [...perStationHiked].sort()
+  writeFileSync(HIKED_PATH, JSON.stringify(hikedOut, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${hikedOut.length} entries to ${HIKED_PATH}`)
 
   if (args.flipOnMap) {
     // Update onMap per-source so each file only holds its own entries —

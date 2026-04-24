@@ -33,7 +33,7 @@
         "distanceKm": 14.5,
         "hours": null,
         "lunchStops": [],
-        "terrain": "Way-marked trail through the Ver and Colne Valleys, linking all seven Abbey Line stations — can be done end-to-end or as individual sections with a train hop back.",
+        "terrain": "Way-marked trail through the Ver and Colne Valleys, linking all seven Abbey Line stations — can be done end-to-end or as individual sections with a train hop back",
         "sights": [
           {
             "name": "Sopwell Nunnery",
@@ -44,8 +44,7 @@
             "url": null
           }
         ],
-        "warnings": "Sections can become waterlogged after heavy rain, sometimes without obvious alternative routes.",
-        "bestTime": "",
+        "warnings": "Sections can become waterlogged after heavy rain, sometimes without obvious alternative routes",
         "id": "rh9p",
         "source": {
           "orgSlug": "abbey-line",
@@ -69,7 +68,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "r2ox",
         "source": {
           "orgSlug": "abbey-line",
@@ -93,7 +91,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "0de8",
         "source": {
           "orgSlug": "abbey-line",
@@ -117,7 +114,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "7skm",
         "source": {
           "orgSlug": "abbey-line",
@@ -141,7 +137,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "mfq9",
         "source": {
           "orgSlug": "abbey-line",
@@ -165,7 +160,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "sz3u",
         "source": {
           "orgSlug": "abbey-line",
@@ -190,7 +184,6 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": "",
         "id": "rrld",
         "source": {
           "orgSlug": "abbey-line",

@@ -60,7 +60,7 @@
             "url": null
           }
         ],
-        "terrain": "Historic market town, River Avon, Grand Union Canal towpath, open fields, racecourse, golf course, woodland.",
+        "terrain": "Historic market town, River Avon, Grand Union Canal towpath, open fields, racecourse, golf course, woodland",
         "sights": [
           {
             "name": "Warwick Castle",
@@ -87,8 +87,7 @@
             "url": "https://www.visitwarwick.co.uk/the-mill-garden/"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "f73u",
         "mudWarning": true,
         "source": {
@@ -157,7 +156,7 @@
             "url": "http://www.emberinns.co.uk"
           }
         ],
-        "terrain": "Pasture, meadows, fields, riding school, canal aqueduct, River Cole, suburban streets.",
+        "terrain": "Pasture, meadows, fields, riding school, canal aqueduct, River Cole, suburban streets",
         "sights": [
           {
             "name": "Transport Museum",
@@ -176,8 +175,7 @@
             "url": null
           }
         ],
-        "warnings": "Broken stile; horses present.",
-        "bestTime": "",
+        "warnings": "Broken stile; horses present",
         "id": "qin7",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -254,7 +252,7 @@
             "url": null
           }
         ],
-        "terrain": "Canal towpath, aqueduct, open fields, hedgerows, working farm.",
+        "terrain": "Canal towpath, aqueduct, open fields, hedgerows, working farm",
         "sights": [
           {
             "name": "St Peter's Church",
@@ -273,8 +271,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be boggy/muddy.",
-        "bestTime": "",
+        "warnings": "Can be boggy/muddy",
         "id": "6b09",
         "mudWarning": true,
         "source": {
@@ -357,7 +354,7 @@
             "url": "https://www.yew-tree-farm.co.uk"
           }
         ],
-        "terrain": "River Alne banks, canal village, old railway track, open fields, ridge and furrow, flood bank, historic villages.",
+        "terrain": "River Alne banks, canal village, old railway track, open fields, ridge and furrow, flood bank, historic villages",
         "sights": [
           {
             "name": "Mary Arden's Farm",
@@ -384,8 +381,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "wb0s",
         "mudWarning": true,
         "source": {
@@ -463,7 +459,7 @@
             "url": "https://www.fiestadelasado.co.uk"
           }
         ],
-        "terrain": "Farmland, Christmas tree plantation, canal crossing, suburban pavements and footpaths.",
+        "terrain": "Farmland, Christmas tree plantation, canal crossing, suburban pavements and footpaths",
         "sights": [
           {
             "name": "Akamba Heritage Centre",
@@ -479,7 +475,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "dagm",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -542,7 +537,7 @@
             "url": "https://www.facebook.com/Hatton-Locks-287533011322479"
           }
         ],
-        "terrain": "Rolling farmland, Grand Union Canal towpath, woodland, farm tracks.",
+        "terrain": "Rolling farmland, Grand Union Canal towpath, woodland, farm tracks",
         "sights": [
           {
             "name": "Hatton Locks",
@@ -561,8 +556,7 @@
             "url": "https://www.churchfarmbrewery.co.uk"
           }
         ],
-        "warnings": "Busy A road crossing.",
-        "bestTime": "",
+        "warnings": "Busy A road crossing",
         "id": "gfu9",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -636,7 +630,7 @@
             "url": "https://www.limescountrylodge.co.uk"
           }
         ],
-        "terrain": "Reservoirs, lakeside paths, ancient woodland, meadows, heathland remnant, field edges.",
+        "terrain": "Reservoirs, lakeside paths, ancient woodland, meadows, heathland remnant, field edges",
         "sights": [
           {
             "name": "Earlswood Lakes",
@@ -655,8 +649,7 @@
             "url": "https://www.facebook.com/earlswoodlakescraftcentre/"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "Best in spring or autumn.",
+        "warnings": "Can be muddy",
         "id": "16ej",
         "mudWarning": true,
         "bestSeasons": [
@@ -744,7 +737,7 @@
             "url": "https://www.hickorys.co.uk"
           }
         ],
-        "terrain": "Suburban streets, deciduous and coniferous woodland, open fields, scrub grassland, sports ground.",
+        "terrain": "Suburban streets, deciduous and coniferous woodland, open fields, scrub grassland, sports ground",
         "sights": [
           {
             "name": "Tile Hill Wood",
@@ -767,8 +760,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "8o92",
         "mudWarning": true,
         "source": {
@@ -832,7 +824,7 @@
             "url": "https://www.shakespawcatcafe.com"
           }
         ],
-        "terrain": "Medieval market town, canal basin, riverside path, parks and gardens, historic streets.",
+        "terrain": "Medieval market town, canal basin, riverside path, parks and gardens, historic streets",
         "sights": [
           {
             "name": "Shakespeare's Birthplace",
@@ -884,7 +876,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "cpuy",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -947,7 +938,7 @@
             "url": null
           }
         ],
-        "terrain": "Canal towpath, village streets, kissing gate, lock-side path.",
+        "terrain": "Canal towpath, village streets, kissing gate, lock-side path",
         "sights": [
           {
             "name": "Stratford-upon-Avon Canal",
@@ -970,8 +961,7 @@
             "url": "https://www.shakespearedistillery.com"
           }
         ],
-        "warnings": "Limited refreshment options.",
-        "bestTime": "",
+        "warnings": "Limited refreshment options",
         "id": "qq91",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1060,7 +1050,7 @@
             "url": "https://www.hungryhorse.co.uk"
           }
         ],
-        "terrain": "Canal towpath, Christmas tree plantations, farmland, forest, lakeside paths.",
+        "terrain": "Canal towpath, Christmas tree plantations, farmland, forest, lakeside paths",
         "sights": [
           {
             "name": "Stratford-upon-Avon Canal",
@@ -1075,8 +1065,7 @@
             "url": "https://www.facebook.com/earlswoodlakescraftcentre/"
           }
         ],
-        "warnings": "Trip hazard: anchored cable.",
-        "bestTime": "",
+        "warnings": "Trip hazard: anchored cable",
         "id": "zrtu",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1150,7 +1139,7 @@
             "url": "www.cliftoncruisers.com/cafe/"
           }
         ],
-        "terrain": "Town streets, river valley, Oxford Canal towpath, open fields, village.",
+        "terrain": "Town streets, river valley, Oxford Canal towpath, open fields, village",
         "sights": [
           {
             "name": "Oxford Canal",
@@ -1165,8 +1154,7 @@
             "url": "www.warwickshirechurches.weebly.com"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "qqa6",
         "mudWarning": true,
         "source": {
@@ -1230,7 +1218,7 @@
             "url": null
           }
         ],
-        "terrain": "Market town, river, parkland, pedestrianised shopping area, tarmac paths.",
+        "terrain": "Market town, river, parkland, pedestrianised shopping area, tarmac paths",
         "sights": [
           {
             "name": "Nuneaton Museum & Art Gallery",
@@ -1262,7 +1250,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "jrm6",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1326,7 +1313,7 @@
             "url": "https://www.tradita.co.uk"
           }
         ],
-        "terrain": "Suburban paths, airport perimeter fence, woodland, open parkland, country park, lakes, meadows.",
+        "terrain": "Suburban paths, airport perimeter fence, woodland, open parkland, country park, lakes, meadows",
         "sights": [
           {
             "name": "Aircraft Spotting (Runway 15 viewing area)",
@@ -1357,8 +1344,7 @@
             "url": "https://www.experience.landrover.com"
           }
         ],
-        "warnings": "Can be noisy (airport).",
-        "bestTime": "",
+        "warnings": "Can be noisy (airport)",
         "id": "epap",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1421,7 +1407,7 @@
             "url": "https://www.cenucacao.co.uk"
           }
         ],
-        "terrain": "Spa town, Grand Union Canal towpath, River Leam, local nature reserve, country park, open fields, village paths.",
+        "terrain": "Spa town, Grand Union Canal towpath, River Leam, local nature reserve, country park, open fields, village paths",
         "sights": [
           {
             "name": "Leam Valley Nature Reserve",
@@ -1440,8 +1426,7 @@
             "url": "https://www.warwickdc.gov.uk/royalpumprooms"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "n6jd",
         "mudWarning": true,
         "source": {
@@ -1525,7 +1510,7 @@
             "url": "https://www.henleyicecream.co.uk"
           }
         ],
-        "terrain": "Historic high street, farmland, Millennium Way, rural lanes, fields, woodland edges.",
+        "terrain": "Historic high street, farmland, Millennium Way, rural lanes, fields, woodland edges",
         "sights": [
           {
             "name": "Henley Mount",
@@ -1556,8 +1541,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be overgrown summer.",
-        "bestTime": "",
+        "warnings": "Can be overgrown summer",
         "id": "v5oq",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1650,7 +1634,7 @@
             "url": "https://www.durhamoxshrewley.co.uk"
           }
         ],
-        "terrain": "Canal towpath, tunnel sections, narrow path sections, low bridges, Warwickshire countryside.",
+        "terrain": "Canal towpath, tunnel sections, narrow path sections, low bridges, Warwickshire countryside",
         "sights": [
           {
             "name": "Hatton Locks",
@@ -1677,8 +1661,7 @@
             "url": null
           }
         ],
-        "warnings": "Narrow path sections.",
-        "bestTime": "Best in spring.",
+        "warnings": "Narrow path sections",
         "id": "i6dq",
         "bestSeasons": [
           "mar",
@@ -1750,7 +1733,7 @@
             "url": "http://www.wythall-park.org.uk"
           }
         ],
-        "terrain": "Farm, heathland, ancient woodland, river crossing, golf course, suburban road.",
+        "terrain": "Farm, heathland, ancient woodland, river crossing, golf course, suburban road",
         "sights": [
           {
             "name": "River Cole",
@@ -1769,8 +1752,7 @@
             "url": "http://www.wythall.org.uk"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "Best in spring.",
+        "warnings": "Can be muddy",
         "id": "ipk9",
         "mudWarning": true,
         "bestSeasons": [
@@ -1838,7 +1820,7 @@
             "url": "https://www.durhamoxshrewley.co.uk"
           }
         ],
-        "terrain": "Gently rolling farmland, small pockets of woodland, Grand Union Canal towpath, motorway bridge crossing.",
+        "terrain": "Gently rolling farmland, small pockets of woodland, Grand Union Canal towpath, motorway bridge crossing",
         "sights": [
           {
             "name": "St Michaels Church",
@@ -1861,8 +1843,7 @@
             "url": "https://www.hattonworld.com"
           }
         ],
-        "warnings": "Nettles and brambles.",
-        "bestTime": "",
+        "warnings": "Nettles and brambles",
         "id": "jq7j",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -1944,7 +1925,7 @@
             "url": "https://www.warwickrowespresso.com"
           }
         ],
-        "terrain": "Suburban streets, nature reserve, meadows, woodland, city park, small urban park.",
+        "terrain": "Suburban streets, nature reserve, meadows, woodland, city park, small urban park",
         "sights": [
           {
             "name": "Canley Ford Local Nature Reserve",
@@ -1971,8 +1952,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "5rpr",
         "mudWarning": true,
         "source": {
@@ -2045,7 +2025,7 @@
             "url": "https://www.cornerhousepubnuneaton.co.uk"
           }
         ],
-        "terrain": "Canal towpath, field paths, suburban town.",
+        "terrain": "Canal towpath, field paths, suburban town",
         "sights": [
           {
             "name": "Coventry Canal",
@@ -2064,8 +2044,7 @@
             "url": "https://www.bedworth-society.co.uk/heritage-centre"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "1jet",
         "mudWarning": true,
         "source": {
@@ -2144,7 +2123,7 @@
             "url": "https://www.facebook.com/theweaversbulko/"
           }
         ],
-        "terrain": "Market town, field paths, Coventry Canal towpath, Ashby Canal towpath, village streets, suburban roads, woodland edge.",
+        "terrain": "Market town, field paths, Coventry Canal towpath, Ashby Canal towpath, village streets, suburban roads, woodland edge",
         "sights": [
           {
             "name": "Coventry Canal",
@@ -2167,8 +2146,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "64wy",
         "mudWarning": true,
         "source": {
@@ -2232,7 +2210,7 @@
             "url": null
           }
         ],
-        "terrain": "Ancient villages, leafy woodland, open fields, canal aqueduct, nature reserve, country lanes.",
+        "terrain": "Ancient villages, leafy woodland, open fields, canal aqueduct, nature reserve, country lanes",
         "sights": [
           {
             "name": "St Mary's Church",
@@ -2255,8 +2233,7 @@
             "url": "https://www.warwickshireflightexperience.co.uk"
           }
         ],
-        "warnings": "Electric fence near stables.",
-        "bestTime": "Best in spring.",
+        "warnings": "Electric fence near stables",
         "id": "atv4",
         "bestSeasons": [
           "mar",
@@ -2323,7 +2300,7 @@
             "url": null
           }
         ],
-        "terrain": "Suburban paths, brook-side walking, oak woodland, wildflower meadow, parkland, sports fields.",
+        "terrain": "Suburban paths, brook-side walking, oak woodland, wildflower meadow, parkland, sports fields",
         "sights": [
           {
             "name": "Alcott Wood",
@@ -2351,7 +2328,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "u9zy",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2409,7 +2385,7 @@
             "url": "https://www.facebook.com/TheOldWindmill.Coventry"
           }
         ],
-        "terrain": "Historic city centre, pedestrian boulevards, cobbled streets, canal basin, city walls, ring road underpasses.",
+        "terrain": "Historic city centre, pedestrian boulevards, cobbled streets, canal basin, city walls, ring road underpasses",
         "sights": [
           {
             "name": "Herbert Art Gallery & Museum",
@@ -2497,7 +2473,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "s86p",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2565,7 +2540,7 @@
             "url": "https://www.facebook.com/joannecharley1971/"
           }
         ],
-        "terrain": "Canal towpath, former colliery park, formal gardens, wildflower meadows, market town streets.",
+        "terrain": "Canal towpath, former colliery park, formal gardens, wildflower meadows, market town streets",
         "sights": [
           {
             "name": "Coventry Canal",
@@ -2588,8 +2563,7 @@
             "url": null
           }
         ],
-        "warnings": "Point-to-point trail.",
-        "bestTime": "",
+        "warnings": "Point-to-point trail",
         "id": "8e7t",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2667,7 +2641,7 @@
             "url": "https://www.thebarnatberryfields.co.uk"
           }
         ],
-        "terrain": "Rural countryside, farmland, fields, farm driveways, quiet lanes, village green.",
+        "terrain": "Rural countryside, farmland, fields, farm driveways, quiet lanes, village green",
         "sights": [
           {
             "name": "St. John the Baptist",
@@ -2682,8 +2656,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "k5ji",
         "mudWarning": true,
         "source": {
@@ -2748,7 +2721,7 @@
             "url": "http://www.thewarwickshirelad.co.uk"
           }
         ],
-        "terrain": "Farmland, woodland edge, country lanes, stream crossings, open fields.",
+        "terrain": "Farmland, woodland edge, country lanes, stream crossings, open fields",
         "sights": [
           {
             "name": "Mockley Wood",
@@ -2775,8 +2748,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "Best in spring.",
+        "warnings": "Can be muddy",
         "id": "35nt",
         "mudWarning": true,
         "bestSeasons": [
@@ -2850,7 +2822,7 @@
             "url": "https://www.facebook.com/hungryhobbitz/"
           }
         ],
-        "terrain": "Canal towpath, River Cole valley, country park, wetlands, grasslands, woodland, heath, urban paths.",
+        "terrain": "Canal towpath, River Cole valley, country park, wetlands, grasslands, woodland, heath, urban paths",
         "sights": [
           {
             "name": "Saxon King on Horse sculpture",
@@ -2874,7 +2846,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "dcoh",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -2942,7 +2913,7 @@
             "url": "https://www.pomeroysbistro.co.uk"
           }
         ],
-        "terrain": "Historic market town, farmland, open countryside, woodland, brooks, bridleways.",
+        "terrain": "Historic market town, farmland, open countryside, woodland, brooks, bridleways",
         "sights": [
           {
             "name": "Abbey Fields",
@@ -2961,8 +2932,7 @@
             "url": "https://www.faerietalealpacas.co.uk"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "hlok",
         "mudWarning": true,
         "source": {
@@ -3037,7 +3007,7 @@
             "url": "https://www.hamptonmanor.com"
           }
         ],
-        "terrain": "Ancient village, tarmacked lanes, River Blythe crossing, nature reserve pools and hides, packhorse bridge, open countryside.",
+        "terrain": "Ancient village, tarmacked lanes, River Blythe crossing, nature reserve pools and hides, packhorse bridge, open countryside",
         "sights": [
           {
             "name": "Marsh Lane Nature Reserve",
@@ -3052,8 +3022,7 @@
             "url": "https://www.hamptonmanor.com"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "p3um",
         "mudWarning": true,
         "source": {
@@ -3123,7 +3092,7 @@
             "url": "https://www.bootinnlapworth.co.uk"
           }
         ],
-        "terrain": "Rural fields, canal towpath, flight of locks, Kingswood Arm, country lanes, Tudor mansion grounds.",
+        "terrain": "Rural fields, canal towpath, flight of locks, Kingswood Arm, country lanes, Tudor mansion grounds",
         "sights": [
           {
             "name": "Church of St. Mary the Virgin",
@@ -3142,8 +3111,7 @@
             "url": "https://www.nationaltrust.org.uk/baddesley-clinton"
           }
         ],
-        "warnings": "Can be very muddy.",
-        "bestTime": "",
+        "warnings": "Can be very muddy",
         "id": "yhud",
         "mudWarning": true,
         "source": {
@@ -3228,7 +3196,7 @@
             "url": null
           }
         ],
-        "terrain": "Town centre, parks, ornamental gardens, lake, River Blythe, woodland, open fields.",
+        "terrain": "Town centre, parks, ornamental gardens, lake, River Blythe, woodland, open fields",
         "sights": [
           {
             "name": "St. Alphege Church",
@@ -3255,8 +3223,7 @@
             "url": "http://www.solihull.gov.uk/Parks-and-open-spaces/"
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "n04c",
         "mudWarning": true,
         "source": {
@@ -3330,7 +3297,7 @@
             "url": "https://www.navigationlapworth.co.uk"
           }
         ],
-        "terrain": "Wealthy suburbia, country lanes, Grand Union Canal towpath, open fields.",
+        "terrain": "Wealthy suburbia, country lanes, Grand Union Canal towpath, open fields",
         "sights": [
           {
             "name": "Brook Meadow",
@@ -3357,8 +3324,7 @@
             "url": null
           }
         ],
-        "warnings": "Can be muddy.",
-        "bestTime": "",
+        "warnings": "Can be muddy",
         "id": "tm5h",
         "mudWarning": true,
         "source": {
@@ -3436,7 +3402,7 @@
             "url": null
           }
         ],
-        "terrain": "Suburban streets, open fields, M42 motorway bridge crossing, River Blythe, parkland.",
+        "terrain": "Suburban streets, open fields, M42 motorway bridge crossing, River Blythe, parkland",
         "sights": [
           {
             "name": "Widney Manor Cemetery",
@@ -3456,7 +3422,6 @@
           }
         ],
         "warnings": "",
-        "bestTime": "",
         "id": "gfml",
         "source": {
           "orgSlug": "heart-rail-trails",
@@ -3534,7 +3499,7 @@
             "url": "https://www.straightfromthecow.co.uk"
           }
         ],
-        "terrain": "Warwickshire countryside, river crossing, fields, kissing gates, village roads, railway crossing.",
+        "terrain": "Warwickshire countryside, river crossing, fields, kissing gates, village roads, railway crossing",
         "sights": [
           {
             "name": "St. Mary Magdalene",
@@ -3549,8 +3514,7 @@
             "url": null
           }
         ],
-        "warnings": "No shops en route.",
-        "bestTime": "",
+        "warnings": "No shops en route",
         "id": "vw13",
         "source": {
           "orgSlug": "heart-rail-trails",

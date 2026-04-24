@@ -61,6 +61,7 @@ async function fetchPhotosViaProxy(
 import { Button } from "@/components/ui/button"
 import { LogoSpinner } from "@/components/logo-spinner"
 import WalksAdminPanel from "@/components/walks-admin-panel"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
@@ -191,8 +192,23 @@ type StationModalProps = {
   privateNote?: string
   /** Rambler recommendations — visible to everyone, sourced from walkingclub.org.uk extractions */
   ramblerNote?: string
+  /** Filtered version of ramblerNote for non-admin viewers: always
+   *  includes all main walks and all notes; includes a variant only
+   *  when its base title (no suffix) doesn't duplicate any other
+   *  walk's full title at the station. Computed by the build script
+   *  alongside ramblerNote. */
+  publicRamblerNote?: string
   /** Saves all three note types when the overlay closes */
   onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
+  /** Free-form markdown paragraphs that render AFTER the walk
+   *  summaries in this station's ramblerNote prose. Admin-editable
+   *  via the Notes section below the walks admin panel; persisted
+   *  in data/station-rambler-extras.json. */
+  ramblerExtras?: string[]
+  /** Replace this station's ramblerExtras with `lines` (empty array
+   *  clears the entry). Server trims + drops blanks and rebuilds
+   *  the derived station-notes.json. */
+  onSaveRamblerExtras?: (lines: string[]) => Promise<void> | void
   /** The default Flickr algo for this station. Decided by the parent based on
    *  cluster/excluded membership — Central London terminals + excluded
    *  stations default to "station"; everything else defaults to "landscapes". */
@@ -416,6 +432,35 @@ function autoResize(el: HTMLTextAreaElement) {
 }
 
 /**
+ * Invoke `cb` while pinning the dialog's scroll position in place.
+ *
+ * Why: admin curation actions (pin/unpin/approve/move) trigger a React
+ * re-render of the photo grid. Even when the photo's array index doesn't
+ * change, focus shifts and layout micro-adjustments (pin badge
+ * appearing, button style flipping) can cause the browser to auto-scroll
+ * — most noticeably jumping the viewport to the top. Capturing scrollTop
+ * on both scroll containers (inner `[data-modal-scroll]` on desktop,
+ * outer `[data-slot="dialog-content"]` on mobile) and restoring it in
+ * the next animation frame makes the scroll position immovable across
+ * the action, so the admin keeps their place in the gallery.
+ */
+function withPreservedScroll(cb: () => void) {
+  if (typeof document === "undefined") { cb(); return }
+  const inner = document.querySelector('[data-modal-scroll]')
+  const outer = document.querySelector('[data-slot="dialog-content"]')
+  const snapshots: Array<{ el: HTMLElement; top: number }> = []
+  if (inner instanceof HTMLElement) snapshots.push({ el: inner, top: inner.scrollTop })
+  if (outer instanceof HTMLElement) snapshots.push({ el: outer, top: outer.scrollTop })
+  cb()
+  // rAF runs after React commits the update, so setting scrollTop here
+  // lands on the post-render layout — any browser-triggered jump during
+  // the commit is undone on the very next frame.
+  requestAnimationFrame(() => {
+    for (const { el, top } of snapshots) el.scrollTop = top
+  })
+}
+
+/**
  * Turn markdown-style [text](url) links into clickable <a> elements.
  * Plain text passes through unchanged.
  */
@@ -511,7 +556,10 @@ export default function StationModal({
   publicNote = "",
   privateNote = "",
   ramblerNote = "",
+  publicRamblerNote = "",
   onSaveNotes,
+  ramblerExtras = [],
+  onSaveRamblerExtras,
   defaultAlgo = "landscapes",
   customSettings,
   onSaveCustom,
@@ -1411,44 +1459,73 @@ export default function StationModal({
             </button>
           ) : null}
 
-          {/* ── Rambler recommendations: same format/behaviour as the
+          {/* ── Walks: same format/behaviour as the
               Trains to Green recommendations block above — subheader gated on
               devMode || content so non-admins never see an empty
               label, admins always do so they know where to type. */}
-          {(devMode || ramblerNote) && (
-            <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Rambler recommendation{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
-            </p>
-          )}
+          {(devMode || ramblerNote) && (() => {
+            // Everyone (admin + public) sees the FILTERED list here
+            // so the admin's prose preview matches what visitors get.
+            // Full walk list with per-variant editing lives in the
+            // WalksAdminPanel below for admins who want to curate.
+            const source = publicRamblerNote || ramblerNote
+            const count = source.split(/\n+/).filter(Boolean).length
+            return (
+              <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
+                Walk{count === 1 ? "" : "s"}
+              </p>
+            )
+          })()}
 
           {/* Rambler note — view-only. The prose is regenerated from
               structured walk data by scripts/build-rambler-notes.mjs
               and written to station-notes.json, so admins no longer
               edit it directly here. Structured editing lives in the
               WalksAdminPanel below (admin only).
-              Public visitors see at most the top 3 paragraphs (already
-              sorted top-first by the build pipeline); admins see every
-              paragraph so they can review what's being trimmed. */}
-          {ramblerNote ? (() => {
-            const allParas = ramblerNote.split(/\n+/).filter(Boolean)
-            const shownParas = devMode ? allParas : allParas.slice(0, 3)
+
+              Visibility:
+                • Everyone (admin + public) sees `publicRamblerNote`
+                  here — always all mains + all notes, plus variants
+                  whose base title (derived title minus suffix) doesn't
+                  duplicate any other walk's full title at this station.
+                  Falls back to `ramblerNote` on older station-notes
+                  entries that predate the publicRamblerNote field.
+                • Admins get the FULL walk list (variants included) in
+                  the WalksAdminPanel below, where they can edit per-
+                  variant structured fields. */}
+          {(() => {
+            const source = publicRamblerNote || ramblerNote
+            if (!source) return null
+            const paras = source.split(/\n+/).filter(Boolean)
             return (
               <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
-                {shownParas.map((para, i) => (
+                {paras.map((para, i) => (
                   <p key={i}>{renderWithLinks(para)}</p>
                 ))}
               </div>
             )
-          })() : null}
+          })()}
 
           {/* Structured walk editor — admin only. Fetches every walk
               variant attached to this station's CRS and surfaces the
               Phase 5 editable fields (Komoot URL, mud warning, best
-              seasons, free-text warnings/bestTime). Saving a card
+              seasons, free-text warnings, train tips). Saving a card
               rewrites the source JSON and re-runs the build, so the
               prose above refreshes on the next station-notes fetch. */}
           {devMode && stationCrs && (
             <WalksAdminPanel stationCrs={stationCrs} onSaved={onWalkSaved} />
+          )}
+
+          {/* Admin-only Notes editor — free-form markdown paragraphs
+              that render AFTER the walk summaries in the ramblerNote
+              prose. Each row is one paragraph. Persisted to
+              data/station-rambler-extras.json; saving rebuilds the
+              derived prose in station-notes.json. */}
+          {devMode && onSaveRamblerExtras && (
+            <RamblerExtrasEditor
+              extras={ramblerExtras}
+              onSave={onSaveRamblerExtras}
+            />
           )}
 
           {/* Private note — admin-only. Same click-to-edit pattern, with
@@ -1748,17 +1825,29 @@ export default function StationModal({
                   const isApproved = approvedIds.has(photo.id)
                   const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
                   const isPinned = pinnedIds.has(photo.id)
-                  // With pins-are-fixed semantics, a move is possible if ANY
-                  // non-pinned-except-self slot exists in that direction
-                  // (pins between don't block — we skip past them). Non-
-                  // approved photos always allow "jump to top" since it
+                  // Movability depends on whether the photo itself is pinned:
+                  //   - A PINNED photo can swap with any adjacent photo (pins
+                  //     can bump other pins), so movability reduces to "is
+                  //     there ANY photo in that direction".
+                  //   - A NON-pinned photo still treats pins as fixed blockers,
+                  //     so it needs at least one non-pinned slot (or self) in
+                  //     that direction to swap into.
+                  // Non-approved photos always allow "jump to top" since it
                   // approves + inserts into the list.
-                  const hasMovableSlotBefore = isApproved && approvedPhotos
-                    .slice(0, approvedIndex)
-                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
-                  const hasMovableSlotAfter = isApproved && approvedPhotos
-                    .slice(approvedIndex + 1)
-                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  const hasMovableSlotBefore = isApproved && (
+                    isPinned
+                      ? approvedIndex > 0
+                      : approvedPhotos
+                          .slice(0, approvedIndex)
+                          .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  )
+                  const hasMovableSlotAfter = isApproved && (
+                    isPinned
+                      ? approvedIndex < approvedPhotos.length - 1
+                      : approvedPhotos
+                          .slice(approvedIndex + 1)
+                          .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  )
                   const canMoveUp = !isApproved ? true : hasMovableSlotBefore
                   const canMoveDown = hasMovableSlotAfter
                   // Pin button shows only on Approved tab, only for photos
@@ -1776,6 +1865,10 @@ export default function StationModal({
                     if (isApproved) onMovePhoto?.(photo.id, "top")
                     else onApprovePhotoAtTop?.(photo)
                   }
+                  // All curation actions reorder or re-style the grid,
+                  // which can jolt the viewport — wrap every click in
+                  // withPreservedScroll so the admin's scroll position
+                  // survives pin / unpin / approve / move operations.
                   return (
                     <PhotoCard
                       key={photo.id}
@@ -1785,14 +1878,14 @@ export default function StationModal({
                       isPinned={isPinned}
                       showPin={showPin}
                       showReorder={reorderable && approvedIndex >= 0}
-                      onApprove={() => onApprovePhoto?.(photo)}
-                      onUnapprove={() => onUnapprovePhoto?.(photo.id)}
-                      onPin={() => onPinPhoto?.(photo)}
-                      onUnpin={() => onUnpinPhoto?.(photo.id)}
-                      onMoveToTop={handleJumpToTop}
-                      onMoveToBottom={() => onMovePhoto?.(photo.id, "bottom")}
-                      onMoveUp={() => onMovePhoto?.(photo.id, "up")}
-                      onMoveDown={() => onMovePhoto?.(photo.id, "down")}
+                      onApprove={() => withPreservedScroll(() => onApprovePhoto?.(photo))}
+                      onUnapprove={() => withPreservedScroll(() => onUnapprovePhoto?.(photo.id))}
+                      onPin={() => withPreservedScroll(() => onPinPhoto?.(photo))}
+                      onUnpin={() => withPreservedScroll(() => onUnpinPhoto?.(photo.id))}
+                      onMoveToBottom={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "bottom"))}
+                      onMoveUp={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "up"))}
+                      onMoveDown={() => withPreservedScroll(() => onMovePhoto?.(photo.id, "down"))}
+                      onMoveToTop={() => withPreservedScroll(handleJumpToTop)}
                       canMoveUp={canMoveUp}
                       canMoveDown={canMoveDown}
                       onImageError={() => handleImageError(photo.id)}
@@ -2438,6 +2531,130 @@ function PhotoCard({ photo, devMode, isApproved, isPinned, showPin = false, show
         </p>
         <p className="truncate text-[10px] text-white/70">{photo.ownerName}</p>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Admin-only editor for a station's free-form "rambler extras" —
+ * markdown paragraphs that render after the walk summaries in the
+ * public ramblerNote prose.
+ *
+ * One row per paragraph, with × to delete and a "+ Add note" button
+ * below. Save is explicit (not auto-on-blur) because edits across
+ * several rows are usually meant as a single batch. Clicking save
+ * commits the entire array; the server trims + drops blanks and
+ * rebuilds the derived station-notes.json.
+ */
+function RamblerExtrasEditor({
+  extras,
+  onSave,
+}: {
+  extras: string[]
+  onSave: (lines: string[]) => Promise<void> | void
+}) {
+  const [draft, setDraft] = useState<string[]>(extras)
+  const [saving, setSaving] = useState(false)
+  // When non-null, the ConfirmDialog renders asking whether to drop
+  // the note at this index. Deleting a note is local-only until Save
+  // is pressed, but the admin may have typed a long note they'd
+  // regret losing to a misclick — so it still gets a confirm.
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null)
+  // Re-seed the draft if the server state updates from elsewhere
+  // (e.g. a sibling edit, or an external edit flushed back via refetch).
+  // Uses a JSON compare so identical-but-new-reference arrays don't
+  // force the local edit state to reset.
+  useEffect(() => {
+    setDraft(extras)
+    // Intentionally only syncing on `extras` identity — we WANT local
+    // edits to persist until the admin clicks save.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(extras)])
+
+  const dirty =
+    draft.length !== extras.length ||
+    draft.some((line, i) => line !== extras[i])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(draft)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-border p-3">
+      <div className="mb-2 text-xs font-medium text-muted-foreground">Notes</div>
+      {draft.length === 0 && (
+        <p className="mb-2 text-xs italic text-muted-foreground/70">
+          No notes yet. Notes render as extra paragraphs after the walks in the public prose.
+        </p>
+      )}
+      <div className="flex flex-col gap-2">
+        {draft.map((line, i) => (
+          <div key={i} className="flex items-start gap-2">
+            {/* One textarea per note — multiline so markdown line breaks
+                read naturally while editing. Fixed 2-row starting size,
+                vertical resize handle for longer notes. */}
+            <textarea
+              value={line}
+              onChange={(e) => {
+                const next = [...draft]
+                next[i] = e.target.value
+                setDraft(next)
+              }}
+              rows={2}
+              placeholder="Markdown supported, e.g. [Featured by Scenic Rail](https://…)"
+              className="flex-1 resize-y rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={() => setConfirmDeleteIndex(i)}
+              className="rounded px-1 text-muted-foreground hover:text-destructive"
+              title="Delete note"
+              aria-label={`Delete note ${i + 1}`}
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setDraft([...draft, ""])}
+          className="rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
+        >
+          + Add note
+        </button>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={!dirty || saving}
+          className="ml-auto rounded bg-primary px-3 py-1 text-xs text-primary-foreground disabled:opacity-40"
+        >
+          {saving ? "Saving…" : "Save"}
+        </button>
+      </div>
+      <ConfirmDialog
+        open={confirmDeleteIndex !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteIndex(null) }}
+        title="Delete this note?"
+        description={
+          confirmDeleteIndex !== null ? (
+            <>This removes the note from the local draft. Changes persist to the site after you click <strong>Save</strong>.</>
+          ) : null
+        }
+        confirmLabel="Delete note"
+        onConfirm={() => {
+          if (confirmDeleteIndex !== null) {
+            setDraft((d) => d.filter((_, j) => j !== confirmDeleteIndex))
+          }
+          setConfirmDeleteIndex(null)
+        }}
+      />
     </div>
   )
 }

@@ -9,6 +9,7 @@ const WALKS_FILES = [
   "data/leicester-ramblers-walks.json",
   "data/heart-rail-trails-walks.json",
   "data/abbey-line-walks.json",
+  "data/manual-walks.json",
 ]
 
 // Build a CRS → station name lookup from public/stations.json so the
@@ -57,15 +58,38 @@ type WalkPayload = {
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string }[]
   // editable
   warnings: string
-  bestTime: string
+  trainTips: string
+  // Admin-only scratchpad on the walk. Never exposed to the public
+  // (build script ignores it entirely). Useful for curation TODOs
+  // like "check distance, SWC says 14.5 but Komoot says 13.8".
+  privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
+  // Entry-level GPX URL (shared across all variants on the same page).
+  // Undefined when the source doesn't publish one.
+  gpx?: string
+  // True when the walk needs a bus / taxi / heritage rail to return,
+  // OR when one endpoint is a non-mainline station (e.g. a village).
+  // Drives the admin `bus` chip and pushes the walk to the bottom of
+  // the CMS list. Public prose NEVER renders these walks (build-
+  // script already filters on `stationToStation === true`), so this
+  // field is an admin-only visibility signal.
+  requiresBus: boolean
   rating: number | null
   updatedAt: string | null
   // provenance (read-only in v1 — populated by
   // scripts/backfill-walk-source-metadata.mjs)
   source?: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
+  // Admin-only cross-reference to a related walk page. Same shape
+  // as `source` but optional — when unset the whole field is
+  // absent from the JSON. Not rendered in public prose.
+  relatedSource?: {
     orgSlug: string
     pageName: string
     pageURL: string
@@ -77,15 +101,21 @@ type WalkPayload = {
 
 // Walk ordering — automatic, not admin-overridable.
 // Sort keys (ASC — lower value wins):
-//   1. ratingTier     (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
-//   2. !komootUrl     (walks with a Komoot route come first)
-//   3. !isMain        (main walks before variants)
-//   4. distanceScore  (|distanceKm - IDEAL_LENGTH_KM| — closer to ideal first;
-//                      walks without a distance sort last via Infinity)
-//   5. -updatedAt     (most recently edited first; missing sorts last)
-//   6. pageTitle      (deterministic tiebreaker)
+//   1. requiresBus     (bus-requiring walks always drop to the BOTTOM;
+//                       they're never published to the public anyway
+//                       so the CMS list keeps the publishable walks
+//                       on top)
+//   2. !komootUrl      (walks with a Komoot route come first)
+//   3. !isMain         (main walks first; non-mains are not
+//                       further sorted among themselves by subtype —
+//                       the SOURCE_TYPES dropdown order no longer
+//                       affects position)
+//   4. ratingTier      (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
+//   5. distanceScore   (|distanceKm - IDEAL_LENGTH_KM| — closest to
+//                       ideal first; missing distance sorts last)
+//   6. pageTitle       (deterministic tiebreaker)
 // Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
-const IDEAL_LENGTH_KM = 13
+const IDEAL_LENGTH_KM = 10
 // Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
 // so the admin cards appear in the same order as the rendered prose.
 const RATING_TIERS: Record<string, number> = {
@@ -120,7 +150,11 @@ export async function GET(req: NextRequest) {
     for (const entry of Object.values(data)) {
       if (!Array.isArray(entry.walks)) continue
       for (const v of entry.walks) {
-        if (v.startStation !== crs && v.endStation !== crs) continue
+        // Only attach each walk to its STARTING station — avoids the
+        // same walk showing up on two overlays (start + end) and
+        // halves the list the admin has to curate. Circular walks
+        // still appear once because start === end.
+        if (v.startStation !== crs) continue
         out.push({
           slug: entry.slug,
           pageTitle: entry.title,
@@ -143,50 +177,58 @@ export async function GET(req: NextRequest) {
           sights: v.sights ?? [],
           lunchStops: v.lunchStops ?? [],
           warnings: v.warnings ?? "",
-          bestTime: v.bestTime ?? "",
+          trainTips: v.trainTips ?? "",
+          privateNote: v.privateNote ?? "",
           mudWarning: !!v.mudWarning,
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",
+          gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
+          requiresBus: !!v.requiresBus,
           rating: typeof v.rating === "number" ? v.rating : null,
           updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,
+          relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
           previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
         })
       }
     }
   }
 
-  // Ordering: ratingTier → komoot first → most-recently-updated →
-  // alphabetic pageTitle. See RATING_TIERS comment above for the
-  // explicit tier mapping.
+  // Proximity to the ideal walk length. Closer to IDEAL_LENGTH_KM
+  // sorts first; missing distances fall to the bottom of their tier
+  // via Infinity so gaps in the data don't win ties.
   const distanceScore = (km: number | null) =>
     typeof km === "number" && Number.isFinite(km)
       ? Math.abs(km - IDEAL_LENGTH_KM)
       : Number.POSITIVE_INFINITY
 
   out.sort((a, b) => {
-    const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
-    if (ta !== tb) return ta - tb
+    // 1. Bus-requiring walks always sink to the bottom. These can
+    //    never be published to the public (the build script filters
+    //    on stationToStation), so they're admin-curation-only — no
+    //    reason for them to compete with publishable walks on the
+    //    other keys.
+    const ba = a.requiresBus ? 1 : 0
+    const bb = b.requiresBus ? 1 : 0
+    if (ba !== bb) return ba - bb
+    // 2. Komoot walks first.
     const ka = a.komootUrl ? 0 : 1
     const kb = b.komootUrl ? 0 : 1
     if (ka !== kb) return ka - kb
-    // Main walks before variants within a tier. source.type is the
-    // modern home; fall back to legacy role for walks that haven't
-    // been touched since the source backfill.
-    const typeA = a.source?.type ?? a.role
-    const typeB = b.source?.type ?? b.role
-    const ma = typeA === "main" ? 0 : 1
-    const mb = typeB === "main" ? 0 : 1
+    // 3. Main walks first. No further type-subtype ordering among
+    //    non-mains. source.type is the modern home; fall back to
+    //    legacy `role` for older walks.
+    const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
+    const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
     if (ma !== mb) return ma - mb
-    // Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
+    // 4. Rating tier (4 → 3 → 2 → unrated → 1).
+    const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
+    if (ta !== tb) return ta - tb
+    // 5. Distance proximity to IDEAL_LENGTH_KM — closest first; missing last.
     const da = distanceScore(a.distanceKm)
     const db = distanceScore(b.distanceKm)
     if (da !== db) return da - db
-    // updatedAt: most recent first. Missing timestamps sort last
-    // (they predate the updatedAt stamp; newer edits bubble above).
-    const ua = a.updatedAt ?? ""
-    const ub = b.updatedAt ?? ""
-    if (ua !== ub) return ub.localeCompare(ua) // DESC
+    // 6. Alphabetic pageTitle for deterministic tiebreak.
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 

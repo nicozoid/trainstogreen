@@ -122,7 +122,7 @@ const EXTRACT_TOOL = {
     type: "object",
     required: [
       "walkTitle", "distanceMiles", "hours", "difficulty", "tagline",
-      "terrain", "sights", "lunchStops", "warnings", "bestTime",
+      "terrain", "sights", "lunchStops", "warnings",
     ],
     properties: {
       walkTitle: {
@@ -184,12 +184,6 @@ const EXTRACT_TOOL = {
         description:
           "ONE ultra-short hazard warning — 2-4 words. 'Can be muddy.' or 'Cliff edges crumbly.' Empty string if no warning.",
       },
-      bestTime: {
-        type: "string",
-        maxLength: 40,
-        description:
-          "ONE ultra-short season recommendation — 2-5 words. 'Best in Oct/Nov.' / 'Best in spring.' Empty if not mentioned.",
-      },
     },
   },
 }
@@ -204,7 +198,7 @@ Rules:
 - For lunchStops, include every recommended pub/cafe/eatery on page 1 or 2 — include their URL when printed.
 - For sights, include every named castle/church/museum/garden/ruin/etc. mentioned — with URLs when printed. Skip pubs/cafes (those are lunch stops).
 - terrain must be ONE short clipped sentence (commas, no prose, no hazard mentions).
-- warnings and bestTime: 2-5 words each or empty string.
+- warnings: 2-4 words or empty string.
 - If the walk is not a circular (e.g. point-to-point), note that in terrain and still emit the schema.
 - Output only via the tool call. No prose.`
 
@@ -316,7 +310,6 @@ function buildEntry(station, url, x) {
         terrain: x.tagline && !x.terrain ? x.tagline : (x.terrain ?? ""),
         sights: (x.sights ?? []).map((s) => ({ name: s.name, url: s.url ?? null })),
         warnings: x.warnings ?? "",
-        bestTime: x.bestTime ?? "",
       },
     ],
     extracted: true,
