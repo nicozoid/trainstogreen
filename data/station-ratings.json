@@ -237,7 +237,7 @@
   },
   "-0.1990432,51.4340563": {
     "name": "Wimbledon Park",
-    "rating": "verified"
+    "rating": "unverified"
   },
   "-0.2038369,51.2418815": {
     "name": "Reigate",
@@ -973,7 +973,7 @@
   },
   "-1.2425171,51.6112197": {
     "name": "Didcot Parkway",
-    "rating": "not-recommended"
+    "rating": "unverified"
   },
   "-1.2427417,51.3938591": {
     "name": "Thatcham",
@@ -1998,5 +1998,117 @@
   "1.4334122,51.360737": {
     "name": "Broadstairs",
     "rating": "verified"
+  },
+  "-3.3494457,51.3871547": {
+    "name": "Rhoose Cardiff International Airport",
+    "rating": "unverified"
+  },
+  "-2.3574357,51.3773725": {
+    "name": "Bath Spa",
+    "rating": "unverified"
+  },
+  "-0.6077008,51.6098353": {
+    "name": "Seer Green and Jordans",
+    "rating": "unverified"
+  },
+  "-2.2580915,51.3452148": {
+    "name": "Bradford-on-Avon",
+    "rating": "unverified"
+  },
+  "-0.0176241,51.5061102": {
+    "name": "Canary Wharf",
+    "rating": "unverified"
+  },
+  "-2.2958515,54.1508117": {
+    "name": "Horton-in-Ribblesdale",
+    "rating": "unverified"
+  },
+  "-1.1569226,51.5625961": {
+    "name": "Cholsey",
+    "rating": "unverified"
+  },
+  "-0.3638616,51.0508094": {
+    "name": "Christ's Hospital",
+    "rating": "unverified"
+  },
+  "-0.170908,51.2274825": {
+    "name": "Earlswood",
+    "rating": "unverified"
+  },
+  "-0.9420743,51.7709259": {
+    "name": "Haddenham and Thame Parkway",
+    "rating": "unverified"
+  },
+  "0.1654013,51.8664266": {
+    "name": "Bishop's Stortford",
+    "rating": "unverified"
+  },
+  "0.7586045,51.9258987": {
+    "name": "Chappel and Wakes Colne",
+    "rating": "unverified"
+  },
+  "-1.5153161,53.3275706": {
+    "name": "Dore and Totley",
+    "rating": "unverified"
+  },
+  "-2.3020982,54.149217": {
+    "name": "Horton-in-Ribblesdale",
+    "rating": "unverified"
+  },
+  "-1.2809729,52.0210915": {
+    "name": "King's Sutton",
+    "rating": "unverified"
+  },
+  "-0.8293176,51.7358193": {
+    "name": "Monks Risborough",
+    "rating": "unverified"
+  },
+  "-0.6053949,51.4866279": {
+    "name": "Windsor and Eton Riverside",
+    "rating": "unverified"
+  },
+  "1.2433218,51.8377612": {
+    "name": "Frinton-on-Sea",
+    "rating": "unverified"
+  },
+  "-2.4104509,54.105416": {
+    "name": "Clapham",
+    "rating": "unverified"
+  },
+  "0.1906219,51.5167202": {
+    "name": "Rainham",
+    "rating": "unverified"
+  },
+  "-1.3387418,51.2376461": {
+    "name": "Whitchurch",
+    "rating": "unverified"
+  },
+  "-0.1236888,51.5074975": {
+    "name": "Charing Cross",
+    "rating": "unverified"
+  },
+  "-0.223247,51.4921603": {
+    "name": "Hammersmith (District and Piccadilly lines)",
+    "rating": "unverified"
+  },
+  "0.0950574,51.781293": {
+    "name": "Harlow Town",
+    "rating": "unverified"
+  },
+  "-0.0107517,51.4817267": {
+    "name": "Cutty Sark for Maritime Greenwich",
+    "rating": "unverified"
+  },
+  "-1.322751,51.3975325": {
+    "name": "Newbury",
+    "rating": "unverified"
+  },
+  "0.0043201,51.500574": {
+    "name": "North Greenwich",
+    "rating": "unverified"
+  },
+  "0.0009329,51.7881973": {
+    "name": "St Margarets",
+    "rating": "unverified"
   }
 }
