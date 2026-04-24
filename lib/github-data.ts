@@ -57,8 +57,25 @@ export async function readDataFile<T>(relativePath: string): Promise<{ data: T; 
   }
 
   const json = await res.json()
-  // GitHub returns the file content as base64
-  const content = Buffer.from(json.content, "base64").toString("utf-8")
+  // The Contents API's inline base64 `content` field is capped at 1MB;
+  // files above that size come back with `content: ""` plus a
+  // `download_url` pointing at the raw blob. Use that fallback so we
+  // can read the (bigger) build outputs like station-notes.json.
+  let content: string
+  if (typeof json.content === "string" && json.content.length > 0) {
+    content = Buffer.from(json.content, "base64").toString("utf-8")
+  } else if (typeof json.download_url === "string" && json.download_url) {
+    const dl = await fetch(json.download_url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!dl.ok) {
+      throw new Error(`GitHub raw read failed (${dl.status}) for ${relativePath}`)
+    }
+    content = await dl.text()
+  } else {
+    throw new Error(`GitHub API returned no content and no download_url for ${relativePath}`)
+  }
   return { data: JSON.parse(content) as T, sha: json.sha }
 }
 
