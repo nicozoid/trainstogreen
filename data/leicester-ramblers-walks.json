@@ -62,7 +62,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "y1yy",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Nottingham to East Midlands Parkway",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -135,7 +142,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "ksj8",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "East Midlands Parkway to Barrow upon Soar",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -198,7 +212,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "l8op",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Barrow upon Soar to Leicester",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -261,7 +282,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "5xoh",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Market Harborough Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -328,7 +356,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "svv0",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Oakham Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -395,7 +430,14 @@
           }
         ],
         "warnings": "Winter flooding possible.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "0m35",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Syston to Melton Mowbray — A Wreake Valley Ramble",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -452,7 +494,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "yf05",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Melton Mowbray to Oakham via Whissendine",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -521,7 +570,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "av1x",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "East Midlands Parkway Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -594,7 +650,14 @@
           }
         ],
         "warnings": "Short stretch on busy A453.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "6byj",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Nottingham to East Midlands Parkway — South Bank of the River Trent",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -655,7 +718,17 @@
           }
         ],
         "warnings": "",
-        "bestTime": "Late April for bluebells."
+        "bestTime": "Late April for bluebells.",
+        "id": "m0l7",
+        "bestSeasons": [
+          "apr"
+        ],
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Atherstone — Bluebells & Beer",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -714,7 +787,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "cizo",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Derby to Long Eaton",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -777,7 +857,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "1su2",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Atherstone Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -842,7 +929,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "161n",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Fiskerton and Southwell",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -897,7 +991,14 @@
           }
         ],
         "warnings": "MOD firing range — check access.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "1zci",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Lichfield Trent Valley Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -972,7 +1073,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "hzjr",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Derby City",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1033,7 +1141,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "n32c",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Bingham Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1098,7 +1213,14 @@
           }
         ],
         "warnings": "Check for flooding.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "g5r0",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Attenborough Nature Reserve, Beeston Canal & River Trent",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1173,7 +1295,14 @@
           }
         ],
         "warnings": "Irregular train times.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "wy9h",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Burton Joyce to Fiskerton — A Walk by the River Trent",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1232,7 +1361,14 @@
           }
         ],
         "warnings": "Last section on busy road.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "k5x6",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Loughborough Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1299,7 +1435,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "f7jc",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Spondon Circular to Dale Abbey",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1362,7 +1505,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "bsg8",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Nuneaton Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1433,7 +1583,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "5yz8",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Stamford Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1492,7 +1649,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "o799",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Long Eaton to Ilkeston — The Erewash Valley",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1561,7 +1725,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "13j4",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Lowdham to Burton Joyce",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1620,7 +1791,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "t8ed",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Kettering Circular",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1683,7 +1861,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "cd3u",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Ruddington to Loughborough (bus from Nottingham)",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1742,7 +1927,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "xus2",
+        "source": {
+          "orgSlug": "leicester-ramblers",
+          "pageName": "Duffield to Derby",
+          "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,

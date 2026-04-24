@@ -738,5 +738,30 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.6326933,52.0212048": {
+    "name": "Aspley Guise",
+    "custom": {
+      "includeTags": [
+        "woburn abbey",
+        "st mary old church",
+        "parish church",
+        "aspley guise",
+        "bow brickhill",
+        "woburn sands",
+        "woburn park",
+        "woburn safari park",
+        "st mary",
+        "st botolph",
+        "sierra",
+        "wellingtonia",
+        "woburn",
+        "woburn brasserie",
+        "black horse"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }

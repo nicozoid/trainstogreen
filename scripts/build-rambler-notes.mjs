@@ -42,10 +42,35 @@ const EXTRA_WALKS_PATHS = [
 const EXTRAS_PATH = join(PROJECT_ROOT, "data", "station-rambler-extras.json")
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
+// Derived file: per-station season arrays ("Spring" | "Summer" | …) for the
+// season dropdown + "[current-season] highlights" checkbox in the filter
+// panel. Purely an output of this script — aggregated from each walk
+// variant's structured `bestSeasons` month codes. No longer editable in
+// the admin UI (used to be, via /api/dev/station-seasons POST).
+const SEASONS_PATH = join(PROJECT_ROOT, "data", "station-seasons.json")
 
 // Attachment priority — first in the list takes precedence when multiple
 // variants on the same URL touch the same station.
 const ROLE_PRIORITY = ["main", "shorter", "longer", "alternative", "variant"]
+
+// Month codes used in each variant's structured `bestSeasons` field.
+// Order matters — renders in calendar order regardless of how the source
+// data lists them. Also used to map months → high-level seasons when
+// aggregating station-level season metadata for the filter UI.
+const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]
+const MONTH_FULL = {
+  jan: "January", feb: "February", mar: "March", apr: "April",
+  may: "May", jun: "June", jul: "July", aug: "August",
+  sep: "September", oct: "October", nov: "November", dec: "December",
+}
+// Calendar-quarter mapping used for deriving per-station season arrays.
+const MONTH_TO_SEASON = {
+  mar: "Spring", apr: "Spring", may: "Spring",
+  jun: "Summer", jul: "Summer", aug: "Summer",
+  sep: "Autumn", oct: "Autumn", nov: "Autumn",
+  dec: "Winter", jan: "Winter", feb: "Winter",
+}
+const SEASON_ORDER = ["Spring", "Summer", "Autumn", "Winter"]
 
 function parseArgs(argv) {
   return {
@@ -70,6 +95,41 @@ function buildCrsIndex() {
 }
 
 // ── Formatting helpers ────────────────────────────────────────────────────
+
+// Terrain is stored as a single comma-separated string where each
+// item is a short phrase (e.g. "Chiltern escarpment ridge, open
+// downland, ancient beechwoods"). Historically it was free-prose
+// ending in a period; admins now edit it as a list of tags with no
+// punctuation, and the renderer handles the comma/"and"/period.
+//
+// Rendering:
+//   ["X"]               → "X."
+//   ["X", "Y"]          → "X and Y."
+//   ["X", "Y", "Z"]     → "X, Y, and Z."   (Oxford comma)
+//
+// Any legacy strings that already contain a period or fragment like
+// "X, Y, and Z." just pass through untouched via withPeriod() because
+// a non-empty parse still looks like one clause — easier than trying
+// to round-trip old prose.
+function formatTerrainTags(raw) {
+  if (!raw || typeof raw !== "string") return null
+  const items = raw
+    .split(",")
+    .map((s) => s.trim().replace(/\s+/g, " "))
+    // Drop empty items (consecutive commas) and the special "and X"
+    // leading — admins might accidentally type "X, Y, and Z" which
+    // we want to read as three items, not two.
+    .map((s) => s.replace(/^and\s+/i, ""))
+    // Strip trailing sentence punctuation from each item. Legacy
+    // strings end with "." so the final item would otherwise double
+    // up when we append our own period below.
+    .map((s) => s.replace(/[.!?]+$/, "").trim())
+    .filter(Boolean)
+  if (items.length === 0) return null
+  if (items.length === 1) return `${items[0]}.`
+  if (items.length === 2) return `${items[0]} and ${items[1]}.`
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}.`
+}
 
 // Distance in km, rounded DOWN, with a space before "km". Miles are
 // intentionally dropped — keeps the trailing stats compact.
@@ -113,14 +173,20 @@ function formatSights(sights) {
     .join(", ")
 }
 
-// "a shorter variant of" / "a longer variant of" / "an alternative variant of" / "a variant of"
-function roleQualifier(role) {
-  switch (role) {
-    case "shorter":     return "a shorter variant of"
-    case "longer":      return "a longer variant of"
-    case "alternative": return "an alternative variant of"
-    default:            return "a variant of"
-  }
+// Structured bestSeasons → "Best in July, August." / "Best in July and August."
+// Input is an array of 3-letter month codes. Sorts into calendar order,
+// dedupes, converts to full names, joins with commas + "and". Empty or
+// invalid → returns null so the caller can fall back to free-text `bestTime`.
+function formatBestSeasons(months) {
+  if (!Array.isArray(months) || months.length === 0) return null
+  const clean = [...new Set(months.map((m) => String(m).toLowerCase()))]
+    .filter((m) => MONTH_FULL[m])
+    .sort((a, b) => MONTH_ORDER.indexOf(a) - MONTH_ORDER.indexOf(b))
+  if (clean.length === 0) return null
+  const names = clean.map((m) => MONTH_FULL[m])
+  if (names.length === 1) return `Best in ${names[0]}.`
+  if (names.length === 2) return `Best in ${names[0]} and ${names[1]}.`
+  return `Best in ${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}.`
 }
 
 // Ensure a string ends with a period. Trims trailing whitespace and
@@ -136,58 +202,104 @@ function withPeriod(s) {
 //   <opener><fav><terrain> <sights sentence><warnings><bestTime><lunch><km><hours>
 //
 // Separators between clauses are single spaces; every clause ends with a
-// period. Main walks get the page title as the link; variants get
-// "Start to End: a ... variant of the [Page Title](URL) walk." as the opener.
+// period. Every walk renders identically — no "main vs variant"
+// distinction — so the reader sees a flat list of walks rather than a
+// page-anchored hierarchy. Names come from `variant.name`, falling
+// back to the entry title when the variant name is the generic
+// placeholder "Main Walk" that the SWC extractor emitted.
+//
+// The `role` field on each variant (main / shorter / longer /
+// alternative / variant) is preserved as **provenance metadata** — a
+// record of how the SWC extractor categorised this walk when it was
+// scraped. It no longer drives rendering or any user-visible
+// hierarchy, but may be useful later for filtering or showing the
+// "canonical" version of a page's walks.
 function buildSummary(variant, entry, crsIndex) {
   const start = crsIndex.get(variant.startStation)
   const end = crsIndex.get(variant.endStation)
   if (!start || !end) return null
 
-  const isMain = variant.role === "main"
   const isCircular = variant.startStation === variant.endStation
 
-  // The route name (the portion before the first colon) is wrapped in
-  // **…** so it renders at font-medium in the overlay — a gentle
-  // emphasis to help the eye hop between stacked recommendations.
-  // For main walks the linked title IS the route name, so the link
-  // lives inside the bold; for variants the "Start to End" subject is
-  // the bold, and the source-page link sits in the trailing clause.
-  let opening
-  if (isMain) {
-    opening = `**[${entry.title}](${entry.url})**:`
+  // Display title resolution, in order of precedence:
+  //   1. `variant.name` (legacy override / "Custom title" from admin)
+  //   2. derived "{start} to {end}" (or "{start} circular") + optional
+  //      `variant.suffix` appended with a space
+  //   3. `entry.title` as a last-resort fallback (shouldn't fire in
+  //      practice — every s2s walk reaching here has resolved stations)
+  const rawName = (variant.name ?? "").trim()
+  const suffix = (variant.suffix ?? "").trim()
+  let displayName
+  if (rawName) {
+    // Admin-curated override — use as-is. Suffix is ignored in this
+    // branch (override is meant to be the final title).
+    displayName = rawName
+  } else if (start && end) {
+    const base = isCircular ? `${start.name} circular` : `${start.name} to ${end.name}`
+    displayName = suffix ? `${base} ${suffix}` : base
   } else {
-    const subject = isCircular ? `${start.name} circular` : `${start.name} to ${end.name}`
-    opening = `**${subject}**: ${roleQualifier(variant.role)} the [${entry.title}](${entry.url}) walk.`
+    displayName = entry.title
   }
+  // Source URL is always the entry's SWC page for now. Once walks can
+  // cite other sources (books, organisations, TG itself — Phase 6),
+  // this will need to consult a per-walk source field.
+  const opening = `**[${displayName}](${entry.url})**:`
 
   const parts = [opening]
 
-  // Rambler-favourite flourish (page-level — applies to every variant on
-  // a starred URL, per the user's preference)
-  if (entry.favourite) parts.push("Rambler favourite!")
+  // Rambler-favourite flourish now keys off the walk's own rating.
+  // Historic behaviour fired on the entry-level `favourite` flag,
+  // which applied to every variant of a starred page; the rating
+  // lives per-variant so individual variants can be singled out.
+  // Threshold: rating >= 3 (backfill starts favourites at 3).
+  if (typeof variant.rating === "number" && variant.rating >= 3) {
+    parts.push("Rambler favourite!")
+  }
 
-  // Terrain — a required clipped sentence
-  if (variant.terrain?.trim()) parts.push(withPeriod(variant.terrain))
+  // Terrain — stored as comma-separated tags; renderer joins with
+  // commas + "and" + period. Legacy prose that already contains
+  // commas still renders well because each chunk is treated as a tag.
+  const terrainSentence = formatTerrainTags(variant.terrain)
+  if (terrainSentence) parts.push(terrainSentence)
 
   // Sights — labelled list, no descriptions
   const sightsStr = formatSights(variant.sights)
   if (sightsStr) parts.push(`Sights: ${sightsStr}.`)
 
-  // Warnings — one ultra-short clause
-  if (variant.warnings?.trim()) parts.push(withPeriod(variant.warnings))
+  // Structured mud warning — short canonical clause. Only emit if the
+  // free-text `warnings` doesn't mention mud anywhere (avoid duplicates
+  // like "Can be muddy. Can be muddy." when both the structured flag
+  // and a legacy mud sentence are present). Once the free-text mud
+  // sentences are pruned in a follow-up pass, this check becomes moot.
+  const warningsText = variant.warnings?.trim() ?? ""
+  const warningsMentionsMud = /\bmud/i.test(warningsText)
+  if (variant.mudWarning && !warningsMentionsMud) parts.push("Can be muddy.")
 
-  // Best time — one ultra-short clause
-  if (variant.bestTime?.trim()) parts.push(withPeriod(variant.bestTime))
+  // Free-text warnings — one ultra-short clause (for anything not
+  // captured by the structured mudWarning flag, e.g. MOD closures).
+  if (warningsText) parts.push(withPeriod(warningsText))
+
+  // Best time — prefer the structured month-code array when present;
+  // fall back to the free-text `bestTime` field otherwise. Once the
+  // migration backfills bestSeasons everywhere, bestTime can be removed.
+  const structuredSeasons = formatBestSeasons(variant.bestSeasons)
+  if (structuredSeasons) parts.push(structuredSeasons)
+  else if (variant.bestTime?.trim()) parts.push(withPeriod(variant.bestTime))
 
   // Lunch stops — compact list
   const lunch = formatLunchStops(variant.lunchStops)
   if (lunch) parts.push(`Lunch at ${lunch}.`)
 
-  // Distance and hours — each their own sentence, terse
-  const dist = formatDistance(variant.distanceKm)
-  if (dist) parts.push(`${dist}.`)
-  const time = formatHours(variant.hours)
-  if (time) parts.push(`${time}.`)
+  // Distance and hours — each their own sentence, terse.
+  // Suppressed when a Komoot URL is present: Komoot provides the
+  // authoritative figures, and the Rambler ones are often approximate
+  // and end up conflicting with the Komoot route.
+  if (!variant.komootUrl) {
+    const dist = formatDistance(variant.distanceKm)
+    if (dist) parts.push(`${dist}.`)
+    const time = formatHours(variant.hours)
+    if (time) parts.push(`${time}.`)
+  }
 
   // GPX file — entry-level (applies to the whole page, not per
   // variant). Renders as a trailing "[GPX file](URL)." clause so the
@@ -195,6 +307,11 @@ function buildSummary(variant, entry, crsIndex) {
   // Only sources that expose a stable GPX URL (currently Leicester
   // Ramblers) populate this — SWC and Heart entries leave it unset.
   if (entry.gpx) parts.push(`[GPX file](${entry.gpx}).`)
+
+  // Komoot tour link — per-variant. Different variants of the same
+  // page can each have their own route, so this lives on the walk
+  // variant rather than the entry.
+  if (variant.komootUrl) parts.push(`[Komoot](${variant.komootUrl}).`)
 
   return parts.join(" ")
 }
@@ -227,6 +344,10 @@ function buildRamblerNotes(args) {
 
   // coordKey → { name, ramblerParts[] }
   const perStation = new Map()
+  // coordKey → Set<Season>. Accumulated across every attached walk
+  // variant. Written out to data/station-seasons.json at the end —
+  // derived data, never hand-edited.
+  const perStationSeasons = new Map()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
   const urlsUsed = new Set()
@@ -268,6 +389,23 @@ function buildRamblerNotes(args) {
           summary,
           priority: entry.favourite ? 0 : 1,
         })
+
+        // Aggregate this variant's structured bestSeasons into the
+        // station's derived season set. Only structured month codes
+        // contribute — free-text `bestTime` is intentionally ignored
+        // here (if a walk hasn't been migrated to month codes yet, its
+        // seasonality simply doesn't flow into the filters).
+        if (Array.isArray(variant.bestSeasons)) {
+          let set = perStationSeasons.get(station.coordKey)
+          if (!set) {
+            set = { name: station.name, seasons: new Set() }
+            perStationSeasons.set(station.coordKey, set)
+          }
+          for (const m of variant.bestSeasons) {
+            const season = MONTH_TO_SEASON[String(m).toLowerCase()]
+            if (season) set.seasons.add(season)
+          }
+        }
       }
     }
   }
@@ -373,6 +511,21 @@ function buildRamblerNotes(args) {
   // eslint-disable-next-line no-console
   console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
 
+  // ── Derived file: station-seasons.json ─────────────────────────────
+  // Build a diff-friendly output: entries sorted by coordKey, empty
+  // season sets skipped, seasons inside each entry in calendar order.
+  const seasonsOut = {}
+  for (const [coordKey, { name, seasons }] of [...perStationSeasons.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    if (seasons.size === 0) continue
+    seasonsOut[coordKey] = {
+      name,
+      seasons: SEASON_ORDER.filter((s) => seasons.has(s)),
+    }
+  }
+  writeFileSync(SEASONS_PATH, JSON.stringify(seasonsOut, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${Object.keys(seasonsOut).length} entries to ${SEASONS_PATH}`)
+
   if (args.flipOnMap) {
     // Update onMap per-source so each file only holds its own entries —
     // otherwise merging `walks` would push Leicester entries into the SWC
@@ -399,4 +552,12 @@ function buildRamblerNotes(args) {
   }
 }
 
-buildRamblerNotes(parseArgs(process.argv.slice(2)))
+// Export the builder so API routes can invoke it in-process (admin
+// saves trigger a rebuild immediately). The CLI entry below only runs
+// when this file is executed directly via `node scripts/...`, not when
+// it's imported.
+export { buildRamblerNotes }
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  buildRamblerNotes(parseArgs(process.argv.slice(2)))
+}

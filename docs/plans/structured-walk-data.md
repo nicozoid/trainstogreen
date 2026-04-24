@@ -1,6 +1,8 @@
 # Plan: Structured walk data + Komoot + admin overlay
 
-Status: not started. This is a design doc for a future session to implement.
+Status: Phases 1–5 landed. Remaining: Phase 6 (sources).
+
+**Phase 2 reconciliation note (landed):** the recently-added `data/station-seasons.json` is no longer editable as its own source of truth. It's now a pure build output of `scripts/build-rambler-notes.mjs`, derived from each walk variant's structured `bestSeasons` field (months → seasons aggregated per station). The admin season checkboxes and the POST `/api/dev/station-seasons` handler were removed; GET is read-only so the map can still hydrate filters on startup. `scripts/build-station-seasons.mjs` was deleted.
 
 ## Goal
 
@@ -40,6 +42,45 @@ Add three new optional fields to each variant object:
 
 Month codes: `"jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"`.
 
+### Additional admin-only fields on walk variants
+
+Landed as schema conventions (the JSON has no enforced schema, so these are just new optional keys that start populating once the Phase 5 admin editor supports them, or via manual edits). None of them render in the current `ramblerNote` — they're for the future per-walk cards that replace the prose.
+
+```jsonc
+{
+  // ── on each sight (sights[]) ──
+  "name": "Hastings Castle",
+  "url": "...",                  // already existed
+  "description": "Ruined Norman castle on the clifftop.", // NEW, optional
+
+  // ── on each lunch stop (lunchStops[]) ──
+  "name": "Gun Inn",
+  "location": "Keyhaven",        // already existed — place name, e.g. village
+  "url": "...",                  // already existed
+  "notes": "Great beer garden, cash only.", // NEW, optional free text
+  "rating": "good",              // NEW, optional: "good" | "fine" | "poor"
+
+  // ── on each walk variant (walks[]) ──
+  "id": "a7kq",                  // NEW, required — unique 4-char base36 code
+  "previousWalkDates": ["2024-08-17", "2025-05-03"] // NEW, optional, ISO dates
+}
+```
+
+**`id`** is a short unique handle for referring to one variant in conversation (e.g. "fix walk `a7kq`"). 4 characters from `[0-9a-z]` — 1.67M combinations, safe for ~1500 variants and plenty of headroom for growth. Assigned by [scripts/assign-walk-ids.mjs](../../scripts/assign-walk-ids.mjs) which is idempotent: run it any time new walks are added and it fills in `id` for only the ones missing one, avoiding collisions with existing ids across ALL walks files. Display is deferred to Phase 5 cards — admins can look it up in the source JSON for now.
+
+**`previousWalkDates`** is a purely private metadata field — a log of when the user personally walked this route. Never surfaced in public UI. ISO date strings only (`YYYY-MM-DD`).
+
+**`lunchStops[].rating`** and **`lunchStops[].notes`** will render in Phase 5 cards (e.g. good/fine/poor badge, notes as a sub-line under the venue). For now: admin metadata only.
+
+**`sights[].description`** will render in Phase 5 cards as a second line under the sight name. For now: admin metadata only.
+
+### Walk name (deferred — not changing)
+
+Considered having the variant `name` auto-derive from `startStation` + `endStation` (e.g. `"Hurst Green to Oxted"` or `"Oxted circular"` with an optional editable suffix like `"via Titsey Place"`). Decided against it for now:
+- The ramblerNote renderer already synthesizes `"Start to End"` titles inline for non-main variants, so the displayed text is already derived.
+- Introducing a derived+suffix field means migrating ~1000 existing `name` values.
+- The Phase 5 cards will reshape how names are presented anyway — wait until that lands before locking in a storage format.
+
 **Season → months mapping** (for migrating existing `bestTime` free-text):
 - spring → mar, apr, may
 - summer → jun, jul, aug
@@ -64,7 +105,11 @@ In `buildSummary()`:
 
 Keep the favourites-first sort (already landed in this PR).
 
-## Book sources (new — allow walks cited from books, not just URLs)
+## Walk sources (generalized — not just books)
+
+Sources can be any origin a walk comes from: a URL (Rambler, SWC, Heart), a book, an organization (Ramblers Association, Trains to Green itself), or anything else. Each source has optional metadata (title, edition, URL, etc.) and walks reference it by slug so we don't duplicate metadata across every walk. Below is framed around books as the concrete first example, but the same `data/sources.json` registry should cover all types (`type: "book" | "url" | "organization" | "tg"`, etc.).
+
+### Book sources (first concrete example)
 
 Some walks aren't sourced from a URL but from a book (e.g. *The Rough Guide to Walks in London & the South East*, 3rd edition). Today these live as hand-edited `publicNote` text. Going forward we want them as first-class walk entries alongside Rambler walks, so they share the same schema, admin UX, and rendering pipeline.
 

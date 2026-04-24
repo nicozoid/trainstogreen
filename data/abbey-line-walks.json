@@ -47,11 +47,18 @@
           }
         ],
         "warnings": "Sections can become waterlogged after heavy rain, sometimes without obvious alternative routes.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "rh9p",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "main"
+        }
       },
       {
         "role": "alternative",
-        "name": "St Albans Abbey to Park Street",
+        "name": "",
         "startPlace": "St Albans Abbey",
         "endPlace": "Park Street",
         "startStation": "SAA",
@@ -65,11 +72,18 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "r2ox",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       },
       {
         "role": "alternative",
-        "name": "Park Street to Bricket Wood",
+        "name": "",
         "startPlace": "Park Street",
         "endPlace": "Bricket Wood",
         "startStation": "PKT",
@@ -83,11 +97,18 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "0de8",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       },
       {
         "role": "alternative",
-        "name": "Bricket Wood to Garston",
+        "name": "",
         "startPlace": "Bricket Wood",
         "endPlace": "Garston",
         "startStation": "BWO",
@@ -101,29 +122,43 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "7skm",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       },
       {
         "role": "alternative",
-        "name": "Garston to Watford North",
+        "name": "",
         "startPlace": "Garston",
         "endPlace": "Watford North",
         "startStation": "GSN",
         "endStation": "WFN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 4.0,
+        "distanceKm": 4,
         "distanceMiles": 2.5,
         "hours": null,
         "lunchStops": [],
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "mfq9",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       },
       {
         "role": "alternative",
-        "name": "Watford North to Watford Junction",
+        "name": "",
         "startPlace": "Watford North",
         "endPlace": "Watford Junction",
         "startStation": "WFN",
@@ -137,11 +172,18 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "sz3u",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       },
       {
         "role": "alternative",
-        "name": "Park Street to How Wood",
+        "name": "",
         "startPlace": "Park Street",
         "endPlace": "How Wood",
         "startStation": "PKT",
@@ -155,7 +197,14 @@
         "terrain": "",
         "sights": [],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "rrld",
+        "source": {
+          "orgSlug": "abbey-line",
+          "pageName": "Abbey Trail",
+          "pageURL": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+          "type": "alternative"
+        }
       }
     ],
     "extracted": true,

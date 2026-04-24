@@ -1,0 +1,19 @@
+{
+  "_readme": "Organisations that walk data is sourced from. Keyed by orgSlug, which is referenced by every walk's `source.orgSlug` field. Adding a new source: add an entry here, then reference its slug in the walk's source object. The name + url here are the ones displayed in the UI (e.g. 'Saturday Walkers Club' as the author, the url as the publisher link).",
+  "saturday-walkers-club": {
+    "name": "Saturday Walkers Club",
+    "url": "https://www.walkingclub.org.uk/"
+  },
+  "leicester-ramblers": {
+    "name": "Leicester Ramblers",
+    "url": "https://www.leicesterramblers.org.uk/"
+  },
+  "heart-rail-trails": {
+    "name": "Heart Rail Trails",
+    "url": "https://www.heartrailtrails.co.uk/"
+  },
+  "abbey-line": {
+    "name": "Abbey Line Community Rail Partnership",
+    "url": "https://www.abbeyline.org.uk/"
+  }
+}
