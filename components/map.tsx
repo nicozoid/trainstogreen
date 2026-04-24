@@ -1885,6 +1885,10 @@ export default function HikeMap() {
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
   type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
+  // Admin-only "Undiscovered" checkbox — when on, hides stations where any
+  // attached walk has a populated `previousWalkDates` (i.e. we've already
+  // hiked it). Cleared on admin-off (below).
+  const [undiscoveredOnly, setUndiscoveredOnly] = useState(false)
   // Public "[current-season] highlights" checkbox — when on, only stations
   // recommended for the current season are shown. Coexists with seasonFilter
   // (both filters applied independently, AND semantics).
@@ -2039,6 +2043,12 @@ export default function HikeMap() {
   type SeasonsEntry = { name: string; seasons: Season[] }
   const [stationSeasons, setStationSeasons] = useState<Record<string, SeasonsEntry>>({})
 
+  // Set of coordKeys for stations with at least one personally-walked
+  // variant. Derived from `previousWalkDates` by the build script and
+  // served as a flat string[]; we wrap in a Set for O(1) lookups in the
+  // "Undiscovered" admin filter (which hides anything in this set).
+  const [stationsHiked, setStationsHiked] = useState<Set<string>>(new Set())
+
   // Per-station custom Flickr tag config (the "custom" fallback step). Only
   // stations with an entry participate in that step — everything else skips
   // straight to the next algo in the chain. The algo itself (landscapes /
@@ -2068,6 +2078,9 @@ export default function HikeMap() {
     fetch("/api/dev/station-seasons")
       .then((res) => res.json())
       .then((data) => setStationSeasons(data))
+    fetch("/api/dev/stations-hiked")
+      .then((res) => res.json())
+      .then((data: string[]) => setStationsHiked(new Set(data)))
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
@@ -4457,6 +4470,12 @@ export default function HikeMap() {
           }
           if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
         }
+        // Admin-only "Undiscovered" — hide any station already in the
+        // hiked set. Stations never walked don't appear in the set at
+        // all, so the lookup is a single .has() call.
+        if (undiscoveredOnly && stationsHiked.has(f.properties.coordKey as string)) {
+          return false
+        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
@@ -4473,7 +4492,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, undiscoveredOnly, stationsHiked])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -6358,6 +6377,8 @@ export default function HikeMap() {
         onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
         seasonFilter={seasonFilter}
         onSeasonFilterChange={setSeasonFilter}
+        undiscoveredOnly={undiscoveredOnly}
+        onUndiscoveredOnlyChange={setUndiscoveredOnly}
         currentSeason={currentSeason()}
         currentSeasonHighlight={currentSeasonHighlight}
         onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
@@ -6477,6 +6498,7 @@ export default function HikeMap() {
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.
                 setSeasonFilter("off")
+                setUndiscoveredOnly(false)
                 if (maxMinutes > 120) setMaxMinutes(120)
               }
             }}

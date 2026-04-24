@@ -121,7 +121,11 @@ export async function GET(req: NextRequest) {
     for (const entry of Object.values(data)) {
       if (!Array.isArray(entry.walks)) continue
       for (const v of entry.walks) {
-        if (v.startStation !== crs && v.endStation !== crs) continue
+        // Only attach each walk to its STARTING station — avoids the
+        // same walk showing up on two overlays (start + end) and
+        // halves the list the admin has to curate. Circular walks
+        // still appear once because start === end.
+        if (v.startStation !== crs) continue
         out.push({
           slug: entry.slug,
           pageTitle: entry.title,

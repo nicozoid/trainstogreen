@@ -263,6 +263,11 @@ type FilterPanelProps = {
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
+  /** Admin-only: hide stations where at least one walk has a populated
+   *  previousWalkDates (i.e. we've already hiked it). Surfaces the
+   *  destinations still to explore. */
+  undiscoveredOnly: boolean
+  onUndiscoveredOnlyChange: (value: boolean) => void
   /** The calendar-derived current season — labels the public checkbox
    *  ("Spring highlights", etc) and is what that checkbox filters against. */
   currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
@@ -274,7 +279,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, undiscoveredOnly, onUndiscoveredOnlyChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1184,6 +1189,25 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     finding destinations that still need seasonality data. */}
                 <option value="None">None</option>
               </select>
+            </div>
+          )}
+
+          {/* Admin-only: "Undiscovered" filter — hides any station where
+              at least one attached walk has a populated previousWalkDates.
+              Surfaces destinations still to explore. Uses the secondary
+              (orange) checkbox accent to group visually with the other
+              admin-only toggles. */}
+          {adminMode && (
+            <div className="mt-1.5 flex items-center gap-[0.4rem]">
+              <Checkbox
+                id="primary-undiscovered-only"
+                checked={undiscoveredOnly}
+                onCheckedChange={(checked) => onUndiscoveredOnlyChange(checked === true)}
+                className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
+              />
+              <Label htmlFor="primary-undiscovered-only" className="cursor-pointer text-xs text-muted-foreground">
+                Undiscovered
+              </Label>
             </div>
           )}
 

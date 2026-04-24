@@ -899,15 +899,35 @@ function SightsEditor({
   sights: SightDraft[]
   onChange: (next: SightDraft[]) => void
 }) {
+  // Collapsed by default — sights can bloat the card and most edits
+  // happen on the scalar fields above. Clicking the header toggles.
+  const [expanded, setExpanded] = useState(false)
   return (
     <div className="mb-3">
-      <Label className="mb-1 block text-xs text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls={`sights-body-${walkId}`}
+        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
+      >
+        {/* Chevron rotates 0° collapsed / 90° expanded. `inline-block` so
+            the transform applies; matches the arrow iconography used
+            elsewhere in the card. */}
+        <span
+          aria-hidden="true"
+          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
+        >
+          ▸
+        </span>
         Sights
         {sights.length > 0 && (
-          <span className="ml-1 italic text-muted-foreground/70">({sights.length})</span>
+          <span className="italic text-muted-foreground/70">({sights.length})</span>
         )}
-      </Label>
-      <div className="flex flex-col gap-2">
+      </button>
+      {expanded && (
+      <div id={`sights-body-${walkId}`}>
+      <div className="mt-1 flex flex-col gap-2">
         {sights.map((s, i) => (
           <div
             key={i}
@@ -1011,6 +1031,8 @@ function SightsEditor({
           we later wire the first input up to it; not strictly required
           since each row has its own label via placeholder. */}
       <span id={`sights-${walkId}`} className="sr-only" />
+      </div>
+      )}
     </div>
   )
 }
@@ -1034,15 +1056,31 @@ function LunchStopsEditor({
   stops: LunchDraft[]
   onChange: (next: LunchDraft[]) => void
 }) {
+  // Collapsed by default — same reasoning as SightsEditor above.
+  const [expanded, setExpanded] = useState(false)
   return (
     <div className="mb-3">
-      <Label className="mb-1 block text-xs text-muted-foreground">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        aria-controls={`lunch-body-${walkId}`}
+        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
+      >
+        <span
+          aria-hidden="true"
+          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
+        >
+          ▸
+        </span>
         Lunch stops
         {stops.length > 0 && (
-          <span className="ml-1 italic text-muted-foreground/70">({stops.length})</span>
+          <span className="italic text-muted-foreground/70">({stops.length})</span>
         )}
-      </Label>
-      <div className="flex flex-col gap-2">
+      </button>
+      {expanded && (
+      <div id={`lunch-body-${walkId}`}>
+      <div className="mt-1 flex flex-col gap-2">
         {stops.map((s, i) => (
           <div
             key={i}
@@ -1198,6 +1236,8 @@ function LunchStopsEditor({
         + Add lunch stop
       </button>
       <span id={`lunch-${walkId}`} className="sr-only" />
+      </div>
+      )}
     </div>
   )
 }

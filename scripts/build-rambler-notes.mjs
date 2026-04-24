@@ -47,6 +47,12 @@ const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // the admin UI (used to be, via /api/dev/station-seasons POST).
 const SEASONS_PATH = join(PROJECT_ROOT, "data", "station-seasons.json")
 
+// Derived list of stations where at least one attached walk has a
+// populated `previousWalkDates` array — i.e. we've personally walked
+// it. Drives the admin-only "Undiscovered" filter, which inverts the
+// match to surface destinations still to explore.
+const HIKED_PATH = join(PROJECT_ROOT, "data", "stations-hiked.json")
+
 // Month codes used in each variant's structured `bestSeasons` field.
 // Order matters — renders in calendar order regardless of how the source
 // data lists them. Also used to map months → high-level seasons when
@@ -504,6 +510,11 @@ function buildRamblerNotes(args) {
   // variant. Written out to data/station-seasons.json at the end —
   // derived data, never hand-edited.
   const perStationSeasons = new Map()
+  // coordKey → true. Any station whose attached walks include at least
+  // one variant with a non-empty `previousWalkDates` array. Written to
+  // data/stations-hiked.json as a sorted array; the admin "Undiscovered"
+  // filter hides these to surface the stations still to visit.
+  const perStationHiked = new Set()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
   const urlsUsed = new Set()
@@ -525,12 +536,15 @@ function buildRamblerNotes(args) {
     for (const variant of stationToStation) {
       const summary = buildSummary(variant, entry, crsIndex)
       if (!summary) continue
-      // For circular walks startStation === endStation, so the inner
-      // loop would otherwise push the same paragraph twice at the
-      // same station. Track per-variant which coord keys have already
-      // been attached.
+      // Each walk attaches ONLY to its starting station in the public
+      // overlay prose — a visitor lands on the walk's natural starting
+      // point rather than seeing it duplicated on both ends. Circular
+      // walks still appear once (start === end); walks whose end
+      // station is the "more famous" stop are the main trade-off.
+      // seenStations is kept to defensively dedupe in case a future
+      // change re-introduces a secondary attachment key.
       const seenStations = new Set()
-      for (const crs of [variant.startStation, variant.endStation]) {
+      for (const crs of [variant.startStation]) {
         if (!crs) continue
         const station = crsIndex.get(crs)
         if (!station) continue
@@ -574,6 +588,13 @@ function buildRamblerNotes(args) {
             const season = MONTH_TO_SEASON[String(m).toLowerCase()]
             if (season) set.seasons.add(season)
           }
+        }
+
+        // Track stations with at least one personally-walked variant.
+        // Any non-empty previousWalkDates flips the station from
+        // "undiscovered" to "hiked" in the derived output.
+        if (Array.isArray(variant.previousWalkDates) && variant.previousWalkDates.length > 0) {
+          perStationHiked.add(station.coordKey)
         }
       }
     }
@@ -703,6 +724,15 @@ function buildRamblerNotes(args) {
   writeFileSync(SEASONS_PATH, JSON.stringify(seasonsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${Object.keys(seasonsOut).length} entries to ${SEASONS_PATH}`)
+
+  // ── Derived file: stations-hiked.json ──────────────────────────────
+  // Sorted array of coordKeys for stations we've personally walked at
+  // least one attached walk from. The client fetches this into a Set<string>
+  // and the "Undiscovered" admin filter hides anything in it.
+  const hikedOut = [...perStationHiked].sort()
+  writeFileSync(HIKED_PATH, JSON.stringify(hikedOut, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${hikedOut.length} entries to ${HIKED_PATH}`)
 
   if (args.flipOnMap) {
     // Update onMap per-source so each file only holds its own entries —
