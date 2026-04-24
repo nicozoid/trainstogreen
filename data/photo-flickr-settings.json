@@ -851,5 +851,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.899422,51.5338451": {
+    "name": "Henley-on-Thames",
+    "custom": {
+      "includeTags": [
+        "thames circular",
+        "henley circular",
+        "hambleden circular",
+        "thames path",
+        "stonor circular",
+        "turville circular",
+        "marlow circular",
+        "great wood",
+        "peppard common",
+        "remenham hill",
+        "binfield heath",
+        "lambridge wood",
+        "thames valley",
+        "high wood",
+        "temple island",
+        "hambleden mill",
+        "virgin church",
+        "church",
+        "all saints church",
+        "whitchurch toll bridge"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
