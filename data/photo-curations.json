@@ -6407,15 +6407,6 @@
     "name": "Borough Green & Wrotham",
     "approved": [
       {
-        "id": "25944282660",
-        "title": "Running Stag",
-        "ownerName": "MrStuy",
-        "thumbnailUrl": "https://live.staticflickr.com/1681/25944282660_5236418875.jpg",
-        "largeUrl": "https://live.staticflickr.com/1681/25944282660_5236418875_b.jpg",
-        "flickrUrl": "https://www.flickr.com/photos/63801162@N03/25944282660",
-        "dateTaken": "2016-04-01 13:08:16"
-      },
-      {
         "id": "29862474336",
         "title": "IMG_3875.jpg",
         "ownerName": "fresad1",
@@ -6423,6 +6414,15 @@
         "largeUrl": "https://live.staticflickr.com/8345/29862474336_ba94a65b21_b.jpg",
         "flickrUrl": "https://www.flickr.com/photos/32564138@N02/29862474336",
         "dateTaken": "2016-09-23 13:00:38"
+      },
+      {
+        "id": "25944282660",
+        "title": "Running Stag",
+        "ownerName": "MrStuy",
+        "thumbnailUrl": "https://live.staticflickr.com/1681/25944282660_5236418875.jpg",
+        "largeUrl": "https://live.staticflickr.com/1681/25944282660_5236418875_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/63801162@N03/25944282660",
+        "dateTaken": "2016-04-01 13:08:16"
       },
       {
         "id": "29911194774",
