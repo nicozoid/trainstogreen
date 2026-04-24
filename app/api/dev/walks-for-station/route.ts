@@ -86,6 +86,15 @@ type WalkPayload = {
     pageURL: string
     type: string
   }
+  // Admin-only cross-reference to a related walk page. Same shape
+  // as `source` but optional — when unset the whole field is
+  // absent from the JSON. Not rendered in public prose.
+  relatedSource?: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
   // admin-only metadata (not editable in v1 but preserved on write)
   previousWalkDates?: string[]
 }
@@ -177,6 +186,7 @@ export async function GET(req: NextRequest) {
           rating: typeof v.rating === "number" ? v.rating : null,
           updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,
+          relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
           previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
         })
       }

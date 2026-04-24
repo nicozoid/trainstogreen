@@ -31,6 +31,7 @@ const EDITABLE_FIELDS = [
   "sights",
   "lunchStops",
   "source",
+  "relatedSource",
 ] as const
 
 const LUNCH_RATINGS = new Set(["good", "fine", "poor"])
@@ -244,6 +245,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const cleaned = cleanSource(body[key])
       if (cleaned && JSON.stringify(variant.source) !== JSON.stringify(cleaned)) {
         variant.source = cleaned
+        changed = true
+      }
+      continue
+    }
+
+    // `relatedSource` — same shape as `source` but OPTIONAL. An
+    // invalid / empty payload DELETES the field (unlike `source`
+    // which is required and no-ops on bad input). Used for admin
+    // cross-references to a related walk page, not rendered in
+    // public prose.
+    if (key === "relatedSource") {
+      const cleaned = cleanSource(body[key])
+      if (cleaned) {
+        if (JSON.stringify(variant.relatedSource) !== JSON.stringify(cleaned)) {
+          variant.relatedSource = cleaned
+          changed = true
+        }
+      } else if ("relatedSource" in variant) {
+        delete variant.relatedSource
         changed = true
       }
       continue

@@ -81,6 +81,14 @@ export type WalkPayload = {
     pageURL: string
     type: string
   }
+  /** Admin-only cross-reference. Same shape as `source` but
+   *  optional. Never rendered in public prose. */
+  relatedSource?: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
   previousWalkDates?: string[]
 }
 
@@ -123,6 +131,17 @@ type EditableFields = {
   // fields to empty strings so the form stays controlled; the server
   // rejects blanks on save.
   source: {
+    orgSlug: string
+    pageName: string
+    pageURL: string
+    type: string
+  }
+  // Related source — admin cross-reference, same shape as `source`
+  // but deletable. Draft-level this is always a fully-populated
+  // object (defaulting to empty strings) so the form stays
+  // controlled; the server deletes the field when all strings are
+  // blank via the cleanSource → no-op path.
+  relatedSource: {
     orgSlug: string
     pageName: string
     pageURL: string
@@ -449,6 +468,12 @@ function WalkCard({
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  // Related Source section — admin cross-reference, collapsed by
+  // default. Auto-expand when the walk already has a related source
+  // set so the admin sees it on open.
+  const [relatedSourceExpanded, setRelatedSourceExpanded] = useState(
+    !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
+  )
 
   // Draft state — initialised from the walk prop. useMemo keeps a
   // stable reference to the "server shape" for dirty-comparison.
@@ -474,6 +499,12 @@ function WalkCard({
         pageURL: walk.source?.pageURL ?? "",
         type: walk.source?.type ?? "variant",
       },
+      relatedSource: {
+        orgSlug: walk.relatedSource?.orgSlug ?? "",
+        pageName: walk.relatedSource?.pageName ?? "",
+        pageURL: walk.relatedSource?.pageURL ?? "",
+        type: walk.relatedSource?.type ?? "variant",
+      },
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
@@ -481,6 +512,7 @@ function WalkCard({
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
+      walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
     ],
   )
   const [draft, setDraft] = useState<EditableFields>(serverState)
@@ -513,7 +545,8 @@ function WalkCard({
       // via useMemo above.
       JSON.stringify(draft.sights) !== JSON.stringify(serverState.sights) ||
       JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops) ||
-      JSON.stringify(draft.source) !== JSON.stringify(serverState.source)
+      JSON.stringify(draft.source) !== JSON.stringify(serverState.source) ||
+      JSON.stringify(draft.relatedSource) !== JSON.stringify(serverState.relatedSource)
     )
   }, [draft, serverState])
 
@@ -561,6 +594,7 @@ function WalkCard({
           sights: draft.sights,
           lunchStops: draft.lunchStops,
           source: draft.source,
+          relatedSource: draft.relatedSource,
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
@@ -713,6 +747,99 @@ function WalkCard({
                 placeholder="Page URL"
                 className="h-7 text-xs"
               />
+            </div>
+
+            {/* Related Source — collapsible admin-only cross-reference.
+                Same four fields as the primary Source, but entirely
+                optional: the server drops the whole `relatedSource`
+                key when all fields are blank. Never rendered in
+                public prose; purely a curation aid to link related
+                walk pages together. */}
+            <div className="mt-2 border-t border-border/60 pt-2">
+              <button
+                type="button"
+                onClick={() => setRelatedSourceExpanded((v) => !v)}
+                aria-expanded={relatedSourceExpanded}
+                aria-controls={`related-source-body-${walk.id}`}
+                className="flex w-full items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block transition-transform ${relatedSourceExpanded ? "rotate-90" : ""}`}
+                >
+                  ▸
+                </span>
+                Related source
+                {(draft.relatedSource.orgSlug || draft.relatedSource.pageName || draft.relatedSource.pageURL) && (
+                  <span className="italic text-muted-foreground/70 normal-case">(set)</span>
+                )}
+              </button>
+              {relatedSourceExpanded && (
+                <div id={`related-source-body-${walk.id}`} className="mt-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div>
+                      <Label htmlFor={`rsrc-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                        Organisation
+                      </Label>
+                      <select
+                        id={`rsrc-org-${walk.id}`}
+                        value={draft.relatedSource.orgSlug}
+                        onChange={(e) => setDraft((d) => ({
+                          ...d, relatedSource: { ...d.relatedSource, orgSlug: e.target.value },
+                        }))}
+                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                      >
+                        {/* Empty option so the admin can clear the
+                            whole related-source block; server then
+                            deletes the field on save. */}
+                        <option value="">— none —</option>
+                        {!SOURCE_ORGS.some((o) => o.slug === draft.relatedSource.orgSlug) && draft.relatedSource.orgSlug && (
+                          <option value={draft.relatedSource.orgSlug}>{draft.relatedSource.orgSlug} (unknown)</option>
+                        )}
+                        {SOURCE_ORGS.map((o) => (
+                          <option key={o.slug} value={o.slug}>{o.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor={`rsrc-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                        Type
+                      </Label>
+                      <select
+                        id={`rsrc-type-${walk.id}`}
+                        value={draft.relatedSource.type}
+                        onChange={(e) => setDraft((d) => ({
+                          ...d, relatedSource: { ...d.relatedSource, type: e.target.value },
+                        }))}
+                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                      >
+                        {SOURCE_TYPES.map((t) => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-1.5 space-y-1.5">
+                    <Input
+                      value={draft.relatedSource.pageName}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, pageName: e.target.value },
+                      }))}
+                      placeholder="Related page name"
+                      className="h-7 text-xs"
+                    />
+                    <Input
+                      type="url"
+                      value={draft.relatedSource.pageURL}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, pageURL: e.target.value },
+                      }))}
+                      placeholder="Related page URL"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
