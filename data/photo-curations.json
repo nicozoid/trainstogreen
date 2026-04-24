@@ -6893,15 +6893,6 @@
         "dateTaken": "2014-03-02 09:43:41"
       },
       {
-        "id": "10575313106",
-        "title": "Windsor Great Park",
-        "ownerName": "Peter Meade",
-        "thumbnailUrl": "https://live.staticflickr.com/7368/10575313106_34935bcfc3.jpg",
-        "largeUrl": null,
-        "flickrUrl": "https://www.flickr.com/photos/33252899@N00/10575313106",
-        "dateTaken": "2013-10-30 13:17:23"
-      },
-      {
         "id": "54536087802",
         "title": "Windsor Castle tour.",
         "ownerName": "Adrian Walker.",
@@ -6909,6 +6900,15 @@
         "largeUrl": "https://live.staticflickr.com/65535/54536087802_333e753881_b.jpg",
         "flickrUrl": "https://www.flickr.com/photos/96660892@N07/54536087802",
         "dateTaken": "2025-05-17 12:12:45"
+      },
+      {
+        "id": "10575313106",
+        "title": "Windsor Great Park",
+        "ownerName": "Peter Meade",
+        "thumbnailUrl": "https://live.staticflickr.com/7368/10575313106_34935bcfc3.jpg",
+        "largeUrl": null,
+        "flickrUrl": "https://www.flickr.com/photos/33252899@N00/10575313106",
+        "dateTaken": "2013-10-30 13:17:23"
       },
       {
         "id": "6285103223",
