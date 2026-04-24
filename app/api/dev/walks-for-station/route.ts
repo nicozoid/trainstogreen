@@ -61,6 +61,9 @@ type WalkPayload = {
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
+  // Entry-level GPX URL (shared across all variants on the same page).
+  // Undefined when the source doesn't publish one.
+  gpx?: string
   rating: number | null
   updatedAt: string | null
   // provenance (read-only in v1 — populated by
@@ -151,6 +154,7 @@ export async function GET(req: NextRequest) {
           mudWarning: !!v.mudWarning,
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",
+          gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
           rating: typeof v.rating === "number" ? v.rating : null,
           updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,

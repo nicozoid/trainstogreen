@@ -62,6 +62,9 @@ export type WalkPayload = {
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
+  // Entry-level GPX URL (shared across every variant of this walk's
+  // source page). Undefined when the source doesn't publish one.
+  gpx?: string
   rating: number | null
   source?: {
     orgSlug: string
@@ -474,6 +477,34 @@ function WalkCard({
           {walk.id}
         </code>
         <span className="truncate font-medium text-foreground">{cardHeadline(walk)}</span>
+        {/* Inline metadata chips, visible while the card is collapsed
+            so admins can scan walk properties at a glance without
+            expanding each one.
+            - variant / shorter / longer / alternative (nothing for
+              "main" — main is the default, no flag needed)
+            - komoot / GPX — flag which external route is available
+            - distance — floored to km to match the public prose
+              rendering in scripts/build-rambler-notes.mjs
+            flex-shrink-0 keeps them from being squeezed when the
+            title string gets long; the title's `truncate` absorbs
+            the overflow instead. */}
+        {(() => {
+          const walkType = walk.source?.type ?? walk.role
+          const isVariant = walkType && walkType !== "main"
+          const chipClass = "shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground"
+          return (
+            <>
+              {isVariant && <span className={chipClass} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {walk.komootUrl && <span className={chipClass} title="Has a Komoot tour URL">komoot</span>}
+              {walk.gpx && <span className={chipClass} title="Source page publishes a GPX track">GPX</span>}
+              {typeof walk.distanceKm === "number" && (
+                <span className={chipClass} title={`${walk.distanceKm} km (floored for display)`}>
+                  {Math.floor(walk.distanceKm)} km
+                </span>
+              )}
+            </>
+          )
+        })()}
         {typeof walk.rating === "number" && walk.rating >= 1 && walk.rating <= 4 && (
           <span
             className="flex items-center text-orange-600"
