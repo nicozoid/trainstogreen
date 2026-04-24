@@ -687,20 +687,30 @@ function buildRamblerNotes(args) {
     const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
     // Public visibility rules (admin always sees the full list):
     //   • Mains are always shown.
-    //   • Notes (free-form extras, kind=1) are always shown.
+    //   • Notes (free-form extras, kind=1) are always shown and
+    //     don't count toward the 5-walk cap.
     //   • Bus-requiring walks never reach this filter — they're
     //     excluded upstream by `stationToStation !== true`, which
     //     buildSummary returns null for. (Admin CMS still shows them.)
-    //   • Variants are shown only when there would otherwise be
-    //     fewer than 5 walks on the page. I.e. if the station has
-    //     fewer than 5 mains, we let variants fill the list out.
-    //     Stations with 5+ mains hide all variants.
+    //   • Variants: if the station already has 5+ mains, NONE are
+    //     shown. Otherwise we take the top-ranked variants (they
+    //     follow the mains in `ordered`) until the total walk count
+    //     would reach 5, or until there are no more variants. So a
+    //     station with 2 mains gets up to 3 variants, a station with
+    //     0 mains gets up to 5, and so on.
     const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
-    const showVariants = mainCount < 5
+    const variantQuota = mainCount >= 5 ? 0 : 5 - mainCount
+    let variantsAdded = 0
     const publicParts = ordered.filter((p) => {
       if (p.kind !== 0) return true // notes always pass
       if (p.isMain) return true // mains always pass
-      return showVariants
+      // Variant — gated by quota. Because `ordered` has mains before
+      // variants and variants already sorted by the main comparator,
+      // the first `variantQuota` variants we see ARE the top-ranked
+      // ones.
+      if (variantsAdded >= variantQuota) return false
+      variantsAdded++
+      return true
     })
     const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
