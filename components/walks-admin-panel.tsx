@@ -491,14 +491,21 @@ function WalkCard({
         {(() => {
           const walkType = walk.source?.type ?? walk.role
           const isVariant = walkType && walkType !== "main"
-          const chipClass = "shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground"
+          // Base pill styling — muted grey, shared across chip types.
+          // Variant chip overrides the bg/text via the destructive token
+          // pair used by the destructive Button variant, so the color
+          // stays on-theme (works in both light and dark mode via the
+          // CSS custom properties) without introducing a raw hex.
+          const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
+          const neutralChip = `${chipBase} bg-muted text-muted-foreground`
+          const variantChip = `${chipBase} bg-destructive/10 text-destructive`
           return (
             <>
-              {isVariant && <span className={chipClass} title={`Source type: ${walkType}`}>{walkType}</span>}
-              {walk.komootUrl && <span className={chipClass} title="Has a Komoot tour URL">komoot</span>}
-              {walk.gpx && <span className={chipClass} title="Source page publishes a GPX track">GPX</span>}
+              {isVariant && <span className={variantChip} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {walk.komootUrl && <span className={neutralChip} title="Has a Komoot tour URL">komoot</span>}
+              {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (
-                <span className={chipClass} title={`${walk.distanceKm} km (floored for display)`}>
+                <span className={neutralChip} title={`${walk.distanceKm} km (floored for display)`}>
                   {Math.floor(walk.distanceKm)} km
                 </span>
               )}
