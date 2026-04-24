@@ -4767,14 +4767,13 @@ export default function HikeMap() {
   // Dev action: move an approved photo within the approved list. All moves
   // respect the pin/non-pin section boundary — pinned photos stay in the
   // pinned prefix, non-pinned stay below it.
-  //   "up" / "down" — swap with the neighbour one slot away (no-op if that
-  //                   swap would cross the section boundary).
-  //   "top"         — push to the top of the photo's own section.
-  //                     pinned     → index 0
-  //                     non-pinned → index numPins (just below the last pin)
-  //   "bottom"      — push to the bottom of the photo's own section.
-  //                     pinned     → index numPins - 1 (bottom of pins)
-  //                     non-pinned → index approved.length - 1 (end of queue)
+  //   "up" / "down" — skip-swap with the nearest photo in that direction
+  //                   that isn't a non-moving pin. Pinned photos we skip over
+  //                   keep their absolute index.
+  //   "top"         — repeat "up" skip-swaps until no further move is possible
+  //                   (bubble to the topmost reachable slot, stopping below
+  //                   any pinned photos stacked above).
+  //   "bottom"      — mirror of "top".
   const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top" | "bottom") => {
     setCurations((prev) => {
       const entry = prev[coordKey]
@@ -4783,29 +4782,32 @@ export default function HikeMap() {
       const idx = approved.findIndex((p) => p.id === photoId)
       if (idx < 0) return prev
       const pinnedSet = new Set(entry.pinnedIds ?? [])
-      const isPinned = pinnedSet.has(photoId)
-      // numPins = length of the pinned prefix in approved[]. Derived by
-      // walking from the start until the first non-pinned photo.
-      let numPins = 0
-      for (const p of approved) {
-        if (pinnedSet.has(p.id)) numPins++
-        else break
+      // skipSwap does one step in `dir`, skipping over pins that aren't the
+      // photo being moved. Returns the new index (or `from` if no move).
+      const skipSwap = (from: number, dir: "up" | "down"): number => {
+        const step = dir === "up" ? -1 : 1
+        const stop = dir === "up" ? -1 : approved.length
+        let t = from + step
+        while (t !== stop) {
+          const occ = approved[t].id
+          if (!pinnedSet.has(occ) || occ === photoId) {
+            ;[approved[from], approved[t]] = [approved[t], approved[from]]
+            return t
+          }
+          t += step
+        }
+        return from
       }
-      if (direction === "top") {
-        const [photo] = approved.splice(idx, 1)
-        const targetIdx = isPinned ? 0 : numPins
-        approved.splice(targetIdx, 0, photo)
-      } else if (direction === "bottom") {
-        const [photo] = approved.splice(idx, 1)
-        const targetIdx = isPinned ? Math.max(0, numPins - 1) : approved.length
-        approved.splice(targetIdx, 0, photo)
+      if (direction === "up" || direction === "down") {
+        skipSwap(idx, direction)
       } else {
-        const targetIdx = direction === "up" ? idx - 1 : idx + 1
-        if (targetIdx < 0 || targetIdx >= approved.length) return prev
-        // Don't let single-step swaps cross the section boundary.
-        const neighbourPinned = pinnedSet.has(approved[targetIdx].id)
-        if (isPinned !== neighbourPinned) return prev
-        ;[approved[idx], approved[targetIdx]] = [approved[targetIdx], approved[idx]]
+        const step: "up" | "down" = direction === "top" ? "up" : "down"
+        let cur = idx
+        for (let n = 0; n < approved.length; n++) {
+          const next = skipSwap(cur, step)
+          if (next === cur) break
+          cur = next
+        }
       }
       return { ...prev, [coordKey]: { ...entry, approved } }
     })
@@ -4842,23 +4844,19 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: approve a photo and place it at the TOP of the non-pinned
-  // section (just below the last pin). Used by the "jump to top" button on
-  // algo tabs for photos that aren't yet approved.
+  // Dev action: approve a photo and insert it as high in the list as
+  // possible, skipping past any pins at the top. So index 0 if nothing
+  // pinned is there; otherwise the first non-pinned index.
   const handleApproveAtTop = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
     setCurations((prev) => {
       const entry = prev[coordKey] ?? { name, approved: [] }
       const photoId = photo.id
       const approvedWithoutPhoto = entry.approved.filter((p) => p.id !== photoId)
       const pinnedSet = new Set(entry.pinnedIds ?? [])
-      // numPins = length of the pinned prefix after the removal.
-      let numPins = 0
-      for (const p of approvedWithoutPhoto) {
-        if (pinnedSet.has(p.id)) numPins++
-        else break
-      }
+      let insertAt = 0
+      while (insertAt < approvedWithoutPhoto.length && pinnedSet.has(approvedWithoutPhoto[insertAt].id)) insertAt++
       const nextApproved = [...approvedWithoutPhoto]
-      nextApproved.splice(numPins, 0, photo)
+      nextApproved.splice(insertAt, 0, photo)
       return { ...prev, [coordKey]: { ...entry, name, approved: nextApproved } }
     })
     await fetch("/api/dev/curate-photo", {
@@ -4868,21 +4866,19 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: pin a photo. Pinning implicitly approves the photo if it
-  // isn't already in the approved list. The photo jumps to the bottom of
-  // the pinned section (just above the first non-pinned photo).
+  // Dev action: pin a photo. The photo STAYS at its current index — pinning
+  // just adds the pin badge and marks the slot as "fixed" so other photos
+  // skip over it when they move. If the photo isn't in approved[] yet
+  // (pinning from a non-Approved tab), it's appended first — but that case
+  // doesn't occur through the UI anymore, since the pin button is gated to
+  // the Approved tab.
   const handlePinPhoto = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
     setCurations((prev) => {
       const entry = prev[coordKey] ?? { name, approved: [], pinnedIds: [] }
       const photoId = photo.id
-      const existing = entry.approved.find((p) => p.id === photoId) ?? photo
-      const approvedWithoutPhoto = entry.approved.filter((p) => p.id !== photoId)
+      const alreadyApproved = entry.approved.some((p) => p.id === photoId)
+      const nextApproved = alreadyApproved ? entry.approved : [...entry.approved, photo]
       const prevPins = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
-      // numPins = how many of the prev pins remain in approved[] after the
-      // removal we just did (they do; we only removed the pinned photo itself).
-      const numPins = prevPins.filter((id) => approvedWithoutPhoto.some((p) => p.id === id)).length
-      const nextApproved = [...approvedWithoutPhoto]
-      nextApproved.splice(numPins, 0, existing)
       return {
         ...prev,
         [coordKey]: {
