@@ -636,5 +636,18 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-1.3726319,51.8247081": {
+    "name": "Hanborough",
+    "custom": {
+      "includeTags": [
+        "blenheim palace",
+        "marlborough house",
+        "blenheim"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
