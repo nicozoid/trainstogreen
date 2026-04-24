@@ -649,5 +649,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.9760562,51.2444245": {
+    "name": "Chilham",
+    "custom": {
+      "includeTags": [
+        "chilham circular",
+        "river",
+        "chilham castle",
+        "canterbury cathedral",
+        "st mary's church",
+        "apostle church",
+        "canterbury chartham garden centre",
+        "chilham",
+        "downland",
+        "godmersham park",
+        "apr",
+        "timber batts",
+        "compasses",
+        "sole street",
+        "canterbury",
+        "westgate",
+        "old weavers",
+        "house",
+        "blackfriars gallery",
+        "old synagogue"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
