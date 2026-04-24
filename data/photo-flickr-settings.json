@@ -679,5 +679,34 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "1.4052264,51.3410764": {
+    "name": "Ramsgate",
+    "custom": {
+      "includeTags": [
+        "bay",
+        "louisa bay",
+        "kingsgate bay",
+        "botany bay",
+        "kingsgate castle",
+        "north foreland lighthouse",
+        "ramsgate",
+        "margate",
+        "turner contemporary gallery",
+        "dickens house museum",
+        "royal victoria pavilion",
+        "royal victoria pavillion",
+        "royal harbour brasserie",
+        "sams",
+        "dumpton gap",
+        "louisa",
+        "charles dickens",
+        "broadstairs",
+        "captain digby"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
