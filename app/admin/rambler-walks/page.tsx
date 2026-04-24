@@ -126,15 +126,19 @@ export default function RamblerWalksAdminPage() {
   // feedback for genuine write failures (auth, file conflict, etc.).
   const updateWalk = useCallback(
     async (slug: string, patch: Partial<RamblerWalk>) => {
-      let prevValues: Partial<RamblerWalk> | null = null
+      // Capture prior values outside setData so the rollback closure can
+      // see them. Typed as a concrete Record so TS is happy spreading it
+      // back in on failure.
+      const prevValues: Record<string, unknown> = {}
+      let captured = false
       setData((prev) => {
         if (!prev || !prev[slug]) return prev
         // Capture the prior values for the patched keys so we can roll
         // back individual fields without trampling anything else.
-        prevValues = {}
-        for (const k of Object.keys(patch) as (keyof RamblerWalk)[]) {
-          ;(prevValues as Record<string, unknown>)[k] = (prev[slug] as Record<string, unknown>)[k]
+        for (const k of Object.keys(patch)) {
+          prevValues[k] = (prev[slug] as Record<string, unknown>)[k]
         }
+        captured = true
         return { ...prev, [slug]: { ...prev[slug], ...patch } }
       })
       try {
@@ -145,11 +149,10 @@ export default function RamblerWalksAdminPage() {
         })
         if (!res.ok) throw new Error(`status ${res.status}`)
       } catch (e) {
-        if (prevValues) {
-          const rollback = prevValues
+        if (captured) {
           setData((prev) => {
             if (!prev || !prev[slug]) return prev
-            return { ...prev, [slug]: { ...prev[slug], ...rollback } }
+            return { ...prev, [slug]: { ...prev[slug], ...prevValues } }
           })
         }
         setError(e instanceof Error ? e.message : "failed to save")
