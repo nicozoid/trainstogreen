@@ -6,53 +6,17 @@
 // browser hits this same-origin route (not proxied by Private Relay), and our
 // server hits Flickr from a clean host IP.
 //
-// This route mirrors the logic previously in `lib/flickr.ts#fetchFlickrPhotos`:
-// parallel page fetches, tag-based exclusion filter, dedup by photo id.
+// This route fetches photos for ONE algo at a time. The client decides which
+// algo (default or fallback step) and orchestrates multi-algo fill when the
+// default returns <12 photos.
 
 import { NextRequest, NextResponse } from "next/server"
 import type { FlickrPhoto } from "@/lib/flickr"
+import { readDataFile } from "@/lib/github-data"
+import { PRESET_DEFAULTS, type Presets } from "@/app/api/dev/flickr-presets/route"
 
 const FLICKR_BASE = "https://www.flickr.com/services/rest/"
-
-// ── Tag lists (kept in sync with lib/flickr.ts) ─────────────────────────────
-const SEARCH_TAGS_DEFAULT = "landscape"
-const SEARCH_TAGS_CURATED =
-  "landscape, landmark, hike, trail, walk, way, castle, ruins, garden, park, nature reserve, nature, cottage, village, thatch, tudor, medieval, ruins, estate"
-// Origin stations (e.g. Farringdon, Stratford) — urban imagery instead of rural.
-// Radius is also tighter (1km vs 7km) since origins are city centres.
-// Named `_ORIGIN` for historical reasons — this is the "station" algo preset.
-const SEARCH_TAGS_ORIGIN =
-  "station, city, cityscape, landmark, urban, architecture, building"
-
-// Destination (hiking) stations exclude anything urban/transit — these photos
-// would drown out the countryside imagery we're actually looking for.
-const EXCLUDE_TAGS_DESTINATION = new Set([
-  "people", "girls", "boys", "children", "portrait", "portraits",
-  "countryfashion", "countryoutfit", "countrystyle",
-  "train", "tank", "railway", "trains", "railways", "station",
-  "engine", "locomotive",
-  "bus", "buses", "airbus", "airport", "airways", "airliner", "flight",
-  "motorbike", "motorcycle",
-  "paddleboarding",
-  "object",
-  "baby",
-  "plane", "taps", "city", "town", "great western railways", "reading", "sexy", "midjourney",
-  "protest", "demonstration", "demo", "march",
-  "band", "music", "musicians",
-])
-
-// Origin stations are city-centre, so we DO want city/town/station/rail/transit
-// imagery. Only the truly non-urban noise tags (people, fashion, random stuff)
-// are kept in the exclude list.
-const EXCLUDE_TAGS_ORIGIN = new Set([
-  "portrait", "portraits",
-  "countryfashion", "countryoutfit", "countrystyle",
-  "paddleboarding",
-  "baby",
-  "taps", "reading", "sexy", "midjourney",
-  "protest", "demonstration", "demo", "march",
-  "band", "music", "musicians",
-])
+const PRESETS_FILE = "data/photo-flickr-presets.json"
 
 function hasExcludedTag(rawTags: string, excludeSet: Set<string>): boolean {
   return rawTags.split(" ").some((t) => excludeSet.has(t.toLowerCase()))
@@ -68,6 +32,15 @@ function getApiKey(): string | null {
 const cache = new Map<string, { photos: FlickrPhoto[]; timestamp: number }>()
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 
+// Hash a preset's content into a short cache-key fragment. Preset edits bust
+// the cache naturally because the hash changes when tags/radius/sort change.
+function hashPreset(p: { includeTags: string[]; excludeTags: string[]; radius: number; sort: string }): string {
+  const s = `${p.includeTags.join(",")}|${p.excludeTags.join(",")}|${p.radius}|${p.sort}`
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return h.toString(36)
+}
+
 export async function GET(req: NextRequest) {
   const apiKey = getApiKey()
   if (!apiKey) {
@@ -77,22 +50,15 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const lat = parseFloat(searchParams.get("lat") ?? "")
   const lng = parseFloat(searchParams.get("lng") ?? "")
-  const hasCurations = searchParams.get("hasCurations") === "1"
-  const isOrigin = searchParams.get("isOrigin") === "1"
-  const rejectedCount = parseInt(searchParams.get("rejectedCount") ?? "0", 10) || 0
-
-  // ── Admin-set algo override ────────────────────────────────────────────────
-  // `algo` (if present) supersedes the auto fallback (isOrigin / hasCurations).
-  // Values: "landscapes" | "hikes" | "station" | "custom".
-  // When algo === "custom", `includeTags`, `excludeTags`, and `radius` must
-  // also be supplied — those three fully override the preset for this station.
+  // Which algo to fetch for this call. Client decides — see fallback chain
+  // in components/photo-overlay.tsx. One of: "landscapes" | "hikes" | "station" | "custom".
   const algoParam = searchParams.get("algo") as
     | "landscapes" | "hikes" | "station" | "custom" | null
-  const customIncludeTags = searchParams.get("includeTags") // already a comma-joined string
+
+  // Custom-only params (when algo === "custom"): full override of the preset.
+  const customIncludeTags = searchParams.get("includeTags")
   const customExcludeTags = searchParams.get("excludeTags")
   const customRadius = searchParams.get("radius")
-  // Optional per-station sort override (only honoured when algo === "custom").
-  // Falls back to "relevance" for custom, "interestingness-desc" for others.
   const customSortParam = searchParams.get("sort")
   const customSort: "relevance" | "interestingness-desc" | null =
     customSortParam === "relevance" || customSortParam === "interestingness-desc" ? customSortParam : null
@@ -100,92 +66,73 @@ export async function GET(req: NextRequest) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     return NextResponse.json({ error: "missing or invalid lat/lng" }, { status: 400 })
   }
+  if (!algoParam) {
+    return NextResponse.json({ error: "missing algo" }, { status: 400 })
+  }
 
-  const pagesToFetch = Math.min(Math.ceil((30 + rejectedCount) / 100), 5)
-
+  const pagesToFetch = 2
   const PER_PAGE = 100
 
-  // Resolve effective tags/radius/excludes. Admin-chosen algo wins; otherwise
-  // fall back to the original auto behaviour. "custom" pulls fully from the
-  // admin-provided query params.
+  // Resolve effective tags/radius/excludes/sort from the algo.
   let tags: string
   let radius: string
   let excludeSet: Set<string>
-  let modeKey: string // cache-key discriminator
-  // Sort order varies by algo:
-  //   custom       → "relevance"          — ranks on tag-match quality, which
-  //                                         matters when the admin has picked
-  //                                         specific place-name tags and wants
-  //                                         photos actually matching them.
-  //   all other    → "interestingness-desc" — Flickr's engagement-weighted
-  //                                         score; empirically produces more
-  //                                         striking generic-tag results.
   let sort: "relevance" | "interestingness-desc"
+  let modeKey: string // cache-key discriminator
 
   if (algoParam === "custom") {
-    // Flickr's photos.search has a hard cap of 20 tags per query. If the admin
-    // has more than 20 include tags saved, keep the first 20 (preserves their
-    // ordering — the UI puts station name first, then curated + extracted).
-    // The rest are dropped with a warning rather than silently ignored.
+    // Flickr's photos.search has a hard cap of 20 tags per query.
     const FLICKR_TAG_LIMIT = 20
-    const rawIncludes = (customIncludeTags ?? SEARCH_TAGS_CURATED)
+    const rawIncludes = (customIncludeTags ?? "")
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean)
     if (rawIncludes.length > FLICKR_TAG_LIMIT) {
       console.warn(
         `[api/flickr/photos] custom algo for ${lat.toFixed(3)},${lng.toFixed(3)} ` +
-        `has ${rawIncludes.length} include tags — truncating to ${FLICKR_TAG_LIMIT} ` +
-        `(Flickr's cap). Dropped: ${rawIncludes.slice(FLICKR_TAG_LIMIT).join(", ")}`,
+        `has ${rawIncludes.length} include tags — truncating to ${FLICKR_TAG_LIMIT}`,
       )
     }
     tags = rawIncludes.slice(0, FLICKR_TAG_LIMIT).join(", ")
     radius = customRadius ?? "7"
     excludeSet = new Set((customExcludeTags ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean))
-    // Admin can override sort for custom algos — default "relevance".
     sort = customSort ?? "relevance"
-    // Hash the truncated include list + sort into the cache key so edits
-    // (and sort flips) bust the cache correctly.
     modeKey = `custom:${tags}:${radius}:${customExcludeTags ?? ""}:${sort}`
-  } else if (algoParam === "station") {
-    tags = SEARCH_TAGS_ORIGIN
-    radius = "1"
-    excludeSet = EXCLUDE_TAGS_ORIGIN
-    modeKey = "station"
-    sort = "interestingness-desc"
-  } else if (algoParam === "hikes") {
-    tags = SEARCH_TAGS_CURATED
-    radius = "7"
-    excludeSet = EXCLUDE_TAGS_DESTINATION
-    modeKey = "hikes"
-    sort = "interestingness-desc"
-  } else if (algoParam === "landscapes") {
-    tags = SEARCH_TAGS_DEFAULT
-    radius = "7"
-    excludeSet = EXCLUDE_TAGS_DESTINATION
-    modeKey = "landscapes"
-    sort = "interestingness-desc"
   } else {
-    // No explicit algo — auto fallback. Curation state no longer promotes to
-    // the "hikes" preset: admins must pick hikes (or custom) manually.
-    // Origin stations still get the urban preset automatically because they're
-    // a different beast (city centres, 1km radius) and setting each one
-    // manually would be annoying.
-    tags = isOrigin ? SEARCH_TAGS_ORIGIN : SEARCH_TAGS_DEFAULT
-    // Origins: 1km — photos right at the station. Destinations: 7km — hiking region.
-    radius = isOrigin ? "1" : "7"
-    // Different exclude list for origins — see tag-list definitions above.
-    excludeSet = isOrigin ? EXCLUDE_TAGS_ORIGIN : EXCLUDE_TAGS_DESTINATION
-    modeKey = isOrigin ? "o" : "d"
-    sort = "interestingness-desc"
+    // Landscapes / hikes / station all pull from the shared preset file so
+    // global edits (via /api/dev/flickr-presets) apply to every station.
+    let presets: Presets
+    try {
+      const { data } = await readDataFile<Partial<Presets>>(PRESETS_FILE)
+      presets = {
+        landscapes: data.landscapes ?? PRESET_DEFAULTS.landscapes,
+        hikes: data.hikes ?? PRESET_DEFAULTS.hikes,
+        station: data.station ?? PRESET_DEFAULTS.station,
+      }
+    } catch {
+      presets = PRESET_DEFAULTS
+    }
+    const preset = presets[algoParam]
+    tags = preset.includeTags.join(", ")
+    radius = String(preset.radius)
+    excludeSet = new Set(preset.excludeTags.map((t) => t.toLowerCase()))
+    sort = preset.sort
+    // Hash the preset content so edits auto-invalidate the cache.
+    modeKey = `${algoParam}:${hashPreset(preset)}`
   }
 
-  // v3: station preset tags changed + renamed from "station-focus" to
-  // "station". Bumping invalidates entries cached under the old preset.
-  const cacheKey = `photos:v3:${lat.toFixed(3)},${lng.toFixed(3)}:${modeKey}:p${pagesToFetch}`
-  const cached = cache.get(cacheKey)
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return NextResponse.json({ photos: cached.photos })
+  // Optional cache-buster. When the client supplies a truthy `bust` param
+  // (from the admin's "Refresh gallery" button), we skip the cache read but
+  // still write the result under the normal key so subsequent requests benefit.
+  // This avoids the race condition where a preset edit's POST hasn't finished
+  // writing the JSON file by the time the auto-refetch runs.
+  const bust = searchParams.get("bust")
+  const cacheKey = `photos:v4:${lat.toFixed(3)},${lng.toFixed(3)}:${modeKey}:p${pagesToFetch}`
+  if (!bust) {
+    const cached = cache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+      return NextResponse.json({ photos: cached.photos })
+    }
   }
 
   const fetchPage = async (page: number) => {
@@ -199,8 +146,6 @@ export async function GET(req: NextRequest) {
       tags,
       tag_mode: "any",
       extras: "url_m,url_l,date_taken,owner_name,geo,tags",
-      // Resolved above — "interestingness-desc" for generic algos, "relevance"
-      // for custom (where specific tag matching matters more than engagement).
       sort,
       per_page: String(PER_PAGE),
       page: String(page),

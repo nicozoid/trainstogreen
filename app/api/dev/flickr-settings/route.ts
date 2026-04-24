@@ -3,84 +3,71 @@ import { readDataFile, writeDataFile } from "@/lib/github-data"
 
 const FILE_PATH = "data/photo-flickr-settings.json"
 
-// Per-station override of the Flickr photo-search algorithm. When a station
-// has no entry in this file, the auto-fallback logic applies (isOrigin →
-// station, else landscapes). When an entry exists, its `algo` supersedes
-// the auto logic. Note: curation state no longer promotes to hikes — the
-// admin must pick hikes (or custom) manually.
+// Per-station custom tag config. Only stored for stations that have a custom
+// feed configured — presence in this file means "this station has a custom
+// fallback". Absence means the custom-fallback step in the gallery fill-chain
+// is skipped for that station.
 //
-// `custom` is only populated when algo === "custom". It's a full override of
-// include tags / exclude tags / radius — no partial overrides, the whole
-// algorithm switches when you pick Custom.
-export type FlickrAlgo = "landscapes" | "hikes" | "station" | "custom"
+// The algo itself (landscapes / hikes / station / custom) is no longer stored
+// per-station — the default is decided by the client based on cluster/excluded
+// membership (always landscapes except for Central London terminals + excluded
+// stations, which default to station). Admins edit only the custom tag config.
 export type FlickrSort = "relevance" | "interestingness-desc"
-export type FlickrSettings = {
+export type FlickrCustomSettings = {
   name?: string
-  algo: FlickrAlgo
-  custom?: {
+  custom: {
     includeTags: string[]
     excludeTags: string[]
     radius: number // km
-    // Optional. Default "relevance" (tag-match quality — matters when the
-    // admin's tags are specific). Admin can flip to "interestingness-desc"
-    // for stations where they want Flickr's engagement score to dominate.
     sort?: FlickrSort
   }
 }
 
-// POST — upsert settings for a station. Pass `algo: null` (or omit the body's
-// algo entirely) to clear the station's override and return it to auto logic.
-// Body: { coordKey, name, algo, custom? }
+// POST — upsert custom config for a station. Pass `custom: null` to clear.
+// Body: { coordKey, name, custom }
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { coordKey, name, algo, custom } = body as {
+  const { coordKey, name, custom } = body as {
     coordKey?: string
     name?: string
-    algo?: FlickrAlgo | null
-    custom?: FlickrSettings["custom"]
+    custom?: FlickrCustomSettings["custom"] | null
   }
 
   if (!coordKey) {
     return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
   }
 
-  const { data: settings, sha } = await readDataFile<Record<string, FlickrSettings>>(FILE_PATH)
+  const { data: settings, sha } = await readDataFile<Record<string, FlickrCustomSettings>>(FILE_PATH)
 
-  // algo === null (or missing) means "clear this station's override"
-  if (!algo) {
+  // null/missing custom means "clear this station's custom config"
+  if (!custom) {
     delete settings[coordKey]
-    await writeDataFile(FILE_PATH, settings, `clear flickr settings for ${name ?? coordKey}`, sha)
+    await writeDataFile(FILE_PATH, settings, `clear flickr custom config for ${name ?? coordKey}`, sha)
     return NextResponse.json({ message: "cleared" })
   }
 
-  const validAlgos: FlickrAlgo[] = ["landscapes", "hikes", "station", "custom"]
-  if (!validAlgos.includes(algo)) {
-    return NextResponse.json({ error: `algo must be one of ${validAlgos.join(", ")}` }, { status: 400 })
+  if (!Array.isArray(custom.includeTags) || !Array.isArray(custom.excludeTags) || typeof custom.radius !== "number") {
+    return NextResponse.json({ error: "custom requires { includeTags, excludeTags, radius }" }, { status: 400 })
   }
+  const sort: FlickrSort | undefined =
+    custom.sort === "interestingness-desc" || custom.sort === "relevance" ? custom.sort : undefined
 
-  // Custom requires a custom payload; other algos don't persist one.
-  const entry: FlickrSettings = { name, algo }
-  if (algo === "custom") {
-    if (!custom || !Array.isArray(custom.includeTags) || !Array.isArray(custom.excludeTags) || typeof custom.radius !== "number") {
-      return NextResponse.json({ error: "custom algo requires { includeTags, excludeTags, radius }" }, { status: 400 })
-    }
-    const sort: FlickrSort | undefined =
-      custom.sort === "interestingness-desc" || custom.sort === "relevance" ? custom.sort : undefined
-    entry.custom = {
+  settings[coordKey] = {
+    name,
+    custom: {
       includeTags: custom.includeTags.map((t) => t.trim()).filter(Boolean),
       excludeTags: custom.excludeTags.map((t) => t.trim()).filter(Boolean),
       radius: Math.max(0.1, Math.min(30, custom.radius)),
       ...(sort ? { sort } : {}),
-    }
+    },
   }
 
-  settings[coordKey] = entry
-  await writeDataFile(FILE_PATH, settings, `set flickr algo=${algo} for ${name ?? coordKey}`, sha)
+  await writeDataFile(FILE_PATH, settings, `set flickr custom config for ${name ?? coordKey}`, sha)
   return NextResponse.json({ message: "ok" })
 }
 
-// GET — returns all settings so the map can hydrate state on mount.
+// GET — returns all custom configs so the map can hydrate state on mount.
 export async function GET() {
-  const { data } = await readDataFile<Record<string, FlickrSettings>>(FILE_PATH)
+  const { data } = await readDataFile<Record<string, FlickrCustomSettings>>(FILE_PATH)
   return NextResponse.json(data)
 }

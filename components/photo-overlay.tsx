@@ -16,7 +16,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
-import { type FlickrPhoto } from "@/lib/flickr"
+import { MAX_GALLERY_PHOTOS, type FlickrPhoto } from "@/lib/flickr"
 import { getEffectiveJourney, prettifyStationLabel } from "@/lib/effective-journey"
 import { categorizePlaceNames } from "@/lib/extract-place-names"
 import londonTerminalsData from "@/data/london-terminals.json"
@@ -25,31 +25,34 @@ import londonTerminalsData from "@/data/london-terminals.json"
 // Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
 // rate-limits, causing empty/failed responses. Same-origin requests bypass
 // Private Relay entirely — and our server reaches Flickr from a clean IP.
+//
+// Fetches ONE algo per call. The client orchestrates fallback filling (see
+// the useEffect below) when the default algo returns fewer than 12 photos.
+type Algo = "landscapes" | "hikes" | "station" | "custom"
+type FlickrSort = "relevance" | "interestingness-desc"
+type CustomSettings = { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }
 async function fetchPhotosViaProxy(
   lat: number,
   lng: number,
-  hasCurations: boolean,
-  rejectedCount: number,
-  isOrigin: boolean,
-  // Admin-set algo override — takes priority over the auto fallback on the server.
-  // `custom` is only read when algo === "custom".
-  algo?: "landscapes" | "hikes" | "station" | "custom" | null,
-  custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" },
+  algo: Algo,
+  custom?: CustomSettings,
+  // Cache-busting token. When truthy, the server treats this as a distinct
+  // cache key (so the admin's "Refresh gallery" click always hits Flickr).
+  // Zero/undefined = normal cached behaviour.
+  bust?: number,
 ): Promise<FlickrPhoto[]> {
   const params = new URLSearchParams({
     lat: String(lat),
     lng: String(lng),
-    hasCurations: hasCurations ? "1" : "0",
-    isOrigin: isOrigin ? "1" : "0",
-    rejectedCount: String(rejectedCount),
+    algo,
   })
-  if (algo) params.set("algo", algo)
   if (algo === "custom" && custom) {
     params.set("includeTags", custom.includeTags.join(", "))
     params.set("excludeTags", custom.excludeTags.join(", "))
     params.set("radius", String(custom.radius))
     if (custom.sort) params.set("sort", custom.sort)
   }
+  if (bust) params.set("bust", String(bust))
   const res = await fetch(`/api/flickr/photos?${params}`)
   if (!res.ok) throw new Error(`photos proxy ${res.status}`)
   const data = (await res.json()) as { photos?: FlickrPhoto[] }
@@ -166,16 +169,21 @@ type StationModalProps = {
   isExcluded?: boolean
   /** Photos the admin has approved for this station (always displayed) */
   approvedPhotos?: FlickrPhoto[]
-  /** Flickr IDs the admin has rejected for this station (never displayed) */
-  rejectedIds?: Set<string>
-  /** Called when the admin approves a photo */
+  /** Ids of approved photos that are also pinned (show the pin badge) */
+  pinnedIds?: Set<string>
+  /** Called when the admin approves a photo (lands at end of approved queue) */
   onApprovePhoto?: (photo: FlickrPhoto) => void
-  /** Called when the admin rejects a photo */
-  onRejectPhoto?: (photoId: string) => void
-  /** Called when the admin un-approves a photo (removes from approved, does not reject) */
+  /** Called when the admin "jump to tops" an unapproved photo — approve +
+   *  place at the top of the non-pinned section (just below the last pin). */
+  onApprovePhotoAtTop?: (photo: FlickrPhoto) => void
+  /** Called when the admin un-approves a photo (also removes any pin) */
   onUnapprovePhoto?: (photoId: string) => void
-  /** Called when the admin moves an approved photo up or down in the display order */
-  onMovePhoto?: (photoId: string, direction: "up" | "down" | "top" | "bottom" | "end") => void
+  /** Called when the admin pins a photo (implicitly approves + moves to top of pins) */
+  onPinPhoto?: (photo: FlickrPhoto) => void
+  /** Called when the admin removes a pin (photo stays approved & in place) */
+  onUnpinPhoto?: (photoId: string) => void
+  /** Called when the admin moves an approved photo */
+  onMovePhoto?: (photoId: string, direction: "up" | "down" | "top" | "bottom") => void
   /** Public note for this station — visible to everyone */
   publicNote?: string
   /** Private note — only visible in admin mode */
@@ -184,17 +192,23 @@ type StationModalProps = {
   ramblerNote?: string
   /** Saves all three note types when the overlay closes */
   onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
-  /** Per-station Flickr-algorithm override. null = no override (auto fallback). */
-  flickrSettings?: {
-    algo: "landscapes" | "hikes" | "station" | "custom"
-    // Custom's `sort` is optional; when absent the server defaults to "relevance".
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" }
+  /** The default Flickr algo for this station. Decided by the parent based on
+   *  cluster/excluded membership — Central London terminals + excluded
+   *  stations default to "station"; everything else defaults to "landscapes". */
+  defaultAlgo?: "landscapes" | "station"
+  /** Per-station custom tag config. null when no custom feed is set up. */
+  customSettings?: CustomSettings | null
+  /** Save per-station custom config. Pass null to clear. */
+  onSaveCustom?: (custom: CustomSettings | null) => void
+  /** Global presets for landscapes/hikes/station. Hydrated on mount. */
+  presets?: {
+    landscapes: CustomSettings
+    hikes: CustomSettings
+    station: CustomSettings
   } | null
-  /** Persists a new algo choice for this station; pass algo=null to revert to auto. */
-  onSaveFlickrSettings?: (
-    algo: "landscapes" | "hikes" | "station" | "custom" | null,
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: "relevance" | "interestingness-desc" },
-  ) => void
+  /** Save a global preset (affects every station that uses it). */
+  onSavePreset?: (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => void
+  /** Reset a global preset to its hardcoded default. */
   /** Journey data keyed by origin station name (e.g. "Farringdon") */
   journeys?: Record<string, JourneyInfo>
   /** Friend origin station name — when set, shows dual journey info */
@@ -482,17 +496,22 @@ export default function StationModal({
   onExclude,
   isExcluded = false,
   approvedPhotos = [],
-  rejectedIds = new Set(),
+  pinnedIds = new Set(),
   onApprovePhoto,
-  onRejectPhoto,
+  onApprovePhotoAtTop,
   onUnapprovePhoto,
+  onPinPhoto,
+  onUnpinPhoto,
   onMovePhoto,
   publicNote = "",
   privateNote = "",
   ramblerNote = "",
   onSaveNotes,
-  flickrSettings,
-  onSaveFlickrSettings,
+  defaultAlgo = "landscapes",
+  customSettings,
+  onSaveCustom,
+  presets,
+  onSavePreset,
   journeys,
   friendOrigin,
   primaryOrigin = "Farringdon",
@@ -511,31 +530,6 @@ export default function StationModal({
   const [error, setError] = useState<string | null>(null)
 
   const hasApiKey = Boolean(process.env.NEXT_PUBLIC_FLICKR_API_KEY)
-
-  // Suppress the automatic Flickr fetch on modal open in two cases:
-  //   1. `npm run dev` locally — saves Flickr API quota while iterating.
-  //   2. Admin mode in any environment — lets the admin intentionally
-  //      decide when to spend a Flickr call (useful when triaging many
-  //      stations quickly without wanting to fetch photos for each one).
-  //
-  // A "Load photos" button appears where the grid would be; clicking
-  // flips the flag and kicks off the usual fetch. In non-admin prod the
-  // flag starts true → fetch runs immediately, unchanged from before.
-  //
-  // process.env.NODE_ENV is replaced at build time by Next.js, so
-  // `isLocalDev` becomes a literal `false` in the prod bundle — the
-  // button branch is tree-shaken out there for non-admin users.
-  const isLocalDev = process.env.NODE_ENV === "development"
-  const gateAutoFetch = isLocalDev || devMode
-  const [photosLoadRequested, setPhotosLoadRequested] = useState(!gateAutoFetch)
-  // Reset the request flag whenever the modal opens for a new station, if
-  // either gating condition applies right now. devMode is NOT in the dep
-  // array on purpose — flipping admin mode mid-session shouldn't suddenly
-  // drop the photos you're already looking at.
-  useEffect(() => {
-    if (isLocalDev || devMode) setPhotosLoadRequested(false)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, lat, lng])
 
   // Diagnostic log: when the modal opens for a station for which we have no
   // journey data from the active primary, emit a console.warn. This makes it
@@ -655,11 +649,9 @@ export default function StationModal({
     setDragOffset(0)
   }, [])
 
-  // Maximum photos shown in the overlay, total. Approved photos fill this
-  // slot-pool first; Flickr candidates fill the remainder. When MAX_PHOTOS
-  // or more photos are approved (and still loading OK), no Flickr fetch
-  // happens at all — the approved set is self-sufficient.
-  const MAX_PHOTOS = 12
+  // Alias the shared constant to the short local name used throughout this
+  // file. Single source of truth lives in lib/flickr.ts — change it there.
+  const MAX_PHOTOS = MAX_GALLERY_PHOTOS
 
   // Per-session set of photo IDs whose <img> failed to load (404, taken down,
   // etc). Reset every time the overlay closes/re-opens — a temporary Flickr
@@ -674,155 +666,185 @@ export default function StationModal({
     })
   }, [])
 
-  // Per-session set of photo IDs the user has explicitly hidden via the
-  // refresh button. Behaves exactly like brokenIds for display/backfill
-  // purposes, but kept separate so we can tell "image failed" apart from
-  // "user requested a swap" in logs / future debug tooling. Also reset on open.
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
-  const handleHidePhoto = useCallback((id: string) => {
-    setHiddenIds((prev) => {
-      if (prev.has(id)) return prev
-      const next = new Set(prev)
-      next.add(id)
-      return next
-    })
-  }, [])
-
-  // Snapshot fetch parameters at dialog-open time so that approving/rejecting
-  // photos during this session doesn't trigger re-fetches (which cause scroll jumps).
-  // The broader tag set and extra buffer pages only kick in the *next* time the overlay opens.
-  const hasCurationsRef = useRef(false)
-  const rejectedCountRef = useRef(0)
-  // Snapshot whether this station uses the urban (origin-style) photo set —
-  // changing it mid-session shouldn't re-fetch with different params until
-  // the overlay is re-opened.
-  const isOriginRef = useRef(false)
-  // Snapshot of approved photo IDs at open time — photos approved *before* this
-  // session get promoted to the top; photos approved *during* this session stay
+  // Snapshot of approved photo IDs at open time — photos approved BEFORE this
+  // session get promoted to the top; photos approved DURING this session stay
   // in their original grid position so the layout doesn't shift.
   const initialApprovedIdsRef = useRef<Set<string>>(new Set())
 
-  // Tracks which station's photos are currently in `allPhotos` — used to decide
-  // whether opening the overlay is for a NEW station (reset + show skeleton) or
-  // the SAME station being re-opened (keep existing photos, refetch silently).
+  // Tracks which fetch key is currently in `allPhotos` — used to decide
+  // whether opening the overlay is for a NEW station/tab (reset + show skeleton)
+  // or the SAME one being re-opened (keep existing photos, refetch silently).
   const lastFetchKeyRef = useRef<string | null>(null)
 
-  // Capture fetch parameters each time the dialog opens (not on every edit)
+  // Admin-only tab state. Non-admin users don't see tabs; they get the
+  // approved-first + fallback-fill view that matches the old non-admin behaviour.
+  // Default to "approved" so most stations open to an empty grid for admins.
+  type TabKey = "approved" | "custom" | "landscapes" | "hikes" | "station"
+  const [selectedTab, setSelectedTab] = useState<TabKey>("approved")
+
+  // Cache-busting counter for the admin's "Refresh gallery" button. When > 0
+  // the next fetch passes it to the server as ?bust=<counter> so the server
+  // skips its in-memory cache. Without this, editing a preset and re-fetching
+  // can hit the warm cache before the preset file write has finished (the
+  // auto-refetch fires on optimistic state update, which beats the POST).
+  const [refreshCounter, setRefreshCounter] = useState(0)
+
+  // Reset per-open state when the dialog opens (new station or re-open).
   useEffect(() => {
     if (open) {
-      hasCurationsRef.current = approvedPhotos.length > 0 || rejectedIds.size > 0
-      rejectedCountRef.current = rejectedIds.size
-      // Friend AND primary origins use the origin-specific Flickr algorithm
-      // (smaller radius, different tag set, urban rather than rural).
-      isOriginRef.current = isFriendOrigin || isPrimaryOrigin
       initialApprovedIdsRef.current = new Set(approvedPhotos.map((p) => p.id))
-      // Reset per-session broken-photo tracking — a photo that 404'd last time
-      // might just have been a transient outage; give it a fresh try.
+      // Transient 404 tracking resets each session — a photo that failed last
+      // time might just have been a transient Flickr outage.
       setBrokenIds(new Set())
-      // Reset hidden-photo tracking too — "refresh this photo" is only meant
-      // for the current viewing session, not a permanent preference.
-      setHiddenIds(new Set())
+      // Always land on the Approved tab when opening a new station.
+      setSelectedTab("approved")
     }
-    // Only re-run when the dialog opens, not when approvedPhotos/rejectedIds change
+    // Only re-run when the dialog opens, not when approvedPhotos changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, lat, lng])
 
-  // Fetch photos when the dialog opens. Approvals/rejections during the session
-  // are handled at display time by filtering allPhotos (no re-fetch, preserves scroll).
-  //
-  // IMPORTANT: when the target station changes, we reset allPhotos and flip loading=true
-  // SYNCHRONOUSLY with kicking off the fetch. This matters because otherwise the "No
-  // photos found" text flashes during the render gap — stale allPhotos gets cleared
-  // but loading hasn't flipped yet, so the empty-state branch renders briefly.
-  // How many approved photos are actually usable right now — excludes both
-  // broken-this-session (image 404'd) and hidden-this-session (refresh button).
-  // Drives whether we need Flickr at all: a station with MAX_PHOTOS or more
-  // usable approved photos is self-sufficient and skips the fetch entirely.
+  // How many approved photos are actually usable right now — excludes broken
+  // (image 404'd this session). Drives whether the non-admin / Approved-tab
+  // view needs any Flickr calls at all (≥12 usable = self-sufficient).
   const usableApprovedCount = approvedPhotos.filter(
-    (p) => !brokenIds.has(p.id) && !hiddenIds.has(p.id),
+    (p) => !brokenIds.has(p.id),
   ).length
 
-  useEffect(() => {
-    // Extra gate: in dev, wait for the user to click the "Load photos"
-    // button before firing the fetch. In prod, photosLoadRequested is
-    // always true so this behaves exactly like before.
-    if (!open || !hasApiKey || !photosLoadRequested) return
+  // Build the fallback order: default first, then the canonical
+  // landscapes → hikes → custom → station order (skipping whichever is the
+  // default, and skipping "custom" if no per-station config exists).
+  const buildFallbackChain = useCallback((): Algo[] => {
+    const order: Algo[] = ["landscapes", "hikes", "custom", "station"]
+    const chain: Algo[] = [defaultAlgo, ...order.filter((a) => a !== defaultAlgo)]
+    return chain.filter((a) => a !== "custom" || !!customSettings)
+  }, [defaultAlgo, customSettings])
 
-    // If we already have enough usable approved photos to fill every slot,
-    // skip the Flickr fetch entirely. If a broken photo is detected later,
-    // usableApprovedCount drops below MAX_PHOTOS and this effect re-runs
-    // (it's in the dep list) and fires the fetch then.
+  // Hold the latest customSettings in a ref so the admin single-algo effect
+  // can read the current value at fetch time WITHOUT re-running when custom
+  // settings change. This implements "only update tab pages on Refresh click"
+  // for admins — editing the textarea saves the setting but doesn't refetch
+  // the gallery until the admin explicitly hits Refresh.
+  const customSettingsRef = useRef(customSettings)
+  useEffect(() => { customSettingsRef.current = customSettings }, [customSettings])
+
+  // Case 1 — admin viewing a single-algo tab. Refires ONLY on station/tab/
+  // refresh change; preset and custom-setting edits don't trigger a refetch.
+  // The admin hits "Refresh gallery" to see their edits.
+  useEffect(() => {
+    if (!open || !hasApiKey) return
+    if (!devMode || selectedTab === "approved") return
+    const algo = selectedTab as Algo
+    const key = `${lat},${lng}:${algo}`
+    const latestCustom = customSettingsRef.current
+    if (algo === "custom" && !latestCustom) {
+      setAllPhotos([])
+      setLoading(false)
+      lastFetchKeyRef.current = key
+      return
+    }
+    if (lastFetchKeyRef.current !== key) {
+      setAllPhotos([])
+      setLoading(true)
+    }
+    setError(null)
+    fetchPhotosViaProxy(lat, lng, algo, latestCustom ?? undefined, refreshCounter || undefined)
+      .then((result) => {
+        setAllPhotos(result)
+        lastFetchKeyRef.current = key
+      })
+      .catch((err) => {
+        console.error("[photos] fetch error:", err)
+        setError("Couldn't load photos. Try again later.")
+      })
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasApiKey, lat, lng, selectedTab, devMode, refreshCounter])
+
+  // Case 2 — non-admin OR admin viewing the Approved tab. Runs the fallback
+  // chain until approved + flickr hits 12. Skips Flickr entirely when
+  // approved alone already covers all 12 slots. This path DOES react to
+  // custom/preset changes so the non-admin view stays in sync when admins
+  // edit from another tab (or across sessions).
+  useEffect(() => {
+    if (!open || !hasApiKey) return
+    if (devMode && selectedTab !== "approved") return
+
     if (usableApprovedCount >= MAX_PHOTOS) {
+      setAllPhotos([])
       setLoading(false)
       return
     }
 
-    const key = `${lat},${lng}`
-    const isNewStation = lastFetchKeyRef.current !== key
-
-    // New station: show skeleton immediately. Same station re-opened: keep current
-    // photos visible and refresh silently in the background.
-    if (isNewStation) {
+    const key = `${lat},${lng}:fallback`
+    if (lastFetchKeyRef.current !== key) {
       setAllPhotos([])
       setLoading(true)
     }
     setError(null)
 
-    console.log(`[photos] fetching: hasCurations=${hasCurationsRef.current}, rejectedCount=${rejectedCountRef.current}, approvedCount=${approvedPhotos.length}, usable=${usableApprovedCount}, algo=${flickrSettings?.algo ?? "(auto)"}`)
-    // Pass through the admin-set algo override (if any). The server resolves
-    // the effective tags/radius/excludes — no fallback logic needed client-side.
-    fetchPhotosViaProxy(
-      lat,
-      lng,
-      hasCurationsRef.current,
-      rejectedCountRef.current,
-      isOriginRef.current,
-      flickrSettings?.algo ?? null,
-      flickrSettings?.custom,
-    )
-      .then((result) => {
-        console.log(`[photos] fetched ${result.length} photos from Flickr`)
-        setAllPhotos(result)
-        lastFetchKeyRef.current = key
-      })
-      .catch((err) => {
-        console.error('[photos] fetch error:', err)
-        setError("Couldn't load photos. Try again later.")
-      })
-      .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, hasApiKey, lat, lng, photosLoadRequested, usableApprovedCount, flickrSettings])
+    const chain = buildFallbackChain()
+    const approvedIdSet = new Set(approvedPhotos.map((p) => p.id))
+    const need = MAX_PHOTOS - usableApprovedCount
 
-  // Build the display list. Photos approved *before* this session are promoted
-  // to the top. Photos approved *during* this session stay in their original
-  // grid position (just get the badge) so the layout doesn't jump around.
+    let cancelled = false
+    ;(async () => {
+      const accumulated: FlickrPhoto[] = []
+      const seen = new Set<string>()
+      try {
+        for (const algo of chain) {
+          const batch = await fetchPhotosViaProxy(lat, lng, algo, customSettings ?? undefined, refreshCounter || undefined)
+          for (const p of batch) {
+            if (seen.has(p.id)) continue
+            if (approvedIdSet.has(p.id)) continue
+            seen.add(p.id)
+            accumulated.push(p)
+          }
+          if (accumulated.length >= need) break
+        }
+        if (!cancelled) {
+          setAllPhotos(accumulated)
+          lastFetchKeyRef.current = key
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("[photos] fallback fetch error:", err)
+          setError("Couldn't load photos. Try again later.")
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasApiKey, lat, lng, selectedTab, devMode, customSettings, usableApprovedCount, presets, refreshCounter])
+
+  // Display-list builders — what appears depends on tab (admin) or the
+  // approved-first fallback view (non-admin + admin Approved tab).
   const approvedIds = new Set(approvedPhotos.map((p) => p.id))
-  // Photos that were already approved when the dialog opened — shown at the top.
-  // Exclude broken (img 404'd this session) and hidden (refresh-button this
-  // session) so the display list collapses and backfill kicks in.
+
+  // Non-admin / Approved-tab path: approved first (capped at 12), then flickr
+  // fallback fills the remainder.
   const preApproved = approvedPhotos.filter(
-    (p) =>
-      initialApprovedIdsRef.current.has(p.id) &&
-      !brokenIds.has(p.id) &&
-      !hiddenIds.has(p.id),
+    (p) => initialApprovedIdsRef.current.has(p.id) && !brokenIds.has(p.id),
   )
-  // Flickr results minus rejected, pre-approved, broken, and session-hidden.
-  // Newly-approved photos (approved during this session) stay in place — they
-  // come from allPhotos and get a badge; we don't promote them to the top to
-  // avoid layout jumps mid-session.
   const flickrOnly = allPhotos.filter(
-    (p) =>
-      !initialApprovedIdsRef.current.has(p.id) &&
-      !rejectedIds.has(p.id) &&
-      !brokenIds.has(p.id) &&
-      !hiddenIds.has(p.id),
+    (p) => !initialApprovedIdsRef.current.has(p.id) && !brokenIds.has(p.id),
   )
-  // Hard cap total display at MAX_PHOTOS (12). Approved photos fill first;
-  // Flickr candidates fill the remainder. If preApproved alone overflows
-  // (e.g. 15 approved), we show the first 12 and drop Flickr entirely.
   const preApprovedCapped = preApproved.slice(0, MAX_PHOTOS)
   const remainingSlots = MAX_PHOTOS - preApprovedCapped.length
-  const photos = [...preApprovedCapped, ...flickrOnly.slice(0, remainingSlots)]
+  const nonAdminPhotos = [...preApprovedCapped, ...flickrOnly.slice(0, remainingSlots)]
+
+  // Admin Approved-tab path: ALL approved photos (no cap, divider drawn
+  // after the 12th in the render code).
+  const approvedOnly = approvedPhotos.filter((p) => !brokenIds.has(p.id))
+
+  // What to render right now.
+  const photos: FlickrPhoto[] =
+    devMode && selectedTab === "approved"
+      ? approvedOnly
+      : devMode && selectedTab !== "approved"
+        ? allPhotos
+        : nonAdminPhotos
 
   // ── Open/close animation ──
   // Desktop: grow from / shrink to the clicked station icon.
@@ -995,7 +1017,7 @@ export default function StationModal({
             On mobile, the outer DialogContent is the scroll container (see
             max-sm:overflow-y-auto up there), so this wrapper reverts to
             flex-none + overflow-visible and content flows inline. */}
-        <div className="min-h-0 flex-1 overflow-y-auto max-sm:flex-none max-sm:overflow-visible">
+        <div data-modal-scroll className="min-h-0 flex-1 overflow-y-auto max-sm:flex-none max-sm:overflow-visible">
         {/* gap-0 override: shadcn's DialogHeader defaults to flex-col
             gap-2, which stacks flex-gap on top of the explicit mt-*
             margins on each child (alts, subheaders, notes). Letting
@@ -1660,30 +1682,6 @@ export default function StationModal({
             </div>
           )}
 
-          {/* "Load photos" button — rendered where the grid would be so
-              the user can request photos explicitly rather than triggering
-              an auto-fetch on every modal open.
-              Shown in two cases:
-                1. local dev (saves Flickr API quota during UI iteration)
-                2. admin mode in any environment (intentional triage flow)
-              In non-admin prod builds, both conditions are false and this
-              branch is effectively dead code. */}
-          {hasApiKey && (isLocalDev || devMode) && !photosLoadRequested && (
-            <div className="flex items-center justify-center rounded-lg bg-muted px-4 py-12">
-              <button
-                type="button"
-                onClick={() => setPhotosLoadRequested(true)}
-                // Matching shadcn Button's outline-variant vibe but
-                // inlined so we don't pull in another import for a
-                // dev-only widget. cursor-pointer is explicit because
-                // buttons without it feel unresponsive to mouse users.
-                className="cursor-pointer rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                Load photos
-              </button>
-            </div>
-          )}
-
           {/* Loading state — logo-glyph spinner centered in the
               blank photo-grid area. min-height approximates the
               3-row photo grid that lands here once loaded, so the
@@ -1703,113 +1701,161 @@ export default function StationModal({
             <p className="text-sm text-destructive">{error}</p>
           )}
 
-          {/* No photos found — gated on photosLoadRequested so dev
-              users don't see "no photos" before clicking the button. */}
-          {hasApiKey && photosLoadRequested && !loading && !error && allPhotos.length === 0 && photos.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              No hiking photos found near this station on Flickr.
-            </p>
-          )}
-
-          {/* Photo grid — 2 cols → 3 → 4. Trim to a multiple of 12 (LCM of 2,3,4)
-              so the last row is always full at every breakpoint. */}
-          {hasApiKey && !loading && photos.length > 0 && (
-            <>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
-                {/* Trim to a multiple of 6 (LCM of 1,2,3) so the last row is always full */}
-                {photos.slice(0, Math.floor(photos.length / 6) * 6 || 6).map((photo) => {
-                  const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
-                  return (
-                  <PhotoCard
-                    key={photo.id}
-                    photo={photo}
-                    devMode={devMode}
-                    isApproved={approvedIds.has(photo.id)}
-                    onApprove={() => onApprovePhoto?.(photo)}
-                    onReject={() => onRejectPhoto?.(photo.id)}
-                    onUnapprove={() => onUnapprovePhoto?.(photo.id)}
-                    onMoveToTop={() => onMovePhoto?.(photo.id, "top")}
-                    onMoveToBottom={() => onMovePhoto?.(photo.id, "bottom")}
-                    onMoveUp={() => onMovePhoto?.(photo.id, "up")}
-                    onMoveDown={() => onMovePhoto?.(photo.id, "down")}
-                    canMoveUp={approvedIndex > 0}
-                    canMoveDown={approvedIndex >= 0 && approvedIndex < approvedPhotos.length - 1}
-                    onImageError={() => handleImageError(photo.id)}
-                    onHide={() => {
-                      // Always hide for this session.
-                      handleHidePhoto(photo.id)
-                      // If the photo was already approved, also demote it to the TRUE
-                      // end of the approved list (past slot 12 — off-screen). So next
-                      // time the admin opens this station, the refreshed-away photo
-                      // won't appear in the visible 12 unless things reshuffle.
-                      // "end" is distinct from "bottom" (which is slot 12).
-                      if (approvedIds.has(photo.id)) {
-                        onMovePhoto?.(photo.id, "end")
-                      }
-                    }}
-                  />
-                  )
-                })}
-              </div>
-
-              {/* "Back to top" — scrolls the dialog content back to the header.
-                  Uses the same scroll target as the tappable title bar (iOS
-                  nav-bar convention). Ghost variant so it doesn't compete
-                  visually with the photo grid above.
-                  Mobile/small-tablet only: md:hidden hides it at ≥768px where
-                  the viewport is short enough not to need a shortcut. */}
-              <div className="mt-4 flex justify-center md:hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="cursor-pointer"
-                  onClick={() => {
-                    if (typeof document === "undefined") return
-                    const el = document.querySelector('[data-slot="dialog-content"]')
-                    if (el instanceof HTMLElement) el.scrollTo({ top: 0, behavior: "smooth" })
-                  }}
-                >
-                  {/* Chevron up — matches the existing reorder-button icons elsewhere in this file */}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                    fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="18 15 12 9 6 15" />
-                  </svg>
-                  Back to top
-                </Button>
-              </div>
-            </>
-          )}
-
-          {/* Admin-only: Flickr algorithm / custom tags panel. Lives below the
-              grid so it doesn't distract from the main curation task. */}
-          {devMode && (
-            <FlickrSettingsPanel
+          {/* Admin-only tabs + per-tab settings panel. Tabs live ABOVE the
+              photos so the admin can switch views without scrolling. The
+              Approved tab is the default — most stations open to an empty
+              grid for admins, reflecting "only approved photos are canonical". */}
+          {hasApiKey && devMode && (
+            <AdminTabsAndSettings
+              selectedTab={selectedTab}
+              onSelectTab={setSelectedTab}
+              approvedCount={approvedPhotos.length}
+              customSettings={customSettings ?? null}
+              onSaveCustom={onSaveCustom}
               stationName={stationName}
               publicNote={publicNote}
               ramblerNote={ramblerNote}
-              approvedCount={approvedPhotos.length}
-              settings={flickrSettings ?? null}
-              hasCurations={approvedPhotos.length > 0 || rejectedIds.size > 0}
-              isOrigin={isFriendOrigin || isPrimaryOrigin}
-              onSave={(algo, custom) => onSaveFlickrSettings?.(algo, custom)}
-              onRefreshGallery={() => {
-                // Clear session-only hidden/broken sets so the gallery
-                // rehydrates to what a non-admin user would see. No forced
-                // Flickr re-fetch — allPhotos buffer is already cached.
-                setHiddenIds(new Set())
-                setBrokenIds(new Set())
-                // Also reset the "initially approved" snapshot so photos
-                // approved during this session get promoted to the top
-                // alongside photos that were already approved at open time.
-                // Without this, mid-session approvals stay interleaved with
-                // unreviewed Flickr candidates — which is deliberate during
-                // curation (prevents layout jumps) but wrong for a preview
-                // of the final user-facing order.
-                initialApprovedIdsRef.current = new Set(
-                  approvedPhotos.map((p) => p.id),
-                )
-              }}
+              presets={presets ?? null}
+              onSavePreset={onSavePreset}
+              // Refreshing bumps the counter, which changes the fetch effect's
+              // dep → forces a refetch with ?bust=<counter> so the server
+              // skips its cache for this request.
+              onRefresh={() => setRefreshCounter((n) => n + 1)}
             />
+          )}
+
+          {/* No photos found — only shown when we've actually finished
+              fetching and have nothing (includes admin tabs that legitimately
+              return nothing, e.g. a "custom" tab with no config). */}
+          {hasApiKey && !loading && !error && photos.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              {devMode && selectedTab === "approved"
+                ? "No approved photos for this station yet."
+                : devMode && selectedTab === "custom" && !customSettings
+                  ? "No custom config for this station — save tags below to populate this feed."
+                  : "No photos found near this station on Flickr."}
+            </p>
+          )}
+
+          {/* Photo grid — 1 col → 2 → 3. In admin Approved tab, a horizontal
+              divider splits the first 12 approved (the public gallery) from
+              everything beyond (the "bench"). Non-admin and other tabs don't
+              need that divider. */}
+          {hasApiKey && !loading && photos.length > 0 && (
+            <>
+              {(() => {
+                const showDivider = devMode && selectedTab === "approved" && photos.length > MAX_PHOTOS
+                const reorderable = devMode && selectedTab === "approved"
+                const firstGroup = showDivider ? photos.slice(0, MAX_PHOTOS) : photos
+                const secondGroup = showDivider ? photos.slice(MAX_PHOTOS) : []
+                // numPins = length of the pinned prefix in approvedPhotos. Used
+                // to section-scope the reorder buttons' disabled state so e.g.
+                // the chevron-up on the top pin is disabled (no room to move up
+                // within its section), not "just" disabled when overall idx is 0.
+                let numPins = 0
+                for (const p of approvedPhotos) {
+                  if (pinnedIds.has(p.id)) numPins++
+                  else break
+                }
+                const renderCards = (list: FlickrPhoto[]) => list.map((photo) => {
+                  const isApproved = approvedIds.has(photo.id)
+                  const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
+                  const isPinned = pinnedIds.has(photo.id)
+                  // Section-scoped move capabilities: within the pinned section
+                  // or within the non-pinned section only — can't cross.
+                  // Non-approved photos always allow "jump to top" (it approves
+                  // the photo and places it at the top of the non-pinned section).
+                  const canMoveUp = !isApproved
+                    ? true
+                    : isPinned
+                      ? approvedIndex > 0
+                      : approvedIndex > numPins
+                  const canMoveDown = isPinned
+                    ? approvedIndex >= 0 && approvedIndex < numPins - 1
+                    : approvedIndex >= 0 && approvedIndex < approvedPhotos.length - 1
+                  // onMoveToTop branches on approval state:
+                  //   - Approved photo → in-place section-aware move (server "top" action).
+                  //   - Non-approved photo → approve + place at top of non-pinned.
+                  const handleJumpToTop = () => {
+                    if (isApproved) onMovePhoto?.(photo.id, "top")
+                    else onApprovePhotoAtTop?.(photo)
+                  }
+                  return (
+                    <PhotoCard
+                      key={photo.id}
+                      photo={photo}
+                      devMode={devMode}
+                      isApproved={isApproved}
+                      isPinned={isPinned}
+                      showReorder={reorderable && approvedIndex >= 0}
+                      onApprove={() => onApprovePhoto?.(photo)}
+                      onUnapprove={() => onUnapprovePhoto?.(photo.id)}
+                      onPin={() => onPinPhoto?.(photo)}
+                      onUnpin={() => onUnpinPhoto?.(photo.id)}
+                      onMoveToTop={handleJumpToTop}
+                      onMoveToBottom={() => onMovePhoto?.(photo.id, "bottom")}
+                      onMoveUp={() => onMovePhoto?.(photo.id, "up")}
+                      onMoveDown={() => onMovePhoto?.(photo.id, "down")}
+                      canMoveUp={canMoveUp}
+                      canMoveDown={canMoveDown}
+                      onImageError={() => handleImageError(photo.id)}
+                    />
+                  )
+                })
+                return (
+                  <>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
+                      {renderCards(firstGroup)}
+                    </div>
+                    {showDivider && (
+                      <>
+                        {/* Divider separating the public-visible first 12 from
+                            the admin-only "bench" (extras beyond slot 12). */}
+                        <div className="my-6 border-t-2 border-foreground/70" aria-label="Public gallery cutoff — everything below is admin-only" />
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 max-sm:-mx-6">
+                          {renderCards(secondGroup)}
+                        </div>
+                      </>
+                    )}
+                  </>
+                )
+              })()}
+
+            </>
+          )}
+
+          {/* "Back to top" — in admin mode it's always visible on every tab
+              and every viewport (the tab header + settings panel make the
+              page long; admins want a fast scroll-to-top shortcut regardless
+              of whether photos have loaded). For non-admins we keep the
+              original mobile-only behaviour, and only render it when there
+              are photos above to scroll past. */}
+          {hasApiKey && (devMode || photos.length > 0) && (
+            <div className={`mt-4 flex justify-center ${devMode ? "" : "md:hidden"}`}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="cursor-pointer"
+                onClick={() => {
+                  if (typeof document === "undefined") return
+                  // Desktop: the real scroll container is the inner
+                  // `[data-modal-scroll]` div (DialogContent itself is
+                  // overflow-hidden). Mobile: the outer DialogContent is
+                  // the scroll container. Scroll both so "top" works on
+                  // every breakpoint without a width check.
+                  const inner = document.querySelector('[data-modal-scroll]')
+                  if (inner instanceof HTMLElement) inner.scrollTo({ top: 0, behavior: "smooth" })
+                  const outer = document.querySelector('[data-slot="dialog-content"]')
+                  if (outer instanceof HTMLElement) outer.scrollTo({ top: 0, behavior: "smooth" })
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="18 15 12 9 6 15" />
+                </svg>
+                Back to top
+              </Button>
+            </div>
           )}
         </div>
         </div>{/* /scroll region */}
@@ -1818,111 +1864,179 @@ export default function StationModal({
   )
 }
 
-// ── Flickr settings panel ──────────────────────────────────────────────────
-// Admin-only. Lives below the photo grid. Lets the admin pick which Flickr
-// search algorithm drives this station's gallery (landscapes / hikes /
-// station / custom), and edit the tags and radius directly when Custom
-// is selected. Settings persist via the /api/dev/flickr-settings endpoint.
-//
-// When no setting is saved, the UI still displays a selected algo — the
-// "auto fallback" (isOrigin → station, else landscapes). Curation state
-// no longer influences the auto algo — that's a manual override only.
-// Picking anything in the dropdown promotes that choice to an explicit override.
+// ── Admin tabs + per-tab settings panel ───────────────────────────────────
+// Admin-only. Sits ABOVE the photo grid. Replaces the old bottom-of-modal
+// Flickr settings panel. Tabs:
+//   - Approved (N/12) — shows all approved photos, divider after the 12th.
+//   - Custom           — raw feed for the per-station custom config.
+//   - Landscapes       — raw feed for the global landscapes preset.
+//   - Hikes            — raw feed for the global hikes preset.
+//   - Station          — raw feed for the global station preset.
+// When selected tab ≠ Approved, the settings fields for that tab render
+// directly below the tab row (above the photos). Custom saves per-station;
+// landscapes/hikes/station saves are GLOBAL and affect every station.
 
-// Preset values — MUST stay in sync with app/api/flickr/photos/route.ts
-// Shown in read-only preview mode when the admin picks a non-custom algo.
-const PRESET_LANDSCAPES = {
-  tags: "landscape",
-  excludes:
-    "people, girls, boys, children, portrait, portraits, countryfashion, countryoutfit, countrystyle, train, tank, railway, trains, railways, station, engine, locomotive, bus, buses, airbus, airport, airways, airliner, flight, motorbike, motorcycle, paddleboarding, object, baby, plane, taps, city, town, great western railways, reading, sexy, midjourney, protest, demonstration, demo, march, band, music, musicians",
-  radius: 7,
-}
-const PRESET_HIKES = {
-  tags:
-    "landscape, landmark, hike, trail, walk, way, castle, ruins, garden, park, nature reserve, nature, cottage, village, thatch, tudor, medieval, ruins, estate",
-  excludes: PRESET_LANDSCAPES.excludes, // same destination-exclude list
-  radius: 7,
-}
-const PRESET_STATION = {
-  tags: "station, city, cityscape, landmark, urban, architecture, building",
-  excludes:
-    "portrait, portraits, countryfashion, countryoutfit, countrystyle, paddleboarding, baby, taps, reading, sexy, midjourney, protest, demonstration, demo, march, band, music, musicians",
-  radius: 1,
-}
-
-// Keeping `Algo` values as kebab-case (or single word) to match the persisted
-// settings file; `station` replaced the original `station-focus`.
-type Algo = "landscapes" | "hikes" | "station" | "custom"
-type FlickrSort = "relevance" | "interestingness-desc"
-
-function FlickrSettingsPanel({
+function AdminTabsAndSettings({
+  selectedTab,
+  onSelectTab,
+  approvedCount,
+  customSettings,
+  onSaveCustom,
   stationName,
   publicNote,
   ramblerNote,
-  approvedCount,
-  settings,
-  hasCurations,
-  isOrigin,
-  onSave,
-  onRefreshGallery,
+  presets,
+  onSavePreset,
+  onRefresh,
 }: {
+  selectedTab: "approved" | "custom" | "landscapes" | "hikes" | "station"
+  onSelectTab: (t: "approved" | "custom" | "landscapes" | "hikes" | "station") => void
+  approvedCount: number
+  customSettings: CustomSettings | null
+  onSaveCustom?: (custom: CustomSettings | null) => void
   stationName: string
   publicNote: string
   ramblerNote: string
-  approvedCount: number
-  settings: { algo: Algo; custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort } } | null
-  hasCurations: boolean
-  isOrigin: boolean
-  onSave: (algo: Algo | null, custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }) => void
-  // Called when the admin wants to preview the gallery as a non-admin would
-  // see it (clears this session's hidden-via-refresh + broken-image tracking).
-  onRefreshGallery?: () => void
+  presets: { landscapes: CustomSettings; hikes: CustomSettings; station: CustomSettings } | null
+  onSavePreset?: (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => void
+  onRefresh?: () => void
 }) {
-  // Auto-fallback mirrors the server-side logic in /api/flickr/photos.
-  // Shown in the dropdown when no explicit override is persisted for this station.
-  // Auto-fallback used to promote curated stations to "hikes" automatically.
-  // That's now a manual choice only — curated stations still default to
-  // "landscapes" unless the admin explicitly picks another algo.
-  const autoAlgo: Algo = isOrigin ? "station" : "landscapes"
-  const effectiveAlgo: Algo = settings?.algo ?? autoAlgo
-  const hasOverride = settings != null
+  const TABS: { key: typeof selectedTab; label: string }[] = [
+    { key: "approved", label: `Approved (${approvedCount}/${MAX_GALLERY_PHOTOS})` },
+    { key: "custom", label: "Custom" },
+    { key: "landscapes", label: "Landscapes" },
+    { key: "hikes", label: "Hikes" },
+    { key: "station", label: "Station" },
+  ]
 
-  // Local-state mirrors of the persisted custom config. Typing doesn't round-trip
-  // to the server on every keystroke — we save on blur (or radius change).
-  const [customInclude, setCustomInclude] = useState(
-    settings?.custom?.includeTags.join(", ") ?? "",
-  )
-  const [customExclude, setCustomExclude] = useState(
-    settings?.custom?.excludeTags.join(", ") ?? "",
-  )
-  const [customRadius, setCustomRadius] = useState(settings?.custom?.radius ?? 7)
-  // Sort selection for custom mode. Default "relevance" matches what the
-  // server falls back to when the field is absent from the stored payload.
-  const [customSort, setCustomSort] = useState<FlickrSort>(settings?.custom?.sort ?? "relevance")
+  // Is the current tab a preset tab (global edit) or the custom (per-station) tab?
+  const isPresetTab = selectedTab === "landscapes" || selectedTab === "hikes" || selectedTab === "station"
+  const presetName = isPresetTab ? (selectedTab as "landscapes" | "hikes" | "station") : null
 
-  // Keep local state in sync when the parent pushes new settings (e.g. a reset).
+  // What config are we editing? For custom: per-station settings. For preset
+  // tabs: the global preset (or null while presets are loading).
+  const activeSettings: CustomSettings | null =
+    selectedTab === "custom" ? customSettings
+    : presetName && presets ? presets[presetName]
+    : null
+
+  // Snapshot each preset on first open of this modal instance. "Reset" reverts
+  // to this snapshot — i.e. it undoes THIS SESSION'S edits. Once the modal
+  // closes and re-opens, whatever values were saved last time become the new
+  // snapshot (the "new default"). Radix Dialog unmounts content on close so
+  // the ref resets naturally each open.
+  const presetSnapshotRef = useRef<typeof presets>(null)
   useEffect(() => {
-    setCustomInclude(settings?.custom?.includeTags.join(", ") ?? "")
-    setCustomExclude(settings?.custom?.excludeTags.join(", ") ?? "")
-    setCustomRadius(settings?.custom?.radius ?? 7)
-    setCustomSort(settings?.custom?.sort ?? "relevance")
+    if (presets && !presetSnapshotRef.current) {
+      presetSnapshotRef.current = presets
+    }
+  }, [presets])
+  // The snapshot for the currently-viewed preset tab (null for custom tab).
+  const activeSnapshot = presetName && presetSnapshotRef.current
+    ? presetSnapshotRef.current[presetName]
+    : null
+
+  return (
+    <>
+      {/* Tabs row — scrolls horizontally on narrow viewports. Selected tab
+          gets a solid background; others are ghost-style. */}
+      <div
+        role="tablist"
+        aria-label="Photo source"
+        className="mb-4 flex gap-1 overflow-x-auto border-b border-border/50 pb-0"
+      >
+        {TABS.map((t) => {
+          const active = t.key === selectedTab
+          return (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => onSelectTab(t.key)}
+              className={
+                "cursor-pointer whitespace-nowrap rounded-t-md px-3 py-2 text-sm transition-colors " +
+                (active
+                  ? "border-b-2 border-foreground bg-muted/60 font-medium text-foreground"
+                  : "text-muted-foreground hover:bg-muted/30 hover:text-foreground")
+              }
+            >
+              {t.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Per-tab settings panel. The Approved tab has no settings (just shows
+          the list of approved photos). Custom + preset tabs share the same
+          editor; differences are the save target (per-station vs global) and
+          the reset button (preset only). */}
+      {selectedTab !== "approved" && (
+        <TabSettingsPanel
+          key={selectedTab}
+          mode={selectedTab === "custom" ? "custom" : "preset"}
+          presetName={presetName}
+          settings={activeSettings}
+          sessionSnapshot={activeSnapshot}
+          stationName={stationName}
+          publicNote={publicNote}
+          ramblerNote={ramblerNote}
+          onSaveCustom={onSaveCustom}
+          onSavePreset={onSavePreset}
+          onRefresh={onRefresh}
+        />
+      )}
+    </>
+  )
+}
+
+// Per-tab settings editor. Identical fields for custom and preset modes —
+// the difference is purely where the save goes (per-station vs global).
+function TabSettingsPanel({
+  mode,
+  presetName,
+  settings,
+  sessionSnapshot,
+  stationName,
+  publicNote,
+  ramblerNote,
+  onSaveCustom,
+  onSavePreset,
+  onRefresh,
+}: {
+  mode: "custom" | "preset"
+  presetName: "landscapes" | "hikes" | "station" | null
+  settings: CustomSettings | null
+  /** The preset values at modal-open. "Reset to defaults" reverts to this
+   *  snapshot — it undoes THIS SESSION'S edits. Null for the custom tab. */
+  sessionSnapshot: CustomSettings | null
+  stationName: string
+  publicNote: string
+  ramblerNote: string
+  onSaveCustom?: (custom: CustomSettings | null) => void
+  onSavePreset?: (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => void
+  onRefresh?: () => void
+}) {
+  // Local state mirrors the saved config — typing doesn't round-trip on every
+  // keystroke; we save on blur (or change for radius/sort).
+  const [include, setInclude] = useState(settings?.includeTags.join(", ") ?? "")
+  const [exclude, setExclude] = useState(settings?.excludeTags.join(", ") ?? "")
+  const [radius, setRadius] = useState(settings?.radius ?? 7)
+  const [sort, setSort] = useState<FlickrSort>(settings?.sort ?? "relevance")
+
+  // Resync when the parent pushes new settings (e.g. preset loaded / reset).
+  useEffect(() => {
+    setInclude(settings?.includeTags.join(", ") ?? "")
+    setExclude(settings?.excludeTags.join(", ") ?? "")
+    setRadius(settings?.radius ?? 7)
+    setSort(settings?.sort ?? "relevance")
   }, [settings])
 
-  // Seed payload when the admin switches to Custom for the first time on this
-  // station. Tag ORDER matters because Flickr caps include tags at 20 and we
-  // truncate server-side — earlier categories survive, later categories drop.
-  // Order (most → least photogenic / specific):
-  //   1. named trails/walks (Ridgeway, North Downs Way, Bruton Circular)
-  //   2. named terrains (Chiltern Hills, Greensand Ridge, Somerset Levels)
-  //   3. sights (Alfred's Tower, Stourhead House, Cadbury Castle)
-  //   4. station name
-  //   5. settlement names (Bruton, Batcombe)
-  // Lunch venues (Inn/Arms/Kitchen/…) are dropped by the extractor itself.
-  // No landscapes defaults — per spec, custom starts "clean" from notes alone.
-  const buildInitialCustom = (): { includeTags: string[]; excludeTags: string[]; radius: number; sort: FlickrSort } => {
+  // Seed the per-station custom config on first use from extracted place names
+  // in the station's notes — same ordering logic as before.
+  const buildInitialCustom = (): CustomSettings => {
     const { trails, terrains, sights, settlements } = categorizePlaceNames(publicNote, ramblerNote)
     const stationTag = stationName.toLowerCase().replace(/\s+station$/, "").trim()
-    // Dedupe while preserving order across the five buckets.
     const seen = new Set<string>()
     const includeTags: string[] = []
     const pushUnique = (t: string) => {
@@ -1935,122 +2049,90 @@ function FlickrSettingsPanel({
     for (const t of sights) pushUnique(t)
     pushUnique(stationTag)
     for (const t of settlements) pushUnique(t)
-    // Truncate to Flickr's 20-tag ceiling up-front — saves a server-side warn
-    // and makes the seeded list match what'll actually be queried.
-    const TRUNCATED = includeTags.slice(0, 20)
-    const excludeTags = PRESET_LANDSCAPES.excludes.split(",").map((t) => t.trim()).filter(Boolean)
-    return { includeTags: TRUNCATED, excludeTags, radius: PRESET_LANDSCAPES.radius, sort: "relevance" }
-  }
-
-  const handleAlgoChange = (next: Algo) => {
-    if (next === "custom") {
-      // Seed only on first switch. If the admin is re-selecting custom after
-      // already having a saved config, don't overwrite their edits.
-      const payload = settings?.custom ?? buildInitialCustom()
-      onSave("custom", payload)
-    } else {
-      onSave(next)
+    return {
+      includeTags: includeTags.slice(0, 20),
+      excludeTags: [],
+      radius: 7,
+      sort: "relevance",
     }
   }
 
-  // Persist custom textareas on blur. Whatever the admin types is what's saved —
-  // no station-name enforcement. Sort is carried through so flipping it in the
-  // dropdown persists immediately (that path calls this after setCustomSort).
-  const commitCustom = (overrides?: { sort?: FlickrSort }) => {
-    if (effectiveAlgo !== "custom") return
-    const includeTags = customInclude.split(",").map((t) => t.trim()).filter(Boolean)
-    const excludeTags = customExclude.split(",").map((t) => t.trim()).filter(Boolean)
-    const sort = overrides?.sort ?? customSort
-    onSave("custom", { includeTags, excludeTags, radius: customRadius, sort })
+  const commit = (overrides?: { sort?: FlickrSort; radius?: number }) => {
+    const payload: CustomSettings = {
+      includeTags: include.split(",").map((t) => t.trim()).filter(Boolean),
+      excludeTags: exclude.split(",").map((t) => t.trim()).filter(Boolean),
+      radius: overrides?.radius ?? radius,
+      sort: overrides?.sort ?? sort,
+    }
+    if (mode === "custom") onSaveCustom?.(payload)
+    else if (presetName) onSavePreset?.(presetName, payload)
   }
 
-  const preset =
-    effectiveAlgo === "landscapes"
-      ? PRESET_LANDSCAPES
-      : effectiveAlgo === "hikes"
-        ? PRESET_HIKES
-        : effectiveAlgo === "station"
-          ? PRESET_STATION
-          : null
+  // Auto-seed the custom config on first visit to the Custom tab — mirrors
+  // the old dropdown behaviour where picking "Custom" immediately populated
+  // the fields from the station's notes. Only fires when:
+  //   - this is the per-station Custom tab (mode === "custom")
+  //   - no config exists yet (settings === null)
+  //   - the parent wired up a save handler
+  // Subsequent edits are saved on blur via commit() below.
+  useEffect(() => {
+    if (mode === "custom" && !settings && onSaveCustom) {
+      onSaveCustom(buildInitialCustom())
+    }
+    // Only fires on mount / when mode or settings flip — not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, settings])
 
-  // When the gallery is at MAX_PHOTOS (12) approved, Flickr isn't fetched —
-  // a little note above the controls makes that visible so admins don't
-  // wonder why changing the algo seems to do nothing.
-  const noFlickrNeeded = approvedCount >= 12
+  const includeCount = include.split(",").map((t) => t.trim()).filter(Boolean).length
+  const excludeCount = exclude.split(",").map((t) => t.trim()).filter(Boolean).length
+  const overIncludeCap = includeCount > 20
 
   return (
-    <section className="mt-6 rounded-md border border-border/50 bg-muted/30 p-4 text-sm">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <h3 className="font-medium">Flickr settings</h3>
-        <select
-          value={effectiveAlgo}
-          onChange={(e) => handleAlgoChange(e.target.value as Algo)}
-          className="cursor-pointer rounded border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-        >
-          <option value="landscapes">Landscapes</option>
-          <option value="hikes">Hikes</option>
-          <option value="station">Station</option>
-          <option value="custom">Custom</option>
-        </select>
+    <section className="mb-6 rounded-md border border-border/50 bg-muted/30 p-4 text-sm">
+      {/* Header — explains the scope of edits (per-station vs global). */}
+      <div className="mb-3">
+        {mode === "custom" ? (
+          <p className="text-xs text-muted-foreground">
+            Per-station custom feed. Edits here only affect this station.
+          </p>
+        ) : (
+          <p className="text-xs text-amber-700 dark:text-amber-400">
+            Editing <span className="font-medium text-foreground">{presetName}</span> — affects every station that uses this algo.
+          </p>
+        )}
       </div>
 
-      {/* "No Flickr needed" hint — only shown when the gallery is fully curated. */}
-      {noFlickrNeeded && (
-        <p className="mb-3 rounded bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
-          Gallery is full (12 approved) — no Flickr algorithm runs. Settings
-          below only kick in if the approved count drops below 12.
-        </p>
-      )}
-
-      {/* Status line: explains whether the current algo is an explicit override or auto. */}
-      <p className="mb-2 text-xs text-muted-foreground">
-        {hasOverride
-          ? <>Override: <span className="font-medium text-foreground">{effectiveAlgo}</span></>
-          : <>Auto: <span className="font-medium text-foreground">{effectiveAlgo}</span> — pick any option to pin.</>}
-      </p>
-
-      {effectiveAlgo === "custom" ? (
+      {(settings || mode === "preset") && (
         <div className="space-y-3">
           <div>
             <label className="mb-1 block text-xs font-medium">
               Include tags (comma-separated)
-              {/* Live tag count — Flickr caps at 20. Turn amber/red when over. */}
-              {(() => {
-                const count = customInclude.split(",").map((t) => t.trim()).filter(Boolean).length
-                const over = count > 20
-                return (
-                  <span className={`ml-2 font-normal ${over ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
-                    ({count}/20)
-                  </span>
-                )
-              })()}
+              <span className={`ml-2 font-normal ${overIncludeCap ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}>
+                ({includeCount}/20)
+              </span>
             </label>
             <textarea
-              value={customInclude}
-              onChange={(e) => setCustomInclude(e.target.value)}
-              onBlur={() => commitCustom()}
+              value={include}
+              onChange={(e) => setInclude(e.target.value)}
+              onBlur={() => commit()}
               rows={3}
               className="w-full resize-y rounded border border-input bg-background px-2 py-1 font-mono text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
-            {customInclude.split(",").map((t) => t.trim()).filter(Boolean).length > 20 && (
+            {overIncludeCap && (
               <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                Flickr only accepts up to 20 include tags per query. Only the first 20 will be used — prune or reorder the rest.
+                Flickr only accepts 20 include tags. Extras will be dropped — prune or reorder.
               </p>
             )}
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium">
               Exclude tags (comma-separated)
-              {/* No Flickr cap on excludes — filtering runs client-side in the proxy.
-                  So the count is informational only, no colour shift. */}
-              <span className="ml-2 font-normal text-muted-foreground">
-                ({customExclude.split(",").map((t) => t.trim()).filter(Boolean).length})
-              </span>
+              <span className="ml-2 font-normal text-muted-foreground">({excludeCount})</span>
             </label>
             <textarea
-              value={customExclude}
-              onChange={(e) => setCustomExclude(e.target.value)}
-              onBlur={() => commitCustom()}
+              value={exclude}
+              onChange={(e) => setExclude(e.target.value)}
+              onBlur={() => commit()}
               rows={3}
               className="w-full resize-y rounded border border-input bg-background px-2 py-1 font-mono text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
@@ -2062,24 +2144,22 @@ function FlickrSettingsPanel({
               min={0.1}
               max={30}
               step={0.5}
-              value={customRadius}
-              onChange={(e) => setCustomRadius(Number(e.target.value))}
-              onBlur={() => commitCustom()}
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              onBlur={() => commit()}
               className="w-16 rounded border border-input bg-background px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             />
             <span className="text-xs text-muted-foreground">km</span>
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="custom-sort" className="text-xs font-medium">Sort</label>
+            <label htmlFor="sort-select" className="text-xs font-medium">Sort</label>
             <select
-              id="custom-sort"
-              value={customSort}
+              id="sort-select"
+              value={sort}
               onChange={(e) => {
                 const next = e.target.value as FlickrSort
-                setCustomSort(next)
-                // Persist immediately — no blur trigger on a select. Pass the
-                // new value through directly to avoid reading stale state.
-                commitCustom({ sort: next })
+                setSort(next)
+                commit({ sort: next })
               }}
               className="cursor-pointer rounded border border-input bg-background px-1 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
@@ -2088,46 +2168,52 @@ function FlickrSettingsPanel({
             </select>
           </div>
         </div>
-      ) : preset ? (
-        // Read-only preview for non-custom algos — shows what the server will use.
-        // Counters match the custom-mode fields so the admin sees the same shape.
-        (() => {
-          const includeCount = preset.tags.split(",").map((t) => t.trim()).filter(Boolean).length
-          const excludeCount = preset.excludes.split(",").map((t) => t.trim()).filter(Boolean).length
-          return (
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
-              <dt className="font-medium text-muted-foreground">Include <span className="font-normal">({includeCount}/20)</span></dt>
-              <dd className="font-mono">{preset.tags}</dd>
-              <dt className="font-medium text-muted-foreground">Exclude <span className="font-normal">({excludeCount})</span></dt>
-              <dd className="font-mono break-words">{preset.excludes}</dd>
-              <dt className="font-medium text-muted-foreground">Radius</dt>
-              <dd className="font-mono">{preset.radius} km</dd>
-            </dl>
-          )
-        })()
-      ) : null}
+      )}
 
-      {/* Footer actions: "Refresh gallery" (always, clears session state so you
-          see what a non-admin sees) and "Reset to auto" (only when an override
-          exists, clears the persisted algo choice and returns to auto fallback). */}
+      {/* Footer actions. All non-approved tabs get a Refresh button — the tab
+          photo grid doesn't auto-update as you edit settings, so the admin
+          clicks Refresh to see the effect of their edits. Custom tabs also
+          get a Clear config button; preset tabs also get Reset. */}
       <div className="mt-3 flex justify-end gap-2">
-        {onRefreshGallery && (
-          <button
+        {onRefresh && (
+          // shadcn Button with variant="default" gives us the built-in hover
+          // + active (pressed) states and the consistent focus ring. size="sm"
+          // keeps it proportional to the small textareas above. The ↻ glyph
+          // + label reads clearly at this size without needing a full SVG.
+          <Button
             type="button"
-            onClick={onRefreshGallery}
-            title="Clear this session's hidden/broken tracking and see the gallery as a non-admin would"
-            className="cursor-pointer rounded border border-input px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            variant="default"
+            size="sm"
+            onClick={onRefresh}
+            title="Fetch fresh photos from Flickr (bypass server cache)"
+            className="cursor-pointer"
           >
             ↻ Refresh gallery
-          </button>
+          </Button>
         )}
-        {hasOverride && (
+        {mode === "custom" && settings && (
           <button
             type="button"
-            onClick={() => onSave(null)}
+            onClick={() => onSaveCustom?.(null)}
             className="cursor-pointer rounded border border-input px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           >
-            Reset to auto
+            Clear custom config
+          </button>
+        )}
+        {/* "Reset to defaults" only appears when THIS SESSION has edited the
+            preset — i.e. the current value differs from the snapshot captured
+            on modal open. Reverts to that snapshot (undoes session edits).
+            When the modal closes and re-opens, the saved values become the
+            new snapshot, so they're effectively the new default. */}
+        {mode === "preset" && presetName && sessionSnapshot && settings &&
+          JSON.stringify(sessionSnapshot) !== JSON.stringify(settings) && (
+          <button
+            type="button"
+            onClick={() => onSavePreset?.(presetName, sessionSnapshot)}
+            title="Revert to the values this preset had when you opened the modal"
+            className="cursor-pointer rounded border border-input px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          >
+            Reset to defaults
           </button>
         )}
       </div>
@@ -2164,29 +2250,28 @@ function DevActionButton({ label, icon, active, onClick }: {
 // Uses largeUrl (1024px) when available, falls back to thumbnailUrl (240px).
 // 4:3 aspect ratio gives photos a scenic landscape feel at this size.
 //
-// In admin mode, hovering shows approve (✓) and reject (✕) icon buttons.
-// Approved photos display a persistent tick badge in the top-right corner.
+// In admin mode, approve + pin buttons sit in the top-left cluster. Reorder
+// buttons sit in the top-right cluster and only show for approved photos in
+// the Approved tab (gated by `showReorder`).
 
-function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprove, onMoveToTop, onMoveToBottom, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onImageError, onHide }: {
+function PhotoCard({ photo, devMode, isApproved, isPinned, showReorder = false, onApprove, onUnapprove, onPin, onUnpin, onMoveToTop, onMoveToBottom, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onImageError }: {
   photo: FlickrPhoto
   devMode: boolean
   isApproved: boolean
+  isPinned: boolean
+  /** When true AND the photo is approved, reorder buttons render. */
+  showReorder?: boolean
   onApprove: () => void
-  onReject: () => void
   onUnapprove: () => void
+  onPin?: () => void
+  onUnpin?: () => void
   onMoveToTop?: () => void
   onMoveToBottom?: () => void
   onMoveUp?: () => void
   onMoveDown?: () => void
   canMoveUp?: boolean
   canMoveDown?: boolean
-  // Fires when the <img> fails to load (404, taken down, etc). Parent uses it
-  // to track per-session broken photos and backfill from extras / re-fetch Flickr.
   onImageError?: () => void
-  // Fires when the admin clicks the refresh button to temporarily hide this
-  // photo for the current session only (no persistent change). Parent drops
-  // it from the display list and backfills with the next available photo.
-  onHide?: () => void
 }) {
   return (
     // `group` lets child elements react to this container's hover state.
@@ -2222,8 +2307,11 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
           the approval indicator. Clicking it un-approves. */}
       {devMode && (
         <>
-          {/* Top-left cluster: approve / reject. Wrapper has no opacity classes — visibility is
-              controlled per-button below so the approved-state approve button can override. */}
+          {/* Top-left cluster: approve + pin. Approve is leftmost — it's the
+              baseline moderation action; pin sits next to it as the "promote"
+              action (which also approves implicitly). Wrapper has no opacity
+              classes; per-button styling below lets the active-state
+              indicators (green check / amber pin) stay visible. */}
           <div className="absolute top-0 left-0 flex gap-1 p-2">
             {/* Approve button — doubles as the approval indicator when isApproved.
                 When approved: solid emerald bg (same colour as unapproved-hover), always visible,
@@ -2245,43 +2333,44 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </button>
-            {/* Reject button — standard hover-only-on-desktop behaviour regardless of approval state */}
+            {/* Pin button — doubles as the pin indicator when isPinned.
+                When pinned: solid emerald bg (matches the approve indicator),
+                always visible, click unpins. When not pinned: semi-opaque
+                black, hover-only on desktop, click pins (implicitly approves
+                if not already approved). */}
             <button
-              onClick={(e) => { e.stopPropagation(); onReject() }}
-              title="Reject photo"
-              className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-red-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
+              onClick={(e) => { e.stopPropagation(); (isPinned ? onUnpin?.() : onPin?.()) }}
+              title={isPinned ? 'Remove pin' : 'Pin photo (jumps to top)'}
+              className={
+                isPinned
+                  ? 'flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600/90 text-white backdrop-blur-sm transition-colors hover:bg-emerald-700 cursor-pointer opacity-100'
+                  : 'flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-emerald-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100'
+              }
             >
+              {/* Pushpin icon — simple silhouette that reads clearly at 14px */}
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-            {/* Refresh button — hide this photo for the session only (no persistent change).
-                Parent drops it from the display list and backfills with the next approved
-                photo in the queue, or an unapproved+unrejected Flickr candidate. Same
-                hover-only-on-desktop / always-on-mobile visibility as reject. */}
-            <button
-              onClick={(e) => { e.stopPropagation(); onHide?.() }}
-              title="Hide for this session"
-              className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-blue-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100"
-            >
-              {/* Circular refresh arrow (Lucide RotateCw shape) */}
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="23 4 23 10 17 10" />
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2 L14 2 L15 8 L19 11 L19 13 L13 13 L13 22 L11 22 L11 13 L5 13 L5 11 L9 8 L10 2 Z" />
               </svg>
             </button>
           </div>
 
-          {/* Top-right cluster: reorder controls — only on approved photos */}
-          {isApproved && (
+          {/* Top-right cluster: reorder controls.
+              The "jump to top" (double chevron up) button shows for EVERY
+              photo on EVERY tab. For approved photos it does the section-
+              aware in-place jump; for non-approved photos it implicitly
+              approves and places at the top of the non-pinned section.
+              The within-list buttons (single chevrons + jump to bottom)
+              only show on the Approved tab for approved photos, where
+              admins are doing the detailed list reordering. */}
+          {(
             <div className="absolute top-0 right-0 flex gap-1 p-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100">
-              {/* Jump to top — double chevron icon */}
+              {/* Jump to top of section — available on all tabs.
+                  Pinned photo → position 0 (top of pins).
+                  Non-pinned photo → position just below the last pin. */}
               <button
                 onClick={(e) => { e.stopPropagation(); onMoveToTop?.() }}
-                title="Move photo to top"
+                title="Jump to top of section (below pins for non-pinned photos)"
                 disabled={!canMoveUp}
                 className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
               >
@@ -2291,46 +2380,50 @@ function PhotoCard({ photo, devMode, isApproved, onApprove, onReject, onUnapprov
                   <polyline points="18 19 12 13 6 19" />
                 </svg>
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
-                title="Move photo up"
-                disabled={!canMoveUp}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
-              >
-                {/* Chevron up */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-              </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
-                title="Move photo down"
-                disabled={!canMoveDown}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
-              >
-                {/* Chevron down */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              {/* Jump to bottom of the approved list — mirror of jump-to-top.
-                  Uses canMoveDown for its disabled state (same condition: photo must
-                  not already be last in the approved set). */}
-              <button
-                onClick={(e) => { e.stopPropagation(); onMoveToBottom?.() }}
-                title="Move photo to bottom"
-                disabled={!canMoveDown}
-                className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
-              >
-                {/* Double chevron down — mirror of the jump-to-top icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                  fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 13 12 19 18 13" />
-                  <polyline points="6 5 12 11 18 5" />
-                </svg>
-              </button>
+              {showReorder && isApproved && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
+                    title="Move photo up"
+                    disabled={!canMoveUp}
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                  >
+                    {/* Chevron up */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
+                    title="Move photo down"
+                    disabled={!canMoveDown}
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                  >
+                    {/* Chevron down */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {/* Jump to bottom of section — mirror of jump-up.
+                      Pinned photo → bottom of pins.
+                      Non-pinned photo → end of the approved queue. */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onMoveToBottom?.() }}
+                    title="Jump to bottom of section"
+                    disabled={!canMoveDown}
+                    className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                  >
+                    {/* Double chevron down — mirror of the jump-to-top icon */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 13 12 19 18 13" />
+                      <polyline points="6 5 12 11 18 5" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </>
