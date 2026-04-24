@@ -31,6 +31,10 @@ const EXTRA_WALKS_PATHS = [
   join(PROJECT_ROOT, "data", "leicester-ramblers-walks.json"),
   join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json"),
   join(PROJECT_ROOT, "data", "abbey-line-walks.json"),
+  // Manual walks created through the admin UI ("+ New walk") —
+  // same entry shape as rambler-walks.json, one entry per walk
+  // keyed `manual-{id}`.
+  join(PROJECT_ROOT, "data", "manual-walks.json"),
 ]
 // Free-form one-liner extras appended to each station's ramblerNote
 // AFTER the walk paragraphs. Keyed by coordKey ("lng,lat"). Each value
@@ -668,21 +672,31 @@ function buildRamblerNotes(args) {
     // Stable sort by priority: favourites first, then regular walks, then extras.
     const ordered = [...ramblerParts].sort(compareRamblerParts)
     const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
-    // Public visibility rule: always show mains + notes; hide a
-    // variant only when its `baseDisplayName` (derived title minus
-    // suffix) collides with some OTHER walk's full `displayName` at
-    // this station. That prevents two variants of the same base
-    // route from both cluttering the public list, while letting
-    // genuinely distinct variants through. Admins still get the full
-    // `ramblerNote` so they can see what's being hidden.
+    // Public visibility rules (admin always sees the full list):
+    //   • Mains are always shown.
+    //   • Notes (free-form extras, kind=1) are always shown.
+    //   • Bus-requiring walks never reach this filter — they're
+    //     excluded upstream by `stationToStation !== true`, which
+    //     buildSummary returns null for. (Admin CMS still shows them.)
+    //   • Variants (non-main walks) are HIDDEN when either:
+    //       a) there are 3 or more main walks at the station — at
+    //          that point variants just add noise. OR
+    //       b) their `baseDisplayName` (derived title minus suffix)
+    //          collides with some OTHER walk's full `displayName` —
+    //          stops two variants of the same base route both
+    //          cluttering the list.
+    //     Otherwise variants pass through.
+    const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
     const allDisplayNames = new Set(
       ordered.filter((p) => p.kind === 0 && p.displayName).map((p) => p.displayName),
     )
     const publicParts = ordered.filter((p) => {
       if (p.kind !== 0) return true // notes always pass
       if (p.isMain) return true // mains always pass
-      // Variant: hide when some other walk's full title equals this
-      // variant's base title. "other" = !== its own full displayName.
+      // Variant path — two independent hiding reasons:
+      if (mainCount >= 3) return false
+      // Duplicate-base: hide when another walk's full title matches
+      // this variant's base title (excluding self).
       if (!p.baseDisplayName) return true
       for (const other of allDisplayNames) {
         if (other !== p.displayName && other === p.baseDisplayName) return false

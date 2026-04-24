@@ -65,6 +65,11 @@ export type WalkPayload = {
   // Entry-level GPX URL (shared across every variant of this walk's
   // source page). Undefined when the source doesn't publish one.
   gpx?: string
+  // True when the walk needs a bus / taxi / heritage rail on the
+  // return leg, or when one end isn't a mainline station. Rendered
+  // as a destructive `bus` chip and sorts to the bottom of the CMS
+  // list — these walks are NEVER shown to the public.
+  requiresBus?: boolean
   rating: number | null
   source?: {
     orgSlug: string
@@ -492,16 +497,21 @@ function WalkCard({
           const walkType = walk.source?.type ?? walk.role
           const isVariant = walkType && walkType !== "main"
           // Base pill styling — muted grey, shared across chip types.
-          // Variant chip overrides the bg/text via the destructive token
-          // pair used by the destructive Button variant, so the color
-          // stays on-theme (works in both light and dark mode via the
-          // CSS custom properties) without introducing a raw hex.
+          // Destructive chips (variant, bus) override the bg/text via
+          // the same token pair used by the destructive Button variant
+          // so the color stays on-theme in both light + dark mode via
+          // CSS custom properties.
           const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
           const neutralChip = `${chipBase} bg-muted text-muted-foreground`
-          const variantChip = `${chipBase} bg-destructive/10 text-destructive`
+          const destructiveChip = `${chipBase} bg-destructive/10 text-destructive`
           return (
             <>
-              {isVariant && <span className={variantChip} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {walk.requiresBus && (
+                <span className={destructiveChip} title="Requires a bus / taxi / heritage rail — never shown publicly">
+                  bus
+                </span>
+              )}
+              {isVariant && <span className={destructiveChip} title={`Source type: ${walkType}`}>{walkType}</span>}
               {walk.komootUrl && <span className={neutralChip} title="Has a Komoot tour URL">komoot</span>}
               {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (

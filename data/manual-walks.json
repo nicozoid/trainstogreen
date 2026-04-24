@@ -1,0 +1,3 @@
+{
+  "_readme": "Manually-added walks with no external source — admin-created via the WalksAdminPanel '+ New walk' button. Entry shape matches data/rambler-walks.json so the build + API pipeline treats them uniformly. Slug convention: `manual-{id}` where {id} is the walk's own 4-char id."
+}

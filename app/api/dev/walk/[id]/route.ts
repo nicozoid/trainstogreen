@@ -8,6 +8,7 @@ const WALKS_FILES = [
   "data/leicester-ramblers-walks.json",
   "data/heart-rail-trails-walks.json",
   "data/abbey-line-walks.json",
+  "data/manual-walks.json",
 ]
 
 // Whitelist of editable fields. Anything outside this set is ignored
@@ -280,6 +281,45 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     console.error("rebuild after walk patch failed:", err)
     return NextResponse.json(
       { message: "saved but rebuild failed", id },
+      { status: 500 },
+    )
+  }
+
+  return NextResponse.json({ message: "ok", id })
+}
+
+// DELETE — remove a single walk variant from its source file. If that
+// removal empties the entry's `walks` array, we remove the entry
+// entirely so the file stays tidy. Triggers a rebuild so station-
+// notes.json reflects the disappearance. Admin-only; the top-level
+// middleware already blocks DELETE on non-dev environments.
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  if (!id || !/^[0-9a-z]{4}$/.test(id)) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 })
+  }
+
+  const located = await locateWalk(id)
+  if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
+
+  const { file, data, sha, slug, variantIndex } = located
+  const entry = data[slug]
+  entry.walks!.splice(variantIndex, 1)
+  // If that was the entry's only variant, drop the entry entirely —
+  // a walks-less entry would otherwise linger with no purpose.
+  if (entry.walks!.length === 0) {
+    delete data[slug]
+  }
+
+  await writeDataFile(file, data, `Delete walk ${id} (${slug})`, sha)
+
+  try {
+    await buildRamblerNotes({ dryRun: false, flipOnMap: false })
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("rebuild after walk delete failed:", err)
+    return NextResponse.json(
+      { message: "deleted but rebuild failed", id },
       { status: 500 },
     )
   }

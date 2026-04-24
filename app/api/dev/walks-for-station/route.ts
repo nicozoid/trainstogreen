@@ -9,6 +9,7 @@ const WALKS_FILES = [
   "data/leicester-ramblers-walks.json",
   "data/heart-rail-trails-walks.json",
   "data/abbey-line-walks.json",
+  "data/manual-walks.json",
 ]
 
 // Build a CRS → station name lookup from public/stations.json so the
@@ -64,6 +65,13 @@ type WalkPayload = {
   // Entry-level GPX URL (shared across all variants on the same page).
   // Undefined when the source doesn't publish one.
   gpx?: string
+  // True when the walk needs a bus / taxi / heritage rail to return,
+  // OR when one endpoint is a non-mainline station (e.g. a village).
+  // Drives the admin `bus` chip and pushes the walk to the bottom of
+  // the CMS list. Public prose NEVER renders these walks (build-
+  // script already filters on `stationToStation === true`), so this
+  // field is an admin-only visibility signal.
+  requiresBus: boolean
   rating: number | null
   updatedAt: string | null
   // provenance (read-only in v1 — populated by
@@ -80,13 +88,18 @@ type WalkPayload = {
 
 // Walk ordering — automatic, not admin-overridable.
 // Sort keys (ASC — lower value wins):
-//   1. !komootUrl     (walks with a Komoot route come first)
-//   2. !isMain        (main walks before variants — de-emphasises variants
-//                      even when they have a higher rating than the main)
-//   3. ratingTier     (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
-//   4. distanceScore  (|distanceKm - IDEAL_LENGTH_KM| — closer to ideal first;
-//                      walks without a distance sort last via Infinity)
-//   5. pageTitle      (deterministic tiebreaker)
+//   1. requiresBus     (bus-requiring walks always drop to the BOTTOM;
+//                       they're never published to the public anyway
+//                       so the CMS list keeps the publishable walks
+//                       on top)
+//   2. !komootUrl      (walks with a Komoot route come first)
+//   3. !isMain         (main walks before variants — de-emphasises
+//                       variants even when they have a higher rating)
+//   4. ratingTier      (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
+//   5. distanceScore   (|distanceKm - IDEAL_LENGTH_KM| — closer to
+//                       ideal first; walks without a distance sort
+//                       last via Infinity)
+//   6. pageTitle       (deterministic tiebreaker)
 // Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
 const IDEAL_LENGTH_KM = 13
 // Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
@@ -155,6 +168,7 @@ export async function GET(req: NextRequest) {
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",
           gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
+          requiresBus: !!v.requiresBus,
           rating: typeof v.rating === "number" ? v.rating : null,
           updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,
@@ -174,25 +188,33 @@ export async function GET(req: NextRequest) {
       : Number.POSITIVE_INFINITY
 
   out.sort((a, b) => {
-    // 1. Komoot walks first.
+    // 1. Bus-requiring walks always sink to the bottom. These can
+    //    never be published to the public (the build script filters
+    //    on stationToStation), so they're admin-curation-only — no
+    //    reason for them to compete with publishable walks on the
+    //    other keys.
+    const ba = a.requiresBus ? 1 : 0
+    const bb = b.requiresBus ? 1 : 0
+    if (ba !== bb) return ba - bb
+    // 2. Komoot walks first.
     const ka = a.komootUrl ? 0 : 1
     const kb = b.komootUrl ? 0 : 1
     if (ka !== kb) return ka - kb
-    // 2. Main walks before variants. source.type is the modern home;
+    // 3. Main walks before variants. source.type is the modern home;
     //    fall back to legacy role for walks that predate the backfill.
     const typeA = a.source?.type ?? a.role
     const typeB = b.source?.type ?? b.role
     const ma = typeA === "main" ? 0 : 1
     const mb = typeB === "main" ? 0 : 1
     if (ma !== mb) return ma - mb
-    // 3. Rating tier (4 → 3 → 2 → unrated → 1).
+    // 4. Rating tier (4 → 3 → 2 → unrated → 1).
     const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
     if (ta !== tb) return ta - tb
-    // 4. Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
+    // 5. Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
     const da = distanceScore(a.distanceKm)
     const db = distanceScore(b.distanceKm)
     if (da !== db) return da - db
-    // 5. Alphabetic pageTitle for deterministic tiebreak.
+    // 6. Alphabetic pageTitle for deterministic tiebreak.
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 
