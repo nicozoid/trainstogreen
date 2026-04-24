@@ -5,7 +5,7 @@
 // Attachment rule: every station-to-station walk variant gets its own
 // paragraph at its start and end stations (no per-source-URL dedup).
 // Paragraph order within a station is determined by compareRamblerParts:
-//   ratingTier → hasKomoot → isMain → -updatedAt → pageTitle
+//   hasKomoot → isMain → ratingTier → distanceScore → pageTitle
 // The admin has no manual override — curation happens via rating/
 // komoot/suffix edits on individual walks.
 //
@@ -103,19 +103,18 @@ function distanceScore(distanceKm) {
 
 // Order ramblerParts at a station:
 //   1. walks before extras (kind ASC)
-//   2. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
-//   3. hasKomoot DESC (walks with a Komoot route come first)
-//   4. isMain DESC (main walks before variants)
+//   2. hasKomoot DESC (walks with a Komoot route come first)
+//   3. isMain DESC (main walks before variants — de-emphasises variants
+//                   even when they have a higher rating than the main)
+//   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
 //   5. distanceScore ASC (closer to IDEAL_LENGTH_KM first; missing sorts last)
-//   6. updatedAt DESC (most recently touched first; "" sorts last)
-//   7. pageTitle ASC for stable alphabetic tiebreak
+//   6. pageTitle ASC for stable alphabetic tiebreak
 function compareRamblerParts(a, b) {
   if (a.kind !== b.kind) return a.kind - b.kind
-  if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
+  if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
-  if (a.updatedAt !== b.updatedAt) return (b.updatedAt).localeCompare(a.updatedAt) // DESC
   return (a.pageTitle || "").localeCompare(b.pageTitle || "")
 }
 
@@ -525,8 +524,8 @@ function buildRamblerNotes(args) {
     urlsConsidered.add(slug)
 
     // Every station-to-station variant gets its own paragraph. We no
-    // longer dedup by source URL: the automatic sort (rating →
-    // komoot → main-first → updatedAt) orders them and keeps the
+    // longer dedup by source URL: the automatic sort (komoot →
+    // main-first → rating → distance) orders them and keeps the
     // reader from drowning in redundant siblings, and admins curate
     // via ratings/suffixes if they want any one walk demoted.
     const stationToStation = entry.walks.filter((v) => v.stationToStation)
@@ -554,12 +553,10 @@ function buildRamblerNotes(args) {
           perStation.set(station.coordKey, { name: station.name, ramblerParts: [] })
         }
         // kind: 0 = walk paragraph, 1 = free-form extra. Walks always
-        // render before extras. Within walks, we sort on a 3-key tuple:
-        //   ratingTier (4→0, 3→1, 2→2, unrated→3, 1→4 — Flawed demoted)
-        //   komoot flag (walks with a komootUrl first)
-        //   -updatedAt (newest first; missing sorts last within the tier)
-        // The admin cannot override this order — all three keys come
-        // from the data itself.
+        // render before extras. Within walks, the sort order is defined
+        // by compareRamblerParts — admins don't override it; all keys
+        // come from the walk data itself (main/variant, komoot, rating,
+        // distance).
         perStation.get(station.coordKey).ramblerParts.push({
           summary,
           kind: 0,
@@ -567,7 +564,6 @@ function buildRamblerNotes(args) {
           hasKomoot: !!variant.komootUrl,
           isMain: (variant.source?.type ?? variant.role) === "main",
           distanceScore: distanceScore(variant.distanceKm),
-          updatedAt: typeof variant.updatedAt === "string" ? variant.updatedAt : "",
           pageTitle: entry.title ?? "",
         })
 
@@ -629,7 +625,6 @@ function buildRamblerNotes(args) {
         hasKomoot: false,
         isMain: false,
         distanceScore: Number.POSITIVE_INFINITY,
-        updatedAt: "",
         pageTitle: "",
       })
     }

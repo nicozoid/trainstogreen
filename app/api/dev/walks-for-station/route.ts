@@ -77,13 +77,13 @@ type WalkPayload = {
 
 // Walk ordering — automatic, not admin-overridable.
 // Sort keys (ASC — lower value wins):
-//   1. ratingTier     (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
-//   2. !komootUrl     (walks with a Komoot route come first)
-//   3. !isMain        (main walks before variants)
+//   1. !komootUrl     (walks with a Komoot route come first)
+//   2. !isMain        (main walks before variants — de-emphasises variants
+//                      even when they have a higher rating than the main)
+//   3. ratingTier     (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
 //   4. distanceScore  (|distanceKm - IDEAL_LENGTH_KM| — closer to ideal first;
 //                      walks without a distance sort last via Infinity)
-//   5. -updatedAt     (most recently edited first; missing sorts last)
-//   6. pageTitle      (deterministic tiebreaker)
+//   5. pageTitle      (deterministic tiebreaker)
 // Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
 const IDEAL_LENGTH_KM = 13
 // Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
@@ -160,37 +160,35 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Ordering: ratingTier → komoot first → most-recently-updated →
-  // alphabetic pageTitle. See RATING_TIERS comment above for the
-  // explicit tier mapping.
+  // Ordering: komoot first → main before variants → rating tier →
+  // distance to ideal → alphabetic pageTitle. Main-over-variant sits
+  // ABOVE rating so a 4-rated variant never displaces a main walk —
+  // de-emphasising variants is the whole point of the reorder.
   const distanceScore = (km: number | null) =>
     typeof km === "number" && Number.isFinite(km)
       ? Math.abs(km - IDEAL_LENGTH_KM)
       : Number.POSITIVE_INFINITY
 
   out.sort((a, b) => {
-    const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
-    if (ta !== tb) return ta - tb
+    // 1. Komoot walks first.
     const ka = a.komootUrl ? 0 : 1
     const kb = b.komootUrl ? 0 : 1
     if (ka !== kb) return ka - kb
-    // Main walks before variants within a tier. source.type is the
-    // modern home; fall back to legacy role for walks that haven't
-    // been touched since the source backfill.
+    // 2. Main walks before variants. source.type is the modern home;
+    //    fall back to legacy role for walks that predate the backfill.
     const typeA = a.source?.type ?? a.role
     const typeB = b.source?.type ?? b.role
     const ma = typeA === "main" ? 0 : 1
     const mb = typeB === "main" ? 0 : 1
     if (ma !== mb) return ma - mb
-    // Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
+    // 3. Rating tier (4 → 3 → 2 → unrated → 1).
+    const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
+    if (ta !== tb) return ta - tb
+    // 4. Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
     const da = distanceScore(a.distanceKm)
     const db = distanceScore(b.distanceKm)
     if (da !== db) return da - db
-    // updatedAt: most recent first. Missing timestamps sort last
-    // (they predate the updatedAt stamp; newer edits bubble above).
-    const ua = a.updatedAt ?? ""
-    const ub = b.updatedAt ?? ""
-    if (ua !== ub) return ub.localeCompare(ua) // DESC
+    // 5. Alphabetic pageTitle for deterministic tiebreak.
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 
