@@ -678,30 +678,17 @@ function buildRamblerNotes(args) {
     //   • Bus-requiring walks never reach this filter — they're
     //     excluded upstream by `stationToStation !== true`, which
     //     buildSummary returns null for. (Admin CMS still shows them.)
-    //   • Variants (non-main walks) are HIDDEN when either:
-    //       a) there are 3 or more main walks at the station — at
-    //          that point variants just add noise. OR
-    //       b) their `baseDisplayName` (derived title minus suffix)
-    //          collides with some OTHER walk's full `displayName` —
-    //          stops two variants of the same base route both
-    //          cluttering the list.
-    //     Otherwise variants pass through.
+    //   • Variants (non-main walks) are shown ONLY when there is
+    //     exactly 1 main walk at this station — variants act as
+    //     supplementary detail on pages dominated by a single walk.
+    //     Stations with 0 mains (rare) or 2+ mains get no variants
+    //     in the public prose at all.
     const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
-    const allDisplayNames = new Set(
-      ordered.filter((p) => p.kind === 0 && p.displayName).map((p) => p.displayName),
-    )
     const publicParts = ordered.filter((p) => {
       if (p.kind !== 0) return true // notes always pass
       if (p.isMain) return true // mains always pass
-      // Variant path — two independent hiding reasons:
-      if (mainCount >= 3) return false
-      // Duplicate-base: hide when another walk's full title matches
-      // this variant's base title (excluding self).
-      if (!p.baseDisplayName) return true
-      for (const other of allDisplayNames) {
-        if (other !== p.displayName && other === p.baseDisplayName) return false
-      }
-      return true
+      // Variant — only permitted when there's a lone main to sit next to.
+      return mainCount === 1
     })
     const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
