@@ -59,8 +59,8 @@ async function fetchPhotosViaProxy(
   return data.photos ?? []
 }
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { LogoSpinner } from "@/components/logo-spinner"
+import WalksAdminPanel from "@/components/walks-admin-panel"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
@@ -244,17 +244,11 @@ type StationModalProps = {
   hasIssue?: boolean
   /** Admin-only: toggles the hasIssue flag for this station. */
   onToggleIssue?: (hasIssue: boolean) => void
-  /** Station's current recommended seasons. Shown (and edited, in admin
-   *  mode) as four checkboxes — one per season. Empty array = unset. */
-  seasons?: Season[]
-  /** Admin-only: saves the full list of recommended seasons for this
-   *  station. Pass [] to clear. Fire-and-forget with optimistic update
-   *  in the parent, mirroring onSaveNotes. */
-  onSaveSeasons?: (seasons: Season[]) => void
+  /** Admin-only: called after a structured walk edit saves + rebuilds.
+   *  Parent should refetch station-notes so the updated ramblerNote
+   *  flows back into this overlay via the `ramblerNote` prop. */
+  onWalkSaved?: () => void | Promise<void>
 }
-
-type Season = "Spring" | "Summer" | "Autumn" | "Winter"
-const ALL_SEASONS: Season[] = ["Spring", "Summer", "Autumn", "Winter"]
 
 // Canonical London-terminus names (+ their aliases) used by the
 // highlighter. Built once at module load from london-terminals.json so
@@ -534,8 +528,7 @@ export default function StationModal({
   isLondonHome = false,
   hasIssue = false,
   onToggleIssue,
-  seasons = [],
-  onSaveSeasons,
+  onWalkSaved,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -564,21 +557,21 @@ export default function StationModal({
   // ── Local note editing state — synced from props when a new station opens ──
   const [localPublicNote, setLocalPublicNote] = useState(publicNote)
   const [localPrivateNote, setLocalPrivateNote] = useState(privateNote)
-  const [localRamblerNote, setLocalRamblerNote] = useState(ramblerNote)
+  // ramblerNote is read-only here (prose is a build output; admins
+  // edit the structured walk data via WalksAdminPanel below). Read
+  // the prop directly so a post-save refetch of stationNotes flows
+  // through immediately without needing a local copy to be resynced.
   // Per-note "is the admin currently editing?" flags. Default false so
   // admins see the same formatted render a regular user does, and click
   // into a note to enter edit mode. Blur (click-away) returns to view.
   // Reset when a new station opens so each modal starts in view mode.
   const [isEditingPublic, setIsEditingPublic] = useState(false)
-  const [isEditingRambler, setIsEditingRambler] = useState(false)
   const [isEditingPrivate, setIsEditingPrivate] = useState(false)
   useEffect(() => {
     if (open) {
       setLocalPublicNote(publicNote)
       setLocalPrivateNote(privateNote)
-      setLocalRamblerNote(ramblerNote)
       setIsEditingPublic(false)
-      setIsEditingRambler(false)
       setIsEditingPrivate(false)
     }
   // Only reset when the dialog opens with new data, not on every prop change
@@ -602,21 +595,22 @@ export default function StationModal({
 
   const handleAnimatedClose = useCallback(() => {
     if (isClosing) return
-    // Save notes if anything changed (fire-and-forget — optimistic update in parent)
+    // Save public/private notes if anything changed. ramblerNote is no
+    // longer user-editable here (it's a build output); we still pass
+    // the current value through onSaveNotes to preserve the existing
+    // three-argument contract without touching map.tsx's handler.
     if (
       onSaveNotes &&
-      (localPublicNote !== publicNote ||
-        localPrivateNote !== privateNote ||
-        localRamblerNote !== ramblerNote)
+      (localPublicNote !== publicNote || localPrivateNote !== privateNote)
     ) {
-      onSaveNotes(localPublicNote, localPrivateNote, localRamblerNote)
+      onSaveNotes(localPublicNote, localPrivateNote, ramblerNote)
     }
     setIsClosing(true)
     closingTimer.current = setTimeout(() => {
       setIsClosing(false)
       onClose()
     }, ANIM_DURATION * 0.65)
-  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, localRamblerNote, publicNote, privateNote, ramblerNote])
+  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote, ramblerNote])
 
   // Swipe-down-to-dismiss for the mobile sheet. Attached only to the drag
   // handle bar (see <div className="mx-auto ... bg-muted" /> near the top
@@ -1358,14 +1352,11 @@ export default function StationModal({
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
-          {/* "Notes" subheader — same treatment as the "Alternative
-              routes" subheader. Top margin scales with --para-gap
-              (3×) so tuning that single var retunes both subheaders
-              in lockstep. Appears above the public note whenever a
-              note is being shown; admin mode always has the textarea
-              visible, so the gate includes devMode to label the empty
-              textarea too. */}
-          {(devMode || localPublicNote) && (
+          {/* "Notes" subheader — admin-only now. Public visitors
+              never see the Trains to Green recommendations block;
+              it's an admin-editing surface until we figure out a
+              better public presentation. */}
+          {devMode && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
               {/* Singular when exactly one paragraph of content,
                   plural otherwise (including the admin empty state). */}
@@ -1373,12 +1364,12 @@ export default function StationModal({
             </p>
           )}
 
-          {/* Public note — three render paths:
-               (a) devMode + editing → textarea with autoFocus, exits on blur.
-               (b) note has content → rendered markdown view; in devMode the
-                   wrapper is click-to-edit.
-               (c) devMode + empty + not editing → "Click to add" placeholder.
-               Non-admin with empty note: renders nothing (as before).
+          {/* Public note — admin-only. Three render paths inside the
+              devMode gate:
+               (a) editing → textarea with autoFocus, exits on blur.
+               (b) note has content → rendered markdown view (click-to-edit).
+               (c) empty + not editing → "Click to add" placeholder.
+               Non-admin visitors skip this block entirely.
 
                Split on any run of newlines into separate paragraphs. Users
                author notes with a single Enter keypress (one \n), so we
@@ -1398,13 +1389,13 @@ export default function StationModal({
               className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
-          ) : localPublicNote ? (
+          ) : devMode && localPublicNote ? (
             <div
-              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""}`}
-              onClick={devMode ? () => setIsEditingPublic(true) : undefined}
-              role={devMode ? "button" : undefined}
-              tabIndex={devMode ? 0 : undefined}
-              onKeyDown={devMode ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } } : undefined}
+              className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3"
+              onClick={() => setIsEditingPublic(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } }}
             >
               {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
                 <p key={i}>{renderWithLinks(para)}</p>
@@ -1424,49 +1415,41 @@ export default function StationModal({
               Trains to Green recommendations block above — subheader gated on
               devMode || content so non-admins never see an empty
               label, admins always do so they know where to type. */}
-          {(devMode || localRamblerNote) && (
+          {(devMode || ramblerNote) && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Rambler recommendation{localRamblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
+              Rambler recommendation{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
             </p>
           )}
 
-          {/* Rambler note — same three-path render as the public note above
-              (edit textarea / formatted view / empty placeholder). */}
-          {devMode && isEditingRambler ? (
-            <textarea
-              ref={(el) => { if (el) autoResize(el) }}
-              value={localRamblerNote}
-              onChange={(e) => {
-                setLocalRamblerNote(e.target.value)
-                autoResize(e.target)
-              }}
-              onBlur={() => setIsEditingRambler(false)}
-              autoFocus
-              placeholder="Rambler recommendations..."
-              className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-              rows={2}
-            />
-          ) : localRamblerNote ? (
-            <div
-              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""}`}
-              onClick={devMode ? () => setIsEditingRambler(true) : undefined}
-              role={devMode ? "button" : undefined}
-              tabIndex={devMode ? 0 : undefined}
-              onKeyDown={devMode ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingRambler(true) } } : undefined}
-            >
-              {localRamblerNote.split(/\n+/).filter(Boolean).map((para, i) => (
-                <p key={i}>{renderWithLinks(para)}</p>
-              ))}
-            </div>
-          ) : devMode ? (
-            <button
-              type="button"
-              onClick={() => setIsEditingRambler(true)}
-              className="mt-[var(--para-gap)] w-full cursor-text rounded-md border border-dashed border-border px-3 py-2 text-left text-sm italic text-muted-foreground hover:bg-muted/40"
-            >
-              Click to add Rambler recommendations…
-            </button>
-          ) : null}
+          {/* Rambler note — view-only. The prose is regenerated from
+              structured walk data by scripts/build-rambler-notes.mjs
+              and written to station-notes.json, so admins no longer
+              edit it directly here. Structured editing lives in the
+              WalksAdminPanel below (admin only).
+              Public visitors see at most the top 3 paragraphs (already
+              sorted top-first by the build pipeline); admins see every
+              paragraph so they can review what's being trimmed. */}
+          {ramblerNote ? (() => {
+            const allParas = ramblerNote.split(/\n+/).filter(Boolean)
+            const shownParas = devMode ? allParas : allParas.slice(0, 3)
+            return (
+              <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
+                {shownParas.map((para, i) => (
+                  <p key={i}>{renderWithLinks(para)}</p>
+                ))}
+              </div>
+            )
+          })() : null}
+
+          {/* Structured walk editor — admin only. Fetches every walk
+              variant attached to this station's CRS and surfaces the
+              Phase 5 editable fields (Komoot URL, mud warning, best
+              seasons, free-text warnings/bestTime). Saving a card
+              rewrites the source JSON and re-runs the build, so the
+              prose above refreshes on the next station-notes fetch. */}
+          {devMode && stationCrs && (
+            <WalksAdminPanel stationCrs={stationCrs} onSaved={onWalkSaved} />
+          )}
 
           {/* Private note — admin-only. Same click-to-edit pattern, with
               the distinctive orange-dashed styling from before. The view
@@ -1509,49 +1492,6 @@ export default function StationModal({
               Click to add private notes…
             </button>
           ) : null}
-
-          {/* Admin-only: Recommended-seasons editor. Four small checkboxes
-              (one per season) — multi-select because a station can be
-              recommended in more than one season. Shares the orange-dashed
-              "admin content" styling with the Private notes block above so
-              it reads as a peer of that control. Each toggle saves
-              immediately (no deferred commit) — onSaveSeasons in the parent
-              does an optimistic state update + POST. */}
-          {devMode && (
-            <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-2 dark:bg-orange-950/10">
-              {/* Row: label on the left, 4 checkboxes on the right. Each
-                 checkbox sits beside its season name; the whole pair is a
-                 clickable <label> so tapping the word also toggles. */}
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
-                <span className="text-muted-foreground">Seasons</span>
-                {ALL_SEASONS.map((season) => {
-                  const checked = seasons.includes(season)
-                  return (
-                    <label
-                      key={season}
-                      className="flex cursor-pointer items-center gap-1.5"
-                    >
-                      <Checkbox
-                        checked={checked}
-                        onCheckedChange={(value) => {
-                          // Compute the next season set. Order is enforced
-                          // server-side (canonical calendar order), so we
-                          // don't need to sort here.
-                          const next =
-                            value === true
-                              ? [...seasons, season]
-                              : seasons.filter((s) => s !== season)
-                          onSaveSeasons?.(next)
-                        }}
-                        className="cursor-pointer"
-                      />
-                      {season}
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Mobile-only Hike button, anchored at the bottom of all the text.
               Desktop uses the inline button in the title row above instead.

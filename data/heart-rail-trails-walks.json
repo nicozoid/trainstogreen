@@ -24,15 +24,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Warwick Circular Walk",
+        "name": "",
         "startPlace": "Warwick",
         "endPlace": "Warwick",
         "startStation": "WRW",
         "endStation": "WRW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.8,
+        "distanceKm": 12.6,
         "hours": 4,
         "lunchStops": [
           {
@@ -89,7 +88,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "f73u",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Warwick Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-683",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -124,15 +132,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wythall to Shirley",
         "startPlace": "Wythall",
         "endPlace": "Wythall",
         "startStation": "WYT",
         "endStation": "WYT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -171,7 +177,14 @@
           }
         ],
         "warnings": "Broken stile; horses present.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "qin7",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Wythall to Shirley",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-830",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -206,15 +219,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wootton Wawen to Wilmcote",
         "startPlace": "Wootton Wawen",
         "endPlace": "Wootton Wawen",
         "startStation": "WWW",
         "endStation": "WWW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.5,
+        "distanceKm": 7.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -263,7 +274,15 @@
           }
         ],
         "warnings": "Can be boggy/muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "6b09",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Wootton Wawen to Wilmcote",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-871",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -298,15 +317,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wilmcote to Wootton Wawen",
         "startPlace": "Wilmcote",
         "endPlace": "Wilmcote",
         "startStation": "WMC",
         "endStation": "WMC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 3,
         "lunchStops": [
           {
@@ -368,7 +385,15 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "wb0s",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Wilmcote to Wootton Wawen",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-828",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -403,15 +428,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Whitlocks End to Shirley",
         "startPlace": "Whitlocks End",
         "endPlace": "Whitlocks End",
         "startStation": "WTE",
         "endStation": "WTE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.75,
+        "distanceKm": 2.8,
         "hours": 1,
         "lunchStops": [
           {
@@ -456,7 +479,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "dagm",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Whitlocks End to Shirley",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-827",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -491,15 +521,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Warwick Parkway Circular Walk",
+        "name": "",
         "startPlace": "Warwick Parkway",
         "endPlace": "Warwick Parkway",
         "startStation": "WRP",
         "endStation": "WRP",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.1,
+        "distanceKm": 8.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -533,7 +562,15 @@
           }
         ],
         "warnings": "Busy A road crossing.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "gfu9",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Warwick Parkway Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-826",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -568,15 +605,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "The Lakes Circular Walk",
+        "name": "",
         "startPlace": "The Lakes",
         "endPlace": "The Lakes",
         "startStation": "TLK",
         "endStation": "TLK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4,
+        "distanceKm": 6.4,
         "hours": 2,
         "lunchStops": [
           {
@@ -620,7 +656,24 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring or autumn."
+        "bestTime": "Best in spring or autumn.",
+        "id": "16ej",
+        "mudWarning": true,
+        "bestSeasons": [
+          "mar",
+          "apr",
+          "may",
+          "sep",
+          "oct",
+          "nov"
+        ],
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "The Lakes Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-825",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -655,15 +708,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Tile Hill Circular Walk",
+        "name": "",
         "startPlace": "Tile Hill",
         "endPlace": "Tile Hill",
         "startStation": "THL",
         "endStation": "THL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.8,
+        "distanceKm": 6.1,
         "hours": 2,
         "lunchStops": [
           {
@@ -716,7 +768,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "8o92",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Tile Hill Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-913",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -751,15 +812,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Shakespeare's Stratford",
         "startPlace": "Stratford-upon-Avon",
         "endPlace": "Stratford-upon-Avon",
         "startStation": "SAV",
         "endStation": "SAV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -825,7 +884,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "cpuy",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Shakespeare's Stratford",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1237",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -860,15 +926,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Stratford-upon-Avon Parkway Circular Walk",
+        "name": "",
         "startPlace": "Stratford-upon-Avon Parkway",
         "endPlace": "Stratford-upon-Avon Parkway",
         "startStation": "STY",
         "endStation": "STY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.25,
+        "distanceKm": 3.6,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -906,7 +971,15 @@
           }
         ],
         "warnings": "Limited refreshment options.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "qq91",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Stratford-upon-Avon Parkway Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-823",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -941,15 +1014,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Shirley Circular Walk",
+        "name": "",
         "startPlace": "Shirley",
         "endPlace": "Shirley",
         "startStation": "SRL",
         "endStation": "SRL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5,
+        "distanceKm": 8,
         "hours": 3,
         "lunchStops": [
           {
@@ -1004,7 +1076,15 @@
           }
         ],
         "warnings": "Trip hazard: anchored cable.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "zrtu",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Shirley Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-822",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -1039,15 +1119,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Rugby Circular Walk",
+        "name": "",
         "startPlace": "Rugby",
         "endPlace": "Rugby",
         "startStation": "RUG",
         "endStation": "RUG",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -1087,7 +1166,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "qqa6",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Rugby Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-821",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -1122,15 +1210,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "George Eliot's Nuneaton",
         "startPlace": "Nuneaton",
         "endPlace": "Nuneaton",
         "startStation": "NUN",
         "endStation": "NUN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.8,
+        "distanceKm": 2.9,
         "hours": 1,
         "lunchStops": [
           {
@@ -1176,7 +1262,15 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "jrm6",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "George Eliot's Nuneaton",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-820",
+          "type": "main"
+        },
+        "suffix": "via Nuneaton Museum & Art Gallery"
       }
     ],
     "extracted": true,
@@ -1211,15 +1305,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Marston Green Circular Walk",
+        "name": "",
         "startPlace": "Marston Green",
         "endPlace": "Marston Green",
         "startStation": "MGN",
         "endStation": "MGN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1265,7 +1358,15 @@
           }
         ],
         "warnings": "Can be noisy (airport).",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "epap",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Marston Green Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-819",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -1300,15 +1401,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Royal Leamington Spa Circular Walk",
         "startPlace": "Leamington Spa",
         "endPlace": "Leamington Spa",
         "startStation": "LMS",
         "endStation": "LMS",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.2,
+        "distanceKm": 11.6,
         "hours": 4,
         "lunchStops": [
           {
@@ -1342,7 +1441,15 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "n6jd",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Royal Leamington Spa Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-678",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1377,15 +1484,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Henley-in-Arden Circular Walk",
+        "name": "",
         "startPlace": "Henley-in-Arden",
         "endPlace": "Henley-in-Arden",
         "startStation": "HNL",
         "endStation": "HNL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1451,7 +1557,15 @@
           }
         ],
         "warnings": "Can be overgrown summer.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "v5oq",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Henley-in-Arden Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-817",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -1486,15 +1600,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Hatton to Lapworth Walk",
         "startPlace": "Hatton",
         "endPlace": "Hatton",
         "startStation": "HTN",
         "endStation": "HTN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5,
+        "distanceKm": 8,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -1566,7 +1678,19 @@
           }
         ],
         "warnings": "Narrow path sections.",
-        "bestTime": "Best in spring."
+        "bestTime": "Best in spring.",
+        "id": "i6dq",
+        "bestSeasons": [
+          "mar",
+          "apr",
+          "may"
+        ],
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Hatton to Lapworth Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1238",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1601,15 +1725,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Earlswood to Wythall",
         "startPlace": "Earlswood",
         "endPlace": "Earlswood",
         "startStation": "EWD",
         "endStation": "EWD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 1.75,
+        "distanceKm": 2.8,
         "hours": 1,
         "lunchStops": [
           {
@@ -1648,7 +1770,20 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring."
+        "bestTime": "Best in spring.",
+        "id": "ipk9",
+        "mudWarning": true,
+        "bestSeasons": [
+          "mar",
+          "apr",
+          "may"
+        ],
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Earlswood to Wythall",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-818",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1683,15 +1818,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Claverdon to Hatton",
         "startPlace": "Claverdon",
         "endPlace": "Claverdon",
         "startStation": "CLV",
         "endStation": "CLV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -1729,7 +1862,14 @@
           }
         ],
         "warnings": "Nettles and brambles.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "jq7j",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Claverdon to Hatton",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-816",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1764,15 +1904,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Canley to Coventry Walk",
         "startPlace": "Canley",
         "endPlace": "Canley",
         "startStation": "CNL",
         "endStation": "CNL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -1834,7 +1972,15 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "5rpr",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Canley to Coventry Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-869",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1869,15 +2015,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Bermuda Park to Bedworth",
         "startPlace": "Bermuda Park",
         "endPlace": "Bermuda Park",
         "startStation": "BEP",
         "endStation": "BEP",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.5,
+        "distanceKm": 5.6,
         "hours": 2,
         "lunchStops": [
           {
@@ -1921,7 +2065,15 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "1jet",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Bermuda Park to Bedworth",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-814",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -1956,15 +2108,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Bedworth Circular Walk",
+        "name": "",
         "startPlace": "Bedworth",
         "endPlace": "Bedworth",
         "startStation": "BEH",
         "endStation": "BEH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 6.3,
+        "distanceKm": 10.1,
         "hours": 3,
         "lunchStops": [
           {
@@ -2017,7 +2168,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "64wy",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Bedworth Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-831",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2052,15 +2212,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Bearley to Claverdon",
         "startPlace": "Bearley",
         "endPlace": "Bearley",
         "startStation": "BER",
         "endStation": "BER",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.75,
+        "distanceKm": 7.6,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -2098,7 +2256,19 @@
           }
         ],
         "warnings": "Electric fence near stables.",
-        "bestTime": "Best in spring."
+        "bestTime": "Best in spring.",
+        "id": "atv4",
+        "bestSeasons": [
+          "mar",
+          "apr",
+          "may"
+        ],
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Bearley to Claverdon",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-813",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -2133,15 +2303,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Birmingham International to Marston Green",
         "startPlace": "Birmingham International",
         "endPlace": "Birmingham International",
         "startStation": "BHI",
         "endStation": "BHI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4,
+        "distanceKm": 6.4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2183,7 +2351,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "u9zy",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Birmingham International to Marston Green",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-675",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -2218,15 +2393,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Coventry Circular Walk",
+        "name": "",
         "startPlace": "Coventry",
         "endPlace": "Coventry",
         "startStation": "COV",
         "endStation": "COV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3,
+        "distanceKm": 4.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2323,7 +2497,15 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "s86p",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Coventry Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-701",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2358,15 +2540,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Coventry Arena to Bedworth",
         "startPlace": "Coventry Arena",
         "endPlace": "Coventry Arena",
         "startStation": "CAA",
         "endStation": "CAA",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.5,
+        "distanceKm": 5.6,
         "hours": 2,
         "lunchStops": [
           {
@@ -2409,7 +2589,14 @@
           }
         ],
         "warnings": "Point-to-point trail.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "8e7t",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Coventry Arena to Bedworth",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-1236",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -2444,15 +2631,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Berkswell Circular Walk",
+        "name": "",
         "startPlace": "Berkswell",
         "endPlace": "Berkswell",
         "startStation": "BKW",
         "endStation": "BKW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.7,
+        "distanceKm": 4.3,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2497,7 +2683,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "k5ji",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Berkswell Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-853",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2532,15 +2727,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Danzey Circular Walk",
+        "name": "",
         "startPlace": "Danzey",
         "endPlace": "Danzey",
         "startStation": "DZY",
         "endStation": "DZY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.7,
+        "distanceKm": 4.3,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2582,7 +2776,21 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": "Best in spring."
+        "bestTime": "Best in spring.",
+        "id": "35nt",
+        "mudWarning": true,
+        "bestSeasons": [
+          "mar",
+          "apr",
+          "may"
+        ],
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Danzey Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-851",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2617,15 +2825,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Olton to Shirley",
         "startPlace": "Olton",
         "endPlace": "Olton",
         "startStation": "OLT",
         "endStation": "OLT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 8,
+        "distanceKm": 12.9,
         "hours": 3.5,
         "lunchStops": [
           {
@@ -2668,7 +2874,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "dcoh",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Olton to Shirley",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-856",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -2703,15 +2916,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Kenilworth Circular Walk",
+        "name": "",
         "startPlace": "Kenilworth",
         "endPlace": "Kenilworth",
         "startStation": "KNW",
         "endStation": "KNW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 7.4,
+        "distanceKm": 11.9,
         "hours": 3.5,
         "lunchStops": [
           {
@@ -2750,7 +2962,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "hlok",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Kenilworth Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-852",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2785,15 +3006,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Hampton-in-Arden Circular Walk",
+        "name": "",
         "startPlace": "Hampton-in-Arden",
         "endPlace": "Hampton-in-Arden",
         "startStation": "HIA",
         "endStation": "HIA",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.6,
+        "distanceKm": 5.8,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -2833,7 +3053,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "p3um",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Hampton-in-Arden Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-850",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2868,15 +3097,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Lapworth Circular Walk",
+        "name": "",
         "startPlace": "Lapworth",
         "endPlace": "Lapworth",
         "startStation": "LPW",
         "endStation": "LPW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 3.75,
+        "distanceKm": 6,
         "hours": 2,
         "lunchStops": [
           {
@@ -2915,7 +3143,16 @@
           }
         ],
         "warnings": "Can be very muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "yhud",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Lapworth Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-854",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -2950,15 +3187,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Solihull Circular Walk",
+        "name": "",
         "startPlace": "Solihull",
         "endPlace": "Solihull",
         "startStation": "SOL",
         "endStation": "SOL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 5.5,
+        "distanceKm": 8.9,
         "hours": 3,
         "lunchStops": [
           {
@@ -3020,7 +3256,16 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "n04c",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Solihull Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-855",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,
@@ -3055,15 +3300,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Dorridge to Lapworth Walk",
         "startPlace": "Dorridge",
         "endPlace": "Dorridge",
         "startStation": "DDG",
         "endStation": "DDG",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 4.5,
+        "distanceKm": 7.2,
         "hours": 2.5,
         "lunchStops": [
           {
@@ -3115,7 +3358,15 @@
           }
         ],
         "warnings": "Can be muddy.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "tm5h",
+        "mudWarning": true,
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Dorridge to Lapworth Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-885",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -3150,15 +3401,13 @@
     "walks": [
       {
         "role": "main",
-        "name": "Widney Manor to Dorridge Walk",
         "startPlace": "Widney Manor",
         "endPlace": "Widney Manor",
         "startStation": "WMR",
         "endStation": "WMR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.75,
+        "distanceKm": 4.4,
         "hours": 1.5,
         "lunchStops": [
           {
@@ -3207,7 +3456,14 @@
           }
         ],
         "warnings": "",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "gfml",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Widney Manor to Dorridge Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-888",
+          "type": "main"
+        }
       }
     ],
     "extracted": true,
@@ -3242,15 +3498,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "Wood End Circular Walk",
+        "name": "",
         "startPlace": "Wood End",
         "endPlace": "Wood End",
         "startStation": "WDE",
         "endStation": "WDE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
-        "distanceMiles": 2.5,
+        "distanceKm": 4,
         "hours": 1,
         "lunchStops": [
           {
@@ -3295,7 +3550,15 @@
           }
         ],
         "warnings": "No shops en route.",
-        "bestTime": ""
+        "bestTime": "",
+        "id": "vw13",
+        "source": {
+          "orgSlug": "heart-rail-trails",
+          "pageName": "Wood End Circular Walk",
+          "pageURL": "https://api.warwickshire.gov.uk/documents/WCCC-1615347118-887",
+          "type": "main"
+        },
+        "suffix": "Walk"
       }
     ],
     "extracted": true,

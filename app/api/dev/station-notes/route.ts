@@ -5,22 +5,30 @@ const FILE_PATH = "data/station-notes.json"
 
 type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
 
+// POST accepts publicNote and privateNote only. `ramblerNote` is a pure
+// build output (scripts/build-rambler-notes.mjs) and is NOT writable
+// through this endpoint — structured edits happen via
+// /api/dev/walk/[id] which rewrites the source walk JSON and re-runs
+// the build. Any existing `ramblerNote` on the entry is preserved so
+// writes to the other two notes don't clobber it.
 export async function POST(req: NextRequest) {
-  const { coordKey, name, publicNote, privateNote, ramblerNote } = await req.json()
+  const { coordKey, name, publicNote, privateNote } = await req.json()
   if (!coordKey) return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
 
   const { data: notes, sha } = await readDataFile<Record<string, NotesEntry>>(FILE_PATH)
 
-  if (publicNote || privateNote || ramblerNote) {
-    // Upsert — store name alongside notes for human readability
+  const existing = notes[coordKey]
+  const existingRambler = existing?.ramblerNote ?? ""
+
+  if (publicNote || privateNote || existingRambler) {
     notes[coordKey] = {
       name: name ?? coordKey,
       publicNote: publicNote ?? "",
       privateNote: privateNote ?? "",
-      ramblerNote: ramblerNote ?? "",
+      ramblerNote: existingRambler,
     }
   } else {
-    // All empty — remove the entry entirely
+    // Everything empty — remove the entry entirely
     delete notes[coordKey]
   }
 

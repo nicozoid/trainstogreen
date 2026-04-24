@@ -34,8 +34,8 @@ type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
 // Meteorological seasons (Mar/Jun/Sep/Dec boundaries) — used by the
 // "[current season] highlights" checkbox. Matches the month→season mapping
-// in scripts/build-station-seasons.mjs. `new Date().getMonth()` returns
-// 0 = January → 11 = December.
+// in scripts/build-rambler-notes.mjs (where station-seasons.json is
+// now derived). `new Date().getMonth()` returns 0 = January → 11 = December.
 function currentSeason(): "Spring" | "Summer" | "Autumn" | "Winter" {
   const m = new Date().getMonth()
   if (m >= 2 && m <= 4) return "Spring"   // Mar–May
@@ -2030,10 +2030,11 @@ export default function HikeMap() {
   type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
-  // Seasons metadata per station. Populated initially from rambler-note month
-  // mentions (scripts/build-station-seasons.mjs) and editable in the admin
-  // photo-overlay. Used by two filters: the admin "Season" dropdown and the
-  // public "[current season] highlights" checkbox.
+  // Seasons metadata per station. Purely a build output derived from each
+  // walk variant's structured `bestSeasons` field (aggregated in
+  // scripts/build-rambler-notes.mjs). Not editable — the source of truth
+  // is the per-walk data. Used by two filters: the admin "Season" dropdown
+  // and the public "[current season] highlights" checkbox.
   type Season = "Spring" | "Summer" | "Autumn" | "Winter"
   type SeasonsEntry = { name: string; seasons: Season[] }
   const [stationSeasons, setStationSeasons] = useState<Record<string, SeasonsEntry>>({})
@@ -4976,27 +4977,20 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Save seasons for a station — called when the admin toggles a season
-  // checkbox in the photo-overlay. Optimistic update + POST, same pattern
-  // as handleSaveNotes. Pass seasons=[] to clear the station's entry.
-  const handleSaveSeasons = useCallback(
-    async (coordKey: string, name: string, seasons: ("Spring" | "Summer" | "Autumn" | "Winter")[]) => {
-      setStationSeasons((prev) => {
-        if (seasons.length === 0) {
-          const next = { ...prev }
-          delete next[coordKey]
-          return next
-        }
-        return { ...prev, [coordKey]: { name, seasons } }
-      })
-      await fetch("/api/dev/station-seasons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ coordKey, name, seasons }),
-      })
-    },
-    [],
-  )
+  // Refresh stationNotes + stationSeasons after a structured walk edit.
+  // The PATCH /api/dev/walk/[id] route re-runs the build server-side,
+  // so we just need to pull the regenerated data back into the client
+  // state — the overlay's ramblerNote prop will then update with the
+  // new prose. Fire-and-forget, no optimistic update (the build
+  // derives both files so there's no straightforward single-key patch).
+  const refreshStationDerivedData = useCallback(async () => {
+    const [notes, seasons] = await Promise.all([
+      fetch("/api/dev/station-notes").then((r) => r.json()),
+      fetch("/api/dev/station-seasons").then((r) => r.json()),
+    ])
+    setStationNotes(notes)
+    setStationSeasons(seasons)
+  }, [])
 
   // Save / clear per-station custom Flickr tag config. Pass custom=null to
   // clear. Admins can no longer pick an algo per-station — that's decided by
@@ -7757,8 +7751,7 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
-            seasons={stationSeasons[displayStation.coordKey]?.seasons ?? []}
-            onSaveSeasons={(seasons) => handleSaveSeasons(displayStation.coordKey, displayStation.name, seasons)}
+            onWalkSaved={refreshStationDerivedData}
             defaultAlgo={
               // Central London terminals (18 + synthetic) and excluded stations
               // default to "station"; everything else defaults to "landscapes".
