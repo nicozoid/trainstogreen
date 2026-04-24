@@ -6762,5 +6762,19 @@
       "51374247853",
       "25944282660"
     ]
+  },
+  "-0.6105638,51.4832744": {
+    "name": "Windsor and Eton Central",
+    "approved": [
+      {
+        "id": "2291051079",
+        "title": "Windsor Castle Viewed from the Long Walk",
+        "ownerName": "top_gun_1uk",
+        "thumbnailUrl": "https://live.staticflickr.com/3054/2291051079_ef97d15373.jpg",
+        "largeUrl": "https://live.staticflickr.com/3054/2291051079_ef97d15373_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/12078867@N02/2291051079",
+        "dateTaken": "2008-02-25 13:51:09"
+      }
+    ]
   }
 }
