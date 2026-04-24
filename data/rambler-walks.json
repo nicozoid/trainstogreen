@@ -6,7 +6,7 @@
     "region": "Algarve",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": true,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -94,7 +94,8 @@
         "warnings": "",
         "bestTime": "Best in spring or early autumn."
       }
-    ]
+    ],
+    "resolved": true
   },
   "newborough-warren-circular": {
     "slug": "newborough-warren-circular",
@@ -103,7 +104,7 @@
     "region": "Anglesey",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": false,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -2352,9 +2353,9 @@
         "startPlace": "Aldermaston",
         "endPlace": "Woolhampton",
         "startStation": "AMT",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 23.2,
         "distanceMiles": 14.4,
         "hours": 5.25,
@@ -2404,9 +2405,9 @@
         "startPlace": "Aldermaston",
         "endPlace": "Woolhampton",
         "startStation": "AMT",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 27.4,
         "distanceMiles": 17,
         "hours": null,
@@ -2431,7 +2432,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village."
   },
   "aldermaston-to-woolhampton-via-stanford-dingley": {
     "slug": "aldermaston-to-woolhampton-via-stanford-dingley",
@@ -2496,9 +2499,9 @@
         "startPlace": "Aldermaston",
         "endPlace": "Woolhampton",
         "startStation": "AMT",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20.7,
         "distanceMiles": 12.9,
         "hours": 4.5,
@@ -2566,9 +2569,9 @@
         "startPlace": "Aldermaston",
         "endPlace": "Woolhampton",
         "startStation": "AMT",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16,
         "distanceMiles": 10,
         "hours": null,
@@ -2610,7 +2613,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village."
   },
   "bedwyn-circular-via-savernake-forest-and-marlborough": {
     "slug": "bedwyn-circular-via-savernake-forest-and-marlborough",
@@ -3355,7 +3360,8 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "crowthorne-to-blackwater-via-eversley-cross": {
     "slug": "crowthorne-to-blackwater-via-eversley-cross",
@@ -3618,7 +3624,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Streatley Warren Extension adds 1.5km (1 mile) to the main walk distance, giving approximately 19.5km/12.2 miles, but the page does not explicitly state the total distance or walking time for this variant. | Start \"Goring\" not found in stations | End \"Goring\" not found in stations | Start \"Goring\" not found in stations | End \"Goring\" not found in stations | Start \"Goring\" not found in stations | End \"Goring\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "An undulating route through Berkshire with lunch at The Bell, a refreshingly traditional pub.",
     "regions": [
@@ -3667,12 +3673,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Goring",
-        "endPlace": "Goring",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Goring & Streatley",
+        "endPlace": "Goring & Streatley",
+        "startStation": "GOR",
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18,
         "distanceMiles": 11.2,
         "hours": 5.5,
@@ -3708,12 +3714,12 @@
       {
         "role": "shorter",
         "name": "YHA Version",
-        "startPlace": "Goring",
-        "endPlace": "Goring",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Goring & Streatley",
+        "endPlace": "Goring & Streatley",
+        "startStation": "GOR",
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 12.5,
         "distanceMiles": 8,
         "hours": null,
@@ -3737,12 +3743,12 @@
       {
         "role": "longer",
         "name": "Streatley Warren Extension",
-        "startPlace": "Goring",
-        "endPlace": "Goring",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Goring & Streatley",
+        "endPlace": "Goring & Streatley",
+        "startStation": "GOR",
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19.5,
         "distanceMiles": 12.2,
         "hours": null,
@@ -3766,7 +3772,9 @@
         "warnings": "Seasonal path closure.",
         "bestTime": "Best Oct to Mar."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley)."
   },
   "kintbury-to-great-bedwyn": {
     "slug": "kintbury-to-great-bedwyn",
@@ -3777,7 +3785,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The shortcut walk reduces the distance by 4.2km from the main walk's 21km, giving approximately 16.8km, but no explicit distance is stated on the page for this variant. | End \"Great Bedwyn\" not found in stations | End \"Great Bedwyn\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Quiet fields before lunch, the Test Way (a long, open, ridge walk, potentially muddy), and a pretty forest walk to return to pretty, canalside Bedwyn.",
     "regions": [
@@ -3835,9 +3843,9 @@
         "startPlace": "Kintbury",
         "endPlace": "Great Bedwyn",
         "startStation": "KIT",
-        "endStation": null,
+        "endStation": "BDW",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 21,
         "distanceMiles": 13,
         "hours": 6.5,
@@ -3866,9 +3874,9 @@
         "startPlace": "Kintbury",
         "endPlace": "Great Bedwyn",
         "startStation": "KIT",
-        "endStation": null,
+        "endStation": "BDW",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.8,
         "distanceMiles": null,
         "hours": null,
@@ -3973,7 +3981,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "maidenhead-to-marlow": {
     "slug": "maidenhead-to-marlow",
@@ -4726,7 +4736,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The end station is listed as 'Woolhampton' but the actual station is Midgham (also called Midgham/Woolhampton). The page refers to both 'Woolhampton' and 'Midgham station' — the walk ends at Midgham station, which serves Woolhampton village. | Walk Options mention 'Starting from Newbury adds 500 metres' and 'Finishing at Thatcham adds 4.5km' but no explicit total distances or walking times are given for these variants — distances above are estimated from the main walk figure. | End \"Woolhampton\" not found in stations | End \"Woolhampton\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Easy walk with some gentle climbs en route which crosses Greenham Common, a former World War II and NATO airfield.",
     "regions": [
@@ -4774,9 +4784,9 @@
         "startPlace": "Newbury Racecourse",
         "endPlace": "Woolhampton",
         "startStation": "NRC",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18,
         "distanceMiles": 11.2,
         "hours": 5.5,
@@ -4807,9 +4817,9 @@
         "startPlace": "Newbury",
         "endPlace": "Woolhampton",
         "startStation": "NBY",
-        "endStation": null,
+        "endStation": "MDG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18.5,
         "distanceMiles": 11.5,
         "hours": null,
@@ -4867,7 +4877,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "slough-to-egham-via-windsor-great-park": {
     "slug": "slough-to-egham-via-windsor-great-park",
@@ -4878,7 +4890,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The page notes that 'Virginia Waters or Egham Stations are not too far from the end' — it is unclear whether the intended end station is Virginia Water or Egham; both are mentioned as options. | The main walk's plotted route runs from Upton Court Park to Valley Gardens/Egham Wick, not station-to-station; the author acknowledges ~3km extra to connect the stations at each end, making the true station-to-station distance approximately 19km rather than 16km. | Start \"Windsor Riverside\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "An introductory walk passing Windsor Castle with lots of history, deer, pheasants, and the Royal Landscape.",
     "regions": [
@@ -4929,8 +4941,8 @@
         "endStation": "EGH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16,
-        "distanceMiles": 10,
+        "distanceKm": 19,
+        "distanceMiles": 12,
         "hours": 4,
         "lunchStops": [],
         "terrain": "Flat urban start, parkland, deer park, historic royal landscape, ornamental gardens, and lake.",
@@ -4964,10 +4976,10 @@
         "name": "Alternate start from Windsor Riverside",
         "startPlace": "Windsor Riverside",
         "endPlace": "Egham",
-        "startStation": null,
+        "startStation": "WNR",
         "endStation": "EGH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -4998,7 +5010,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "End station confirmed as EGH (Egham). Updated main walk distance to the true station-to-station figure (19 km / 12 mi) rather than the plotted park-to-park 16 km."
   },
   "sunningdale-to-windsor": {
     "slug": "sunningdale-to-windsor",
@@ -5009,7 +5023,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "End \"Windsor & Eton Riverside\" not found in stations | End \"Windsor Central\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Virginia Water, Windsor Great Park, the Long Walk, and Windsor Castle",
     "regions": [
@@ -5094,9 +5108,9 @@
         "startPlace": "Sunningdale",
         "endPlace": "Windsor & Eton Riverside",
         "startStation": "SNG",
-        "endStation": null,
+        "endStation": "WNR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.98,
         "distanceMiles": 10.55,
         "hours": 4,
@@ -5241,9 +5255,9 @@
         "startPlace": "Sunningdale",
         "endPlace": "Windsor Central",
         "startStation": "SNG",
-        "endStation": null,
+        "endStation": "WNC",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.6,
         "distanceMiles": 10.3,
         "hours": 4,
@@ -5312,7 +5326,9 @@
         "warnings": "",
         "bestTime": "Best late April/early May."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "reading-to-henley": {
     "slug": "reading-to-henley",
@@ -5702,7 +5718,8 @@
         "warnings": "Very exposed ridge.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "black-mountains-ridge": {
     "slug": "black-mountains-ridge",
@@ -5913,7 +5930,8 @@
         "warnings": "Path eroded; boggy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "blorenge": {
     "slug": "blorenge",
@@ -6196,7 +6214,8 @@
         "warnings": "Exceptionally exposed to elements.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "brecon-circular-via-y-gaer-battle-and-pen-y-crug": {
     "slug": "brecon-circular-via-y-gaer-battle-and-pen-y-crug",
@@ -6379,7 +6398,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "bwlch-circular-via-mynydd-troed-and-llangorse-lake": {
     "slug": "bwlch-circular-via-mynydd-troed-and-llangorse-lake",
@@ -6390,7 +6410,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends at Bwlch bus stop (not a mainline station) — travel from London requires a train to Abergavenny then bus X43. The shorter walk distance is inferred by subtracting 2.2 km from 21.6 km; the longer walk distance is inferred by adding 0.8 km to 21.6 km — these are not explicitly stated as totals on the page. | The 'cut out Allt yr Esgair' variant is mentioned but no distance or time saving is given, making it difficult to describe as a distinct walk variant.",
+    "notes": "The walk starts and ends at Bwlch bus stop (not a mainline station) — travel from London requires a train to Abergavenny then bus X43. The shorter walk distance is inferred by subtracting 2.2 km from 21.6 km; the longer walk distance is inferred by adding 0.8 km to 21.6 km — these are not explicitly stated as totals on the page.",
     "outsideMainlandBritain": false,
     "tagline": "Via an easily accessible glacial ridge to the largest natural lake in South Wales and an ancient hillfort",
     "regions": [
@@ -6651,7 +6671,8 @@
         "warnings": "Remote exposed terrain.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "crickhowell-circular-via-mynydd-llangatwg-and-craig-y-cilau": {
     "slug": "crickhowell-circular-via-mynydd-llangatwg-and-craig-y-cilau",
@@ -6757,7 +6778,8 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "crickhowell-circular-via-table-mountain-and-the-3-pens": {
     "slug": "crickhowell-circular-via-table-mountain-and-the-3-pens",
@@ -7047,7 +7069,8 @@
         "warnings": "Very remote, exposed.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "brecon-beacons-fan-dance": {
     "slug": "brecon-beacons-fan-dance",
@@ -7132,7 +7155,8 @@
         "warnings": "Steep descents; knee risk.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "fforest-fawr-traverse-craig-y-nos-to-llwyn-y-celyn": {
     "slug": "fforest-fawr-traverse-craig-y-nos-to-llwyn-y-celyn",
@@ -7143,7 +7167,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The alternative finish distance of ~22.3 km is inferred from the main walk (21.5 km) plus the stated 800m addition; the page does not give an explicit figure. | The page states the alternative route through the high plateau 'adds 0.9 km, cuts 140m ascent' relative to the main walk but does not clarify whether it replaces a section or is a full variant — the endpoints are the same as the main walk so it has not been extracted as a separate walk entry.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Remote mountain traverse: limestone scenery, Fan Gyhirych, a glacial escarpment, great views all around. Bus travel.",
     "regions": [
@@ -7282,7 +7306,7 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 22.3,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
@@ -7320,7 +7344,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Nulled inferred distance/time on alternative finish (per ambiguous-DT rule). Ambiguous high-plateau route variant ignored."
   },
   "henrhyd-waterfalls-from-craig-y-nos": {
     "slug": "henrhyd-waterfalls-from-craig-y-nos",
@@ -7331,7 +7357,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This is a circular bus-dependent walk — the start/end point (Craig y Nos) is a bus stop, not a train station. All walk variants require the T6 bus to reach the start from Neath station. The shorter walk start point ('Pen y Cae or Ynyswen') is ambiguous — two possible alternative start points are mentioned but only one minimum distance (6.8 km) is given.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Rewarding walk through Craig y Nos Country Park and above the Tawe River or via the Cribarth limestone plateau, then up a scenic wooded gorge to South Wales' highest waterfall",
     "regions": [
@@ -7534,8 +7560,8 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 6.8,
-        "distanceMiles": 4.2,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -7572,7 +7598,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "llangynidr-to-bwlch-or-circular": {
     "slug": "llangynidr-to-bwlch-or-circular",
@@ -7583,7 +7611,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The circular finish at Llangynidr is noted as only making sense if arriving by car (last buses through village will have left by finish time) — no distance or time is given for this variant. | A start from Bwlch is mentioned as possible but described only as a 'map-led option' with no separate distances or times given. | Start \"Llangynidr\" not found in stations | End \"Llangynidr\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Up a tight valley to the Chartist Cave in the limestone uplands of Mynydd Llangynidr, return along the rim of the Crawnon Valley.",
     "regions": [
@@ -7718,7 +7746,9 @@
         "warnings": "Difficult route finding.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "llanvihangel-crucorney-circular": {
     "slug": "llanvihangel-crucorney-circular",
@@ -7729,7 +7759,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts and ends at Llanvihangel Crucorney which is served only by bus (line X3); there is no rail station there. The page describes starting from Abergavenny Station as a shorter option. It is unclear whether the 'main walk' is intended to be bus-dependent from Abergavenny or truly self-contained at Llanvihangel Crucorney for car drivers. | The 'Finish in Abergavenny' shorter variant has several sub-options (direct from bottom of Skirrid, from Copper Kettle, from Walnut Tree Inn, or via Ysgyryd Fach) with different distances (cuts of 600m, 1.5km, or 2.5km); the specific distances for each sub-option are not fully enumerated. | End \"Llanvihangel Crucorney\" not found in stations | Start \"Llanvihangel Crucorney\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Two easily accessible ridge walks south east of the Black Mountains, quiet pastures with views and a Michelin-starred lunch pub",
     "regions": [
@@ -7946,7 +7976,9 @@
         "warnings": "Steep descents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "pandy-inn-to-llanvihangel-crucorney": {
     "slug": "pandy-inn-to-llanvihangel-crucorney",
@@ -7957,7 +7989,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends at bus stops (Pandy Inn Bus Stop and Skirrid Inn Bus Stop / Llanvihangel Crucorney), not railway stations. The page notes these are served by Bus Line 23. It is unclear whether 'Llanvihangel Crucorney' endpoint is specifically the Skirrid Inn Bus Stop or a distinct stop in the village centre.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Offa's Dyke Path along Hatterrall Hill and Ridge, return through the Vale of Ewyas past Llanthony Priory and the Leaning Church in Cwmyoy",
     "regions": [
@@ -8059,7 +8091,9 @@
         "warnings": "Can be boggy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "pen-y-fan-and-corn-du-from-storey-arms": {
     "slug": "pen-y-fan-and-corn-du-from-storey-arms",
@@ -8070,7 +8104,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends at a car park accessible by bus or car — not a mainline railway station. The nearest station is Merthyr Tydfil, requiring the T4 bus to reach the start. requiresBus is set to true accordingly.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A classic, and very popular, short walk climbing up to the two highest peaks in the Brecon Beacons along an engineered path.",
     "regions": [
@@ -8174,7 +8208,9 @@
         "warnings": "Exposed summits; check weather.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "storey-arms-to-libanus-or-circular": {
     "slug": "storey-arms-to-libanus-or-circular",
@@ -8185,7 +8221,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The New Inn at Ystradfellte is listed as the lunch stop but explicitly closed 08/24 — excluded from lunchStops accordingly. | All walk endpoints (Storey Arms, Libanus, Llwyn-y-Celyn) are bus stops, not train stations; requiresBus=true set for all variants. | The Circular Walk back to Storey Arms distance is not explicitly given — only described as cutting 4.2 km and 237m descent from the main walk, making exact total ambiguous.",
+    "notes": "The New Inn at Ystradfellte is listed as the lunch stop but explicitly closed 08/24 — excluded from lunchStops accordingly. | All walk endpoints (Storey Arms, Libanus, Llwyn-y-Celyn) are bus stops, not train stations; requiresBus=true set for all variants.",
     "outsideMainlandBritain": false,
     "tagline": "Strenuous route in the Fforest Fawr: 4 peaks, upland moor, limestone plateaus, and a glorious descent into the Usk Valley. Stretches of pathless terrain",
     "regions": [
@@ -8423,7 +8459,8 @@
         "warnings": "Pathless terrain.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "sugar-loaf-abergavenny-circular": {
     "slug": "sugar-loaf-abergavenny-circular",
@@ -8434,7 +8471,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The 'Scenic Diversion to Dragon's Head in Llangenny' adds distance to the longer descent route and notes bail-out to Crickhowell, but it is unclear whether the final endpoint is Abergavenny station or Crickhowell station. | End \"Crickhowell\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Ascent of the iconic Sugar Loaf along quiet paths: lush pastures, ancient oak woods, grassy ridges, heather and gorse. Tea at a vineyard.",
     "regions": [
@@ -8528,8 +8565,8 @@
         "endStation": "AGV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 21.2,
-        "distanceMiles": 13.2,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
         "terrain": "Lush pastures, ancient oak woods, heathland, grassy ridges, heather and gorse, open mountain summit, extended descent flank.",
@@ -8555,8 +8592,8 @@
         "endStation": null,
         "requiresBus": false,
         "stationToStation": false,
-        "distanceKm": 25.2,
-        "distanceMiles": 15.7,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -8579,7 +8616,9 @@
         "warnings": "Very exposed summit.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "the-black-mountain-from-glyntawe": {
     "slug": "the-black-mountain-from-glyntawe",
@@ -8590,7 +8629,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This is a bus-accessed circular walk — there is no mainline railway station at Glyntawe. All walk variants require bus travel (T6 bus from Neath). Downstream logic should treat all variants as requiresBus=true.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A spectacular ridge walk to Fan Brycheiniog, Fan Foel and Waun Lefrith. Return via a glacial valley below the ridge, or remote moorland, shakeholes and a waterfall",
     "regions": [
@@ -8817,7 +8856,9 @@
         "warnings": "Avoid in poor visibility.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "clydach-gorge": {
     "slug": "clydach-gorge",
@@ -8969,7 +9010,8 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "waterfall-country-pontneddfechan-circular": {
     "slug": "waterfall-country-pontneddfechan-circular",
@@ -8980,7 +9022,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The New Inn in Ystradfellte closed in August 2024 and is no longer serving — excluded from lunchStops. The Burger Pod at Cwm Porth Car Park is listed as the tea stop for the Main Walk and Shortcut II, not a lunch stop; however it is the only food option after the closed New Inn so has been included as the de-facto lunch alternative. | Shortcut I cuts 5.1 km from the main walk (22.4 - 5.1 = 17.3 km); Shortcut II cuts 3.4 km (22.4 - 3.4 = 19.0 km); Extension adds 3.2 km (22.4 + 3.2 = 25.6 km) — these are calculated distances as the page only states deltas. | The walk starts and ends at Pontneddfechan bus stop, not a rail station — it is entirely bus/car dependent. requiresBus has been set to false for all variants as the circular nature means no bus is needed mid-walk, but access to the start itself requires bus or car. | Start \"Pontneddfechan\" not found in stations | End \"Pontneddfechan\" not found in stations | Start \"Pontneddfechan\" not found in stations | End \"Pontneddfechan\" not found in stations | Start \"Pontneddfechan\" not found in stations | End \"Pontneddfechan\" not found in stations | Start \"Pontneddfechan\" not found in stations | End \"Pontneddfechan\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "More rapids, cascades and waterfalls than any other walk, wooded gorges, limestone uplands, caves, mines and far views",
     "regions": [
@@ -9237,7 +9279,9 @@
         "warnings": "Mud, roots, slippery rocks.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "amersham-circular-via-chalfont-st-giles": {
     "slug": "amersham-circular-via-chalfont-st-giles",
@@ -9470,7 +9514,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "End \"Seer Green & Jordans\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Gentle hills, Chalfont St Giles, and Jordans, a hamlet with Quaker links",
     "regions": [
@@ -9612,11 +9656,11 @@
         "role": "shorter",
         "name": "Shorter Walk (end at Seer Green & Jordans)",
         "startPlace": "Beaconsfield",
-        "endPlace": "Seer Green & Jordans",
+        "endPlace": "Seer Green and Jordans",
         "startStation": "BCF",
-        "endStation": null,
+        "endStation": "SRG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -9709,7 +9753,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Seer Green & Jordans\" to SRG on the shorter walk."
   },
   "west-drayton-to-cookham": {
     "slug": "west-drayton-to-cookham",
@@ -11073,7 +11119,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The shortcut distance is not explicitly stated on the page — only the amount cut (7.6 km / 4.7 mi) is given; the shorter walk distance of ~20.1 km is inferred by subtraction and should be verified. | Start \"Haddenham & Thame Parkway\" not found in stations | End \"Haddenham & Thame Parkway\" not found in stations | Start \"Haddenham & Thame Parkway\" not found in stations | End \"Haddenham & Thame Parkway\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Strenuous walk linking several hill top villages in the rolling landscape of the north westerly Aylesbury Vale, with splendid views throughout.",
     "regions": [
@@ -11120,12 +11166,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Haddenham & Thame Parkway",
-        "endPlace": "Haddenham & Thame Parkway",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Haddenham and Thame Parkway",
+        "endPlace": "Haddenham and Thame Parkway",
+        "startStation": "HDM",
+        "endStation": "HDM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 27.7,
         "distanceMiles": 17.2,
         "hours": 6.333,
@@ -11167,12 +11213,12 @@
       {
         "role": "shorter",
         "name": "Shortcut (without Brill)",
-        "startPlace": "Haddenham & Thame Parkway",
-        "endPlace": "Haddenham & Thame Parkway",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Haddenham and Thame Parkway",
+        "endPlace": "Haddenham and Thame Parkway",
+        "startStation": "HDM",
+        "endStation": "HDM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20.1,
         "distanceMiles": 12.5,
         "hours": null,
@@ -11193,7 +11239,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Haddenham & Thame Parkway\" to HDM."
   },
   "haddenham-to-aylesbury-via-gibraltar-and-ford": {
     "slug": "haddenham-to-aylesbury-via-gibraltar-and-ford",
@@ -11204,7 +11252,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The HS2 path closure near Hartwell House means the full main walk to Aylesbury station may not be completable; the page recommends finishing at The Bugle Horn in Stone/Hartwell and catching a bus to Haddenham or Aylesbury. It is unclear whether the closure was lifted by late 2024 as originally anticipated. | Start \"Haddenham & Thame Parkway\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The scenic heart of Aylesbury Vale: picturesque hamlets in the Thame Valley, Notley Abbey, Dinton Hall and Hartwell House.",
     "regions": [
@@ -11253,12 +11301,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Haddenham & Thame Parkway",
+        "startPlace": "Haddenham and Thame Parkway",
         "endPlace": "Aylesbury",
-        "startStation": null,
+        "startStation": "HDM",
         "endStation": "AYS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 23.4,
         "distanceMiles": 14.6,
         "hours": 5,
@@ -11303,18 +11351,18 @@
             "url": "http://www.kingsheadaylesbury.co.uk/"
           }
         ],
-        "warnings": "HS2 path closure.",
+        "warnings": "",
         "bestTime": ""
       },
       {
         "role": "shorter",
         "name": "Shorter Walk (bus from Hartwell/Dinton area)",
-        "startPlace": "Haddenham & Thame Parkway",
-        "endPlace": "Haddenham & Thame Parkway",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Haddenham and Thame Parkway",
+        "endPlace": "Haddenham and Thame Parkway",
+        "startStation": "HDM",
+        "endStation": "HDM",
         "requiresBus": true,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -11354,7 +11402,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note."
   },
   "haddenham-to-aylesbury-via-waddesdon": {
     "slug": "haddenham-to-aylesbury-via-waddesdon",
@@ -11365,7 +11415,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The page states the main walk ends at Aylesbury, but the HS2 path closure notice says only the Alternative Endings at Aylesbury Vale Parkway or Stone are currently possible — it is unclear whether the main walk to Aylesbury is effectively suspended or still published as the nominal route. | The shortcut distance reduction (2.5 km) is given but no total distance for the shortcut variant is explicitly stated, so no shortcut walk could be extracted with full figures. | The Alternative Ending at Aylesbury Vale Parkway cuts 5.4 km from the main walk (25.3 km), giving ~19.9 km, and the Stone alternative cuts 2.4 km giving ~22.9 km — these figures are inferred, not explicitly stated on the page. | Start \"Haddenham & Thame Parkway\" not found in stations | Start \"Haddenham & Thame Parkway\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Tranquil stretches of the Thame Valley, combined with a few energetic climbs and long passages through two magnificent Rothschild estates.",
     "regions": [
@@ -11417,12 +11467,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Haddenham & Thame Parkway",
+        "startPlace": "Haddenham and Thame Parkway",
         "endPlace": "Aylesbury",
-        "startStation": null,
+        "startStation": "HDM",
         "endStation": "AYS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 25.3,
         "distanceMiles": 15.8,
         "hours": 5.75,
@@ -11468,18 +11518,18 @@
             "url": null
           }
         ],
-        "warnings": "Path closed for HS2.",
+        "warnings": "",
         "bestTime": ""
       },
       {
         "role": "alternative",
         "name": "Alternative Ending at Aylesbury Vale Parkway",
-        "startPlace": "Haddenham & Thame Parkway",
+        "startPlace": "Haddenham and Thame Parkway",
         "endPlace": "Aylesbury Vale Parkway",
-        "startStation": null,
+        "startStation": "HDM",
         "endStation": "AVP",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19.9,
         "distanceMiles": null,
         "hours": null,
@@ -11531,10 +11581,10 @@
       {
         "role": "alternative",
         "name": "Alternative Ending at Stone",
-        "startPlace": "Haddenham & Thame Parkway",
+        "startPlace": "Haddenham and Thame Parkway",
         "endPlace": "Stone",
-        "startStation": null,
-        "endStation": "SNE",
+        "startStation": "HDM",
+        "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": 22.9,
@@ -11585,7 +11635,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note."
   },
   "little-kimble-to-saunderton": {
     "slug": "little-kimble-to-saunderton",
@@ -12711,7 +12763,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The 'Alternative end via Coombe Hill' variant has no distance or time given on the page — it is only briefly mentioned as following from Ellesborough[7]. It is unclear whether this remains a circular walk returning to Wendover station. | The Rising Sun at Little Hamden is noted as closed since 2010 and has been excluded from lunch stops accordingly. | End \"Monk's Risborough\" not found in stations | Start \"Monk's Risborough\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Chilterns: gentle wooded hills and ridges.",
     "regions": [
@@ -12851,9 +12903,9 @@
         "startPlace": "Wendover",
         "endPlace": "Monk's Risborough",
         "startStation": "WND",
-        "endStation": null,
+        "endStation": "MRS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 11.2,
         "distanceMiles": 7,
         "hours": 3.5,
@@ -12883,10 +12935,10 @@
         "name": "Short Walk: Monk's Risborough to Wendover",
         "startPlace": "Monk's Risborough",
         "endPlace": "Wendover",
-        "startStation": null,
+        "startStation": "MRS",
         "endStation": "WND",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 9.7,
         "distanceMiles": 6,
         "hours": 3,
@@ -12943,7 +12995,9 @@
         "warnings": "",
         "bestTime": "Best in autumn."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Rising Sun (closed since 2010) already absent from lunchStops. Walk surfaces on WND + MRS as expected."
   },
   "wendover-circular-via-the-lee-and-swan-bottom": {
     "slug": "wendover-circular-via-the-lee-and-swan-bottom",
@@ -13746,7 +13800,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This walk starts and ends at a Guided Busway stop (not a mainline rail station) — requiresBus is true. Walk Options mention a drivers' car park at Ouse Fen as an alternative start but no distinct station-to-station variant is described. | No finish place is clearly named — the page describes a circuit from the Busway stop area but does not explicitly state the end point.",
+    "notes": "No finish place is clearly named — the page describes a circuit from the Busway stop area but does not explicitly state the end point.",
     "outsideMainlandBritain": false,
     "tagline": "Newly created RSPB fenland nature reserve",
     "regions": [
@@ -13812,7 +13866,8 @@
         "warnings": "Busway path fatalities.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "shelford-to-cambridge": {
     "slug": "shelford-to-cambridge",
@@ -13823,7 +13878,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "Start \"Grantchester\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Granchester, the River Cam and the Cambridge colleges.",
     "regions": [
@@ -14151,7 +14206,9 @@
         "warnings": "High tarmac count.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "cross-fell-and-great-dun-fell": {
     "slug": "cross-fell-and-great-dun-fell",
@@ -14359,7 +14416,8 @@
         "warnings": "Map-and-compass skills needed.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "hadrians-wall-path-core-section": {
     "slug": "hadrians-wall-path-core-section",
@@ -14983,7 +15041,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Extension via Warcop Range and Scordale adds 5.8 km/3.6 mi to the main walk distance, giving approximately 29.7 km/18.4 mi, but the page does not explicitly state the total distance for this variant. | The Shortcut cuts 2.5 km/1.5 mi, giving approximately 21.4 km/13.3 mi, but no explicit total is stated. | Start \"Appleby-in-Westmorland\" not found in stations | End \"Appleby-in-Westmorland\" not found in stations | Start \"Appleby-in-Westmorland\" not found in stations | End \"Appleby-in-Westmorland\" not found in stations | Start \"Appleby-in-Westmorland\" not found in stations | End \"Appleby-in-Westmorland\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "One of the finest natural features in northern England, the spectacular High Cup Nick, on good paths and with easy route finding",
     "regions": [
@@ -15127,7 +15185,9 @@
         "warnings": "MOD closures apply.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "nine-standards": {
     "slug": "nine-standards",
@@ -15473,7 +15533,7 @@
     "region": "Devon",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": true,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -15557,7 +15617,8 @@
         "warnings": "Steep clifftop edges.",
         "bestTime": "Apr–Oct only."
       }
-    ]
+    ],
+    "resolved": true
   },
   "seaton-to-lyme-regis-via-the-undercliff": {
     "slug": "seaton-to-lyme-regis-via-the-undercliff",
@@ -15568,7 +15629,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk endpoint (Lyme Regis) is not a train station — return to Seaton is by bus (Bus 378). The walk is car-based or bus-dependent rather than a standard station-to-station walk. Axminster station is mentioned as accessible by bus from both Lyme Regis and Seaton but is not the walk's start or end point.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Jungle like walk through the Axmouth / Lyme Regis undercliff, with sea views at the start and finish",
     "regions": [
@@ -15681,7 +15742,9 @@
         "warnings": "Tides and rockfall danger.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "axminster-to-lyme-regis-via-the-pinetum": {
     "slug": "axminster-to-lyme-regis-via-the-pinetum",
@@ -15784,7 +15847,8 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "bournemouth-to-barton-on-sea": {
     "slug": "bournemouth-to-barton-on-sea",
@@ -16341,7 +16405,8 @@
         "warnings": "Check firing times.",
         "bestTime": "Sep to Mar only."
       }
-    ]
+    ],
+    "resolved": true
   },
   "dorchester-circular-or-to-portesham": {
     "slug": "dorchester-circular-or-to-portesham",
@@ -16585,7 +16650,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The 'To/From Wool Station Option' (8.4 km) is described as a link route between Wool station and Arish Mell — it is unclear whether this is a standalone walk or purely a connector segment; the page does not give a clear end station for the circular variant using it. | The page notes public transport from Wool Station to Lulworth Cove is infrequent and seasonal — it is ambiguous whether walkers doing the full circular walk from London require a bus/taxi leg between Wool station and Lulworth Cove to start/end the walk, or whether the Wool Station link route makes it fully station-to-station independent. | Start \"Lulworth Cove\" not found in stations | End \"Lulworth Cove\" not found in stations | Start \"Lulworth Cove\" not found in stations | End \"Lulworth Cove\" not found in stations | Start \"Lulworth Cove\" not found in stations | End \"Lulworth Cove\" not found in stations | End \"Arish Mell\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Dramatic coastal scenery, Lulworth cove, hidden beaches, Durdle Door cliff arch, and a ghost town.",
     "regions": [
@@ -16783,8 +16848,8 @@
         "endStation": null,
         "requiresBus": false,
         "stationToStation": false,
-        "distanceKm": 8.4,
-        "distanceMiles": 5.2,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
         "terrain": "Flat inland route from station across farmland to coast, connecting Wool Station to the Tyneham loop at Arish Mell beach.",
@@ -16792,7 +16857,9 @@
         "warnings": "MOD closures apply.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "lyme-regis-to-axminster-via-hawkchurch": {
     "slug": "lyme-regis-to-axminster-via-hawkchurch",
@@ -16803,7 +16870,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts in Lyme Regis, which is not a train station — access is by bus from Axminster or Weymouth stations. It is unclear whether the walk is intended to be done bus-to-station (Lyme Regis to Axminster) or whether a shorter station-to-station variant exists. No Walk Options section is present on the page describing an alternative.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Gently undulating route through quiet woods, streams, fields and lanes, with some fine views",
     "regions": [
@@ -16878,7 +16945,9 @@
         "warnings": "Can be boggy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "lyme-regis-via-golden-cap-circular": {
     "slug": "lyme-regis-via-golden-cap-circular",
@@ -16889,7 +16958,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk is described as a circular starting and ending in Lyme Regis, but Lyme Regis is not a train station — it is bus-linked to Axminster and Weymouth stations. The page does not describe a station-to-station variant. | The 'Extension to West Bay' distance of 16.6 km/10.3 mi appears to be for the coastal section only (Golden Cap to West Bay), not the full walk from Lyme Regis — the page wording is ambiguous about whether this is the total distance or a partial leg.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Undulating walk from Lyme to the top of the Golden Cap, offering views in both directions of the Jurassic coast. Inland return or onwards along coast to West Bay",
     "regions": [
@@ -17026,7 +17095,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "maiden-newton-circular-or-to-dorchester": {
     "slug": "maiden-newton-circular-or-to-dorchester",
@@ -17037,7 +17108,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The Alternative Ending in Dorchester adds 1.3 km to the main walk (28.3 + 1.3 = 29.6 km), but it is unclear whether this ends at Dorchester South or Dorchester West station — the page mentions both are a 5-minute walk from each other. | The Walk Options describe two shortcuts and a Giant Hill extension but give only partial distance/time adjustments; no complete variant distances are provided for the shortened versions. | The page mentions Bus line 5 linking Cerne Abbas and villages to train stations — it is unclear if any walk variant explicitly relies on this bus for completion, or if it is only offered as an emergency option. | End \"Dorchester\" is ambiguous (candidates: Dorchester West, Dorchester South)",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Chalk streams, pretty valleys, rounded hills and broad ridges in the Dorset Downs. Cerne Abbas village with Britain's largest hill figure.",
     "regions": [
@@ -17157,10 +17228,10 @@
         "startPlace": "Maiden Newton",
         "endPlace": "Dorchester",
         "startStation": "MDN",
-        "endStation": null,
+        "endStation": "DCH",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 29.6,
+        "stationToStation": true,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [
@@ -17212,7 +17283,9 @@
         "warnings": "Hilly ascents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "wareham-to-swanage-or-kingston": {
     "slug": "wareham-to-swanage-or-kingston",
@@ -17223,7 +17296,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Purbeck Way East walk ends at Swanage, which is served by the Swanage Steam Railway (heritage) as well as buses (#40 to Wareham, #50 to Bournemouth). The page instructs walkers to return by bus, so requiresBus=true has been set. If Swanage mainline rail connection is restored this may change. | The Purbeck Way South walk ends at Kingston (bus stop for #40 to Wareham) or optionally Worth Matravers (not on bus route, requires walk to B3069). The primary endpoint is Kingston by bus; it is unclear whether Worth Matravers should be treated as a separate variant endpoint.",
+    "notes": "The Purbeck Way East walk ends at Swanage, which is served by the Swanage Steam Railway (heritage) as well as buses (#40 to Wareham, #50 to Bournemouth). The page instructs walkers to return by bus, so requiresBus=true has been set. If Swanage mainline rail connection is restored this may change.",
     "outsideMainlandBritain": false,
     "tagline": "Heathland, Corfe's ruined castle (NT), either south to the sea at Chapman's Pool or west along a spectacular ridge to the sea and Swanage.",
     "regions": [
@@ -17360,7 +17433,8 @@
         "warnings": "Steep final descent.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "seaton-circular-via-branscombe": {
     "slug": "seaton-circular-via-branscombe",
@@ -17371,7 +17445,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Seaton is not a mainline railway station — the walk is accessed by bus from nearby towns (Axminster, Honiton, Taunton, Lyme Regis). All walks have requiresBus=true as a result. | The Westerly Extension distance of 17.3 km is derived by adding the stated +3.9 km to the main walk's 13.4 km; this is an inference as no explicit total is given on the page. | The Seaton to Lyme Regis Undercliff option is described as a standalone walk (11.4 km), not clearly combinable with the circular — ambiguity about whether this is truly an extension or a separate walk.",
+    "notes": "The Seaton to Lyme Regis Undercliff option is described as a standalone walk (11.4 km), not clearly combinable with the circular — ambiguity about whether this is truly an extension or a separate walk.",
     "outsideMainlandBritain": false,
     "tagline": "Westerly route from Seaton along the coast path, passing beaches at Beer and Bramscombe. Return inland through Branscombe village, then fields and woods",
     "regions": [
@@ -17516,7 +17590,8 @@
         "warnings": "No escape route.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "osmington-or-dorchester-to-abbotsbury": {
     "slug": "osmington-or-dorchester-to-abbotsbury",
@@ -17527,7 +17602,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The page mentions starting from 'Dorchester station' but does not clarify whether this is Dorchester South or Dorchester West — both stations serve Dorchester. | The page mentions Weymouth as a transport hub and notes Upwey station as a possible split-walk starting point, but these are not described as full walk variants with distances.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Long ridge walk with stunning views over Purbeck, the Isle of Portland, Chesil beach and Lyme bay. Travel by bus.",
     "regions": [
@@ -17632,9 +17707,9 @@
       {
         "role": "shorter",
         "name": "Dorchester to Abbotsbury",
-        "startPlace": "Dorchester",
+        "startPlace": "Dorchester South",
         "endPlace": "Abbotsbury",
-        "startStation": null,
+        "startStation": "DCH",
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
@@ -17683,7 +17758,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Dorchester resolved to DCH (South — fastest to London). Ignored Weymouth/Upwey suggestions. Walk surfaces on DCH via station-rambler-extras since Abbotsbury is non-station."
   },
   "abbotsbury-to-west-bay": {
     "slug": "abbotsbury-to-west-bay",
@@ -17805,7 +17882,8 @@
         "warnings": "Crumbling cliff edges.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "branksome-to-swanage-or-corfe-castle": {
     "slug": "branksome-to-swanage-or-corfe-castle",
@@ -17816,7 +17894,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The 'To Corfe Castle' distance is listed as '14.5 miles' but no km equivalent is given on the page — this may be approximate. | Both walks end at non-mainline-station points (Swanage is served by the heritage Swanage Railway; Corfe Castle is also on the heritage railway). Return to the mainline requires bus to Wareham or Bournemouth, so requiresBus=true for both.",
+    "notes": "Both walks end at non-mainline-station points (Swanage is served by the heritage Swanage Railway; Corfe Castle is also on the heritage railway). Return to the mainline requires bus to Wareham or Bournemouth, so requiresBus=true for both.",
     "outsideMainlandBritain": false,
     "tagline": "Lovely coastal walk via a busy prom, a short ferry crossing, the start the South West Coast Path, Studland Bay (a sandy beach), Old Harry (cliffs) to a seaside resort or ridge walk to Corfe Castle. Return by bus.",
     "regions": [
@@ -17965,7 +18043,8 @@
         "warnings": "Check bus times carefully.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "west-bay-to-lyme-regis": {
     "slug": "west-bay-to-lyme-regis",
@@ -18068,7 +18147,8 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "weymouth-to-lulworth-cove": {
     "slug": "weymouth-to-lulworth-cove",
@@ -18079,7 +18159,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk ends at Lulworth Cove, which requires a bus or taxi to Wool Station (the nearest mainline station). Bus services are seasonal — summer only for some services. The page notes the walk can also be done in reverse (Lulworth to Weymouth), starting with a bus from Wool to Lulworth, but this is not described as a distinct walk variant with its own distance. | Upwey to Lulworth distance: the page states it is 'a little (1km) longer' than the main walk of 17.8km, giving approximately 18.8km, but no explicit distance is stated for this variant.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Weymouth Bay, then a dramatic cliff walk past small beaches, then higher cliffs past Durdle Door (stack) to Lulworth Cove",
     "regions": [
@@ -18245,7 +18325,9 @@
         "warnings": "Steep cliff climbs.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "weymouth-via-isle-of-portland-circular": {
     "slug": "weymouth-via-isle-of-portland-circular",
@@ -18490,7 +18572,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "All walk variants end at Lulworth Cove, which is not a mainline station — the return to Wool station requires a bus or taxi. It is unclear if any variant can be completed fully station-to-station without a bus.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Heathland to Corfe Castle, a great ridge walk, the ghost town of Tyneham, the rollercoaster South West Coast Path, and Lulworth Cove",
     "regions": [
@@ -18740,7 +18822,9 @@
         "warnings": "MOD closures apply.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "wool-circular": {
     "slug": "wool-circular",
@@ -18888,7 +18972,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk is described as a circular starting and ending in Worth Matravers, which is not a railway station — access requires bus 40 from Wareham station to Langton Matravers. It is unclear if a pure station-to-station variant exists.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Purbeck: Keats (dinosaur footprints) and Winspit (swimming) quarries, Chapman's Pool (hidden beach), and Jurassic Coast views.",
     "regions": [
@@ -18984,7 +19068,9 @@
         "warnings": "Two steep descents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "ashurst-circular": {
     "slug": "ashurst-circular",
@@ -20220,7 +20306,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "berwick-to-eastbourne": {
     "slug": "berwick-to-eastbourne",
@@ -21894,7 +21981,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The page mentions 'Pevensey' as a walk start, but there are two Pevensey stations: Pevensey & Westham and Pevensey Bay — the page refers to the inland one (Pevensey & Westham) for the shorter variant starting at Pevensey, but does not make this entirely explicit. | Start \"Norman's Bay\" not found in stations | Start \"Norman's Bay\" not found in stations | Start \"Pevensey\" is ambiguous (candidates: Pevensey Bay, Pevensey and Westham)",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Flat coastal walk along the south coast past busy sea front promenades and quiet beaches.",
     "regions": [
@@ -22034,94 +22121,13 @@
       },
       {
         "role": "shorter",
-        "name": "Norman's Bay to Eastbourne",
-        "startPlace": "Norman's Bay",
-        "endPlace": "Eastbourne",
-        "startStation": null,
-        "endStation": "EBN",
-        "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": null,
-        "distanceMiles": 8,
-        "hours": null,
-        "lunchStops": [
-          {
-            "name": "Aqua Bar",
-            "location": "Pevensey Bay",
-            "url": null
-          },
-          {
-            "name": "The Moorings",
-            "location": "Pevensey Bay",
-            "url": null
-          },
-          {
-            "name": "Castle Inn",
-            "location": "Pevensey Bay",
-            "url": "http://castleinnpevenseybay.co.uk/"
-          }
-        ],
-        "terrain": "Remote shingle beach, Pevensey seafront, marina, Eastbourne promenade and pier.",
-        "sights": [
-          {
-            "name": "Eastbourne Pier",
-            "url": "http://www.eastbournepier.com/"
-          },
-          {
-            "name": "Sovereign Harbour",
-            "url": null
-          }
-        ],
-        "warnings": "Shingle heavy going.",
-        "bestTime": ""
-      },
-      {
-        "role": "shorter",
-        "name": "Norman's Bay to Hastings",
-        "startPlace": "Norman's Bay",
-        "endPlace": "Hastings",
-        "startStation": null,
-        "endStation": "HGS",
-        "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": null,
-        "distanceMiles": 8,
-        "hours": null,
-        "lunchStops": [
-          {
-            "name": "Relais Cooden Beach",
-            "location": "Cooden Beach",
-            "url": "https://www.therelaisretreats.com/coodenbeach/"
-          },
-          {
-            "name": "De La Warr Pavilion Cafe, Bar & Kitchen",
-            "location": "Bexhill",
-            "url": "http://www.dlwp.com/"
-          }
-        ],
-        "terrain": "Remote beach, seafront promenades, secluded bays, Bexhill seafront, Hastings promenade.",
-        "sights": [
-          {
-            "name": "De La Warr Pavilion",
-            "url": "http://www.dlwp.com/"
-          },
-          {
-            "name": "Hastings Pier",
-            "url": null
-          }
-        ],
-        "warnings": "Shingle heavy going.",
-        "bestTime": ""
-      },
-      {
-        "role": "shorter",
         "name": "Pevensey to Eastbourne",
-        "startPlace": "Pevensey",
+        "startPlace": "Pevensey and Westham",
         "endPlace": "Eastbourne",
-        "startStation": null,
+        "startStation": "PEV",
         "endStation": "EBN",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": 6,
         "hours": null,
@@ -22184,7 +22190,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched Pevensey to PEV (Pevensey and Westham). Removed both Norman's Bay shorter variants — not valid for this project (bus-required)."
   },
   "eridge-circular": {
     "slug": "eridge-circular",
@@ -23066,7 +23074,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk is circular (Forest Row to Forest Row) but requires a bus from East Grinstead to reach Forest Row — the walk itself starts and ends at Forest Row (not a station). The 'Extension to East Grinstead' distance of 23.2km is inferred by adding 5.5km to the main walk's 17.7km; the page only states the extension 'adds 5.5km (3.4 miles)'. | Horsted Keynes is served by the Bluebell Railway (heritage), not a mainline station — the Forest Row/Horsted Keynes combination walks are bus-dependent in any case.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The heathlands of Ashdown Forest. Travel by Bus.",
     "regions": [
@@ -23200,9 +23208,9 @@
         "startStation": null,
         "endStation": "EGR",
         "requiresBus": true,
-        "stationToStation": false,
-        "distanceKm": 23.2,
-        "distanceMiles": 14.4,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -23220,66 +23228,10 @@
         ],
         "warnings": "Summer evenings only.",
         "bestTime": ""
-      },
-      {
-        "role": "variant",
-        "name": "Forest Row to Horsted Keynes",
-        "startPlace": "Forest Row",
-        "endPlace": "Horsted Keynes",
-        "startStation": null,
-        "endStation": null,
-        "requiresBus": true,
-        "stationToStation": false,
-        "distanceKm": 16.2,
-        "distanceMiles": 10.6,
-        "hours": null,
-        "lunchStops": [
-          {
-            "name": "Red Lion",
-            "location": "Chelwood Gate",
-            "url": null
-          }
-        ],
-        "terrain": "Heathland, green valleys, woodland.",
-        "sights": [
-          {
-            "name": "Ashdown Forest",
-            "url": null
-          }
-        ],
-        "warnings": "Easy to get lost.",
-        "bestTime": ""
-      },
-      {
-        "role": "variant",
-        "name": "Horsted Keynes to Forest Row",
-        "startPlace": "Horsted Keynes",
-        "endPlace": "Forest Row",
-        "startStation": null,
-        "endStation": null,
-        "requiresBus": true,
-        "stationToStation": false,
-        "distanceKm": 18.9,
-        "distanceMiles": 11.7,
-        "hours": null,
-        "lunchStops": [
-          {
-            "name": "Red Lion",
-            "location": "Chelwood Gate",
-            "url": null
-          }
-        ],
-        "terrain": "Heathland, green valleys, woodland.",
-        "sights": [
-          {
-            "name": "Ashdown Forest",
-            "url": null
-          }
-        ],
-        "warnings": "Easy to get lost.",
-        "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Dropped Horsted Keynes combo variants (invalid). Added Forest Row Circular extension one-liner to East Grinstead's ramblerNote via station-rambler-extras."
   },
   "glynde-to-seaford": {
     "slug": "glynde-to-seaford",
@@ -31571,7 +31523,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "End \"Newport (Essex)\" not found in stations | End \"Newport (Essex)\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Through rolling hills and river valleys to the historic market town of Saffron Walden and one of Britain's finest stately homes.",
     "regions": [
@@ -31645,11 +31597,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Great Chesterford",
-        "endPlace": "Newport (Essex)",
+        "endPlace": "Newport",
         "startStation": "GRC",
-        "endStation": null,
+        "endStation": "NWE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.5,
         "distanceMiles": 10.9,
         "hours": 4,
@@ -31845,11 +31797,11 @@
         "role": "shorter",
         "name": "Short Walk, from Audley End",
         "startPlace": "Audley End",
-        "endPlace": "Newport (Essex)",
+        "endPlace": "Newport",
         "startStation": "AUD",
-        "endStation": null,
+        "endStation": "NWE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 15.25,
         "distanceMiles": 9.5,
         "hours": 3.417,
@@ -32021,7 +31973,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Newport (Essex)\" to NWE (Newport)."
   },
   "ingatestone-to-battlesbridge": {
     "slug": "ingatestone-to-battlesbridge",
@@ -33272,7 +33226,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This walk is an out-and-back tidal route with no conventional start/end stations — access is by car or bus #14 to Great Wakering. There is no station-to-station variant described. The page explicitly states the walk is not recommended without a local guide and that definitive safe tide times are not available. | Start \"Wakering Stairs\" not found in stations | End \"Wakering Stairs\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Fabled tidal road off the coast off Essex across Maplin Sands to Foulness Island.",
     "regions": [
@@ -33339,7 +33293,9 @@
         "warnings": "Extreme tidal danger.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "theydon-bois-to-epping": {
     "slug": "theydon-bois-to-epping",
@@ -33550,7 +33506,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Walk Options mention shortening the walk via bus from the A1124 back to Wakes Colne, but no distinct shorter station-to-station variant with a distance or endpoint is described — only a bus-dependent shortcut from the lunch pub. The lengthening option (adding Walk 8, Bures to Sudbury shortened version) references another walk entirely rather than describing a standalone variant with its own distance on this page. | Start \"Chappel & Wakes Colne\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Colne Valley, thatched cottages, brooks, farms, woods and undulating hills",
     "regions": [
@@ -33617,10 +33573,10 @@
         "name": "Main Walk",
         "startPlace": "Chappel & Wakes Colne",
         "endPlace": "Bures",
-        "startStation": null,
+        "startStation": "CWC",
         "endStation": "BUE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.7,
         "distanceMiles": 11,
         "hours": 5.5,
@@ -33657,7 +33613,9 @@
         "warnings": "Can be very muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "walton-on-the-naze-circular": {
     "slug": "walton-on-the-naze-circular",
@@ -33668,7 +33626,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The page notes the walk out to Stone Point 'hasn't been walk checked recently' — the spit section may not be reliable. | Walton-on-the-Naze is served by a station named 'Walton-on-the-Naze' (WON) but the page's train widget labels it '(not a train station)' — however this appears to be a data widget issue, as the page clearly describes trains from London Liverpool Street to Walton-on-the-Naze. | End \"Frinton\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Coastal walk from a faded grandeur Victorian seaside resort with pier to a fast eroding, fossil rich headland and a sand spit. Return along the beach or salt marsh sea wall.",
     "regions": [
@@ -33759,7 +33717,7 @@
             "url": "http://www.essexwt.org.uk/reserves/john-weston"
           }
         ],
-        "warnings": "Check tide timings.",
+        "warnings": "Check tide timings. Stone Point spit section may not be reliable — hasn't been walk-checked recently.",
         "bestTime": ""
       },
       {
@@ -33768,19 +33726,21 @@
         "startPlace": "Walton-on-the-Naze",
         "endPlace": "Frinton",
         "startStation": "WON",
-        "endStation": null,
+        "endStation": "FRI",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
         "terrain": "Flat coastal seafront, beach huts, sandy shore southward to Frinton.",
         "sights": [],
-        "warnings": "Check tide timings.",
+        "warnings": "Check tide timings. Stone Point spit section may not be reliable — hasn't been walk-checked recently.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Added Stone Point reliability warning to both variants. Walk continues to surface on WON + FRI."
   },
   "wendens-ambo-circular": {
     "slug": "wendens-ambo-circular",
@@ -34703,7 +34663,8 @@
         "warnings": "Steep climb at end.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "heddons-mouth-circular": {
     "slug": "heddons-mouth-circular",
@@ -34714,7 +34675,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This is a car-only circular walk with no station start or end point — all walks on this page require private transport (no train or bus access to the trailhead). | Start \"Hunter's Inn\" not found in stations | End \"Hunter's Inn\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Short walk to Heddon's Beach, and along the South West Coast Path from a remote country pub. Travel by car only.",
     "regions": [
@@ -34788,7 +34749,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "minehead-to-porlock": {
     "slug": "minehead-to-porlock",
@@ -34799,7 +34762,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Minehead is served only by the West Somerset heritage railway, not National Rail — the walk effectively starts from a non-mainline station and requires coach or bus to reach. This may affect whether the walk qualifies as a station-to-station walk. | The walk ends at Porlock Weir which has no station; return is by bus (year-round #39) or walking inland to Porlock for a summer-only bus. requiresBus=true is set accordingly. | The page mentions a 'rugged' cliff alternative path (6km, 219m ascent) but does not describe it as a fully separate walk variant with its own start/end points — it rejoins the main route at Bossington.",
+    "notes": "The walk ends at Porlock Weir which has no station; return is by bus (year-round #39) or walking inland to Porlock for a summer-only bus. requiresBus=true is set accordingly. | The page mentions a 'rugged' cliff alternative path (6km, 219m ascent) but does not describe it as a fully separate walk variant with its own start/end points — it rejoins the main route at Bossington.",
     "outsideMainlandBritain": false,
     "tagline": "SWCP Day 1 - Gentle introduction to the coast path, with rugged and tea room options.",
     "regions": [
@@ -34893,7 +34856,8 @@
         "warnings": "Shingle beach heavy going.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "porlock-to-lynton": {
     "slug": "porlock-to-lynton",
@@ -34990,7 +34954,8 @@
         "warnings": "Lots of steep ascent.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "lynton-to-combe-martin": {
     "slug": "lynton-to-combe-martin",
@@ -35093,7 +35058,8 @@
         "warnings": "Lots of ascent/descent.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "barry-to-llantwit-major": {
     "slug": "barry-to-llantwit-major",
@@ -35104,7 +35070,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The page mentions 'Rhoose station' but the rail station is officially named 'Rhoose Cardiff International Airport' — downstream matching may need to account for this. | The Barry to Rhoose distance is given as 'approx 4 miles / 7km' but the walk notes also say '6.5 miles' for Barry to Rhoose — these figures are inconsistent and may need human review. | End \"Rhoose\" not found in stations | Start \"Rhoose\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Glamorgan Heritage Coast : Cold Knap point, Porthkerry viaduct, Fontygary, Rhoose and Summerhouse points, Llantwit Major beach",
     "regions": [
@@ -35237,13 +35203,13 @@
         "role": "shorter",
         "name": "Barry to Rhoose",
         "startPlace": "Barry",
-        "endPlace": "Rhoose",
+        "endPlace": "Rhoose Cardiff International Airport",
         "startStation": "BRY",
-        "endStation": null,
+        "endStation": "RIA",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 7,
-        "distanceMiles": 4,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [],
         "terrain": "Coastal headlands, pebble beach, low cliffs, parkland, railway viaduct, cliff tops above former quarries.",
@@ -35281,12 +35247,12 @@
       {
         "role": "shorter",
         "name": "Rhoose to Llantwit Major",
-        "startPlace": "Rhoose",
+        "startPlace": "Rhoose Cardiff International Airport",
         "endPlace": "Llantwit Major",
-        "startStation": null,
+        "startStation": "RIA",
         "endStation": "LWM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 15,
         "distanceMiles": 10,
         "hours": null,
@@ -35313,7 +35279,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Rhoose\" to RIA (Rhoose Cardiff International Airport). Removed ambiguous Barry-to-Rhoose distance (conflicting 4 mi / 7 km vs 6.5 mi)."
   },
   "kenfig-burrows-to-porthcawl": {
     "slug": "kenfig-burrows-to-porthcawl",
@@ -35324,7 +35292,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts at Mawdlam/Kenfig Burrows (not a train station) and ends at Porthcawl (not a train station); return is by bus to Pyle or Bridgend station — no station-to-station walk without a bus is described for the linear option. | The Margham Moors addition of 1.5 miles is described as an out-and-back from the main route, not a separate variant with defined start/end points. | Start \"Mawdlam\" not found in stations | End \"Mawdlam\" not found in stations | Start \"Mawdlam\" not found in stations | End \"Mawdlam\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Kenfig Burrows (sandy dunes), Margham Moors (heathland and edgeland in the shadow of Port talbot steelworks), and quiet sandy beaches",
     "regions": [
@@ -35554,7 +35522,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "llantwit-major-to-ogmore-or-porthcawl": {
     "slug": "llantwit-major-to-ogmore-or-porthcawl",
@@ -35565,7 +35535,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk endpoint is Ogmore-by-Sea, which requires a bus to Bridgend station — there are multiple bus-dependent options described and it is unclear which is the definitively intended 'main' walk end. | The high-tide inland route to Porthcawl (19.4 miles) is described as 'way too far for most' — it is unclear if this is meant as a genuine walk option or merely informational.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Glamorgan Heritage Coast : Llantwit Major beach, St Donat's Bay, Nash Point lighthouse, Traeth Mawr beach, Southendown (Dunraven Bay), Ogmore-by-Sea",
     "regions": [
@@ -35653,8 +35623,8 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 18.2,
-        "distanceMiles": 11.3,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35718,7 +35688,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 15.3,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35773,7 +35743,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 19.4,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35824,7 +35794,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 12.5,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35871,7 +35841,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 13.5,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35926,7 +35896,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 8,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -35953,7 +35923,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "kemble-circular": {
     "slug": "kemble-circular",
@@ -36225,7 +36197,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Moreton in Marsh\" not found in stations | End \"Moreton in Marsh\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A First World War Remembrance Walk",
     "regions": [
@@ -36279,9 +36251,9 @@
         "startPlace": "Kingham",
         "endPlace": "Moreton in Marsh",
         "startStation": "KGM",
-        "endStation": null,
+        "endStation": "MIM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.7,
         "distanceMiles": 11,
         "hours": 5,
@@ -36329,9 +36301,9 @@
         "startPlace": "Kingham",
         "endPlace": "Moreton in Marsh",
         "startStation": "KGM",
-        "endStation": null,
+        "endStation": "MIM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19.4,
         "distanceMiles": 12.1,
         "hours": 5,
@@ -36373,7 +36345,9 @@
         "warnings": "Can be boggy.",
         "bestTime": "Late June to mid-August."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "moreton-in-marsh-circular": {
     "slug": "moreton-in-marsh-circular",
@@ -36775,7 +36749,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This is a circular walk starting and ending in Llanmadoc, which is not a train station. Access is by bus from Swansea (only 4 buses per day in 2025). The page does not describe a direct station-to-station variant, so requiresBus=true for the only walk described.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Out through NT pine forest with salt marsh views to a lighthouse, back along sand dunes and a remote beach.",
     "regions": [
@@ -36878,7 +36852,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "mumbles-to-three-cliffs-bay": {
     "slug": "mumbles-to-three-cliffs-bay",
@@ -36889,7 +36865,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This walk is entirely bus-dependent (no mainline station at start or finish) — the nearest station is Swansea, requiring a bus to Mumbles to start, and a bus from Oxwich/Parkmill/Southgate to return. There is no station-to-station variant described.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Gower coast path via Mumbles Head, Langland bay, Caswell bay, Brandy Cove and Pwlldu bay.",
     "regions": [
@@ -37034,7 +37010,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "port-eynon-to-rhossili": {
     "slug": "port-eynon-to-rhossili",
@@ -37045,7 +37023,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Worms Head Hotel is noted as closed due to a fire (Dec-25) — it is unclear if this is permanent or temporary, so it has been excluded from lunch stops. | Rhossili is a bus terminus, not a train station — the walk is bus-dependent at the end. The start (Port Eynon) is also bus-accessed, not a rail station. | The 'Start in Oxwich' option notes a possible bus change on Mon-Sat, making it ambiguous whether Oxwich is reliably on the same bus route as Port Eynon and Rhossili.",
+    "notes": "The Worms Head Hotel is noted as closed due to a fire (Dec-25) — it is unclear if this is permanent or temporary, so it has been excluded from lunch stops. | The 'Start in Oxwich' option notes a possible bus change on Mon-Sat, making it ambiguous whether Oxwich is reliably on the same bus route as Port Eynon and Rhossili.",
     "outsideMainlandBritain": false,
     "tagline": "Gower coast path along cliff top paths to Worms Head and spectacular Rhossili bay.",
     "regions": [
@@ -37198,7 +37176,8 @@
         "warnings": "Tidal — check times.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "rhossili-via-llangennith-circular": {
     "slug": "rhossili-via-llangennith-circular",
@@ -37307,7 +37286,8 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "rhossili-via-worms-head-circular": {
     "slug": "rhossili-via-worms-head-circular",
@@ -37318,7 +37298,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk is circular starting and ending in Rhossili village, which is not a train station — access is by bus from Swansea. The page does not describe a station-to-station variant; the entire walk requires a bus to reach the start.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A gentle cliff top headland walk a dramatic extension - a classic walk out to 2 small islands cut off at high tide, with stunning views of Rhossili beach.",
     "regions": [
@@ -37405,7 +37385,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "three-cliffs-bay-to-oxwich-bay": {
     "slug": "three-cliffs-bay-to-oxwich-bay",
@@ -37416,7 +37398,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts by bus from Swansea to Southgate and ends at Oxwich Cross (bus back to Swansea) — neither endpoint is a mainline station. The page describes Swansea as the nearest station but the walk itself is bus-dependent at both ends. | An alternate start for drivers is mentioned at Parkmill, but no separate distance or full route description is given for that variant.",
+    "notes": "An alternate start for drivers is mentioned at Parkmill, but no separate distance or full route description is given for that variant.",
     "outsideMainlandBritain": false,
     "tagline": "Gower coast path via spectacular Three Cliffs and Oxwich beaches",
     "regions": [
@@ -37529,7 +37511,8 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "alton-circular": {
     "slug": "alton-circular",
@@ -40369,7 +40352,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Whitchurch\" is ambiguous (candidates: (multiple)) | End \"Whitchurch\" is ambiguous (candidates: (multiple)) | Start \"Whitchurch\" is ambiguous (candidates: (multiple)) | End \"Whitchurch\" is ambiguous (candidates: (multiple)) | Start \"Whitchurch\" is ambiguous (candidates: (multiple)) | End \"Whitchurch\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "An easy walk down the Test valley which passes many interesting mills, old and new.",
     "regions": [
@@ -40443,9 +40426,9 @@
         "startPlace": "Overton",
         "endPlace": "Whitchurch",
         "startStation": "OVR",
-        "endStation": null,
+        "endStation": "WCH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.25,
         "distanceMiles": 10.7,
         "hours": 4,
@@ -40539,9 +40522,9 @@
         "startPlace": "Overton",
         "endPlace": "Whitchurch",
         "startStation": "OVR",
-        "endStation": null,
+        "endStation": "WCH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 14.5,
         "distanceMiles": null,
         "hours": null,
@@ -40601,10 +40584,10 @@
         "name": "Circular Walk, from Whitchurch",
         "startPlace": "Whitchurch",
         "endPlace": "Whitchurch",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "WCH",
+        "endStation": "WCH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 15,
         "distanceMiles": 9.3,
         "hours": 3.42,
@@ -40673,10 +40656,10 @@
         "name": "Short Circular Walk, omitting Freefolk",
         "startPlace": "Whitchurch",
         "endPlace": "Whitchurch",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "WCH",
+        "endStation": "WCH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 11,
         "distanceMiles": 6.9,
         "hours": 2.5,
@@ -40719,7 +40702,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "petersfield-to-liss": {
     "slug": "petersfield-to-liss",
@@ -41396,7 +41381,8 @@
         "warnings": "Unpleasant road section.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "winchester-to-west-meon-or-hinton-ampner": {
     "slug": "winchester-to-west-meon-or-hinton-ampner",
@@ -41407,7 +41393,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "All walk endpoints (West Meon, Hinton Ampner, Exton) require a bus back to Winchester; bus frequencies are very infrequent (some only summer weekends) — walkers should check current timetables carefully before setting out.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Historic Winchester and the South Downs Way. Shorter (via Hinton Ampner NT) and longer (Beacon Hill, and a railway path) options. Return by bus.",
     "regions": [
@@ -41659,7 +41645,9 @@
         "warnings": "Very limited bus service.",
         "bestTime": "Best in summer."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "west-meon-to-petersfield": {
     "slug": "west-meon-to-petersfield",
@@ -41670,7 +41658,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts at West Meon which is reached by bus from Petersfield station — the actual rail start is Petersfield, but the walk is described as starting at West Meon (bus-dependent). All variants therefore require a bus at one end or the other. | Option A saves 2.5 miles (reducing total from 17.1 to ~14.6 miles / ~23.5 km), but the exact revised distance is not explicitly stated on the page. | Option C saves 2.6 miles reducing total to ~14.5 miles / ~23.4 km, but exact revised distance not explicitly stated. | Option D saves 4 miles reducing total to ~13.1 miles / ~21.1 km, but exact revised distance not explicitly stated.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A railway path, The South Downs Way, Old Winchester Hill, Butser Hill, Queen Elizabeth Country Park, Buriton and The Hangers Way.",
     "regions": [
@@ -42018,7 +42006,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "southbourne-to-emsworth-via-thorney-island": {
     "slug": "southbourne-to-emsworth-via-thorney-island",
@@ -42169,7 +42159,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Whitchurch\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Longparish, thatched cottages and the River Test",
     "regions": [
@@ -42241,10 +42231,10 @@
         "name": "Main Walk",
         "startPlace": "Whitchurch",
         "endPlace": "Andover",
-        "startStation": null,
+        "startStation": "WCH",
         "endStation": "ADV",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19,
         "distanceMiles": 11.8,
         "hours": 5,
@@ -42311,7 +42301,7 @@
         "name": "Walk to Longparish (bus to Andover)",
         "startPlace": "Whitchurch",
         "endPlace": "Longparish",
-        "startStation": null,
+        "startStation": "WCH",
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
@@ -42356,7 +42346,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "winchester-circular": {
     "slug": "winchester-circular",
@@ -42904,7 +42896,8 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "berkhamsted-circular": {
     "slug": "berkhamsted-circular",
@@ -44002,7 +43995,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk ends at 'St Albans' which has two stations: St Albans City (to St Pancras) and St Albans Abbey (to Euston/Watford Junction). The directions describe routes to both — the page treats them as alternatives. | End \"St Albans\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "River Ver, historic St Albans and the Roman town of Verulamium",
     "regions": [
@@ -44067,11 +44060,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Garston",
-        "endPlace": "St Albans",
+        "endPlace": "St Albans City",
         "startStation": "GSN",
-        "endStation": null,
+        "endStation": "SAC",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 14.55,
         "distanceMiles": 9.04,
         "hours": 4,
@@ -44153,8 +44146,101 @@
         ],
         "warnings": "Can be very muddy.",
         "bestTime": ""
+      },
+      {
+        "role": "alternative",
+        "name": "Main Walk — alternative ending at St Albans Abbey",
+        "startPlace": "Garston",
+        "endPlace": "St Albans Abbey",
+        "startStation": "GSN",
+        "endStation": "SAA",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
+        "lunchStops": [
+          {
+            "name": "Moor Mill",
+            "location": "Bricket Wood",
+            "url": null
+          },
+          {
+            "name": "Overdraught",
+            "location": "Park Street",
+            "url": null
+          },
+          {
+            "name": "Falcon",
+            "location": "Park Street",
+            "url": null
+          }
+        ],
+        "terrain": "Common woodland, farmland tracks, river meadows, water meadows, quiet residential roads, and historic city streets.",
+        "sights": [
+          {
+            "name": "Bricket Wood Common",
+            "url": null
+          },
+          {
+            "name": "Munden House",
+            "url": null
+          },
+          {
+            "name": "Moor Mill",
+            "url": null
+          },
+          {
+            "name": "Netherwylde Farm",
+            "url": null
+          },
+          {
+            "name": "Verulamium Museum",
+            "url": "http://www.stalbansmuseums.org.uk/Sites/Verulamium-Museum"
+          },
+          {
+            "name": "Verulamium",
+            "url": "http://en.wikipedia.org/wiki/Verulamium"
+          },
+          {
+            "name": "Roman Theatre",
+            "url": "http://www.romantheatre.co.uk/"
+          },
+          {
+            "name": "St Albans Cathedral",
+            "url": null
+          },
+          {
+            "name": "Great Gateway",
+            "url": null
+          },
+          {
+            "name": "Ye Olde Fighting Cocks",
+            "url": null
+          },
+          {
+            "name": "Clock Tower",
+            "url": null
+          },
+          {
+            "name": "Roman Wall",
+            "url": null
+          },
+          {
+            "name": "Hypocaust",
+            "url": null
+          },
+          {
+            "name": "Sopwell Nunnery",
+            "url": null
+          }
+        ],
+        "warnings": "Can be very muddy.",
+        "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Main walk now ends at SAC (St Albans City); added alternative variant ending at SAA (St Albans Abbey) so both stations surface the walk."
   },
   "harlow-circular": {
     "slug": "harlow-circular",
@@ -44165,7 +44251,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk is described as starting and ending at Harlow, but the page notes '(not a train station)' for Harlow Mill (HWN) — it is unclear whether the circular walk starts/ends at Harlow Town station, Harlow Mill station, or requires a bus/taxi from a non-rail point. | Start \"Harlow\" is ambiguous (candidates: Harlow Town, Harlow Mill) | End \"Harlow\" is ambiguous (candidates: Harlow Town, Harlow Mill)",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "An easy walk through south east Hertfordshire.",
     "regions": [
@@ -44209,10 +44295,10 @@
         "name": "Harlow Circular Walk",
         "startPlace": "Harlow",
         "endPlace": "Harlow",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "HWN",
+        "endStation": "HWN",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 14,
         "distanceMiles": 8.7,
         "hours": null,
@@ -44242,7 +44328,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "harpenden-to-st-albans": {
     "slug": "harpenden-to-st-albans",
@@ -45137,7 +45225,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Bus 35/35C from Much Hadham goes to either Bishop's Stortford Interchange or St. Margaret's Station (Hertford East line) — it is unclear which endpoint applies when the bus option is taken. | The Henry Moore Foundation visit variant is described as 'substantially shorter' but no precise distance is given separately from the shortcut distances. | End \"Bishops Stortford\" not found in stations | End \"Bishops Stortford\" not found in stations",
+    "notes": "Bus 35/35C from Much Hadham goes to either Bishop's Stortford Interchange or St. Margaret's Station (Hertford East line) — it is unclear which endpoint applies when the bus option is taken. | The Henry Moore Foundation visit variant is described as 'substantially shorter' but no precise distance is given separately from the shortcut distances.",
     "outsideMainlandBritain": false,
     "tagline": "Sawbridgeworth, gently rolling countryside, fields, woods and waterways, the Stort Navigation, and Bishop's Stortford",
     "regions": [
@@ -45188,9 +45276,9 @@
         "startPlace": "Sawbridgeworth",
         "endPlace": "Bishops Stortford",
         "startStation": "SAW",
-        "endStation": null,
+        "endStation": "BIS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 23.8,
         "distanceMiles": 14.8,
         "hours": 5,
@@ -45235,9 +45323,9 @@
         "startPlace": "Sawbridgeworth",
         "endPlace": "Bishops Stortford",
         "startStation": "SAW",
-        "endStation": null,
+        "endStation": "BIS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.1,
         "distanceMiles": 10,
         "hours": null,
@@ -45269,9 +45357,9 @@
         "startPlace": "Sawbridgeworth",
         "endPlace": "Bishops Stortford",
         "startStation": "SAW",
-        "endStation": null,
+        "endStation": "BIS",
         "requiresBus": true,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -45297,7 +45385,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "st-margarets-circular": {
     "slug": "st-margarets-circular",
@@ -45308,7 +45397,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"St. Margarets\" not found in stations | End \"St. Margarets\" not found in stations | Start \"St. Margarets\" not found in stations | End \"St. Margarets\" not found in stations | Start \"St. Margarets\" not found in stations | End \"St. Margarets\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Quiet rolling Hertfordshire countryside, a haunted, ruined church and long stretches in scenic river valleys.",
     "regions": [
@@ -45355,12 +45444,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "St. Margarets",
-        "endPlace": "St. Margarets",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "St Margarets",
+        "endPlace": "St Margarets",
+        "startStation": "SMT",
+        "endStation": "SMT",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 24.1,
         "distanceMiles": 15,
         "hours": 5.25,
@@ -45397,12 +45486,12 @@
       {
         "role": "shorter",
         "name": "Shortcut I",
-        "startPlace": "St. Margarets",
-        "endPlace": "St. Margarets",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "St Margarets",
+        "endPlace": "St Margarets",
+        "startStation": "SMT",
+        "endStation": "SMT",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 12.6,
         "distanceMiles": 7.8,
         "hours": null,
@@ -45426,12 +45515,12 @@
       {
         "role": "shorter",
         "name": "Shortcut II",
-        "startPlace": "St. Margarets",
-        "endPlace": "St. Margarets",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "St Margarets",
+        "endPlace": "St Margarets",
+        "startStation": "SMT",
+        "endStation": "SMT",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19.5,
         "distanceMiles": 12.2,
         "hours": null,
@@ -45456,7 +45545,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"St. Margarets\" to SMT (Hertfordshire) — walk region = Hertfordshire."
   },
   "tring-to-berkhamsted": {
     "slug": "tring-to-berkhamsted",
@@ -45931,7 +46022,7 @@
     "region": "Isle of Wight",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": false,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -46059,7 +46150,7 @@
     "region": "Isle of Wight",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": false,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -46355,7 +46446,7 @@
     "region": "Isle of Wight",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": false,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -46569,7 +46660,7 @@
     "region": "Isle of Wight",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": false,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -46650,7 +46741,7 @@
     "region": "Isle of Wight",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": true,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -46800,7 +46891,8 @@
         "warnings": "Coastal path conditions vary.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "ashurst-to-eridge": {
     "slug": "ashurst-to-eridge",
@@ -47113,7 +47205,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The Main Walk ends at 'Maidstone' — the page describes finishing at Maidstone East station but also mentions Maidstone Barracks as an alternative finishing station on the Medway Valley line; the primary endpoint is Maidstone East. | End \"Maidstone\" is ambiguous (candidates: Maidstone West, Maidstone Barracks, Maidstone East)",
+    "notes": "The Main Walk ends at 'Maidstone' — the page describes finishing at Maidstone East station but also mentions Maidstone Barracks as an alternative finishing station on the Medway Valley line; the primary endpoint is Maidstone East.",
     "outsideMainlandBritain": false,
     "tagline": "Ancient sites and a fine viewpoint on Kent's North Downs.",
     "regions": [
@@ -47193,11 +47285,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Aylesford",
-        "endPlace": "Maidstone",
+        "endPlace": "Maidstone East",
         "startStation": "AYL",
-        "endStation": null,
+        "endStation": "MDE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19,
         "distanceMiles": 11.8,
         "hours": 4.583,
@@ -47385,7 +47477,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Assumed end station is Maidstone East — endStation set to MDE on the main walk."
   },
   "birchington-to-herne-bay": {
     "slug": "birchington-to-herne-bay",
@@ -47597,7 +47691,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Borough Green\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A Country House, Igtham Mote (NT), Knole Palace and deer park (NT), as well as pretty countryside, and close to London.",
     "regions": [
@@ -47658,12 +47752,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Borough Green",
+        "startPlace": "Borough Green & Wrotham",
         "endPlace": "Sevenoaks",
-        "startStation": null,
+        "startStation": "BRG",
         "endStation": "SEV",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 15.09,
         "distanceMiles": 9.38,
         "hours": 4.5,
@@ -47705,7 +47799,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Borough Green\" to BRG (Borough Green & Wrotham)."
   },
   "canterbury-circular": {
     "slug": "canterbury-circular",
@@ -47716,7 +47812,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The main walk starts/finishes at Canterbury but the page references both Canterbury West and Canterbury East stations as valid starting points — the walk directions primarily use Canterbury West but directions are also provided for Canterbury East. | Start \"Canterbury\" is ambiguous (candidates: Canterbury West, Canterbury East) | End \"Canterbury\" is ambiguous (candidates: Canterbury West, Canterbury East) | Start \"Canterbury\" is ambiguous (candidates: Canterbury West, Canterbury East) | End \"Canterbury\" is ambiguous (candidates: Canterbury West, Canterbury East) | End \"Canterbury\" is ambiguous (candidates: Canterbury West, Canterbury East)",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Ancient villages, churches and pubs in a classic Kent landscape",
     "regions": [
@@ -47768,12 +47864,12 @@
       {
         "role": "main",
         "name": "Canterbury Circular",
-        "startPlace": "Canterbury",
-        "endPlace": "Canterbury",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Canterbury East",
+        "endPlace": "Canterbury East",
+        "startStation": "CBE",
+        "endStation": "CBE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 22.7,
         "distanceMiles": 14.1,
         "hours": null,
@@ -47823,12 +47919,12 @@
       {
         "role": "shorter",
         "name": "Canterbury to Sturry",
-        "startPlace": "Canterbury",
+        "startPlace": "Canterbury East",
         "endPlace": "Sturry",
-        "startStation": null,
+        "startStation": "CBE",
         "endStation": "STU",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18.3,
         "distanceMiles": 11.4,
         "hours": null,
@@ -47875,11 +47971,11 @@
         "role": "variant",
         "name": "Bekesbourne to Canterbury",
         "startPlace": "Bekesbourne",
-        "endPlace": "Canterbury",
+        "endPlace": "Canterbury East",
         "startStation": "BKS",
-        "endStation": null,
+        "endStation": "CBE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.7,
         "distanceMiles": 10.4,
         "hours": null,
@@ -48024,11 +48120,11 @@
         "role": "variant",
         "name": "Sturry Circular + ending in Canterbury",
         "startPlace": "Sturry",
-        "endPlace": "Canterbury",
+        "endPlace": "Canterbury East",
         "startStation": "STU",
-        "endStation": null,
+        "endStation": "CBE",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18.3,
         "distanceMiles": 11.4,
         "hours": null,
@@ -48118,7 +48214,9 @@
         "warnings": "",
         "bestTime": "Best late March–May."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Canterbury\" to CBE (Canterbury East) on all variants."
   },
   "chilham-circular": {
     "slug": "chilham-circular",
@@ -50512,7 +50610,8 @@
         "warnings": "Some short steep sections.",
         "bestTime": "Best late Apr/May."
       }
-    ]
+    ],
+    "resolved": true
   },
   "eynsford-circular-via-farningham": {
     "slug": "eynsford-circular-via-farningham",
@@ -53754,7 +53853,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Hayes (Kent)\" not found in stations | End \"Hayes (Kent)\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A short walk across three commons in South East London",
     "regions": [
@@ -53814,10 +53913,10 @@
         "name": "Hayes Circular Walk",
         "startPlace": "Hayes (Kent)",
         "endPlace": "Hayes (Kent)",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "HYS",
+        "endStation": "HYS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 9.5,
         "distanceMiles": 6,
         "hours": null,
@@ -53877,7 +53976,9 @@
         "warnings": "Busy road crossings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "hayes-to-knockholt": {
     "slug": "hayes-to-knockholt",
@@ -56455,7 +56556,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Leigh (Kent)\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Penshurst Place (a stately home), rivers, woods, and Kent's rolling hills",
     "regions": [
@@ -56525,10 +56626,10 @@
         "name": "Main Walk",
         "startPlace": "Leigh (Kent)",
         "endPlace": "Tunbridge Wells",
-        "startStation": null,
+        "startStation": "LIH",
         "endStation": "TBW",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18.58,
         "distanceMiles": 11.55,
         "hours": 5.333,
@@ -56581,7 +56682,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "lenham-to-charing": {
     "slug": "lenham-to-charing",
@@ -59692,7 +59795,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Folkestone\" is ambiguous (candidates: Folkestone Central, Folkestone West) | End \"Folkestone\" is ambiguous (candidates: Folkestone Central, Folkestone West) | End \"Folkestone\" is ambiguous (candidates: Folkestone Central, Folkestone West)",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A swimming walk. Starts with a disused railway line, Saltwood Castle, and downland. Finishes along the coast to Folkestone.",
     "regions": [
@@ -59750,9 +59853,9 @@
         "startPlace": "Sandling",
         "endPlace": "Folkestone",
         "startStation": "SDG",
-        "endStation": null,
+        "endStation": "FKC",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 11.2,
         "distanceMiles": 7,
         "hours": null,
@@ -59815,9 +59918,9 @@
         "startPlace": "Sandling",
         "endPlace": "Folkestone",
         "startStation": "SDG",
-        "endStation": null,
+        "endStation": "FKC",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 13.4,
         "distanceMiles": 8.3,
         "hours": null,
@@ -59894,9 +59997,9 @@
         "startPlace": "Sandling",
         "endPlace": "Folkestone",
         "startStation": "SDG",
-        "endStation": null,
+        "endStation": "FKC",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 22.7,
         "distanceMiles": 14.1,
         "hours": null,
@@ -59938,7 +60041,9 @@
         "warnings": "Two steep hill climbs.",
         "bestTime": "Best July to September."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "sevenoaks-circular": {
     "slug": "sevenoaks-circular",
@@ -60197,7 +60302,9 @@
         "warnings": "Can be muddy.",
         "bestTime": "Best late Apr/May."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
   },
   "shoreham-circular": {
     "slug": "shoreham-circular",
@@ -60208,7 +60315,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Shoreham (Kent)\" not found in stations | End \"Shoreham (Kent)\" not found in stations | Start \"Shoreham (Kent)\" not found in stations | End \"Shoreham (Kent)\" not found in stations | Start \"Shoreham (Kent)\" not found in stations | End \"Shoreham (Kent)\" not found in stations | Start \"Shoreham (Kent)\" not found in stations | End \"Shoreham (Kent)\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The steep-sided hills above an attractive village in the Darent valley.",
     "regions": [
@@ -60289,10 +60396,10 @@
         "name": "Main Walk",
         "startPlace": "Shoreham (Kent)",
         "endPlace": "Shoreham (Kent)",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "SEH",
+        "endStation": "SEH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20,
         "distanceMiles": 12.4,
         "hours": 5,
@@ -60405,10 +60512,10 @@
         "name": "Alternative Walk",
         "startPlace": "Shoreham (Kent)",
         "endPlace": "Shoreham (Kent)",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "SEH",
+        "endStation": "SEH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 15.25,
         "distanceMiles": 9.4,
         "hours": 3.75,
@@ -60481,10 +60588,10 @@
         "name": "Short Walk (north)",
         "startPlace": "Shoreham (Kent)",
         "endPlace": "Shoreham (Kent)",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "SEH",
+        "endStation": "SEH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 10.5,
         "distanceMiles": 6.5,
         "hours": 2.5,
@@ -60553,10 +60660,10 @@
         "name": "Short Walk (south)",
         "startPlace": "Shoreham (Kent)",
         "endPlace": "Shoreham (Kent)",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "SEH",
+        "endStation": "SEH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 9.5,
         "distanceMiles": 5.9,
         "hours": 2.417,
@@ -60620,7 +60727,9 @@
         "warnings": "Steep descents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "snodland-to-sole-street": {
     "slug": "snodland-to-sole-street",
@@ -61091,7 +61200,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts from Tenterden, which has no mainline rail station — access requires a bus from Headcorn or Ashford International. The walk is effectively bus-dependent at both the start and end, with Rye being the only mainline station. This is reflected in requiresBus=true for all variants, but note that Rye itself IS a mainline station (Marshlink Line).",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A varied landscape between two interesting Cinque Port towns, from the low hills of the eastern High Weald almost to the coast.",
     "regions": [
@@ -61354,7 +61463,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "teynham-to-faversham": {
     "slug": "teynham-to-faversham",
@@ -64626,7 +64737,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Borough Green\" not found in stations | End \"Borough Green\" not found in stations | End \"Borough Green\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A gentle walk along The Greensand Way and through Mereworth Woods",
     "regions": [
@@ -64694,9 +64805,9 @@
         "startPlace": "Yalding",
         "endPlace": "Borough Green",
         "startStation": "YAL",
-        "endStation": null,
+        "endStation": "BRG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.54,
         "distanceMiles": 10.28,
         "hours": 5,
@@ -64735,9 +64846,9 @@
         "startPlace": "Yalding",
         "endPlace": "Borough Green",
         "startStation": "YAL",
-        "endStation": null,
+        "endStation": "BRG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.54,
         "distanceMiles": 10.28,
         "hours": 5,
@@ -64772,9 +64883,9 @@
         "startPlace": "Yalding",
         "endPlace": "Borough Green",
         "startStation": "YAL",
-        "endStation": null,
+        "endStation": "BRG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -64803,7 +64914,9 @@
         "warnings": "Can be muddy.",
         "bestTime": "Best in spring."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "walks-from-ambleside": {
     "slug": "walks-from-ambleside",
@@ -64814,7 +64927,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This page describes multiple distinct walk options (7 numbered routes) from Ambleside, all bus-dependent (no rail station at Ambleside). No single definitive main walk route, distance, or time is given for the overall page — only a range of 3 to 5 miles is listed, which does not cover all variants (e.g. the 9-mile Red Screes route).",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Low to mid level walks from Ambleside in the Lake District",
     "regions": [
@@ -64937,7 +65050,9 @@
         "warnings": "Avoid in mist.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "alexandra-palace-to-tottenham-hale": {
     "slug": "alexandra-palace-to-tottenham-hale",
@@ -65730,7 +65845,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Canary Wharf\" is ambiguous (candidates: (multiple)) | End \"Canary Wharf\" is ambiguous (candidates: (multiple)) | End \"Canary Wharf\" is ambiguous (candidates: (multiple)) | End \"Canary Wharf\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Greenwich Park with its world-famous Museums and a foot tunnel under the Thames to Canary Wharf.",
     "regions": [
@@ -65824,9 +65939,9 @@
         "startPlace": "Blackheath",
         "endPlace": "Canary Wharf",
         "startStation": "BKH",
-        "endStation": null,
+        "endStation": "CWX",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 12,
         "distanceMiles": 7.4,
         "hours": 2.583,
@@ -65936,9 +66051,9 @@
         "startPlace": "Blackheath",
         "endPlace": "Canary Wharf",
         "startStation": "BKH",
-        "endStation": null,
+        "endStation": "CWX",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 11.75,
         "distanceMiles": null,
         "hours": null,
@@ -66018,9 +66133,9 @@
         "startPlace": "Blackheath",
         "endPlace": "Canary Wharf",
         "startStation": "BKH",
-        "endStation": null,
+        "endStation": "CWX",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18.25,
         "distanceMiles": 11.3,
         "hours": 4,
@@ -66110,9 +66225,9 @@
         "startPlace": "Maze Hill",
         "endPlace": "Canary Wharf",
         "startStation": "MZH",
-        "endStation": null,
+        "endStation": "CWX",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 12.25,
         "distanceMiles": 7.6,
         "hours": 2.667,
@@ -66173,7 +66288,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Canary Wharf\" to CWX (Elizabeth line) on all variants."
   },
   "blackheath-to-deptford": {
     "slug": "blackheath-to-deptford",
@@ -69295,7 +69412,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "rainham-to-purfleet-via-rspb-rainham-marshes": {
     "slug": "rainham-to-purfleet-via-rspb-rainham-marshes",
@@ -69306,7 +69424,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The 'Very Long Walk' starting from Hornchurch Underground is described as starting at a tube station (Hornchurch), not a mainline rail station, making requiresBus potentially ambiguous — set to true as it is Underground-dependent rather than a standard station-to-station walk. | The Alternative Ending adds 3.0 km to the loop variant but total distance is not explicitly stated on the page. | Start \"Rainham\" is ambiguous (candidates: (multiple)) | Start \"Rainham\" is ambiguous (candidates: (multiple)) | End \"Rainham\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "An easy birdwatching walk in Outer East London along an atmospheric section of the London LOOP via the RSPB reserve at Rainham marshes.",
     "regions": [
@@ -69379,10 +69497,10 @@
         "name": "Main Walk",
         "startPlace": "Rainham",
         "endPlace": "Purfleet",
-        "startStation": null,
+        "startStation": "RNM",
         "endStation": "PFL",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 12.7,
         "distanceMiles": 7.9,
         "hours": 3,
@@ -69436,10 +69554,10 @@
         "name": "Alternative Ending back to Rainham",
         "startPlace": "Rainham",
         "endPlace": "Rainham",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "RNM",
+        "endStation": "RNM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -69482,9 +69600,9 @@
         "startPlace": "Hornchurch",
         "endPlace": "Rainham",
         "startStation": "ZHU",
-        "endStation": null,
+        "endStation": "RNM",
         "requiresBus": true,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 36.5,
         "distanceMiles": 22.7,
         "hours": null,
@@ -69513,7 +69631,9 @@
         "warnings": "Can be muddy.",
         "bestTime": "Best in autumn or winter."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "loughton-to-epping": {
     "slug": "loughton-to-epping",
@@ -70227,7 +70347,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The Longer Walk ends at 'Putney Bridge' (District line underground station). The text also mentions a separate Putney main line station (+¾ km extra). The 19½ km figure is for Putney Bridge underground; Putney main line station adds another ¾ km (0.45 miles). | End \"Hammersmith\" is ambiguous (candidates: Hammersmith (Circle and Hammersmith & City lines), Hammersmith (District and Piccadilly lines))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A deer park, 'the village on the river' and one of the first English landscape gardens.",
     "regions": [
@@ -70329,9 +70449,9 @@
         "startPlace": "Norbiton",
         "endPlace": "Hammersmith",
         "startStation": "NBT",
-        "endStation": null,
+        "endStation": "ZHA",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.75,
         "distanceMiles": 10.4,
         "hours": 3.67,
@@ -70718,7 +70838,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "petts-wood-circular": {
     "slug": "petts-wood-circular",
@@ -70832,7 +70954,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Rainham\" is ambiguous (candidates: (multiple)) | Start \"Rainham\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Dracula, outdoor art, concrete barges, an ace nature reserve, industrial sculpture, history and heritage, accompanied by the  mighty Thames.",
     "regions": [
@@ -70891,10 +71013,10 @@
         "name": "Main Walk",
         "startPlace": "Rainham",
         "endPlace": "Grays",
-        "startStation": null,
+        "startStation": "RNM",
         "endStation": "GRY",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.2,
         "distanceMiles": 10.1,
         "hours": null,
@@ -70958,10 +71080,10 @@
         "name": "Walk to Purfleet",
         "startPlace": "Rainham",
         "endPlace": "Purfleet",
-        "startStation": null,
+        "startStation": "RNM",
         "endStation": "PFL",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": 5,
         "hours": null,
@@ -71007,7 +71129,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "richmond-circular": {
     "slug": "richmond-circular",
@@ -71875,7 +71999,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The page's title says 'London Bridge to Greenwich via the south bank' but the main walk starts at Westminster/Waterloo — the London Bridge start is an explicitly shorter variant (10 km / 6.2 miles). The end station is described as Cutty Sark DLR or nearby Greenwich rail station; it is unclear which is the canonical finish station. | The 'extension to North Greenwich' is described in Walk Options as roughly 2 miles past Greenwich, but no total distance for the extended walk is given. | End \"Greenwich (Cutty Sark DLR)\" not found in stations | End \"Greenwich (Cutty Sark DLR)\" not found in stations | End \"North Greenwich\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Thames path through central London, past Tower Bridge and the regenerating East End, to historic Greenwich.",
     "regions": [
@@ -71955,11 +72079,11 @@
         "startPlace": "Westminster",
         "endPlace": "Greenwich (Cutty Sark DLR)",
         "startStation": "ZWM",
-        "endStation": null,
+        "endStation": "ZCS",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 13,
-        "distanceMiles": 8,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -72078,11 +72202,11 @@
         "startPlace": "London Bridge",
         "endPlace": "Greenwich (Cutty Sark DLR)",
         "startStation": "LBG",
-        "endStation": null,
+        "endStation": "ZCS",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 10,
-        "distanceMiles": 6.2,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -72214,7 +72338,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "london-stations": {
     "slug": "london-stations",
@@ -72225,7 +72351,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The Extension to Moorgate ends at Moorgate Underground/National Rail station, which is not a mainline terminus in the conventional sense — requiresBus is set true as it requires separate transport back; downstream logic should decide whether to include this variant. | End \"Charing Cross\" is ambiguous (candidates: (multiple)) | Start \"Charing Cross\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "All London's railway terminals, the three royal parks, the River Thames and the City",
     "regions": [
@@ -72666,9 +72792,9 @@
         "startPlace": "Paddington",
         "endPlace": "Charing Cross",
         "startStation": "PAD",
-        "endStation": null,
+        "endStation": "CHX",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 7.2,
         "distanceMiles": 4.4,
         "hours": null,
@@ -72749,10 +72875,10 @@
         "name": "Charing Cross to Liverpool Street",
         "startPlace": "Charing Cross",
         "endPlace": "Liverpool Street",
-        "startStation": null,
+        "startStation": "CHX",
         "endStation": "LST",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 8.6,
         "distanceMiles": 5.3,
         "hours": null,
@@ -72883,7 +73009,7 @@
         "startStation": "LST",
         "endStation": "MOG",
         "requiresBus": true,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 0.7,
         "distanceMiles": 0.4,
         "hours": null,
@@ -72903,7 +73029,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "totteridge-circular": {
     "slug": "totteridge-circular",
@@ -73498,7 +73626,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "wimbledon-to-kingston": {
     "slug": "wimbledon-to-kingston",
@@ -74113,7 +74243,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Hunstanton is a bus terminus (not a mainline rail station) — walkers arrive by Coasthopper bus from Kings Lynn station; the walk is bus-dependent at the start as well as optionally along the route. | The main walk distance is given as 'about 45 miles' but it is unclear whether this includes or excludes any inland bus-bypass sections. | The beach route past the breached RSPB Titchwell site may now be impassable at certain tides — the page notes uncertainty about current passability.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A quiet coastal path with wide beaches, sand dunes, salt and freshwater marshes, nature reserves, barrier islands, and lots of birds.",
     "regions": [
@@ -74207,7 +74337,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": null,
-        "distanceMiles": 45,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -74287,7 +74417,7 @@
             "url": "http://www.nationaltrust.org.uk/main/w-vh/w-visits/w-findaplace/w-felbrigghallgardenandpark/"
           }
         ],
-        "warnings": "Check tide timings.",
+        "warnings": "Check tide timings. Beach route past the breached RSPB Titchwell site may be impassable at certain tides — check current passability.",
         "bestTime": ""
       },
       {
@@ -74318,10 +74448,12 @@
             "url": "http://en.wikipedia.org/wiki/Scolt_Head_Island"
           }
         ],
-        "warnings": "Check tide timings.",
+        "warnings": "Check tide timings. Beach route past the breached RSPB Titchwell site may be impassable at certain tides — check current passability.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Added Titchwell impassability warning to both variants. Walk surfaced on Cromer via station-rambler-extras (Hunstanton not a station — bus from Kings Lynn)."
   },
   "kings-sutton-circular": {
     "slug": "kings-sutton-circular",
@@ -74332,7 +74464,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Banbury start adds 8km and Banbury finish adds 6km to the main walk distance; it is unclear whether these are cumulative or independent additions, so the Banbury-start and Banbury-finish total distances are estimated. | Kings Sutton is listed as 'not a train station' in the page's train widget, but trains from Marylebone to Kings Sutton direct are described in the Transport section — it may be a request stop or very small station; downstream should verify station status. | Start \"Kings Sutton\" not found in stations | End \"Kings Sutton\" not found in stations | End \"Kings Sutton\" not found in stations | Start \"Kings Sutton\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A leisurely stroll through Northamptonshire with ample refreshment.",
     "regions": [
@@ -74376,10 +74508,10 @@
         "name": "Main Walk",
         "startPlace": "Kings Sutton",
         "endPlace": "Kings Sutton",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "KGS",
+        "endStation": "KGS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.2,
         "distanceMiles": 10.7,
         "hours": null,
@@ -74437,9 +74569,9 @@
         "startPlace": "Banbury",
         "endPlace": "Kings Sutton",
         "startStation": "BAN",
-        "endStation": null,
+        "endStation": "KGS",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 25.2,
         "distanceMiles": 15.7,
         "hours": null,
@@ -74496,10 +74628,10 @@
         "name": "Banbury Finish",
         "startPlace": "Kings Sutton",
         "endPlace": "Banbury",
-        "startStation": null,
+        "startStation": "KGS",
         "endStation": "BAN",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 23.2,
         "distanceMiles": 14.4,
         "hours": null,
@@ -74551,7 +74683,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "wellingborough-circular": {
     "slug": "wellingborough-circular",
@@ -75333,7 +75467,7 @@
     "region": "Northern France",
     "favourite": false,
     "extracted": true,
-    "onMap": true,
+    "onMap": false,
     "issues": true,
     "notes": "Outside mainland Britain — no walks extracted for T2G.",
     "outsideMainlandBritain": true,
@@ -75705,7 +75839,8 @@
         "warnings": "Crumbly cliff edges.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "banbury-circular": {
     "slug": "banbury-circular",
@@ -75907,7 +76042,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Goring\" not found in stations | Start \"Goring\" not found in stations | End \"Goring\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Fairly gentle climbs through Oxfordshire and Berkshire countryside ending with a southerly stretch along the Thames.",
     "regions": [
@@ -75954,11 +76089,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Cholsey",
-        "endPlace": "Goring",
+        "endPlace": "Goring & Streatley",
         "startStation": "CHO",
-        "endStation": null,
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 23.5,
         "distanceMiles": 14.6,
         "hours": null,
@@ -75986,12 +76121,12 @@
       {
         "role": "variant",
         "name": "Goring circular walk via Moulsford",
-        "startPlace": "Goring",
-        "endPlace": "Goring",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Goring & Streatley",
+        "endPlace": "Goring & Streatley",
+        "startStation": "GOR",
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20,
         "distanceMiles": 12.4,
         "hours": null,
@@ -76006,7 +76141,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley) on main + circular variant."
   },
   "cholsey-to-goring-via-wallingford": {
     "slug": "cholsey-to-goring-via-wallingford",
@@ -76017,7 +76154,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Goring\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Thames Path to Wallingford, rolling hills and South Stoke, finishing along the Thames path",
     "regions": [
@@ -76053,11 +76190,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Cholsey",
-        "endPlace": "Goring",
+        "endPlace": "Goring & Streatley",
         "startStation": "CHO",
-        "endStation": null,
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20.5,
         "distanceMiles": 12.8,
         "hours": null,
@@ -76083,7 +76220,9 @@
         "warnings": "Long, exposed walk.",
         "bestTime": "Best Apr–Jun or early autumn."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley)."
   },
   "cookham-to-maidenhead": {
     "slug": "cookham-to-maidenhead",
@@ -76490,7 +76629,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "Appleford has fewer trains, especially at weekends — walkers should check return train times carefully before choosing this variant. | Start \"Didcot\" not found in stations | End \"Didcot\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A walk in Oxfordshire, taking in Dorchester-on-Thames and the Clumps. Can start from Appleford.",
     "regions": [
@@ -76536,12 +76675,12 @@
       {
         "role": "main",
         "name": "Main Walk (Didcot Circular)",
-        "startPlace": "Didcot",
-        "endPlace": "Didcot",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Didcot Parkway",
+        "endPlace": "Didcot Parkway",
+        "startStation": "DID",
+        "endStation": "DID",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 22.1,
         "distanceMiles": 13.7,
         "hours": null,
@@ -76631,10 +76770,12 @@
             "url": null
           }
         ],
-        "warnings": "",
+        "warnings": "Infrequent trains from Appleford, especially at weekends — check return times.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Didcot\" to DID (Didcot Parkway) on the main circular walk."
   },
   "goring-circular-via-hill-bottom": {
     "slug": "goring-circular-via-hill-bottom",
@@ -76645,7 +76786,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Goring\" not found in stations | End \"Goring\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Rolling Chilterns countryside, forest trails, quiet country lanes and 3 pubs",
     "regions": [
@@ -76685,12 +76826,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Goring",
-        "endPlace": "Goring",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Goring & Streatley",
+        "endPlace": "Goring & Streatley",
+        "startStation": "GOR",
+        "endStation": "GOR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 18,
         "distanceMiles": 11.3,
         "hours": null,
@@ -76705,7 +76846,9 @@
         "warnings": "Muddy after rain.",
         "bestTime": "Best late Apr/May."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Goring\" to GOR."
   },
   "hanborough-to-charlbury": {
     "slug": "hanborough-to-charlbury",
@@ -79546,7 +79689,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends at 'Thame Town Hall Bus Stop' with a mandatory bus connection to/from Haddenham & Thame Parkway station; all variants therefore requiresBus=true. Distances for shortcut/extension/alternative-ending variants are inferred from the stated cut/addition values but not explicitly listed on the page.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Scenic ramble through quiet villages in the Thame Valley on the Oxon/Bucks border, north of the Chilterns.",
     "regions": [
@@ -79653,7 +79796,7 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 15.2,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [
@@ -79686,7 +79829,7 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 24.5,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [
@@ -79733,7 +79876,7 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 23.7,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [
@@ -79757,7 +79900,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "goring-to-wantage": {
     "slug": "goring-to-wantage",
@@ -79933,7 +80078,8 @@
         "warnings": "No Sunday buses.",
         "bestTime": "Good in winter."
       }
-    ]
+    ],
+    "resolved": true
   },
   "bamford-to-edale-via-win-hill-and-great-ridge": {
     "slug": "bamford-to-edale-via-win-hill-and-great-ridge",
@@ -81267,7 +81413,8 @@
         "warnings": "Exposed path above dale.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "edale-circular-via-kinder-scout-and-mam-tor": {
     "slug": "edale-circular-via-kinder-scout-and-mam-tor",
@@ -81742,7 +81889,8 @@
         "warnings": "Can be boggy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "grindleford-circular-via-chatsworth-house": {
     "slug": "grindleford-circular-via-chatsworth-house",
@@ -83142,7 +83290,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The start/end point is the 'Ladybower Inn Bus Stop' (Ashopton), not a railway station. The walk is bus-dependent throughout — no mainline station variant is clearly described as start or end except the 'Alternative Ending to Bamford Station' on the Alternative Route. Distances for the Shorter/Alternative Start/Ending variants are inferred by adding/subtracting stated km cuts from the main walk distance; exact figures not explicitly given on the page. | The 'Shorter Ending at Yorkshire Bridge Inn' on the Alternative Route is mentioned but no distance is given — it may be a valid walk option requiring further detail. | Bus line 257 (Sheffield Interchange – Bamford Station) runs summer Sundays only, making this walk significantly bus-dependent and season-restricted.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A grassy ridge to Britain's longest inland landslip. Descend to skirt the famous Derwent Reservoirs. Hilly return options across moors or along edges.",
     "regions": [
@@ -83221,8 +83369,8 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 26.9,
-        "distanceMiles": 16.7,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": 6.5,
         "lunchStops": [],
         "terrain": "Grassy ridge, open moorland, grouse moors, wooded Derwent Valley, reservoir shoreside paths, wild upland valley.",
@@ -83395,7 +83543,9 @@
         "warnings": "Steep descents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "ladybower-inn-circular-via-derwent-edge-and-strines": {
     "slug": "ladybower-inn-circular-via-derwent-edge-and-strines",
@@ -83406,7 +83556,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends at Ladybower Inn bus stop (not a mainline station); all variants require bus connections — Bus 257 to/from Sheffield Interchange is the primary link. Shorter endings to High and Low Bradfield use circular bus routes 61/62 to Hillsborough Interchange for onward connections to Sheffield Station. | Distances for the two shorter Bradfield ending variants are calculated by subtracting the stated cuts (7.4 km and 7.9 km) from the main walk distance of 25.8 km; these are approximate.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Famous gritstone formations on Derwent Edge high above the Derwent Reservoirs, wooded Bradfield Dale with its reservoirs and folly tower. Back across moorland to Ladybower.",
     "regions": [
@@ -83598,7 +83748,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "macclesfield-circular-via-teggs-nose-and-kerridge-hill": {
     "slug": "macclesfield-circular-via-teggs-nose-and-kerridge-hill",
@@ -84081,7 +84233,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk ends at Leek Bus Station, not a rail station — return to Macclesfield or onward to Stoke-on-Trent (Hanley) requires bus. A 2.3 km walk from Hanley Bus Station to Stoke Station is described but not quantified as a distinct walk variant. | The shorter ending distances for Upper Hulme and Blackshaw Moor are calculated by subtracting the stated cuts (6.9 km and 5.2 km) from the main walk distance; these are approximate and may need verification.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Reservoirs, Macclesfield Forest, the 'Cheshire Matterhorn', lonely Wildboarclough, the Dane Valley, Lud's Church chasm and the Roaches gritstone escarpment",
     "regions": [
@@ -84311,7 +84463,9 @@
         "warnings": "Steep ascents and descents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "mam-tor-to-kinder-low": {
     "slug": "mam-tor-to-kinder-low",
@@ -84322,7 +84476,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "This is a car-park-based out-and-back walk, not a station-to-station walk. No train station is mentioned as start or end point — the walk begins and ends at Mam Nick NT car park (S33 8WA). There is no bus information provided either. | Start \"Mam Nick NT car park\" not found in stations | End \"Kinder Low\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Peak District out-and-back ridge walk around Edale from a car park at 420m to Mam Tor, Lords Seat, Brown Knoll, Swines Back and Kinder Low (633m)",
     "regions": [
@@ -84405,7 +84559,9 @@
         "warnings": "Very exposed when windy.",
         "bestTime": "Best in dry summer."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "monsal-trail": {
     "slug": "monsal-trail",
@@ -84416,7 +84572,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts at Topley Pike Junction (not a mainline station) and ends at Coombs Road Viaduct (not a mainline station); the nearest stations are Buxton and Matlock, with the Transpeak bus linking them to the walk endpoints. It is unclear whether walkers are expected to take the bus both to the start and from the end, or whether a car-based out-and-back is the primary mode. requiresBus is set true accordingly. | The page describes the walk as 9 miles / 14.5 km but no pure walking time (hours) is given.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Gentle Peak District walk along a disused railway line via viaducts, tunnels, and escarpements",
     "regions": [
@@ -84551,7 +84707,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Missing walking time is not a blocker; walk uses stated distance only."
   },
   "sheffield-circular-via-porter-and-gleadless": {
     "slug": "sheffield-circular-via-porter-and-gleadless",
@@ -84562,7 +84720,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk ends at Hunter's Bar roundabout, which requires a bus back to Sheffield station — confirmed requiresBus=true. The page notes 'Line 181 Mon-Fri' for the Ringinglow bus return, suggesting the Ringinglow shortcut may not be available on Saturdays. | The page lists ascent/descent figures for the shorter version (15.0 km, 325/259m) which aligns with the Dore & Totley variant, but the Ringinglow variant (10.2 km) has no separate ascent/descent figures provided. | End \"Dore & Totley\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Strenuous excursion through the south westerly wooded valleys of Sheffield",
     "regions": [
@@ -84636,9 +84794,9 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 27.8,
-        "distanceMiles": 17.3,
-        "hours": 8,
+        "distanceKm": null,
+        "distanceMiles": null,
+        "hours": null,
         "lunchStops": [
           {
             "name": "Endcliffe Park Café",
@@ -84733,8 +84891,8 @@
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 10.2,
-        "distanceMiles": 6.4,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -84781,11 +84939,11 @@
         "startPlace": "Sheffield",
         "endPlace": "Dore & Totley",
         "startStation": "SHF",
-        "endStation": null,
+        "endStation": "DOR",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 15,
-        "distanceMiles": 9.4,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -84844,7 +85002,9 @@
         "warnings": "",
         "bestTime": "Best in spring (bluebells)."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Nulled distances/times on all variants per user directive (page figures were inconsistent/partial)."
   },
   "sheffield-to-bamford-via-stanage-edge": {
     "slug": "sheffield-to-bamford-via-stanage-edge",
@@ -85071,7 +85231,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts at Upper Hulme, which is served only by two buses a day (not a station). The page notes that only the longer Leek-start walk is currently doable as a daywalk from London due to lack of morning bus to Upper Hulme. All variants require a bus at the start, so requiresBus=true for all. | The Leek alternative start distance of 30.7 km / 19.0 mi is computed by adding the stated 5.8 km / 3.6 mi to the main walk figures; hours are not separately stated for this variant.",
+    "notes": "The Leek alternative start distance of 30.7 km / 19.0 mi is computed by adding the stated 5.8 km / 3.6 mi to the main walk figures; hours are not separately stated for this variant.",
     "outsideMainlandBritain": false,
     "tagline": "Hen Cloud and the Roaches, the Hanging Stone, Lud's Church chasm, the Dane Valley, lonely Wildboarclough, the 'Cheshire Matterhorn', Macclesfield Forest, Reservoirs.",
     "regions": [
@@ -85327,7 +85487,8 @@
         "warnings": "Steep, rough ascents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "castlemartin-range-coast-path": {
     "slug": "castlemartin-range-coast-path",
@@ -85439,7 +85600,8 @@
         "warnings": "MOD closures apply.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "snowdon": {
     "slug": "snowdon",
@@ -85450,7 +85612,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Llanberis\" not found in stations | End \"Snowdon summit\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A beginners guide to safely climbing the highest mountain in England and Wales.",
     "regions": [
@@ -85765,7 +85927,9 @@
         "warnings": "Ice highly dangerous.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "bath-circular-via-2-tunnels-and-a-canal": {
     "slug": "bath-circular-via-2-tunnels-and-a-canal",
@@ -85776,7 +85940,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The Walk Options mention a shorter winter return 'over the hill directly to Bath, through Prior Park (NT)... or via Claverton Down', but no distance or timing is given for this variant. | Start \"Bath\" not found in stations | End \"Bath\" not found in stations | Start \"Bath\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Walk/Cycle route via a disused railway, Devonshire and Combe Down tunnels, Tucking Mill Viaduct, the Kennet and Avon Canal towpath, Dundas Aqueduct, and historic Bath",
     "regions": [
@@ -85831,12 +85995,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Bath",
-        "endPlace": "Bath",
-        "startStation": null,
-        "endStation": null,
+        "startPlace": "Bath Spa",
+        "endPlace": "Bath Spa",
+        "startStation": "BTH",
+        "endStation": "BTH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 19.9,
         "distanceMiles": 12.4,
         "hours": null,
@@ -85894,12 +86058,12 @@
       {
         "role": "alternative",
         "name": "Walk to Bradford-on-Avon",
-        "startPlace": "Bath",
+        "startPlace": "Bath Spa",
         "endPlace": "Bradford-on-Avon",
-        "startStation": null,
+        "startStation": "BTH",
         "endStation": "BOA",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -85929,7 +86093,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Bath\" to BTH (Bath Spa). Dropped unlisted winter-return variant (no distance/time given)."
   },
   "bruton-circular-via-hauser-wirth-somerset": {
     "slug": "bruton-circular-via-hauser-wirth-somerset",
@@ -86862,7 +87028,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "melton-to-woodbridge-via-sutton-hoo": {
     "slug": "melton-to-woodbridge-via-sutton-hoo",
@@ -87022,7 +87189,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk ends at Aldeburgh which has no mainline railway station — a bus to Saxmundham (or Ipswich) is required. The page suggests cutting to B1122 for a bus if time is short, or catching First Bus 64 or Borderbus 521/522 from Aldeburgh High Street. No clear station-to-station variant is described; both variants require a bus. | The shorter variant distance (omitting section 4, saving 2.3 km) is derived from the text ('reduce the distance by 2.3 kms') applied to the stated 22.8 km total, giving approximately 20.5 km — not explicitly stated on the page.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Blaxhall Common, Suffolk heathlands (the Sandlings), Snape Maltings for lunch, the historic Sailors' Path along the River Alde estuary along, then either the seawall around Aldeburgh Marshes or a shortcut to seaside Aldeburgh.",
     "regions": [
@@ -87184,7 +87351,9 @@
         "warnings": "Check last bus time.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "wickham-market-to-felixstowe": {
     "slug": "wickham-market-to-felixstowe",
@@ -93159,7 +93328,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "Start \"Earlswood\" is ambiguous (candidates: (multiple))",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Greensand Way Stage 5 : A gentle ridge walk through a quiet part of Surrey. Regularly spaced pubs.",
     "regions": [
@@ -93211,10 +93380,10 @@
         "name": "Earlswood to Oxted",
         "startPlace": "Earlswood",
         "endPlace": "Oxted",
-        "startStation": null,
+        "startStation": "ELD",
         "endStation": "OXT",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.9,
         "distanceMiles": 10.5,
         "hours": null,
@@ -93284,7 +93453,9 @@
         "warnings": "",
         "bestTime": "Best in late April/May."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Earlswood\" to ELD (Surrey, Brighton line) per disambiguation priority rule."
   },
   "hurst-green-to-sevenoaks": {
     "slug": "hurst-green-to-sevenoaks",
@@ -95053,7 +95224,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk is described as a circular/orbital route starting and ending at Kiln Meadow Bus Stop in Kingsley Green, which is not a station — it requires taking bus line 70 from Haslemere Station. The page describes multiple spoke routes connecting to Haslemere Station on foot, but does not give complete distance/time figures for any individual spoke variant, so no clean station-to-station walk variants can be extracted.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Orbital route around Haslemere from a rural bus stop, but with plenty of options for connecting routes from the station",
     "regions": [
@@ -95195,7 +95366,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "haslemere-to-farnham": {
     "slug": "haslemere-to-farnham",
@@ -96912,7 +97085,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The page lists 'Box Hill' as the start station (BXW = Box Hill & Westhumble). The walk notes say 'Train people start at remote Box Hill station' — this is Box Hill & Westhumble station, not a separate Box Hill station. | The longer walk distance to Caterham is given as 'Add 5.7 miles (9.2 km)' to the main 10.2 mile walk, giving approximately 15.9 miles / 25.6 km total — page does not state total km explicitly. | The Dorking West variant distance is described as 'About 1 mile (1.6 km) longer' than the main walk, so approximately 11.2 miles / 18.0 km — page does not give exact figures. | Start \"Box Hill\" not found in stations | Start \"Box Hill\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Follows north downs escarpement via Box Hill, Reigate Hill, and Gatton Park. Forest with many viewpoints. Hilly.",
     "regions": [
@@ -96969,12 +97142,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Box Hill",
+        "startPlace": "Box Hill & Westhumble",
         "endPlace": "Merstham",
-        "startStation": null,
+        "startStation": "BXW",
         "endStation": "MHM",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.4,
         "distanceMiles": 10.2,
         "hours": null,
@@ -97019,14 +97192,14 @@
       {
         "role": "longer",
         "name": "Box Hill to Caterham (via Merstham)",
-        "startPlace": "Box Hill",
+        "startPlace": "Box Hill & Westhumble",
         "endPlace": "Caterham",
-        "startStation": null,
+        "startStation": "BXW",
         "endStation": "CAT",
         "requiresBus": false,
-        "stationToStation": false,
-        "distanceKm": 25.6,
-        "distanceMiles": 16,
+        "stationToStation": true,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -97074,8 +97247,8 @@
         "endStation": "MHM",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 18,
-        "distanceMiles": 11.2,
+        "distanceKm": null,
+        "distanceMiles": null,
         "hours": null,
         "lunchStops": [
           {
@@ -97115,7 +97288,9 @@
         "warnings": "Hilly, multiple ascents.",
         "bestTime": "Best in autumn."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Box Hill\" to BXW (Box Hill & Westhumble) on main + longer. Removed approximated distances on longer and variant."
   },
   "caterham-to-knockholt": {
     "slug": "caterham-to-knockholt",
@@ -98530,7 +98705,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "End \"South Godstone\" not found in stations | End \"South Godstone\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A short climb over the Greensand Hills followed by a gentle walk across the Low Weald, with a fine bluebell wood at its centre.",
     "regions": [
@@ -98688,9 +98863,9 @@
         "startPlace": "Oxted",
         "endPlace": "South Godstone",
         "startStation": "OXT",
-        "endStation": null,
+        "endStation": "GDN",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 16.25,
         "distanceMiles": null,
         "hours": null,
@@ -98802,9 +98977,9 @@
         "startPlace": "Hurst Green",
         "endPlace": "South Godstone",
         "startStation": "HUR",
-        "endStation": null,
+        "endStation": "GDN",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 13.5,
         "distanceMiles": null,
         "hours": null,
@@ -98837,7 +99012,9 @@
         "warnings": "Can be muddy.",
         "bestTime": "Best in spring."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "redhill-circular": {
     "slug": "redhill-circular",
@@ -104378,7 +104555,8 @@
         "warnings": "Steep and stiff climbs.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "balcombe-circular": {
     "slug": "balcombe-circular",
@@ -105315,7 +105493,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The three shorter walk variants (Christs Hospital to Knepp Castle, Christs Hospital to Dial Post, Knepp Castle to Billingshurst) all involve a bus on the A24 at the Partridge Green turn rather than a mainline station endpoint — confirm whether downstream logic should treat these as bus-dependent partial walks. | Start \"Christs Hospital\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Long flat walk with an emphasis on fauna in a re-wilding area, and passing several historic buildings.",
     "regions": [
@@ -105376,12 +105554,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Christs Hospital",
+        "startPlace": "Christ's Hospital",
         "endPlace": "Billingshurst",
-        "startStation": null,
+        "startStation": "CHH",
         "endStation": "BIG",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 27.1,
         "distanceMiles": 16.9,
         "hours": 6.5,
@@ -105439,9 +105617,9 @@
       {
         "role": "shorter",
         "name": "Christs Hospital to Knepp Castle (bus)",
-        "startPlace": "Christs Hospital",
+        "startPlace": "Christ's Hospital",
         "endPlace": "Knepp Castle",
-        "startStation": null,
+        "startStation": "CHH",
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
@@ -105476,9 +105654,9 @@
       {
         "role": "shorter",
         "name": "Christs Hospital to Dial Post (bus)",
-        "startPlace": "Christs Hospital",
+        "startPlace": "Christ's Hospital",
         "endPlace": "Dial Post",
-        "startStation": null,
+        "startStation": "CHH",
         "endStation": null,
         "requiresBus": true,
         "stationToStation": false,
@@ -105569,7 +105747,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Main walk start set to CHH (Christ's Hospital). Bus-dependent shorter variants accepted as-is."
   },
   "cocking-to-south-harting": {
     "slug": "cocking-to-south-harting",
@@ -105580,7 +105760,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The shorter 'Ending at Elsted' variant distance is listed as 'nn.nkm' on the page — the actual distance is unknown and was not filled in. | The main walk ends at South Harting, which is not a railway station; return requires taxi or infrequent bus (54 or 91) to Petersfield station. The start at Cocking is also bus-dependent from Chichester station. Both endpoints are non-stations. | The 'Extending the walk to Petersfield' variant adds 7.4km (total 21.9km) but it is unclear if the route through Petersfield terminates at Petersfield station or elsewhere.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "to do",
     "regions": [
@@ -105711,7 +105891,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Confirmed the extended walk ends at PTR (Petersfield). Nulled Elsted variant distance (was placeholder nn.nkm). Bus-dependent main walk accepted as-is."
   },
   "east-grinstead-circular": {
     "slug": "east-grinstead-circular",
@@ -106347,7 +106529,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts at Halnaker Crossroads (a bus stop, not a train station) — the bus connection from Chichester station is required at the start. The end at Chichester is a mainline station. requiresBus is set to true for the main walk due to the bus required at the start.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Scenic steep chalk downlands around the Upper Lavant Valley, the Goodwood Estate and unrivalled views from St. Roche's Hill",
     "regions": [
@@ -106466,7 +106648,9 @@
         "warnings": "Several steep ascents.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "haslemere-to-midhurst-via-henley": {
     "slug": "haslemere-to-midhurst-via-henley",
@@ -106477,7 +106661,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk endpoint Midhurst is not a train station — return requires a bus (Stagecoach #70 to Haslemere, #91/92/93 to Petersfield, #1 to Pulborough, or #60 to Chichester). Multiple bus options exist; the correct one depends on the walker's outward rail line.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Temple of the Winds on Black Down & lunch in idyllic hamlet with fine pub and evocative ruins of a fortified Tudor house on Cowdray Estate against the backdrop of the South Downs",
     "regions": [
@@ -106719,7 +106903,9 @@
         "warnings": "Can be muddy.",
         "bestTime": "Best in late Apr/May or autumn."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "haslemere-to-midhurst-via-lurgashall": {
     "slug": "haslemere-to-midhurst-via-lurgashall",
@@ -106838,7 +107024,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
   },
   "haslemere-to-midhurst-via-midhurst-way": {
     "slug": "haslemere-to-midhurst-via-midhurst-way",
@@ -106976,7 +107164,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
   },
   "hassocks-to-upper-beeding": {
     "slug": "hassocks-to-upper-beeding",
@@ -107199,7 +107389,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "The Railway Walk is described as starting from East Grinstead (mainline station) via heritage railway to Horsted Keynes, then walking to Sheffield Park Station (Bluebell Railway). The endpoint Sheffield Park Station is a heritage railway station, not a mainline station — return to London requires a bus or taxi. The page notes weekend bus service from Sheffield Park was withdrawn April 2019, and taxi may be needed. | The Garden Walk endpoint is Sheffield Park Station (Bluebell Railway/heritage) with no direct mainline rail return; the weekend bus service to Haywards Heath was withdrawn in April 2019. A taxi would likely be needed. | End \"Sheffield Park Station\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "A gently undulating walk in the low hills around the Ouse Valley.",
     "regions": [
@@ -107557,7 +107747,9 @@
         "warnings": "Check train timetables.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
   },
   "haywards-heath-to-balcombe-via-ardingly": {
     "slug": "haywards-heath-to-balcombe-via-ardingly",
@@ -108382,7 +108574,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
   },
   "littlehampton-to-bognor-regis": {
     "slug": "littlehampton-to-bognor-regis",
@@ -108675,7 +108869,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "West Wittering has no train station — walk requires bus from CCH; not station-to-station."
   },
   "pease-pottage-to-steyning": {
     "slug": "pease-pottage-to-steyning",
@@ -108989,7 +109185,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "petersfield-to-rowlands-castle": {
     "slug": "petersfield-to-rowlands-castle",
@@ -109587,7 +109784,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The endpoint 'Halfway Bridge' is a bus stop (Lodsworth, Halfway Bridge on Bus Line 1), not a railway station — the walk requires a bus back to Pulborough station.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The Rother and Lod valleys, Littleworth and Sutton Common heathlands, South Downs views, Burton Park and three good pubs",
     "regions": [
@@ -109705,7 +109902,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "pulborough-to-petworth": {
     "slug": "pulborough-to-petworth",
@@ -110724,7 +110923,7 @@
     "extracted": true,
     "onMap": true,
     "issues": true,
-    "notes": "Start \"Shoreham By Sea\" not found in stations | Start \"Shoreham By Sea\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Varied coastal walk past quiet shingle beaches and the busier south coast resorts of Worthing and Littlehampton",
     "regions": [
@@ -110780,10 +110979,10 @@
         "name": "Main Walk",
         "startPlace": "Shoreham By Sea",
         "endPlace": "Littlehampton",
-        "startStation": null,
+        "startStation": "SSE",
         "endStation": "LIT",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 22.4,
         "distanceMiles": 13.9,
         "hours": null,
@@ -110858,10 +111057,10 @@
         "name": "Shoreham to Worthing",
         "startPlace": "Shoreham By Sea",
         "endPlace": "Worthing",
-        "startStation": null,
+        "startStation": "SSE",
         "endStation": "WRH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 10.3,
         "distanceMiles": 6.4,
         "hours": null,
@@ -110951,7 +111150,9 @@
         "warnings": "Check tide timings.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "petersfield-to-cocking": {
     "slug": "petersfield-to-cocking",
@@ -110962,7 +111163,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk endpoint is Cocking, which is not a railway station — the return requires a bus (to Midhurst, Haslemere, or Chichester). No walking time is given on the page.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Follows the South Downs Way along the crest of the South Downs with good 360 degree views throughout.",
     "regions": [
@@ -111062,7 +111263,9 @@
         "warnings": "",
         "bestTime": "Best in spring or autumn."
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "amberley-to-cocking": {
     "slug": "amberley-to-cocking",
@@ -111142,7 +111345,8 @@
         "warnings": "",
         "bestTime": "Best in winter (views)."
       }
-    ]
+    ],
+    "resolved": true
   },
   "amberley-to-shoreham-by-sea-or-lancing": {
     "slug": "amberley-to-shoreham-by-sea-or-lancing",
@@ -111585,7 +111789,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The main walk starts at Steyning and ends at Cocking, neither of which is a mainline railway station — both require bus connections. The start (Steyning) is reached by bus from Pulborough station, and the end (Cocking) returns by bus to Chichester. | Walk Options mention 'Ending at Washington after nnkm' and 'Ending at Duncton after nnkm' — distances are placeholders ('nn') and not given on the page. | The 'Ending at Amberley' option says 'after 21km' but the split table says 21.1km — minor inconsistency, likely the same section. | The White Horse Hotel, Storrington is listed as currently closed (CAMRA link confirms) and has been excluded from lunch stops accordingly.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "to do",
     "regions": [
@@ -111777,7 +111981,7 @@
         "endStation": "AMY",
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 21.1,
+        "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
         "lunchStops": [
@@ -111807,7 +112011,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Nulled ambiguous Ending-at-Amberley distance. Walk surfaces on Amberley (AMY) via station-rambler-extras — Steyning and Cocking are bus-dependent non-stations."
   },
   "wivelsfield-to-haywards-heath": {
     "slug": "wivelsfield-to-haywards-heath",
@@ -112023,7 +112229,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "End \"Bath\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Follow the tranquil Kennet and Avon Canal through a pretty valley between the historic towns of Bradford-upon-Avon and Bath",
     "regions": [
@@ -112071,11 +112277,11 @@
         "role": "main",
         "name": "Main Walk",
         "startPlace": "Bradford-on-Avon",
-        "endPlace": "Bath",
+        "endPlace": "Bath Spa",
         "startStation": "BOA",
-        "endStation": null,
+        "endStation": "BTH",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": 9.9,
         "hours": 4.5,
@@ -112118,7 +112324,9 @@
         "warnings": "Can be muddy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Bath\" to BTH (Bath Spa)."
   },
   "chippenham-circular": {
     "slug": "chippenham-circular",
@@ -112245,7 +112453,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk starts and ends in Marlborough, which is not a railway station — travel requires buses 20/22/X22 from Bedwyn or Hungerford stations. The page does not describe a direct station-to-station variant without a bus leg, so requiresBus=true applies to the main walk. | Walk Options mention extension loops from Avebury (to Windmill Hill; to Silbury Hill/West Kennett Long Barrow/The Sanctuary) but do not provide separate start/end station pairs or enough detail to treat them as independent walk variants.",
+    "notes": "Walk Options mention extension loops from Avebury (to Windmill Hill; to Silbury Hill/West Kennett Long Barrow/The Sanctuary) but do not provide separate start/end station pairs or enough detail to treat them as independent walk variants.",
     "outsideMainlandBritain": false,
     "tagline": "Over the Marlborough Downs and through sarsen fields to the Avebury World Heritage Site",
     "regions": [
@@ -112377,7 +112585,8 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true
   },
   "pewsey-circular": {
     "slug": "pewsey-circular",
@@ -113219,7 +113428,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The walk ends at 'Amesbury, Library Bus Stop' which is not a mainline railway station — return to Salisbury is by bus (lines Activ8, X4, X5). requiresBus is set to true accordingly.",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Up the Avon Valley from the attractive marker town of Salisbury past Old Sarum hillfort and castle site to the Stonehenge World Heritage Site and on to historic Amesbury",
     "regions": [
@@ -113346,7 +113555,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
   },
   "tisbury-circular-via-alvediston": {
     "slug": "tisbury-circular-via-alvediston",
@@ -115047,7 +115258,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Horton in Ribblesdale\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Easy exploration of a wild and remote fell. Return with views of green valleys, Malham Tarn and Catrigg Force waterfall. Finish along elevated path above Ribblesdale",
     "regions": [
@@ -115102,12 +115313,12 @@
       {
         "role": "main",
         "name": "Main Walk",
-        "startPlace": "Horton in Ribblesdale",
+        "startPlace": "Horton-in-Ribblesdale",
         "endPlace": "Settle",
-        "startStation": null,
+        "startStation": "HIR",
         "endStation": "SET",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 24.4,
         "distanceMiles": 15.2,
         "hours": 6,
@@ -115133,7 +115344,9 @@
         "warnings": "Can be boggy/rough.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Matched \"Horton in Ribblesdale\" to HIR (Horton-in-Ribblesdale)."
   },
   "great-knoutberry-hill": {
     "slug": "great-knoutberry-hill",
@@ -115472,7 +115685,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "The 'Alternative Finish to Clapham' mentions both Clapham village (bus to Settle) and Clapham Station (trains to Giggleswick/Leeds) as separate endpoints — it is unclear whether these are one or two distinct variants, and the exact distances/times for each are not given. | Clapham Station serves trains to Giggleswick (for Settle) and Leeds, but it is unclear if Giggleswick is a usable return station or if walkers must travel onward to Settle — may affect requiresBus determination. | Start \"Horton in Ribblesdale\" not found in stations | Start \"Horton in Ribblesdale\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "Easy route over Yorkshire's finest via the limestone paradise that is its easterly end: limestone pavement, caves, a dramatic gorge and chasm, a pot with the longest waterfall, views",
     "regions": [
@@ -115522,10 +115735,10 @@
         "name": "Main Walk",
         "startPlace": "Horton in Ribblesdale",
         "endPlace": "Ribblehead",
-        "startStation": null,
+        "startStation": "HIR",
         "endStation": "RHD",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 20.7,
         "distanceMiles": 12.8,
         "hours": 6,
@@ -115561,10 +115774,10 @@
         "name": "Alternative Finish to Clapham",
         "startPlace": "Horton in Ribblesdale",
         "endPlace": "Clapham",
-        "startStation": null,
+        "startStation": "HIR",
         "endStation": "CPY",
         "requiresBus": true,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -115603,10 +115816,10 @@
         "name": "Alternative Finish to Clapham Station",
         "startPlace": "Horton in Ribblesdale",
         "endPlace": "Clapham",
-        "startStation": null,
+        "startStation": "HIR",
         "endStation": "CPY",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": null,
         "distanceMiles": null,
         "hours": null,
@@ -115640,7 +115853,9 @@
         "warnings": "",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Only alternative end stations given are Clapham (CPY) and Ribblehead (RHD) — not Giggleswick. Walk data already correct; note was a misleading digression."
   },
   "pen-y-ghent-and-plover-hill": {
     "slug": "pen-y-ghent-and-plover-hill",
@@ -115651,7 +115866,7 @@
     "extracted": true,
     "onMap": false,
     "issues": true,
-    "notes": "Start \"Horton in Ribblesdale\" not found in stations | End \"Horton in Ribblesdale\" not found in stations",
+    "notes": "",
     "outsideMainlandBritain": false,
     "tagline": "The iconic Pen-y-ghent via a quiet ascent route, then the even quieter Plover Hill. Return through remote countryside on good paths. Fine views all round.",
     "regions": [
@@ -115703,10 +115918,10 @@
         "name": "Main Walk",
         "startPlace": "Horton in Ribblesdale",
         "endPlace": "Horton in Ribblesdale",
-        "startStation": null,
-        "endStation": null,
+        "startStation": "HIR",
+        "endStation": "HIR",
         "requiresBus": false,
-        "stationToStation": false,
+        "stationToStation": true,
         "distanceKm": 17.2,
         "distanceMiles": 10.7,
         "hours": 4.5,
@@ -115729,7 +115944,9 @@
         "warnings": "Can be boggy.",
         "bestTime": ""
       }
-    ]
+    ],
+    "resolved": true,
+    "resolution": "Fuzzy-matched station name to the correct CRS."
   },
   "pendle-hill": {
     "slug": "pendle-hill",
