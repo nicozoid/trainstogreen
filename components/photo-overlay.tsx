@@ -191,6 +191,12 @@ type StationModalProps = {
   privateNote?: string
   /** Rambler recommendations — visible to everyone, sourced from walkingclub.org.uk extractions */
   ramblerNote?: string
+  /** Filtered version of ramblerNote for non-admin viewers: always
+   *  includes all main walks and all notes; includes a variant only
+   *  when its base title (no suffix) doesn't duplicate any other
+   *  walk's full title at the station. Computed by the build script
+   *  alongside ramblerNote. */
+  publicRamblerNote?: string
   /** Saves all three note types when the overlay closes */
   onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
   /** Free-form markdown paragraphs that render AFTER the walk
@@ -549,6 +555,7 @@ export default function StationModal({
   publicNote = "",
   privateNote = "",
   ramblerNote = "",
+  publicRamblerNote = "",
   onSaveNotes,
   ramblerExtras = [],
   onSaveRamblerExtras,
@@ -1455,31 +1462,48 @@ export default function StationModal({
               Trains to Green recommendations block above — subheader gated on
               devMode || content so non-admins never see an empty
               label, admins always do so they know where to type. */}
-          {(devMode || ramblerNote) && (
-            <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              Walk{ramblerNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
-            </p>
-          )}
+          {(devMode || ramblerNote) && (() => {
+            // Everyone (admin + public) sees the FILTERED list here
+            // so the admin's prose preview matches what visitors get.
+            // Full walk list with per-variant editing lives in the
+            // WalksAdminPanel below for admins who want to curate.
+            const source = publicRamblerNote || ramblerNote
+            const count = source.split(/\n+/).filter(Boolean).length
+            return (
+              <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
+                Walk{count === 1 ? "" : "s"}
+              </p>
+            )
+          })()}
 
           {/* Rambler note — view-only. The prose is regenerated from
               structured walk data by scripts/build-rambler-notes.mjs
               and written to station-notes.json, so admins no longer
               edit it directly here. Structured editing lives in the
               WalksAdminPanel below (admin only).
-              Public visitors see at most the top 3 paragraphs (already
-              sorted top-first by the build pipeline); admins see every
-              paragraph so they can review what's being trimmed. */}
-          {ramblerNote ? (() => {
-            const allParas = ramblerNote.split(/\n+/).filter(Boolean)
-            const shownParas = devMode ? allParas : allParas.slice(0, 3)
+
+              Visibility:
+                • Everyone (admin + public) sees `publicRamblerNote`
+                  here — always all mains + all notes, plus variants
+                  whose base title (derived title minus suffix) doesn't
+                  duplicate any other walk's full title at this station.
+                  Falls back to `ramblerNote` on older station-notes
+                  entries that predate the publicRamblerNote field.
+                • Admins get the FULL walk list (variants included) in
+                  the WalksAdminPanel below, where they can edit per-
+                  variant structured fields. */}
+          {(() => {
+            const source = publicRamblerNote || ramblerNote
+            if (!source) return null
+            const paras = source.split(/\n+/).filter(Boolean)
             return (
               <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
-                {shownParas.map((para, i) => (
+                {paras.map((para, i) => (
                   <p key={i}>{renderWithLinks(para)}</p>
                 ))}
               </div>
             )
-          })() : null}
+          })()}
 
           {/* Structured walk editor — admin only. Fetches every walk
               variant attached to this station's CRS and surfaces the

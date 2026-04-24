@@ -2032,7 +2032,7 @@ export default function HikeMap() {
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
-  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
+  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
   // Free-form "rambler extras" — admin-editable markdown paragraphs
@@ -7829,6 +7829,7 @@ export default function HikeMap() {
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
+            publicRamblerNote={stationNotes[displayStation.coordKey]?.publicRamblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
             ramblerExtras={ramblerExtras[displayStation.coordKey] ?? []}
             onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}

@@ -103,16 +103,17 @@ function distanceScore(distanceKm) {
 
 // Order ramblerParts at a station:
 //   1. walks before extras (kind ASC)
-//   2. hasKomoot DESC (walks with a Komoot route come first)
-//   3. isMain DESC (main walks before variants — de-emphasises variants
-//                   even when they have a higher rating than the main)
+//   2. isMain DESC (main walks ALL come before variants — enables the
+//                   client-side "slice to N mains when there are 2+"
+//                   rule; non-mains are always second-class now)
+//   3. hasKomoot DESC (within the same kind + main-status, komoot first)
 //   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
 //   5. distanceScore ASC (closer to IDEAL_LENGTH_KM first; missing sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak
 function compareRamblerParts(a, b) {
   if (a.kind !== b.kind) return a.kind - b.kind
-  if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
+  if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
   return (a.pageTitle || "").localeCompare(b.pageTitle || "")
@@ -365,15 +366,25 @@ function buildSummary(variant, entry, crsIndex) {
   const rawName = (variant.name ?? "").trim()
   const suffix = (variant.suffix ?? "").trim()
   let displayName
+  // Base title = the derived name WITHOUT the suffix. Used by the
+  // downstream "hide duplicate variants" filter: a variant is hidden
+  // from public view when its baseDisplayName matches any other walk's
+  // full displayName at the same station (so two variants that differ
+  // only in their suffix don't both clutter the list).
+  let baseDisplayName
   if (rawName) {
     // Admin-curated override — use as-is. Suffix is ignored in this
-    // branch (override is meant to be the final title).
+    // branch (override is meant to be the final title). The base for
+    // the duplicate check is the override itself (no suffix to strip).
     displayName = rawName
+    baseDisplayName = rawName
   } else if (start && end) {
     const base = isCircular ? `${start.name} Circular` : `${start.name} to ${end.name}`
     displayName = suffix ? `${base} ${suffix}` : base
+    baseDisplayName = base
   } else {
     displayName = entry.title
+    baseDisplayName = entry.title
   }
   // Title linking is conditional on variant type:
   //  - MAIN walks link the title directly to source.pageURL so the
@@ -472,7 +483,10 @@ function buildSummary(variant, entry, crsIndex) {
   // variant rather than the entry.
   if (variant.komootUrl) parts.push(`[Komoot route](${variant.komootUrl}).`)
 
-  return parts.join(" ")
+  // Return the rendered string PLUS the title pieces — callers need
+  // `displayName` / `baseDisplayName` to run the duplicate-variant
+  // filter without re-implementing the derivation logic.
+  return { summary: parts.join(" "), displayName, baseDisplayName }
 }
 
 // ── Main build ─────────────────────────────────────────────────────────────
@@ -531,8 +545,9 @@ function buildRamblerNotes(args) {
     const stationToStation = entry.walks.filter((v) => v.stationToStation)
 
     for (const variant of stationToStation) {
-      const summary = buildSummary(variant, entry, crsIndex)
-      if (!summary) continue
+      const built = buildSummary(variant, entry, crsIndex)
+      if (!built) continue
+      const { summary, displayName, baseDisplayName } = built
       // Each walk attaches ONLY to its starting station in the public
       // overlay prose — a visitor lands on the walk's natural starting
       // point rather than seeing it duplicated on both ends. Circular
@@ -565,6 +580,12 @@ function buildRamblerNotes(args) {
           isMain: (variant.source?.type ?? variant.role) === "main",
           distanceScore: distanceScore(variant.distanceKm),
           pageTitle: entry.title ?? "",
+          // Title pieces feed the duplicate-variant filter below —
+          // variants whose `baseDisplayName` (title minus suffix)
+          // matches another walk's full `displayName` at this same
+          // station are hidden from the public-prose output.
+          displayName,
+          baseDisplayName,
         })
 
         // Aggregate this variant's structured bestSeasons into the
@@ -626,6 +647,11 @@ function buildRamblerNotes(args) {
         isMain: false,
         distanceScore: Number.POSITIVE_INFINITY,
         pageTitle: "",
+        // Extras (free-form notes) have no title, so no duplicate-
+        // filter role. Leaving these empty is equivalent to "never
+        // matches any other walk's displayName".
+        displayName: "",
+        baseDisplayName: "",
       })
     }
   }
@@ -642,12 +668,38 @@ function buildRamblerNotes(args) {
     // Stable sort by priority: favourites first, then regular walks, then extras.
     const ordered = [...ramblerParts].sort(compareRamblerParts)
     const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
+    // Public visibility rule: always show mains + notes; hide a
+    // variant only when its `baseDisplayName` (derived title minus
+    // suffix) collides with some OTHER walk's full `displayName` at
+    // this station. That prevents two variants of the same base
+    // route from both cluttering the public list, while letting
+    // genuinely distinct variants through. Admins still get the full
+    // `ramblerNote` so they can see what's being hidden.
+    const allDisplayNames = new Set(
+      ordered.filter((p) => p.kind === 0 && p.displayName).map((p) => p.displayName),
+    )
+    const publicParts = ordered.filter((p) => {
+      if (p.kind !== 0) return true // notes always pass
+      if (p.isMain) return true // mains always pass
+      // Variant: hide when some other walk's full title equals this
+      // variant's base title. "other" = !== its own full displayName.
+      if (!p.baseDisplayName) return true
+      for (const other of allDisplayNames) {
+        if (other !== p.displayName && other === p.baseDisplayName) return false
+      }
+      return true
+    })
+    const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const before = notes[coordKey].ramblerNote
       notes[coordKey].ramblerNote = ramblerNote
+      notes[coordKey].publicRamblerNote = publicRamblerNote
+      // Drop the legacy sidecar field from the earlier "mainCount"
+      // rule so it doesn't linger in the JSON.
+      if ("ramblerMainCount" in notes[coordKey]) delete notes[coordKey].ramblerMainCount
       if (before !== ramblerNote) changes.updated++
     } else {
-      notes[coordKey] = { name, publicNote: "", privateNote: "", ramblerNote }
+      notes[coordKey] = { name, publicNote: "", privateNote: "", ramblerNote, publicRamblerNote }
       changes.added++
     }
   }
@@ -656,8 +708,12 @@ function buildRamblerNotes(args) {
     if (perStation.has(coordKey)) continue
     if (entry.ramblerNote) {
       entry.ramblerNote = ""
+      entry.publicRamblerNote = ""
       changes.cleared++
     }
+    // Tidy up the legacy sidecar field left behind by the earlier
+    // "mainCount-based" visibility rule. No longer read by the client.
+    if ("ramblerMainCount" in entry) delete entry.ramblerMainCount
   }
 
   for (const [coordKey, entry] of Object.entries(notes)) {
