@@ -108,7 +108,7 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 // `adminOnly` entries only render when admin mode is active.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
-    key: "highlight", label: "Heavenly", tooltip: "A personal favourite of mine — T2G creator",
+    key: "highlight", label: "Heavenly", tooltip: "A personal favourite of the T2G creator",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +117,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Good", tooltip: "Strongly recommended by ramblers",
+    key: "verified", label: "Good", tooltip: "Popular with ramblers",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,7 +130,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Probably", tooltip: "Recommended by ramblers",
+    key: "unverified", label: "Probably", tooltip: "Walks publicised by ramblers",
     icon: (
       <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
@@ -139,7 +139,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but I wouldn't go again — T2G creator",
+    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but this isn't the goodest",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
