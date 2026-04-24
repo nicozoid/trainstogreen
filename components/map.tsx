@@ -5954,8 +5954,12 @@ export default function HikeMap() {
         if (real) feature = real as unknown as typeof feature
       }
     }
-    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France)
-    if (feature.properties?.isSecretAdmin) {
+    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France).
+    // Dev-only: on production deployments the admin API is disabled at the
+    // middleware layer, so we also refuse to flip the client-side state.
+    // process.env.NODE_ENV is inlined at build time — this branch is dead-
+    // code-eliminated from production bundles entirely.
+    if (process.env.NODE_ENV === "development" && feature.properties?.isSecretAdmin) {
       // Boulogne (hidden secret-admin marker) toggles admin mode WITHOUT
       // touching any filter UI state. This entry point is meant for
       // quick peeking — I'm already looking at a particular slice of
@@ -6077,6 +6081,11 @@ export default function HikeMap() {
   // take effect after the heavy routing memo finished, which can take
   // 5-10s on a cold page load and is wasted time.
   useEffect(() => {
+    // Dev-only deep-link: `?admin=1` flips admin on at mount. Ignored in
+    // production so that sharing an admin URL with someone doesn't give
+    // them admin-mode UI (the server blocks the writes too, but the UI
+    // affordances should also stay hidden on the live site).
+    if (process.env.NODE_ENV !== "development") return
     const params = new URLSearchParams(window.location.search)
     if (params.get("admin") !== "1") return
     setDevExcludeActive(true)
