@@ -1352,14 +1352,11 @@ export default function StationModal({
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
-          {/* "Notes" subheader — same treatment as the "Alternative
-              routes" subheader. Top margin scales with --para-gap
-              (3×) so tuning that single var retunes both subheaders
-              in lockstep. Appears above the public note whenever a
-              note is being shown; admin mode always has the textarea
-              visible, so the gate includes devMode to label the empty
-              textarea too. */}
-          {(devMode || localPublicNote) && (
+          {/* "Notes" subheader — admin-only now. Public visitors
+              never see the Trains to Green recommendations block;
+              it's an admin-editing surface until we figure out a
+              better public presentation. */}
+          {devMode && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
               {/* Singular when exactly one paragraph of content,
                   plural otherwise (including the admin empty state). */}
@@ -1367,12 +1364,12 @@ export default function StationModal({
             </p>
           )}
 
-          {/* Public note — three render paths:
-               (a) devMode + editing → textarea with autoFocus, exits on blur.
-               (b) note has content → rendered markdown view; in devMode the
-                   wrapper is click-to-edit.
-               (c) devMode + empty + not editing → "Click to add" placeholder.
-               Non-admin with empty note: renders nothing (as before).
+          {/* Public note — admin-only. Three render paths inside the
+              devMode gate:
+               (a) editing → textarea with autoFocus, exits on blur.
+               (b) note has content → rendered markdown view (click-to-edit).
+               (c) empty + not editing → "Click to add" placeholder.
+               Non-admin visitors skip this block entirely.
 
                Split on any run of newlines into separate paragraphs. Users
                author notes with a single Enter keypress (one \n), so we
@@ -1392,13 +1389,13 @@ export default function StationModal({
               className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
-          ) : localPublicNote ? (
+          ) : devMode && localPublicNote ? (
             <div
-              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""}`}
-              onClick={devMode ? () => setIsEditingPublic(true) : undefined}
-              role={devMode ? "button" : undefined}
-              tabIndex={devMode ? 0 : undefined}
-              onKeyDown={devMode ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } } : undefined}
+              className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3"
+              onClick={() => setIsEditingPublic(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } }}
             >
               {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
                 <p key={i}>{renderWithLinks(para)}</p>
