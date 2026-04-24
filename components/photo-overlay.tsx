@@ -59,6 +59,7 @@ async function fetchPhotosViaProxy(
   return data.photos ?? []
 }
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
@@ -243,7 +244,17 @@ type StationModalProps = {
   hasIssue?: boolean
   /** Admin-only: toggles the hasIssue flag for this station. */
   onToggleIssue?: (hasIssue: boolean) => void
+  /** Station's current recommended seasons. Shown (and edited, in admin
+   *  mode) as four checkboxes — one per season. Empty array = unset. */
+  seasons?: Season[]
+  /** Admin-only: saves the full list of recommended seasons for this
+   *  station. Pass [] to clear. Fire-and-forget with optimistic update
+   *  in the parent, mirroring onSaveNotes. */
+  onSaveSeasons?: (seasons: Season[]) => void
 }
+
+type Season = "Spring" | "Summer" | "Autumn" | "Winter"
+const ALL_SEASONS: Season[] = ["Spring", "Summer", "Autumn", "Winter"]
 
 // Canonical London-terminus names (+ their aliases) used by the
 // highlighter. Built once at module load from london-terminals.json so
@@ -523,6 +534,8 @@ export default function StationModal({
   isLondonHome = false,
   hasIssue = false,
   onToggleIssue,
+  seasons = [],
+  onSaveSeasons,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
   const [allPhotos, setAllPhotos] = useState<FlickrPhoto[]>([])
@@ -1496,6 +1509,49 @@ export default function StationModal({
               Click to add private notes…
             </button>
           ) : null}
+
+          {/* Admin-only: Recommended-seasons editor. Four small checkboxes
+              (one per season) — multi-select because a station can be
+              recommended in more than one season. Shares the orange-dashed
+              "admin content" styling with the Private notes block above so
+              it reads as a peer of that control. Each toggle saves
+              immediately (no deferred commit) — onSaveSeasons in the parent
+              does an optimistic state update + POST. */}
+          {devMode && (
+            <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-2 dark:bg-orange-950/10">
+              {/* Row: label on the left, 4 checkboxes on the right. Each
+                 checkbox sits beside its season name; the whole pair is a
+                 clickable <label> so tapping the word also toggles. */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm">
+                <span className="text-muted-foreground">Seasons</span>
+                {ALL_SEASONS.map((season) => {
+                  const checked = seasons.includes(season)
+                  return (
+                    <label
+                      key={season}
+                      className="flex cursor-pointer items-center gap-1.5"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(value) => {
+                          // Compute the next season set. Order is enforced
+                          // server-side (canonical calendar order), so we
+                          // don't need to sort here.
+                          const next =
+                            value === true
+                              ? [...seasons, season]
+                              : seasons.filter((s) => s !== season)
+                          onSaveSeasons?.(next)
+                        }}
+                        className="cursor-pointer"
+                      />
+                      {season}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Mobile-only Hike button, anchored at the bottom of all the text.
               Desktop uses the inline button in the title row above instead.

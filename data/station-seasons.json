@@ -1,0 +1,508 @@
+{
+  "-0.0042265,51.1558675": {
+    "name": "Dormans",
+    "seasons": [
+      "Summer"
+    ]
+  },
+  "-0.0045745,51.2578327": {
+    "name": "Oxted",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.0068029,51.1761001": {
+    "name": "Lingfield",
+    "seasons": [
+      "Summer"
+    ]
+  },
+  "-0.0178578,51.1264031": {
+    "name": "East Grinstead",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.0516667,51.2896975": {
+    "name": "Woldingham",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.0778344,51.3085512": {
+    "name": "Upper Warlingham",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.1322636,51.2267445": {
+    "name": "Nutfield",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.170908,51.2274825": {
+    "name": "Earlswood",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.2052107,51.4220252": {
+    "name": "Wimbledon",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.3018196,51.4129328": {
+    "name": "Kingston",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.320874,51.1811282": {
+    "name": "Holmwood",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "-0.3241359,51.2411653": {
+    "name": "Dorking",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.3286723,51.2539871": {
+    "name": "Box Hill & Westhumble",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.3288402,51.4505786": {
+    "name": "Twickenham",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.4200621,51.2912974": {
+    "name": "Effingham Junction",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.4352969,51.2795154": {
+    "name": "Horsley",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.4422487,51.2192418": {
+    "name": "Gomshall",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "-0.4495061,51.0151333": {
+    "name": "Billingshurst",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.5029086,51.432328": {
+    "name": "Staines",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.5183913,51.6542186": {
+    "name": "Chorleywood",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.5419326,50.8966534": {
+    "name": "Amberley",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.5549256,51.5887853": {
+    "name": "Gerrards Cross",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.5611671,51.6681019": {
+    "name": "Chalfont & Latimer",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.5811391,51.2372003": {
+    "name": "Guildford",
+    "seasons": [
+      "Spring",
+      "Summer",
+      "Autumn"
+    ]
+  },
+  "-0.6053949,51.4866279": {
+    "name": "Windsor and Eton Riverside",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.6105638,51.4832744": {
+    "name": "Windsor and Eton Central",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.6110784,51.705012": {
+    "name": "Chesham",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.6224578,51.800672": {
+    "name": "Tring",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.6332427,51.3921459": {
+    "name": "Sunningdale",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.6368939,51.163179": {
+    "name": "Milford",
+    "seasons": [
+      "Summer"
+    ]
+  },
+  "-0.7092458,51.7033896": {
+    "name": "Great Missenden",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.7129145,51.2497298": {
+    "name": "Ash",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "-0.7194871,51.0887757": {
+    "name": "Haslemere",
+    "seasons": [
+      "Summer"
+    ]
+  },
+  "-0.7222499,51.5573685": {
+    "name": "Cookham",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.7664026,51.571086": {
+    "name": "Marlow",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.7924218,51.2118094": {
+    "name": "Farnham",
+    "seasons": [
+      "Summer",
+      "Autumn"
+    ]
+  },
+  "-0.8085107,51.7522425": {
+    "name": "Little Kimble",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.8253668,51.6758974": {
+    "name": "Saunderton",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.8440858,51.7180454": {
+    "name": "Princes Risborough",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.899422,51.5338451": {
+    "name": "Henley-on-Thames",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-0.9417209,51.0065237": {
+    "name": "Petersfield",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-0.957274,50.8924696": {
+    "name": "Rowlands Castle",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-1.1331195,51.5211885": {
+    "name": "Goring & Streatley",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "-1.1586983,51.5704082": {
+    "name": "Cholsey",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "-1.3726319,51.8247081": {
+    "name": "Hanborough",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "-1.4897686,51.8723271": {
+    "name": "Charlbury",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "-1.5522587,52.5784071": {
+    "name": "Atherstone",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "-1.628532,51.9024116": {
+    "name": "Kingham",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "-1.7002657,51.9921819": {
+    "name": "Moreton-in-Marsh",
+    "seasons": [
+      "Summer"
+    ]
+  },
+  "0.0086166,51.5688027": {
+    "name": "Leytonstone",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.009471,51.6325345": {
+    "name": "Chingford",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.0113494,50.8705975": {
+    "name": "Lewes",
+    "seasons": [
+      "Winter"
+    ]
+  },
+  "0.0365138,51.7754392": {
+    "name": "Roydon",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "0.0553234,51.6412266": {
+    "name": "Loughton",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.1139888,51.6936318": {
+    "name": "Epping",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "0.1308295,51.3457689": {
+    "name": "Knockholt",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.1526024,51.1284231": {
+    "name": "Ashurst",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "0.16054,51.8146205": {
+    "name": "Sawbridgeworth",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "0.1819438,51.2764117": {
+    "name": "Sevenoaks",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.363387,51.0201404": {
+    "name": "Stonegate",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.3781687,51.383247": {
+    "name": "Sole Street",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.4121616,51.2266654": {
+    "name": "Yalding",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.461982,51.373911": {
+    "name": "Cuxton",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.4686815,50.9855542": {
+    "name": "Robertsbridge",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.5504987,51.1715258": {
+    "name": "Staplehurst",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.5616239,51.5441005": {
+    "name": "Benfleet",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "0.6273669,51.1656292": {
+    "name": "Headcorn",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.6394573,51.5412111": {
+    "name": "Leigh-on-Sea",
+    "seasons": [
+      "Autumn"
+    ]
+  },
+  "0.6726551,51.2449353": {
+    "name": "Harrietsham",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.7465822,51.1564849": {
+    "name": "Pluckley",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "0.9760562,51.2444245": {
+    "name": "Chilham",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.0660027,51.0904998": {
+    "name": "Sandling",
+    "seasons": [
+      "Summer",
+      "Autumn"
+    ]
+  },
+  "1.07582,51.274185": {
+    "name": "Canterbury East",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.1222644,51.300986": {
+    "name": "Sturry",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.1372301,51.2614031": {
+    "name": "Bekesbourne",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.1683853,51.0828121": {
+    "name": "Folkestone Central",
+    "seasons": [
+      "Summer",
+      "Autumn"
+    ]
+  },
+  "1.2433218,51.8377612": {
+    "name": "Frinton-on-Sea",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.2678629,51.8462158": {
+    "name": "Walton-on-the-Naze",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.2916476,52.9300536": {
+    "name": "Cromer",
+    "seasons": [
+      "Spring"
+    ]
+  },
+  "1.3048692,51.1259357": {
+    "name": "Dover Priory",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "1.3986457,51.2231068": {
+    "name": "Deal",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  }
+}

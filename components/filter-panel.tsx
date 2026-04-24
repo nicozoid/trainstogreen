@@ -259,12 +259,22 @@ type FilterPanelProps = {
    *  curation at all (no approvals AND no rejections yet). */
   primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
   onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics") => void
+  /** Admin-only season filter — hides destinations whose recommended
+   *  seasons don't include the selected one. "off" = no filter. */
+  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter"
+  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter") => void
+  /** The calendar-derived current season — labels the public checkbox
+   *  ("Spring highlights", etc) and is what that checkbox filters against. */
+  currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
+  /** Public "[current-season] highlights" checkbox (visible to all users). */
+  currentSeasonHighlight: boolean
+  onCurrentSeasonHighlightChange: (value: boolean) => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1148,6 +1158,32 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </div>
           )}
 
+          {/* Admin-only: "Season" filter. Hides destinations whose
+              recommended-seasons metadata doesn't include the selected
+              season. Same style as the Feature dropdown — single-select
+              native <select> sharing the interchange/feature styling. */}
+          {adminMode && (
+            <div className="mt-1.5 flex items-center gap-[0.4rem]">
+              <Label htmlFor="primary-season-filter" className="cursor-pointer text-xs text-muted-foreground">
+                Season
+              </Label>
+              <select
+                id="primary-season-filter"
+                value={seasonFilter}
+                onChange={(e) => onSeasonFilterChange(
+                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter",
+                )}
+                className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="off">—</option>
+                <option value="Spring">Spring</option>
+                <option value="Summer">Summer</option>
+                <option value="Autumn">Autumn</option>
+                <option value="Winter">Winter</option>
+              </select>
+            </div>
+          )}
+
           {/* Admin-only: min travel time. Hides stations closer than this from the primary origin.
               Simpler styling than the max slider — no arrival animation, shares the train track visuals. */}
           {adminMode && (
@@ -1318,17 +1354,37 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             ))}
           </div>
 
-          {/* Trails toggle — <div> instead of <label> so tapping the gap
-             on touchscreens doesn't toggle the checkbox */}
-          <div className="mt-4 flex items-center justify-between border-t pt-3">
-            <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
-              <span className="text-sm font-medium">Waymarked trails</span>
-            </LabelTip>
-            <Checkbox
-              checked={showTrails}
-              onCheckedChange={(checked) => onToggleTrails(checked === true)}
-              className="cursor-pointer"
-            />
+          {/* Map-layer toggles — grouped under a single border-t divider.
+             The top rule separates this group from the ratings section
+             above; inside the group there's no further rule between
+             the two rows, so highlights + trails read as siblings. */}
+          <div className="mt-4 border-t pt-3">
+            {/* Current-season highlights toggle — visible to everyone
+               (not gated on adminMode). Label updates dynamically based
+               on `currentSeason` computed from today's date in map.tsx. */}
+            <div className="flex items-center justify-between">
+              <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
+                <span className="text-sm font-medium">{currentSeason} highlights</span>
+              </LabelTip>
+              <Checkbox
+                checked={currentSeasonHighlight}
+                onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
+                className="cursor-pointer"
+              />
+            </div>
+
+            {/* Trails toggle — <div> instead of <label> so tapping the gap
+               on touchscreens doesn't toggle the checkbox */}
+            <div className="mt-3 flex items-center justify-between">
+              <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
+                <span className="text-sm font-medium">Waymarked trails</span>
+              </LabelTip>
+              <Checkbox
+                checked={showTrails}
+                onCheckedChange={(checked) => onToggleTrails(checked === true)}
+                className="cursor-pointer"
+              />
+            </div>
           </div>
         </div>
       </div>
