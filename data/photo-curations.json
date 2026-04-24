@@ -6402,5 +6402,19 @@
         "dateTaken": "2025-02-08 11:33:31"
       }
     ]
+  },
+  "0.3061936,51.2931422": {
+    "name": "Borough Green & Wrotham",
+    "approved": [
+      {
+        "id": "6248992125",
+        "title": "The Greensand Way - 37 | Knole House",
+        "ownerName": "Paul Dykes",
+        "thumbnailUrl": "https://live.staticflickr.com/6236/6248992125_c55e8d8ec5.jpg",
+        "largeUrl": "https://live.staticflickr.com/6236/6248992125_c55e8d8ec5_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/11725219@N05/6248992125",
+        "dateTaken": "2011-10-15 17:19:36"
+      }
+    ]
   }
 }
