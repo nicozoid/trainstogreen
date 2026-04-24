@@ -32,6 +32,18 @@ import { stitchJourney, matchTerminal, MIN_CHANGE_BUFFER_MIN, type Terminal, typ
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
 
+// Meteorological seasons (Mar/Jun/Sep/Dec boundaries) — used by the
+// "[current season] highlights" checkbox. Matches the month→season mapping
+// in scripts/build-station-seasons.mjs. `new Date().getMonth()` returns
+// 0 = January → 11 = December.
+function currentSeason(): "Spring" | "Summer" | "Autumn" | "Winter" {
+  const m = new Date().getMonth()
+  if (m >= 2 && m <= 4) return "Spring"   // Mar–May
+  if (m >= 5 && m <= 7) return "Summer"   // Jun–Aug
+  if (m >= 8 && m <= 10) return "Autumn"  // Sep–Nov
+  return "Winter"                          // Dec, Jan, Feb
+}
+
 // Only the fields the popup needs — simpler than the old sidebar type
 type SelectedStation = {
   name: string
@@ -1869,6 +1881,14 @@ export default function HikeMap() {
   //                       using the broad Flickr algorithm by default.
   type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
+  // Admin-only "Season" dropdown — slice destinations to those recommended
+  // for the chosen season. "off" = no filter. Cleared on admin-off (below).
+  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter"
+  const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
+  // Public "[current-season] highlights" checkbox — when on, only stations
+  // recommended for the current season are shown. Coexists with seasonFilter
+  // (both filters applied independently, AND semantics).
+  const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
@@ -2010,6 +2030,14 @@ export default function HikeMap() {
   type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
+  // Seasons metadata per station. Populated initially from rambler-note month
+  // mentions (scripts/build-station-seasons.mjs) and editable in the admin
+  // photo-overlay. Used by two filters: the admin "Season" dropdown and the
+  // public "[current season] highlights" checkbox.
+  type Season = "Spring" | "Summer" | "Autumn" | "Winter"
+  type SeasonsEntry = { name: string; seasons: Season[] }
+  const [stationSeasons, setStationSeasons] = useState<Record<string, SeasonsEntry>>({})
+
   // Per-station custom Flickr tag config (the "custom" fallback step). Only
   // stations with an entry participate in that step — everything else skips
   // straight to the next algo in the chain. The algo itself (landscapes /
@@ -2036,6 +2064,9 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
+    fetch("/api/dev/station-seasons")
+      .then((res) => res.json())
+      .then((data) => setStationSeasons(data))
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
@@ -4404,6 +4435,19 @@ export default function HikeMap() {
             if (approvedCount > 0) return false
           }
         }
+        // Season filters. Two independent filters both look up this
+        // station's recommended seasons in stationSeasons:
+        //   • seasonFilter (admin dropdown) — hides stations whose seasons
+        //     don't include the selected value.
+        //   • currentSeasonHighlight (public checkbox) — hides stations
+        //     whose seasons don't include the current calendar season.
+        // AND semantics — both apply when both are active.
+        if (seasonFilter !== "off" || currentSeasonHighlight) {
+          const entry = stationSeasons[f.properties.coordKey as string]
+          const seasons = entry?.seasons ?? []
+          if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) return false
+          if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
+        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
@@ -4420,7 +4464,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -4935,6 +4979,28 @@ export default function HikeMap() {
       body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
     })
   }, [])
+
+  // Save seasons for a station — called when the admin toggles a season
+  // checkbox in the photo-overlay. Optimistic update + POST, same pattern
+  // as handleSaveNotes. Pass seasons=[] to clear the station's entry.
+  const handleSaveSeasons = useCallback(
+    async (coordKey: string, name: string, seasons: ("Spring" | "Summer" | "Autumn" | "Winter")[]) => {
+      setStationSeasons((prev) => {
+        if (seasons.length === 0) {
+          const next = { ...prev }
+          delete next[coordKey]
+          return next
+        }
+        return { ...prev, [coordKey]: { name, seasons } }
+      })
+      await fetch("/api/dev/station-seasons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coordKey, name, seasons }),
+      })
+    },
+    [],
+  )
 
   // Save / clear per-station custom Flickr tag config. Pass custom=null to
   // clear. Admins can no longer pick an algo per-station — that's decided by
@@ -6292,6 +6358,11 @@ export default function HikeMap() {
         }}
         primaryFeatureFilter={primaryFeatureFilter}
         onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
+        seasonFilter={seasonFilter}
+        onSeasonFilterChange={setSeasonFilter}
+        currentSeason={currentSeason()}
+        currentSeasonHighlight={currentSeasonHighlight}
+        onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
       />
@@ -6404,6 +6475,10 @@ export default function HikeMap() {
                 setMinMinutes(0)
                 setPrimaryInterchangeFilter("off")
                 setPrimaryFeatureFilter("off")
+                // Admin-only season dropdown — clear its selection on
+                // admin-off so a returning non-admin doesn't see a
+                // filtered map with no visible control.
+                setSeasonFilter("off")
                 if (maxMinutes > 120) setMaxMinutes(120)
               }
             }}
@@ -7686,6 +7761,8 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            seasons={stationSeasons[displayStation.coordKey]?.seasons ?? []}
+            onSaveSeasons={(seasons) => handleSaveSeasons(displayStation.coordKey, displayStation.name, seasons)}
             defaultAlgo={
               // Central London terminals (18 + synthetic) and excluded stations
               // default to "station"; everything else defaults to "landscapes".
