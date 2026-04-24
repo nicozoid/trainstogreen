@@ -763,5 +763,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.1971759,51.3129318": {
+    "name": "Otford",
+    "custom": {
+      "includeTags": [
+        "otford circular",
+        "north downs way",
+        "darent valley path",
+        "north downs",
+        "darent valley",
+        "river",
+        "fackenden down",
+        "church",
+        "otford palace",
+        "broughton manor",
+        "st bartholomew's church",
+        "lullingstone castle",
+        "eynsford castle",
+        "st martin's church",
+        "farningham mill",
+        "castle hotel",
+        "otford",
+        "romney street",
+        "ancients",
+        "pre"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
