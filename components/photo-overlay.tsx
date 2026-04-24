@@ -1777,17 +1777,29 @@ export default function StationModal({
                   const isApproved = approvedIds.has(photo.id)
                   const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
                   const isPinned = pinnedIds.has(photo.id)
-                  // With pins-are-fixed semantics, a move is possible if ANY
-                  // non-pinned-except-self slot exists in that direction
-                  // (pins between don't block — we skip past them). Non-
-                  // approved photos always allow "jump to top" since it
+                  // Movability depends on whether the photo itself is pinned:
+                  //   - A PINNED photo can swap with any adjacent photo (pins
+                  //     can bump other pins), so movability reduces to "is
+                  //     there ANY photo in that direction".
+                  //   - A NON-pinned photo still treats pins as fixed blockers,
+                  //     so it needs at least one non-pinned slot (or self) in
+                  //     that direction to swap into.
+                  // Non-approved photos always allow "jump to top" since it
                   // approves + inserts into the list.
-                  const hasMovableSlotBefore = isApproved && approvedPhotos
-                    .slice(0, approvedIndex)
-                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
-                  const hasMovableSlotAfter = isApproved && approvedPhotos
-                    .slice(approvedIndex + 1)
-                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  const hasMovableSlotBefore = isApproved && (
+                    isPinned
+                      ? approvedIndex > 0
+                      : approvedPhotos
+                          .slice(0, approvedIndex)
+                          .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  )
+                  const hasMovableSlotAfter = isApproved && (
+                    isPinned
+                      ? approvedIndex < approvedPhotos.length - 1
+                      : approvedPhotos
+                          .slice(approvedIndex + 1)
+                          .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  )
                   const canMoveUp = !isApproved ? true : hasMovableSlotBefore
                   const canMoveDown = hasMovableSlotAfter
                   // Pin button shows only on Approved tab, only for photos

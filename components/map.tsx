@@ -4854,15 +4854,21 @@ export default function HikeMap() {
       const idx = approved.findIndex((p) => p.id === photoId)
       if (idx < 0) return prev
       const pinnedSet = new Set(entry.pinnedIds ?? [])
-      // skipSwap does one step in `dir`, skipping over pins that aren't the
-      // photo being moved. Returns the new index (or `from` if no move).
+      const isMovingPinned = pinnedSet.has(photoId)
+      // skipSwap does one step in `dir`. Pin semantics are asymmetric:
+      //   - If the moving photo is PINNED, it can swap with any adjacent
+      //     photo (pins don't block pins).
+      //   - If the moving photo is NOT pinned, it skips over any pinned
+      //     occupants and swaps with the first non-pinned slot in that
+      //     direction — pins hold their absolute positions for non-pins.
+      // Returns the new index (or `from` if no move).
       const skipSwap = (from: number, dir: "up" | "down"): number => {
         const step = dir === "up" ? -1 : 1
         const stop = dir === "up" ? -1 : approved.length
         let t = from + step
         while (t !== stop) {
           const occ = approved[t].id
-          if (!pinnedSet.has(occ) || occ === photoId) {
+          if (isMovingPinned || !pinnedSet.has(occ) || occ === photoId) {
             ;[approved[from], approved[t]] = [approved[t], approved[from]]
             return t
           }
