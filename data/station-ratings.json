@@ -11,10 +11,6 @@
     "name": "Lingfield",
     "rating": "unverified"
   },
-  "-0.0093086,50.9037132": {
-    "name": "Cooksbridge",
-    "rating": "unverified"
-  },
   "-0.0106258,51.7468257": {
     "name": "Broxbourne",
     "rating": "unverified"
@@ -27,10 +23,6 @@
     "name": "Cheshunt",
     "rating": "unverified"
   },
-  "-0.0266353,51.4789824": {
-    "name": "Deptford",
-    "rating": "unverified"
-  },
   "-0.0514363,51.2181855": {
     "name": "Godstone",
     "rating": "unverified"
@@ -38,18 +30,6 @@
   "-0.0516667,51.2896975": {
     "name": "Woldingham",
     "rating": "verified"
-  },
-  "-0.0530903,51.4392419": {
-    "name": "Forest Hill",
-    "rating": "unverified"
-  },
-  "-0.0598099,50.9284626": {
-    "name": "Plumpton",
-    "rating": "unverified"
-  },
-  "-0.0599442,51.588123": {
-    "name": "Tottenham Hale",
-    "rating": "unverified"
   },
   "-0.0712666,51.4176595": {
     "name": "Crystal Palace",
@@ -73,18 +53,6 @@
   },
   "-0.0814269,51.5182105": {
     "name": "Liverpool Street",
-    "rating": "unverified"
-  },
-  "-0.0872899,50.8619409": {
-    "name": "Falmer",
-    "rating": "unverified"
-  },
-  "-0.0957274,51.7579011": {
-    "name": "Bayford",
-    "rating": "unverified"
-  },
-  "-0.0963971,51.5703208": {
-    "name": "Manor House",
     "rating": "unverified"
   },
   "-0.0997037,51.3329352": {
@@ -139,10 +107,6 @@
     "name": "Nutfield",
     "rating": "unverified"
   },
-  "-0.134245,51.3220643": {
-    "name": "Coulsdon Town",
-    "rating": "not-recommended"
-  },
   "-0.137032,51.0555957": {
     "name": "Balcombe",
     "rating": "verified"
@@ -151,20 +115,12 @@
     "name": "Coulsdon South",
     "rating": "not-recommended"
   },
-  "-0.1407393,50.8288602": {
-    "name": "Brighton",
-    "rating": "unverified"
-  },
   "-0.1457168,50.9247179": {
     "name": "Hassocks",
     "rating": "verified"
   },
   "-0.1458316,51.5776825": {
     "name": "Highgate",
-    "rating": "unverified"
-  },
-  "-0.1485149,51.651366": {
-    "name": "Cockfosters",
     "rating": "unverified"
   },
   "-0.150065,51.2641687": {
@@ -178,10 +134,6 @@
   "-0.1648137,51.5871881": {
     "name": "East Finchley",
     "rating": "unverified"
-  },
-  "-0.1653912,51.5552396": {
-    "name": "Hampstead Heath",
-    "rating": "verified"
   },
   "-0.165577,51.2400546": {
     "name": "Redhill",
@@ -197,14 +149,6 @@
   },
   "-0.177317,51.5170952": {
     "name": "Paddington",
-    "rating": "unverified"
-  },
-  "-0.1778626,51.4182747": {
-    "name": "Colliers Wood",
-    "rating": "unverified"
-  },
-  "-0.1784251,51.5565973": {
-    "name": "Hampstead",
     "rating": "unverified"
   },
   "-0.1791837,51.6307163": {
@@ -227,22 +171,6 @@
     "name": "Potters Bar",
     "rating": "not-recommended"
   },
-  "-0.1938826,51.650399": {
-    "name": "High Barnet",
-    "rating": "unverified"
-  },
-  "-0.1947552,51.4027615": {
-    "name": "Morden",
-    "rating": "unverified"
-  },
-  "-0.1990432,51.4340563": {
-    "name": "Wimbledon Park",
-    "rating": "unverified"
-  },
-  "-0.2038369,51.2418815": {
-    "name": "Reigate",
-    "rating": "unverified"
-  },
   "-0.2038429,51.8008507": {
     "name": "Welwyn Garden City",
     "rating": "unverified"
@@ -251,36 +179,16 @@
     "name": "Wimbledon",
     "rating": "unverified"
   },
-  "-0.2052959,50.8357461": {
-    "name": "Portslade",
-    "rating": "unverified"
-  },
-  "-0.2087947,51.4682995": {
-    "name": "Putney Bridge",
-    "rating": "unverified"
-  },
   "-0.2110536,51.2947305": {
     "name": "Kingswood",
-    "rating": "unverified"
-  },
-  "-0.2145128,51.3556609": {
-    "name": "Cheam",
     "rating": "unverified"
   },
   "-0.2153478,51.4609339": {
     "name": "Putney",
     "rating": "unverified"
   },
-  "-0.2289056,51.9803536": {
-    "name": "Letchworth Garden City",
-    "rating": "unverified"
-  },
   "-0.2358629,51.2914245": {
     "name": "Tadworth",
-    "rating": "verified"
-  },
-  "-0.2384351,51.3242508": {
-    "name": "Epsom Downs",
     "rating": "verified"
   },
   "-0.2411817,51.466783": {
@@ -295,20 +203,8 @@
     "name": "Stoneleigh",
     "rating": "unverified"
   },
-  "-0.2526332,51.4720123": {
-    "name": "Barnes Bridge",
-    "rating": "unverified"
-  },
-  "-0.2546948,51.4951314": {
-    "name": "Turnham Green",
-    "rating": "unverified"
-  },
   "-0.2557593,51.4039615": {
     "name": "New Malden",
-    "rating": "unverified"
-  },
-  "-0.257131,51.3501115": {
-    "name": "Ewell West",
     "rating": "unverified"
   },
   "-0.260819,52.0850343": {
@@ -321,10 +217,6 @@
   },
   "-0.266464,52.0258212": {
     "name": "Arlesey",
-    "rating": "unverified"
-  },
-  "-0.2681753,51.4811465": {
-    "name": "Chiswick",
     "rating": "unverified"
   },
   "-0.2695495,51.3343527": {
@@ -343,14 +235,6 @@
     "name": "Norbiton",
     "rating": "unverified"
   },
-  "-0.284962,51.4771341": {
-    "name": "Kew Gardens",
-    "rating": "verified"
-  },
-  "-0.287225,51.4895024": {
-    "name": "Kew Bridge",
-    "rating": "unverified"
-  },
   "-0.3004067,51.5149803": {
     "name": "Ealing Broadway",
     "rating": "unverified"
@@ -363,37 +247,17 @@
     "name": "Kingston",
     "rating": "unverified"
   },
-  "-0.3073912,51.3179225": {
-    "name": "Ashtead",
-    "rating": "unverified"
-  },
   "-0.308097,51.35675": {
     "name": "Chessington South",
-    "rating": "unverified"
-  },
-  "-0.3096825,51.4876569": {
-    "name": "Brentford",
     "rating": "unverified"
   },
   "-0.3123501,51.4145582": {
     "name": "Hampton Wick",
     "rating": "unverified"
   },
-  "-0.312979,51.4996647": {
-    "name": "Northfields",
-    "rating": "unverified"
-  },
-  "-0.318921,51.0659838": {
-    "name": "Horsham",
-    "rating": "unverified"
-  },
   "-0.320874,51.1811282": {
     "name": "Holmwood",
     "rating": "unverified"
-  },
-  "-0.3232037,50.8270176": {
-    "name": "Lancing",
-    "rating": "verified"
   },
   "-0.3241359,51.2411653": {
     "name": "Dorking",
@@ -403,20 +267,12 @@
     "name": "Boston Manor",
     "rating": "unverified"
   },
-  "-0.3276687,51.7504966": {
-    "name": "St Albans City",
-    "rating": "verified"
-  },
   "-0.3286723,51.2539871": {
     "name": "Box Hill & Westhumble",
     "rating": "verified"
   },
   "-0.3288402,51.4505786": {
     "name": "Twickenham",
-    "rating": "unverified"
-  },
-  "-0.3296073,51.0930387": {
-    "name": "Warnham",
     "rating": "unverified"
   },
   "-0.3330413,51.2991137": {
@@ -447,20 +303,8 @@
     "name": "Greenford",
     "rating": "unverified"
   },
-  "-0.3449434,51.7173665": {
-    "name": "How Wood",
-    "rating": "unverified"
-  },
-  "-0.3484109,51.3610578": {
-    "name": "Claygate",
-    "rating": "unverified"
-  },
   "-0.3515572,51.8148177": {
     "name": "Harpenden",
-    "rating": "unverified"
-  },
-  "-0.3518348,51.4815507": {
-    "name": "Osterley",
     "rating": "unverified"
   },
   "-0.3591176,51.7055662": {
@@ -543,10 +387,6 @@
     "name": "Harlington",
     "rating": "unverified"
   },
-  "-0.5029086,51.432328": {
-    "name": "Staines",
-    "rating": "unverified"
-  },
   "-0.505218,51.3396192": {
     "name": "West Byfleet",
     "rating": "unverified"
@@ -583,20 +423,12 @@
     "name": "Arundel",
     "rating": "verified"
   },
-  "-0.5465778,51.4294065": {
-    "name": "Egham",
-    "rating": "unverified"
-  },
   "-0.5549256,51.5887853": {
     "name": "Gerrards Cross",
     "rating": "unverified"
   },
   "-0.5589965,52.0415839": {
     "name": "Lidlington",
-    "rating": "unverified"
-  },
-  "-0.5611671,51.6681019": {
-    "name": "Chalfont & Latimer",
     "rating": "unverified"
   },
   "-0.5630828,51.763646": {
@@ -611,45 +443,21 @@
     "name": "Guildford",
     "rating": "verified"
   },
-  "-0.5824209,51.2878849": {
-    "name": "Worplesdon",
-    "rating": "unverified"
-  },
   "-0.591276,51.512103": {
     "name": "Slough",
-    "rating": "unverified"
-  },
-  "-0.5948488,52.026389": {
-    "name": "Ridgmont",
-    "rating": "unverified"
-  },
-  "-0.6043738,51.1971446": {
-    "name": "Farncombe",
     "rating": "unverified"
   },
   "-0.6073643,51.6740875": {
     "name": "Amersham",
     "rating": "not-recommended"
   },
-  "-0.6105638,51.4832744": {
-    "name": "Windsor and Eton Central",
-    "rating": "verified"
-  },
   "-0.6110784,51.705012": {
     "name": "Chesham",
     "rating": "unverified"
   },
-  "-0.6189563,51.1865224": {
-    "name": "Godalming",
-    "rating": "verified"
-  },
   "-0.6224578,51.800672": {
     "name": "Tring",
     "rating": "highlight"
-  },
-  "-0.6326933,52.0212048": {
-    "name": "Aspley Guise",
-    "rating": "verified"
   },
   "-0.6332427,51.3921459": {
     "name": "Sunningdale",
@@ -671,10 +479,6 @@
     "name": "Witley",
     "rating": "unverified"
   },
-  "-0.6470844,51.5233926": {
-    "name": "Burnham",
-    "rating": "unverified"
-  },
   "-0.654557,52.0181089": {
     "name": "Woburn Sands",
     "rating": "unverified"
@@ -687,20 +491,8 @@
     "name": "Wanborough",
     "rating": "unverified"
   },
-  "-0.6757482,50.7876895": {
-    "name": "Bognor Regis",
-    "rating": "unverified"
-  },
   "-0.6762814,52.3037832": {
     "name": "Wellingborough",
-    "rating": "unverified"
-  },
-  "-0.6773449,51.9161989": {
-    "name": "Leighton Buzzard",
-    "rating": "unverified"
-  },
-  "-0.6818864,51.5233325": {
-    "name": "Taplow",
     "rating": "unverified"
   },
   "-0.6962178,52.0042693": {
@@ -709,10 +501,6 @@
   },
   "-0.7092458,51.7033896": {
     "name": "Great Missenden",
-    "rating": "unverified"
-  },
-  "-0.710798,51.5769144": {
-    "name": "Bourne End",
     "rating": "unverified"
   },
   "-0.7129145,51.2497298": {
@@ -759,10 +547,6 @@
     "name": "Blackwater",
     "rating": "verified"
   },
-  "-0.781845,50.8318805": {
-    "name": "Chichester",
-    "rating": "unverified"
-  },
   "-0.7924218,51.2118094": {
     "name": "Farnham",
     "rating": "verified"
@@ -783,14 +567,6 @@
     "name": "Little Kimble",
     "rating": "unverified"
   },
-  "-0.8143149,51.8134286": {
-    "name": "Aylesbury",
-    "rating": "unverified"
-  },
-  "-0.8155144,50.8391034": {
-    "name": "Fishbourne",
-    "rating": "verified"
-  },
   "-0.8192585,51.3664877": {
     "name": "Crowthorne",
     "rating": "unverified"
@@ -803,17 +579,9 @@
     "name": "Fleet",
     "rating": "verified"
   },
-  "-0.8429813,51.4119036": {
-    "name": "Wokingham",
-    "rating": "unverified"
-  },
   "-0.8440858,51.7180454": {
     "name": "Princes Risborough",
     "rating": "verified"
-  },
-  "-0.8471677,50.8428556": {
-    "name": "Bosham",
-    "rating": "unverified"
   },
   "-0.859831,51.8312778": {
     "name": "Aylesbury Vale Parkway",
@@ -831,17 +599,9 @@
     "name": "Melton Mowbray",
     "rating": "verified"
   },
-  "-0.8926226,51.0439274": {
-    "name": "Liss",
-    "rating": "unverified"
-  },
   "-0.899422,51.5338451": {
     "name": "Henley-on-Thames",
     "rating": "verified"
-  },
-  "-0.9069697,52.2373719": {
-    "name": "Northampton",
-    "rating": "unverified"
   },
   "-0.9070163,51.2847339": {
     "name": "Winchfield",
@@ -857,10 +617,6 @@
   },
   "-0.9118374,53.0606002": {
     "name": "Fiskerton",
-    "rating": "unverified"
-  },
-  "-0.9385075,50.8516544": {
-    "name": "Emsworth",
     "rating": "unverified"
   },
   "-0.9417209,51.0065237": {
@@ -887,16 +643,8 @@
     "name": "Reading",
     "rating": "unverified"
   },
-  "-0.9815624,50.8544413": {
-    "name": "Havant",
-    "rating": "unverified"
-  },
   "-0.9982248,53.0064332": {
     "name": "Lowdham",
-    "rating": "unverified"
-  },
-  "-1.0296647,51.4716513": {
-    "name": "Tilehurst",
     "rating": "unverified"
   },
   "-1.0356438,51.3720595": {
@@ -905,14 +653,6 @@
   },
   "-1.0412134,52.9832944": {
     "name": "Burton Joyce",
-    "rating": "unverified"
-  },
-  "-1.0608367,51.3299792": {
-    "name": "Bramley",
-    "rating": "verified"
-  },
-  "-1.074364,51.4333628": {
-    "name": "Theale",
     "rating": "unverified"
   },
   "-1.0825247,52.6940888": {
@@ -925,10 +665,6 @@
   },
   "-1.1087807,50.7967035": {
     "name": "Portsmouth Harbour",
-    "rating": "unverified"
-  },
-  "-1.1236065,52.6321088": {
-    "name": "Leicester",
     "rating": "unverified"
   },
   "-1.1331195,51.5211885": {
@@ -946,10 +682,6 @@
   "-1.1454909,52.7494311": {
     "name": "Barrow-upon-Soar",
     "rating": "verified"
-  },
-  "-1.1782912,51.3960664": {
-    "name": "Midgham",
-    "rating": "unverified"
   },
   "-1.1965133,52.7795757": {
     "name": "Loughborough",
@@ -975,10 +707,6 @@
     "name": "Didcot Parkway",
     "rating": "unverified"
   },
-  "-1.2427417,51.3938591": {
-    "name": "Thatcham",
-    "rating": "unverified"
-  },
   "-1.2502743,52.3790353": {
     "name": "Rugby",
     "rating": "unverified"
@@ -999,17 +727,9 @@
     "name": "Oxford",
     "rating": "unverified"
   },
-  "-1.275093,51.8037471": {
-    "name": "Oxford Parkway",
-    "rating": "unverified"
-  },
   "-1.2872821,52.8849696": {
     "name": "Long Eaton",
     "rating": "verified"
-  },
-  "-1.2950397,52.9790983": {
-    "name": "Ilkeston",
-    "rating": "unverified"
   },
   "-1.306971,51.398654": {
     "name": "Newbury Racecourse",
@@ -1019,20 +739,12 @@
     "name": "Winchester",
     "rating": "unverified"
   },
-  "-1.3277225,51.0221625": {
-    "name": "Shawford",
-    "rating": "unverified"
-  },
   "-1.3277563,52.0605712": {
     "name": "Banbury",
     "rating": "unverified"
   },
   "-1.3417907,50.8750016": {
     "name": "Netley",
-    "rating": "unverified"
-  },
-  "-1.364194,50.8964487": {
-    "name": "Sholing",
     "rating": "unverified"
   },
   "-1.3726319,51.8247081": {
@@ -1077,10 +789,6 @@
   },
   "-1.4897686,51.8723271": {
     "name": "Charlbury",
-    "rating": "unverified"
-  },
-  "-1.4932507,50.9927043": {
-    "name": "Romsey",
     "rating": "unverified"
   },
   "-1.4947986,52.4469559": {
@@ -1159,10 +867,6 @@
     "name": "Hathersage",
     "rating": "unverified"
   },
-  "-1.6576697,50.7557623": {
-    "name": "New Milton",
-    "rating": "verified"
-  },
   "-1.6729068,52.2952126": {
     "name": "Hatton",
     "rating": "unverified"
@@ -1239,10 +943,6 @@
     "name": "Christchurch",
     "rating": "unverified"
   },
-  "-1.7852844,51.5657001": {
-    "name": "Swindon",
-    "rating": "not-recommended"
-  },
   "-1.7888672,52.4146286": {
     "name": "Solihull",
     "rating": "unverified"
@@ -1287,10 +987,6 @@
     "name": "Earlswood",
     "rating": "unverified"
   },
-  "-1.8641943,50.7272094": {
-    "name": "Bournemouth",
-    "rating": "unverified"
-  },
   "-1.8654559,52.3801248": {
     "name": "Wythall",
     "rating": "unverified"
@@ -1307,21 +1003,9 @@
     "name": "Evesham",
     "rating": "unverified"
   },
-  "-1.9924997,52.3609702": {
-    "name": "Barnt Green",
-    "rating": "unverified"
-  },
-  "-2.0190286,54.9662648": {
-    "name": "Corbridge",
-    "rating": "unverified"
-  },
   "-2.0230749,51.6767954": {
     "name": "Kemble",
     "rating": "highlight"
-  },
-  "-2.0723991,52.1307399": {
-    "name": "Pershore",
-    "rating": "unverified"
   },
   "-2.0787884,51.061005": {
     "name": "Tisbury",
@@ -1330,10 +1014,6 @@
   "-2.0947934,54.9735335": {
     "name": "Hexham",
     "rating": "unverified"
-  },
-  "-2.1001222,51.8969882": {
-    "name": "Cheltenham Spa",
-    "rating": "verified"
   },
   "-2.1158799,51.4623678": {
     "name": "Chippenham",
@@ -1345,10 +1025,6 @@
   },
   "-2.1465358,52.4224267": {
     "name": "Hagley",
-    "rating": "unverified"
-  },
-  "-2.1769016,51.2069721": {
-    "name": "Warminster",
     "rating": "unverified"
   },
   "-2.1997296,51.2663283": {
@@ -1391,10 +1067,6 @@
     "name": "Kirkby Stephen",
     "rating": "unverified"
   },
-  "-2.3944323,53.8735624": {
-    "name": "Clitheroe",
-    "rating": "unverified"
-  },
   "-2.4118943,53.8244874": {
     "name": "Whalley",
     "rating": "unverified"
@@ -1413,14 +1085,6 @@
   },
   "-2.4627642,54.9679903": {
     "name": "Haltwhistle",
-    "rating": "unverified"
-  },
-  "-2.486536,54.58041": {
-    "name": "Appleby",
-    "rating": "unverified"
-  },
-  "-2.5106193,54.1154922": {
-    "name": "Bentham",
     "rating": "unverified"
   },
   "-2.5224232,51.099857": {
@@ -1445,10 +1109,6 @@
   },
   "-3.2848689,51.3969039": {
     "name": "Barry",
-    "rating": "unverified"
-  },
-  "-3.4814284,51.4096499": {
-    "name": "Llantwit Major",
     "rating": "unverified"
   },
   "-3.9964221,50.7323333": {
@@ -1499,10 +1159,6 @@
     "name": "Newhaven Town",
     "rating": "unverified"
   },
-  "0.0551622,50.7898002": {
-    "name": "Newhaven Harbour",
-    "rating": "unverified"
-  },
   "0.0553234,51.6412266": {
     "name": "Loughton",
     "rating": "unverified"
@@ -1541,10 +1197,6 @@
   },
   "0.1033213,51.6717759": {
     "name": "Theydon Bois",
-    "rating": "verified"
-  },
-  "0.1083284,51.3566115": {
-    "name": "Chelsfield",
     "rating": "verified"
   },
   "0.1098981,51.1556295": {
@@ -1599,10 +1251,6 @@
     "name": "Great Chesterford",
     "rating": "unverified"
   },
-  "0.1967655,52.2622818": {
-    "name": "Waterbeach",
-    "rating": "verified"
-  },
   "0.1971759,51.3129318": {
     "name": "Otford",
     "rating": "verified"
@@ -1622,10 +1270,6 @@
   "0.2112588,51.1939929": {
     "name": "Leigh",
     "rating": "verified"
-  },
-  "0.215334,51.9798629": {
-    "name": "Newport",
-    "rating": "not-recommended"
   },
   "0.2191164,51.4474203": {
     "name": "Dartford",
@@ -1657,10 +1301,6 @@
   },
   "0.2796796,50.7959254": {
     "name": "Hampden Park",
-    "rating": "unverified"
-  },
-  "0.2798724,51.4504764": {
-    "name": "Greenhithe",
     "rating": "unverified"
   },
   "0.2815355,50.7696435": {
@@ -1695,10 +1335,6 @@
     "name": "Stonegate",
     "rating": "unverified"
   },
-  "0.3668306,51.4413627": {
-    "name": "Gravesend",
-    "rating": "unverified"
-  },
   "0.3781687,51.383247": {
     "name": "Sole Street",
     "rating": "unverified"
@@ -1711,17 +1347,9 @@
     "name": "Paddock Wood",
     "rating": "unverified"
   },
-  "0.4033747,51.2045463": {
-    "name": "Beltring",
-    "rating": "unverified"
-  },
   "0.4121616,51.2266654": {
     "name": "Yalding",
     "rating": "verified"
-  },
-  "0.4127329,51.4844914": {
-    "name": "East Tilbury",
-    "rating": "unverified"
   },
   "0.4186871,51.2920962": {
     "name": "West Malling",
@@ -1745,10 +1373,6 @@
   },
   "0.4423838,51.0106562": {
     "name": "Etchingham",
-    "rating": "unverified"
-  },
-  "0.4451218,51.3523741": {
-    "name": "Halling",
     "rating": "unverified"
   },
   "0.4484399,51.3302228": {
@@ -1783,10 +1407,6 @@
     "name": "Crowhurst",
     "rating": "unverified"
   },
-  "0.5072941,51.3892066": {
-    "name": "Rochester",
-    "rating": "unverified"
-  },
   "0.5157564,51.2703088": {
     "name": "Maidstone West",
     "rating": "unverified"
@@ -1795,20 +1415,12 @@
     "name": "Wickford",
     "rating": "unverified"
   },
-  "0.5199007,51.2776262": {
-    "name": "Maidstone East",
-    "rating": "unverified"
-  },
   "0.5504987,51.1715258": {
     "name": "Staplehurst",
     "rating": "unverified"
   },
   "0.5616239,51.5441005": {
     "name": "Benfleet",
-    "rating": "unverified"
-  },
-  "0.5656286,51.6249307": {
-    "name": "Battlesbridge",
     "rating": "unverified"
   },
   "0.5768255,50.8583028": {
@@ -1821,10 +1433,6 @@
   },
   "0.6132177,50.9009617": {
     "name": "Three Oaks",
-    "rating": "unverified"
-  },
-  "0.6273669,51.1656292": {
-    "name": "Headcorn",
     "rating": "unverified"
   },
   "0.6278176,51.2653803": {
@@ -1859,10 +1467,6 @@
     "name": "Rye",
     "rating": "verified"
   },
-  "0.7355732,52.0362647": {
-    "name": "Sudbury",
-    "rating": "unverified"
-  },
   "0.7465822,51.1564849": {
     "name": "Pluckley",
     "rating": "unverified"
@@ -1871,32 +1475,12 @@
     "name": "Bures",
     "rating": "unverified"
   },
-  "0.7898686,51.2082021": {
-    "name": "Charing",
-    "rating": "unverified"
-  },
-  "0.7945675,51.531446": {
-    "name": "Shoeburyness",
-    "rating": "unverified"
-  },
   "0.8070514,51.3336038": {
     "name": "Teynham",
     "rating": "unverified"
   },
-  "0.8136583,51.6336033": {
-    "name": "Burnham-on-Crouch",
-    "rating": "unverified"
-  },
-  "0.8165763,51.0332869": {
-    "name": "Appledore",
-    "rating": "unverified"
-  },
   "0.8545851,51.0681986": {
     "name": "Ham Street",
-    "rating": "unverified"
-  },
-  "0.8752323,51.143379": {
-    "name": "Ashford International",
     "rating": "unverified"
   },
   "0.8906635,51.3116525": {
@@ -1915,10 +1499,6 @@
     "name": "Chilham",
     "rating": "verified"
   },
-  "1.0343648,51.3576861": {
-    "name": "Whitstable",
-    "rating": "unverified"
-  },
   "1.0449277,51.9491435": {
     "name": "Manningtree",
     "rating": "unverified"
@@ -1931,10 +1511,6 @@
     "name": "Canterbury East",
     "rating": "verified"
   },
-  "1.1183071,51.3644375": {
-    "name": "Herne Bay",
-    "rating": "unverified"
-  },
   "1.1222644,51.300986": {
     "name": "Sturry",
     "rating": "unverified"
@@ -1942,10 +1518,6 @@
   "1.1372301,51.2614031": {
     "name": "Bekesbourne",
     "rating": "unverified"
-  },
-  "1.1537821,51.0847184": {
-    "name": "Folkestone West",
-    "rating": "verified"
   },
   "1.1543273,51.7945324": {
     "name": "Clacton-on-Sea",
@@ -1967,16 +1539,8 @@
     "name": "Dover Priory",
     "rating": "verified"
   },
-  "1.3178856,52.0902961": {
-    "name": "Woodbridge",
-    "rating": "unverified"
-  },
   "1.3381527,52.1043512": {
     "name": "Melton",
-    "rating": "unverified"
-  },
-  "1.3498136,51.9670171": {
-    "name": "Felixstowe",
     "rating": "unverified"
   },
   "1.3719521,51.3851637": {
@@ -2003,30 +1567,6 @@
     "name": "Rhoose Cardiff International Airport",
     "rating": "unverified"
   },
-  "-2.3574357,51.3773725": {
-    "name": "Bath Spa",
-    "rating": "unverified"
-  },
-  "-0.6077008,51.6098353": {
-    "name": "Seer Green and Jordans",
-    "rating": "unverified"
-  },
-  "-2.2580915,51.3452148": {
-    "name": "Bradford-on-Avon",
-    "rating": "unverified"
-  },
-  "-0.0176241,51.5061102": {
-    "name": "Canary Wharf",
-    "rating": "unverified"
-  },
-  "-2.2958515,54.1508117": {
-    "name": "Horton-in-Ribblesdale",
-    "rating": "unverified"
-  },
-  "-1.1569226,51.5625961": {
-    "name": "Cholsey",
-    "rating": "unverified"
-  },
   "-0.3638616,51.0508094": {
     "name": "Christ's Hospital",
     "rating": "unverified"
@@ -2039,16 +1579,8 @@
     "name": "Haddenham and Thame Parkway",
     "rating": "unverified"
   },
-  "0.1654013,51.8664266": {
-    "name": "Bishop's Stortford",
-    "rating": "unverified"
-  },
   "0.7586045,51.9258987": {
     "name": "Chappel and Wakes Colne",
-    "rating": "unverified"
-  },
-  "-1.5153161,53.3275706": {
-    "name": "Dore and Totley",
     "rating": "unverified"
   },
   "-2.3020982,54.149217": {
@@ -2067,14 +1599,6 @@
     "name": "Windsor and Eton Riverside",
     "rating": "unverified"
   },
-  "1.2433218,51.8377612": {
-    "name": "Frinton-on-Sea",
-    "rating": "unverified"
-  },
-  "-2.4104509,54.105416": {
-    "name": "Clapham",
-    "rating": "unverified"
-  },
   "0.1906219,51.5167202": {
     "name": "Rainham",
     "rating": "unverified"
@@ -2087,24 +1611,12 @@
     "name": "Charing Cross",
     "rating": "unverified"
   },
-  "-0.223247,51.4921603": {
-    "name": "Hammersmith (District and Piccadilly lines)",
-    "rating": "unverified"
-  },
   "0.0950574,51.781293": {
     "name": "Harlow Town",
     "rating": "unverified"
   },
-  "-0.0107517,51.4817267": {
-    "name": "Cutty Sark for Maritime Greenwich",
-    "rating": "unverified"
-  },
   "-1.322751,51.3975325": {
     "name": "Newbury",
-    "rating": "unverified"
-  },
-  "0.0043201,51.500574": {
-    "name": "North Greenwich",
     "rating": "unverified"
   },
   "0.0009329,51.7881973": {

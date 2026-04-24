@@ -8,7 +8,6 @@ import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { HelpButton } from "@/components/help-button"
-import { AdminPublishButton } from "@/components/admin-publish-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
@@ -6493,19 +6492,6 @@ export default function HikeMap() {
           }}
         />
       </div>
-
-      {/* Admin Publish button — renders whenever admin mode is active
-          (including on production, unlike the dev-mode toggle below
-          which is dev-only). Positioned top-center on all breakpoints
-          so it doesn't clash with the filter panel (top-left) or the
-          help/theme buttons (top-right). Gated behind devExcludeActive
-          so non-admin visitors never see it. */}
-      {devExcludeActive && (
-        <div className="pointer-events-none absolute top-4 left-1/2 z-50 -translate-x-1/2">
-          <AdminPublishButton />
-        </div>
-      )}
-
 
       {/* Dev mode toggle + zoom badge — only rendered in local development.
           process.env.NODE_ENV is inlined at build time by Next.js, so this
