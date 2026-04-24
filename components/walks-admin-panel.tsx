@@ -435,11 +435,9 @@ export default function WalksAdminPanel({
               <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
                 <li>Komoot-linked walks come first</li>
-                <li>
-                  Variant priority: Main &gt; Shorter &gt; Alternative &gt; Variant &gt; Longer &gt; Similar to &gt; Adapted from
-                </li>
+                <li>Main walks first (no further subtype ordering)</li>
                 <li>Higher rating first (4 → 3 → 2 → unrated → 1)</li>
-                <li>Distance, shortest first</li>
+                <li>Distance closest to 10 km first</li>
                 <li>Alphabetic tiebreak</li>
               </ol>
             </div>
@@ -448,14 +446,7 @@ export default function WalksAdminPanel({
               <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><strong>Always shown:</strong> every main walk + every Note.</li>
                 <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
-                <li>
-                  <strong>Variants are tiered by number of mains at the station:</strong>
-                  <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-                    <li><strong>1 main</strong> — show all variants.</li>
-                    <li><strong>2 or 3 mains</strong> — show only <span className="font-mono">Shorter</span> variants.</li>
-                    <li><strong>0 or 4+ mains</strong> — no variants at all.</li>
-                  </ul>
-                </li>
+                <li><strong>Variants show</strong> only when the station has fewer than 5 main walks. With 5+ mains, variants are hidden.</li>
               </ul>
             </div>
           </div>

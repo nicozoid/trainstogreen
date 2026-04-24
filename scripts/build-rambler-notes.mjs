@@ -5,7 +5,7 @@
 // Attachment rule: every station-to-station walk variant gets its own
 // paragraph at its start and end stations (no per-source-URL dedup).
 // Paragraph order within a station is determined by compareRamblerParts:
-//   hasKomoot → typePriority → ratingTier → distanceKey → pageTitle
+//   hasKomoot → isMain → ratingTier → distanceScore → pageTitle
 // The admin has no manual override — curation happens via rating/
 // komoot/suffix edits on individual walks.
 //
@@ -91,48 +91,40 @@ function ratingTierOf(rating) {
   return RATING_TIER[key] ?? RATING_TIER.unrated
 }
 
-// Distance sort key. Shortest first; walks without a recorded
-// distance fall to the bottom of their tier (Infinity).
-function distanceKeyOf(distanceKm) {
+// Ideal walk length for ordering — proximity to this value is the
+// distance sort key. Tweak to shift the bias (e.g. 13 prefers a
+// full-day hike, 8 a half-day stroll). Keep in sync with
+// IDEAL_LENGTH_KM in app/api/dev/walks-for-station/route.ts.
+const IDEAL_LENGTH_KM = 10
+
+// Distance score — |distanceKm - IDEAL_LENGTH_KM|. Closer to ideal
+// sorts higher; walks without a recorded distance fall to the
+// bottom of their tier (Infinity).
+function distanceScore(distanceKm) {
   if (typeof distanceKm !== "number" || !Number.isFinite(distanceKm)) {
     return Number.POSITIVE_INFINITY
   }
-  return distanceKm
+  return Math.abs(distanceKm - IDEAL_LENGTH_KM)
 }
 
-// Source-type priority — main first, then increasingly peripheral
-// variant categories. Mirrors TYPE_PRIORITY in
-// app/api/dev/walks-for-station/route.ts and SOURCE_TYPES in
-// components/walks-admin-panel.tsx.
-const TYPE_PRIORITY = {
-  main: 0,
-  shorter: 1,
-  alternative: 2,
-  variant: 3,
-  longer: 4,
-  similar: 5,
-  adapted: 6,
-}
-function typePriorityOf(type) {
-  return TYPE_PRIORITY[type] ?? 99
-}
 
 // Order ramblerParts at a station:
 //   1. walks before extras (kind ASC)
 //   2. hasKomoot DESC (walks with a Komoot route come first)
-//   3. typePriority ASC (main > shorter > alternative > variant >
-//                        longer > similar > adapted)
+//   3. isMain DESC (main walks first; non-mains don't get a
+//                   further subtype ordering among themselves)
 //   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
-//   5. distanceKey ASC (shortest first; missing sorts last)
+//   5. distanceScore ASC (closest to IDEAL_LENGTH_KM first; missing
+//                         sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak
 // Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
 // keep both in step.
 function compareRamblerParts(a, b) {
   if (a.kind !== b.kind) return a.kind - b.kind
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
-  if (a.typePriority !== b.typePriority) return a.typePriority - b.typePriority
+  if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
-  if (a.distanceKey !== b.distanceKey) return a.distanceKey - b.distanceKey
+  if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
   return (a.pageTitle || "").localeCompare(b.pageTitle || "")
 }
 
@@ -600,12 +592,10 @@ function buildRamblerNotes(args) {
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
           isMain: sourceType === "main",
-          // Raw source type — drives both the sort (via typePriority)
-          // and the tiered variant-visibility filter (singles out
-          // `shorter` at 2–3-main stations).
+          // Raw source type kept for possible future per-subtype
+          // filtering. Current filter only cares about isMain.
           sourceType,
-          typePriority: typePriorityOf(sourceType),
-          distanceKey: distanceKeyOf(variant.distanceKm),
+          distanceScore: distanceScore(variant.distanceKm),
           pageTitle: entry.title ?? "",
           // Legacy title pieces from the old duplicate-variant filter.
           // Current rule keys off mainCount + sourceType only; leaving
@@ -675,8 +665,7 @@ function buildRamblerNotes(args) {
         // Extras aren't walks — these fields are unused at kind=1 but
         // kept on the struct so all parts share the same shape.
         sourceType: "",
-        typePriority: Number.POSITIVE_INFINITY,
-        distanceKey: Number.POSITIVE_INFINITY,
+        distanceScore: Number.POSITIVE_INFINITY,
         pageTitle: "",
         displayName: "",
         baseDisplayName: "",
@@ -702,26 +691,16 @@ function buildRamblerNotes(args) {
     //   • Bus-requiring walks never reach this filter — they're
     //     excluded upstream by `stationToStation !== true`, which
     //     buildSummary returns null for. (Admin CMS still shows them.)
-    //   • Variants (non-main walks) are tiered by mainCount:
-    //       1 main       → show ALL variants (mains are sparse, so
-    //                       supplementary variants fill the page)
-    //       2–3 mains    → show only `shorter` variants (the most
-    //                       likely to appeal when several full walks
-    //                       are already on display)
-    //       4+ mains, 0  → no variants (either too crowded or no
-    //                       main to anchor them)
+    //   • Variants are shown only when there would otherwise be
+    //     fewer than 5 walks on the page. I.e. if the station has
+    //     fewer than 5 mains, we let variants fill the list out.
+    //     Stations with 5+ mains hide all variants.
     const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
+    const showVariants = mainCount < 5
     const publicParts = ordered.filter((p) => {
       if (p.kind !== 0) return true // notes always pass
       if (p.isMain) return true // mains always pass
-      // Variant — tiered by mainCount.
-      if (mainCount === 1) return true
-      if (mainCount === 2 || mainCount === 3) {
-        // sourceType is the modern home; fall back to legacy `role`.
-        const type = p.sourceType
-        return type === "shorter"
-      }
-      return false
+      return showVariants
     })
     const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
