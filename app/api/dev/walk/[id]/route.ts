@@ -77,14 +77,23 @@ async function locateWalk(id: string): Promise<
 function cleanField(key: string, value: unknown): unknown | undefined {
   switch (key) {
     case "komootUrl":
-    case "warnings":
-    case "trainTips":
-    case "privateNote":
-    case "terrain":
     case "name":
     case "suffix": {
       if (typeof value !== "string") return undefined
       const trimmed = value.trim()
+      return trimmed === "" ? undefined : trimmed
+    }
+    // Prose fields — strip trailing sentence punctuation on save so
+    // admins don't need to type a period at the end of each entry.
+    // The public renderer (scripts/build-rambler-notes.mjs) adds the
+    // terminal period itself via `withPeriod()`, so storing the
+    // content without it keeps the source clean.
+    case "warnings":
+    case "trainTips":
+    case "privateNote":
+    case "terrain": {
+      if (typeof value !== "string") return undefined
+      const trimmed = value.trim().replace(/[.!?]+$/, "").trim()
       return trimmed === "" ? undefined : trimmed
     }
     case "rating": {

@@ -964,8 +964,8 @@ function WalkCard({
           <div className="mb-3">
             <Label htmlFor={`terrain-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
               Terrain
-              <span className="ml-1 italic text-muted-foreground/70">
-                (comma-separated, no punctuation)
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                comma-separated, no punctuation
               </span>
             </Label>
             <Input
@@ -1095,7 +1095,10 @@ function WalkCard({
               "MOD closures apply" or "Chalk paths can be slippery". */}
           <div className="mb-3">
             <Label htmlFor={`warn-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Warnings (free text)
+              Warnings
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                free text
+              </span>
             </Label>
             <Input
               id={`warn-${walk.id}`}
@@ -1111,7 +1114,10 @@ function WalkCard({
               sentence right after warnings. */}
           <div className="mb-3">
             <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Train tips (free text)
+              Train tips
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                free text
+              </span>
             </Label>
             <Input
               id={`tips-${walk.id}`}
@@ -1128,7 +1134,10 @@ function WalkCard({
               reopens", etc). */}
           <div className="mb-3">
             <Label htmlFor={`priv-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Private note (admin-only)
+              Private note
+              <span className="ml-1 font-normal italic text-muted-foreground/70">
+                admin-only
+              </span>
             </Label>
             <Input
               id={`priv-${walk.id}`}
