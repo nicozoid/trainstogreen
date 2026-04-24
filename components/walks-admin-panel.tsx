@@ -441,7 +441,14 @@ export default function WalksAdminPanel({
               <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><strong>Always shown:</strong> every main walk + every Note.</li>
                 <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
-                <li><strong>Variants only show</strong> when the station has exactly one main walk. With 0 or 2+ mains, variants are hidden.</li>
+                <li>
+                  <strong>Variants are tiered by number of mains at the station:</strong>
+                  <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
+                    <li><strong>1 main</strong> — show all variants.</li>
+                    <li><strong>2 or 3 mains</strong> — show only <span className="font-mono">Shorter</span> variants.</li>
+                    <li><strong>0 or 4+ mains</strong> — no variants at all.</li>
+                  </ul>
+                </li>
               </ul>
             </div>
           </div>

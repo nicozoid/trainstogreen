@@ -580,18 +580,22 @@ function buildRamblerNotes(args) {
         // by compareRamblerParts — admins don't override it; all keys
         // come from the walk data itself (main/variant, komoot, rating,
         // distance).
+        const sourceType = variant.source?.type ?? variant.role ?? "main"
         perStation.get(station.coordKey).ramblerParts.push({
           summary,
           kind: 0,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
-          isMain: (variant.source?.type ?? variant.role) === "main",
+          isMain: sourceType === "main",
+          // Raw source type (shorter/longer/alternative/variant/
+          // similar/adapted) — needed by the tiered variant visibility
+          // filter so we can single out `shorter` at 2–3-main stations.
+          sourceType,
           distanceScore: distanceScore(variant.distanceKm),
           pageTitle: entry.title ?? "",
-          // Title pieces feed the duplicate-variant filter below —
-          // variants whose `baseDisplayName` (title minus suffix)
-          // matches another walk's full `displayName` at this same
-          // station are hidden from the public-prose output.
+          // Title pieces kept for legacy — the old duplicate-variant
+          // filter used them; current rule ignores the names entirely
+          // and keys off mainCount + sourceType only.
           displayName,
           baseDisplayName,
         })
@@ -653,11 +657,11 @@ function buildRamblerNotes(args) {
         ratingTier: Number.POSITIVE_INFINITY,
         hasKomoot: false,
         isMain: false,
+        // Extras aren't walks — sourceType is unused at kind=1 but
+        // kept on the struct so all parts share the same shape.
+        sourceType: "",
         distanceScore: Number.POSITIVE_INFINITY,
         pageTitle: "",
-        // Extras (free-form notes) have no title, so no duplicate-
-        // filter role. Leaving these empty is equivalent to "never
-        // matches any other walk's displayName".
         displayName: "",
         baseDisplayName: "",
       })
@@ -682,17 +686,26 @@ function buildRamblerNotes(args) {
     //   • Bus-requiring walks never reach this filter — they're
     //     excluded upstream by `stationToStation !== true`, which
     //     buildSummary returns null for. (Admin CMS still shows them.)
-    //   • Variants (non-main walks) are shown ONLY when there is
-    //     exactly 1 main walk at this station — variants act as
-    //     supplementary detail on pages dominated by a single walk.
-    //     Stations with 0 mains (rare) or 2+ mains get no variants
-    //     in the public prose at all.
+    //   • Variants (non-main walks) are tiered by mainCount:
+    //       1 main       → show ALL variants (mains are sparse, so
+    //                       supplementary variants fill the page)
+    //       2–3 mains    → show only `shorter` variants (the most
+    //                       likely to appeal when several full walks
+    //                       are already on display)
+    //       4+ mains, 0  → no variants (either too crowded or no
+    //                       main to anchor them)
     const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
     const publicParts = ordered.filter((p) => {
       if (p.kind !== 0) return true // notes always pass
       if (p.isMain) return true // mains always pass
-      // Variant — only permitted when there's a lone main to sit next to.
-      return mainCount === 1
+      // Variant — tiered by mainCount.
+      if (mainCount === 1) return true
+      if (mainCount === 2 || mainCount === 3) {
+        // sourceType is the modern home; fall back to legacy `role`.
+        const type = p.sourceType
+        return type === "shorter"
+      }
+      return false
     })
     const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
