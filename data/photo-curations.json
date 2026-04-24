@@ -6893,15 +6893,6 @@
         "dateTaken": "2014-03-02 09:43:41"
       },
       {
-        "id": "53207390899",
-        "title": "Windsor Castle",
-        "ownerName": "gary8345",
-        "thumbnailUrl": "https://live.staticflickr.com/65535/53207390899_aae9495bd8.jpg",
-        "largeUrl": "https://live.staticflickr.com/65535/53207390899_aae9495bd8_b.jpg",
-        "flickrUrl": "https://www.flickr.com/photos/99809597@N00/53207390899",
-        "dateTaken": "2023-09-08 11:10:26"
-      },
-      {
         "id": "10575313106",
         "title": "Windsor Great Park",
         "ownerName": "Peter Meade",
@@ -6977,7 +6968,6 @@
     "pinnedIds": [
       "52998218084",
       "2291051079",
-      "53207390899",
       "20005335391",
       "49011093563",
       "51764794478",
