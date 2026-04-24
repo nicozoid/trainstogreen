@@ -2035,6 +2035,14 @@ export default function HikeMap() {
   type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
+  // Free-form "rambler extras" — admin-editable markdown paragraphs
+  // that render AFTER the walk summaries in each station's ramblerNote
+  // prose. Keyed by coordKey. Lives in data/station-rambler-extras.json;
+  // derived into station-notes.json by the build script. We store it
+  // client-side as `Record<coordKey, string[]>` and thread the current
+  // station's entry into the photo overlay for editing.
+  const [ramblerExtras, setRamblerExtras] = useState<Record<string, string[]>>({})
+
   // Seasons metadata per station. Purely a build output derived from each
   // walk variant's structured `bestSeasons` field (aggregated in
   // scripts/build-rambler-notes.mjs). Not editable — the source of truth
@@ -2076,6 +2084,9 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
+    fetch("/api/dev/station-rambler-extras")
+      .then((res) => res.json())
+      .then((data: Record<string, string[]>) => setRamblerExtras(data))
     fetch("/api/dev/station-seasons")
       .then((res) => res.json())
       .then((data) => setStationSeasons(data))
@@ -5010,6 +5021,32 @@ export default function HikeMap() {
     })
   }, [])
 
+  // Save the free-form "rambler extras" for a station. Accepts the
+  // full replacement array; empty array clears the entry. The server
+  // trims + drops blanks and re-runs the build, so we also refetch
+  // stationNotes afterwards to pick up the regenerated prose.
+  const handleSaveRamblerExtras = useCallback(async (coordKey: string, lines: string[]) => {
+    // Optimistic update of the local map so the photo-overlay
+    // re-renders with the new list immediately. Server will strip
+    // empties; mirror that here so the optimistic state matches.
+    const cleaned = lines.map((s) => s.trim()).filter(Boolean)
+    setRamblerExtras((prev) => {
+      const next = { ...prev }
+      if (cleaned.length === 0) delete next[coordKey]
+      else next[coordKey] = cleaned
+      return next
+    })
+    await fetch("/api/dev/station-rambler-extras", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, lines: cleaned }),
+    })
+    // The server rebuilt station-notes.json as part of the write —
+    // refetch so the overlay's ramblerNote prose reflects the change.
+    const notes = await fetch("/api/dev/station-notes").then((r) => r.json())
+    setStationNotes(notes)
+  }, [])
+
   // Refresh stationNotes + stationSeasons after a structured walk edit.
   // The PATCH /api/dev/walk/[id] route re-runs the build server-side,
   // so we just need to pull the regenerated data back into the client
@@ -7793,6 +7830,8 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            ramblerExtras={ramblerExtras[displayStation.coordKey] ?? []}
+            onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}
             onWalkSaved={refreshStationDerivedData}
             defaultAlgo={
               // Central London terminals (18 + synthetic) and excluded stations
