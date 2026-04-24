@@ -1879,16 +1879,17 @@ export default function HikeMap() {
   //                       curation at all (no approvals AND no
   //                       rejections). These are the stations still
   //                       using the broad Flickr algorithm by default.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
+  // `undiscovered` hides any station where at least one attached walk
+  // has a populated `previousWalkDates` — surfaces destinations still
+  // to explore. Lives on the Feature dropdown (rather than a separate
+  // checkbox) so admin-only filters that exclude stations all share a
+  // single UI control.
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
   type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
-  // Admin-only "Undiscovered" checkbox — when on, hides stations where any
-  // attached walk has a populated `previousWalkDates` (i.e. we've already
-  // hiked it). Cleared on admin-off (below).
-  const [undiscoveredOnly, setUndiscoveredOnly] = useState(false)
   // Public "[current-season] highlights" checkbox — when on, only stations
   // recommended for the current season are shown. Coexists with seasonFilter
   // (both filters applied independently, AND semantics).
@@ -4447,6 +4448,11 @@ export default function HikeMap() {
             const entry = curations[f.properties.coordKey as string]
             const approvedCount = entry?.approved.length ?? 0
             if (approvedCount > 0) return false
+          } else if (primaryFeatureFilter === "undiscovered") {
+            // "Undiscovered" — hide stations we've personally walked any
+            // variant from. Membership in stationsHiked is single .has()
+            // lookup; stations never walked don't appear in the set.
+            if (stationsHiked.has(f.properties.coordKey as string)) return false
           }
         }
         // Season filters. Two independent filters both look up this
@@ -4470,12 +4476,6 @@ export default function HikeMap() {
           }
           if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
         }
-        // Admin-only "Undiscovered" — hide any station already in the
-        // hiked set. Stations never walked don't appear in the set at
-        // all, so the lookup is a single .has() call.
-        if (undiscoveredOnly && stationsHiked.has(f.properties.coordKey as string)) {
-          return false
-        }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
@@ -4492,7 +4492,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, undiscoveredOnly, stationsHiked])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -6392,8 +6392,6 @@ export default function HikeMap() {
         onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
         seasonFilter={seasonFilter}
         onSeasonFilterChange={setSeasonFilter}
-        undiscoveredOnly={undiscoveredOnly}
-        onUndiscoveredOnlyChange={setUndiscoveredOnly}
         currentSeason={currentSeason()}
         currentSeasonHighlight={currentSeasonHighlight}
         onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
@@ -6513,7 +6511,6 @@ export default function HikeMap() {
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.
                 setSeasonFilter("off")
-                setUndiscoveredOnly(false)
                 if (maxMinutes > 120) setMaxMinutes(120)
               }
             }}

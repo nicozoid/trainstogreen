@@ -257,17 +257,12 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
-  /** Admin-only: hide stations where at least one walk has a populated
-   *  previousWalkDates (i.e. we've already hiked it). Surfaces the
-   *  destinations still to explore. */
-  undiscoveredOnly: boolean
-  onUndiscoveredOnlyChange: (value: boolean) => void
   /** The calendar-derived current season — labels the public checkbox
    *  ("Spring highlights", etc) and is what that checkbox filters against. */
   currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
@@ -279,7 +274,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, undiscoveredOnly, onUndiscoveredOnlyChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1150,7 +1145,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1159,6 +1154,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <option value="private-notes">Private notes</option>
                 <option value="sloppy-pics">Sloppy pics</option>
                 <option value="all-sloppy-pics">All sloppy pics</option>
+                {/* "Undiscovered" — hides any station with at least one walk
+                    we've personally logged in previousWalkDates. Surfaces
+                    destinations still to explore. */}
+                <option value="undiscovered">Undiscovered</option>
               </select>
             </div>
           )}
@@ -1189,25 +1188,6 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     finding destinations that still need seasonality data. */}
                 <option value="None">None</option>
               </select>
-            </div>
-          )}
-
-          {/* Admin-only: "Undiscovered" filter — hides any station where
-              at least one attached walk has a populated previousWalkDates.
-              Surfaces destinations still to explore. Uses the secondary
-              (orange) checkbox accent to group visually with the other
-              admin-only toggles. */}
-          {adminMode && (
-            <div className="mt-1.5 flex items-center gap-[0.4rem]">
-              <Checkbox
-                id="primary-undiscovered-only"
-                checked={undiscoveredOnly}
-                onCheckedChange={(checked) => onUndiscoveredOnlyChange(checked === true)}
-                className="cursor-pointer size-3 data-checked:!bg-secondary data-checked:!border-secondary"
-              />
-              <Label htmlFor="primary-undiscovered-only" className="cursor-pointer text-xs text-muted-foreground">
-                Undiscovered
-              </Label>
             </div>
           )}
 
