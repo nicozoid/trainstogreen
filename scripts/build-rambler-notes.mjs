@@ -5,7 +5,7 @@
 // Attachment rule: every station-to-station walk variant gets its own
 // paragraph at its start and end stations (no per-source-URL dedup).
 // Paragraph order within a station is determined by compareRamblerParts:
-//   hasKomoot → isMain → ratingTier → distanceScore → pageTitle
+//   hasKomoot → typePriority → ratingTier → distanceKey → pageTitle
 // The admin has no manual override — curation happens via rating/
 // komoot/suffix edits on individual walks.
 //
@@ -91,35 +91,48 @@ function ratingTierOf(rating) {
   return RATING_TIER[key] ?? RATING_TIER.unrated
 }
 
-// Ideal walk length for ordering. Walks closer to this figure sort
-// higher (|distanceKm - IDEAL_LENGTH_KM| ASC). Tweak the constant to
-// shift the bias — e.g. 13 prefers a full-day hike, 8 prefers a
-// half-day stroll. Walks with no distance recorded fall to the
-// bottom of this tier (Infinity score).
-const IDEAL_LENGTH_KM = 13
-
-function distanceScore(distanceKm) {
+// Distance sort key. Shortest first; walks without a recorded
+// distance fall to the bottom of their tier (Infinity).
+function distanceKeyOf(distanceKm) {
   if (typeof distanceKm !== "number" || !Number.isFinite(distanceKm)) {
     return Number.POSITIVE_INFINITY
   }
-  return Math.abs(distanceKm - IDEAL_LENGTH_KM)
+  return distanceKm
+}
+
+// Source-type priority — main first, then increasingly peripheral
+// variant categories. Mirrors TYPE_PRIORITY in
+// app/api/dev/walks-for-station/route.ts and SOURCE_TYPES in
+// components/walks-admin-panel.tsx.
+const TYPE_PRIORITY = {
+  main: 0,
+  shorter: 1,
+  alternative: 2,
+  variant: 3,
+  longer: 4,
+  similar: 5,
+  adapted: 6,
+}
+function typePriorityOf(type) {
+  return TYPE_PRIORITY[type] ?? 99
 }
 
 // Order ramblerParts at a station:
 //   1. walks before extras (kind ASC)
-//   2. isMain DESC (main walks ALL come before variants — enables the
-//                   client-side "slice to N mains when there are 2+"
-//                   rule; non-mains are always second-class now)
-//   3. hasKomoot DESC (within the same kind + main-status, komoot first)
+//   2. hasKomoot DESC (walks with a Komoot route come first)
+//   3. typePriority ASC (main > shorter > alternative > variant >
+//                        longer > similar > adapted)
 //   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
-//   5. distanceScore ASC (closer to IDEAL_LENGTH_KM first; missing sorts last)
+//   5. distanceKey ASC (shortest first; missing sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak
+// Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
+// keep both in step.
 function compareRamblerParts(a, b) {
   if (a.kind !== b.kind) return a.kind - b.kind
-  if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
+  if (a.typePriority !== b.typePriority) return a.typePriority - b.typePriority
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
-  if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
+  if (a.distanceKey !== b.distanceKey) return a.distanceKey - b.distanceKey
   return (a.pageTitle || "").localeCompare(b.pageTitle || "")
 }
 
@@ -587,15 +600,17 @@ function buildRamblerNotes(args) {
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
           isMain: sourceType === "main",
-          // Raw source type (shorter/longer/alternative/variant/
-          // similar/adapted) — needed by the tiered variant visibility
-          // filter so we can single out `shorter` at 2–3-main stations.
+          // Raw source type — drives both the sort (via typePriority)
+          // and the tiered variant-visibility filter (singles out
+          // `shorter` at 2–3-main stations).
           sourceType,
-          distanceScore: distanceScore(variant.distanceKm),
+          typePriority: typePriorityOf(sourceType),
+          distanceKey: distanceKeyOf(variant.distanceKm),
           pageTitle: entry.title ?? "",
-          // Title pieces kept for legacy — the old duplicate-variant
-          // filter used them; current rule ignores the names entirely
-          // and keys off mainCount + sourceType only.
+          // Legacy title pieces from the old duplicate-variant filter.
+          // Current rule keys off mainCount + sourceType only; leaving
+          // them on the struct for now in case we reintroduce the
+          // dedup later without a rebuild.
           displayName,
           baseDisplayName,
         })
@@ -657,10 +672,11 @@ function buildRamblerNotes(args) {
         ratingTier: Number.POSITIVE_INFINITY,
         hasKomoot: false,
         isMain: false,
-        // Extras aren't walks — sourceType is unused at kind=1 but
+        // Extras aren't walks — these fields are unused at kind=1 but
         // kept on the struct so all parts share the same shape.
         sourceType: "",
-        distanceScore: Number.POSITIVE_INFINITY,
+        typePriority: Number.POSITIVE_INFINITY,
+        distanceKey: Number.POSITIVE_INFINITY,
         pageTitle: "",
         displayName: "",
         baseDisplayName: "",

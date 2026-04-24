@@ -106,15 +106,28 @@ type WalkPayload = {
 //                       so the CMS list keeps the publishable walks
 //                       on top)
 //   2. !komootUrl      (walks with a Komoot route come first)
-//   3. !isMain         (main walks before variants — de-emphasises
-//                       variants even when they have a higher rating)
+//   3. typePriority    (main > shorter > alternative > variant > longer
+//                       > similar > adapted — unknowns sort last)
 //   4. ratingTier      (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
-//   5. distanceScore   (|distanceKm - IDEAL_LENGTH_KM| — closer to
-//                       ideal first; walks without a distance sort
-//                       last via Infinity)
+//   5. distanceKm      (shortest first; missing last)
 //   6. pageTitle       (deterministic tiebreaker)
-// Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
-const IDEAL_LENGTH_KM = 13
+// Mirrored by compareRamblerParts in scripts/build-rambler-notes.mjs
+// and SOURCE_TYPES in components/walks-admin-panel.tsx — keep them
+// in step when changing this list.
+const TYPE_PRIORITY: Record<string, number> = {
+  main: 0,
+  shorter: 1,
+  alternative: 2,
+  variant: 3,
+  longer: 4,
+  similar: 5,
+  adapted: 6,
+}
+function typePriority(type: string | undefined | null): number {
+  // Unknown types sort after all named ones so new values the UI
+  // doesn't yet know about still land somewhere deterministic.
+  return TYPE_PRIORITY[type ?? ""] ?? 99
+}
 // Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
 // so the admin cards appear in the same order as the rendered prose.
 const RATING_TIERS: Record<string, number> = {
@@ -193,14 +206,10 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Ordering: komoot first → main before variants → rating tier →
-  // distance to ideal → alphabetic pageTitle. Main-over-variant sits
-  // ABOVE rating so a 4-rated variant never displaces a main walk —
-  // de-emphasising variants is the whole point of the reorder.
-  const distanceScore = (km: number | null) =>
-    typeof km === "number" && Number.isFinite(km)
-      ? Math.abs(km - IDEAL_LENGTH_KM)
-      : Number.POSITIVE_INFINITY
+  // Missing distance sorts last (Infinity) so the shortest-first
+  // key doesn't reward gaps in the data.
+  const distanceKeyOf = (km: number | null) =>
+    typeof km === "number" && Number.isFinite(km) ? km : Number.POSITIVE_INFINITY
 
   out.sort((a, b) => {
     // 1. Bus-requiring walks always sink to the bottom. These can
@@ -215,19 +224,18 @@ export async function GET(req: NextRequest) {
     const ka = a.komootUrl ? 0 : 1
     const kb = b.komootUrl ? 0 : 1
     if (ka !== kb) return ka - kb
-    // 3. Main walks before variants. source.type is the modern home;
-    //    fall back to legacy role for walks that predate the backfill.
-    const typeA = a.source?.type ?? a.role
-    const typeB = b.source?.type ?? b.role
-    const ma = typeA === "main" ? 0 : 1
-    const mb = typeB === "main" ? 0 : 1
-    if (ma !== mb) return ma - mb
+    // 3. Source-type priority (main > shorter > alternative > variant
+    //    > longer > similar > adapted). source.type is the modern
+    //    home; fall back to legacy `role` for older walks.
+    const pa = typePriority(a.source?.type ?? a.role)
+    const pb = typePriority(b.source?.type ?? b.role)
+    if (pa !== pb) return pa - pb
     // 4. Rating tier (4 → 3 → 2 → unrated → 1).
     const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
     if (ta !== tb) return ta - tb
-    // 5. Distance proximity to IDEAL_LENGTH_KM — closer first, missing last.
-    const da = distanceScore(a.distanceKm)
-    const db = distanceScore(b.distanceKm)
+    // 5. Distance — shortest first; missing last.
+    const da = distanceKeyOf(a.distanceKm)
+    const db = distanceKeyOf(b.distanceKm)
     if (da !== db) return da - db
     // 6. Alphabetic pageTitle for deterministic tiebreak.
     return a.pageTitle.localeCompare(b.pageTitle)

@@ -216,12 +216,17 @@ const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson
   }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
+// Type priority — dictates BOTH the dropdown order and the walk
+// sort order (higher-priority types bubble up). Keep this single
+// source of truth in step with TYPE_PRIORITY on the server
+// (app/api/dev/walks-for-station/route.ts) and the build script
+// (scripts/build-rambler-notes.mjs).
 const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: "main",        label: "Main walk" },
   { value: "shorter",     label: "Shorter variant" },
-  { value: "longer",      label: "Longer variant" },
   { value: "alternative", label: "Alternative variant" },
   { value: "variant",     label: "Variant" },
+  { value: "longer",      label: "Longer variant" },
   { value: "similar",     label: "Similar to" },
   { value: "adapted",     label: "Adapted from" },
 ]
@@ -430,9 +435,11 @@ export default function WalksAdminPanel({
               <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
                 <li>Komoot-linked walks come first</li>
-                <li>Main walks before variants</li>
+                <li>
+                  Variant priority: Main &gt; Shorter &gt; Alternative &gt; Variant &gt; Longer &gt; Similar to &gt; Adapted from
+                </li>
                 <li>Higher rating first (4 → 3 → 2 → unrated → 1)</li>
-                <li>Distance closest to 13 km</li>
+                <li>Distance, shortest first</li>
                 <li>Alphabetic tiebreak</li>
               </ol>
             </div>
