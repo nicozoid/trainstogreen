@@ -607,17 +607,6 @@
       "sort": "relevance"
     }
   },
-  "-1.3726319,51.8247081": {
-    "name": "Hanborough",
-    "custom": {
-      "includeTags": [
-        "marlborough house"
-      ],
-      "excludeTags": [],
-      "radius": 7,
-      "sort": "relevance"
-    }
-  },
   "0.2815355,50.7696435": {
     "name": "Eastbourne",
     "custom": {
