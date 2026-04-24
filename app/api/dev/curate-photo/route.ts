@@ -6,30 +6,43 @@ const FILE_PATH = "data/photo-curations.json"
 
 // Each station's curations.
 //
-// `approved` is the canonical display order — admins reorder freely within it,
-// but the array MUST keep the invariant: every id in `pinnedIds` comes before
-// any non-pinned photo. All callers that move photos around enforce this.
+// `approved` is the canonical display order — admins reorder freely within it.
+// Pinned photos are "locked in place": when another photo moves, pinned
+// photos keep their absolute index. But an admin CAN still move a pinned
+// photo manually via the reorder buttons.
 //
-// `pinnedIds` is the set of photo ids the admin has pinned. Their relative
-// order is derived from their order in `approved[]` (pinnedIds itself isn't
-// an ordered source of truth; it's just "which photos have the pin badge").
+// `pinnedIds` is just the set of photo ids with the pin badge — no ordering
+// invariant; a pin can sit at any index in `approved[]`.
 type CurationEntry = {
   name: string
   approved: FlickrPhoto[]
   pinnedIds?: string[]
 }
 
-// Helper — count how many of the currently-approved photos are pinned.
-// `approved.slice(0, numPins)` is the pinned prefix.
-function getNumPins(entry: CurationEntry): number {
-  if (!entry.pinnedIds?.length) return 0
-  const set = new Set(entry.pinnedIds)
-  let count = 0
-  for (const p of entry.approved) {
-    if (set.has(p.id)) count++
-    else break  // invariant: pins come first, so we can stop at the first non-pinned
+// Bubble a photo at `idx` in `arr` one slot toward `end` (either "up" = lower
+// index or "down" = higher index), skipping over any index whose photo is in
+// `pinnedSet` (unless that photo IS the one being moved). Returns the new
+// index, or `idx` if no move was possible. Mutates `arr` via swap — so pinned
+// photos we skip over keep their absolute positions.
+function moveOne(
+  arr: FlickrPhoto[],
+  idx: number,
+  direction: "up" | "down",
+  pinnedSet: Set<string>,
+): number {
+  const step = direction === "up" ? -1 : 1
+  const end = direction === "up" ? -1 : arr.length
+  const movingId = arr[idx].id
+  let t = idx + step
+  while (t !== end) {
+    const occupantId = arr[t].id
+    if (!pinnedSet.has(occupantId) || occupantId === movingId) {
+      ;[arr[idx], arr[t]] = [arr[t], arr[idx]]
+      return t
+    }
+    t += step
   }
-  return count
+  return idx
 }
 
 // POST — approve / unapprove / pin / unpin / move a photo for a station
@@ -54,71 +67,56 @@ export async function POST(req: NextRequest) {
       entry.approved.push(photo)
     }
   } else if (action === "approveAtTop") {
-    // "jump to top" on a non-approved photo: approve AND put at the top of
-    // the non-pinned section (just below the last pin). Keeps pins untouched.
+    // "jump to top" on a non-approved photo: approve AND insert as high in the
+    // list as possible, skipping past any prefix of pinned photos. So index 0
+    // if nothing pinned is there; otherwise the first non-pinned index.
     if (!photo) {
       return NextResponse.json({ error: "photo object required for approveAtTop" }, { status: 400 })
     }
-    // Remove any existing entry for this id so we can re-insert cleanly.
     entry.approved = entry.approved.filter((p) => p.id !== photoId)
-    const numPins = getNumPins(entry)
-    entry.approved.splice(numPins, 0, photo)
+    const pinned = new Set(entry.pinnedIds ?? [])
+    let insertAt = 0
+    while (insertAt < entry.approved.length && pinned.has(entry.approved[insertAt].id)) insertAt++
+    entry.approved.splice(insertAt, 0, photo)
   } else if (action === "unapprove") {
     entry.approved = entry.approved.filter((p) => p.id !== photoId)
     entry.pinnedIds = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
   } else if (action === "pin") {
-    // Pinning implicitly approves — if the photo isn't in the approved list
-    // yet, we need the full photo object so we can store it.
-    let existing = entry.approved.find((p) => p.id === photoId)
-    if (!existing) {
+    // Pin = just mark the photo. It stays at its current index in approved[].
+    // (Pinning implicitly approves, for the case where an admin pins from a
+    // non-Approved tab — the photo gets appended to approved[] if absent.)
+    if (!entry.approved.some((p) => p.id === photoId)) {
       if (!photo) {
         return NextResponse.json({ error: "photo object required to pin an unapproved photo" }, { status: 400 })
       }
-      existing = photo
+      entry.approved.push(photo)
     }
-    // Remove from current position (if already in approved[]) and from pinnedIds.
-    entry.approved = entry.approved.filter((p) => p.id !== photoId)
     const prevPins = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
-    // Insert at position `numPins` (computed against the list AFTER removal) so
-    // the photo lands at the bottom of the pinned section — below any existing
-    // pins, above every non-pinned photo.
-    const numPinsAfterRemoval = prevPins.filter((id) => entry.approved.some((p) => p.id === id)).length
-    entry.approved.splice(numPinsAfterRemoval, 0, existing as FlickrPhoto)
     entry.pinnedIds = [...prevPins, photoId]
   } else if (action === "unpin") {
-    // Photo keeps its position — which, since it was at the bottom of the
-    // pinned section, becomes the top of the non-pinned section.
+    // Unpin = just clear the badge. Photo keeps its position in approved[].
     entry.pinnedIds = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
   } else if (action === "move") {
-    // "up" / "down" — swap with immediate neighbour, clamped at the section
-    //                 boundary (can't cross between pinned and non-pinned).
-    // "top"         — push to the top of the photo's own section.
-    //                 pinned   → index 0
-    //                 non-pinned → index numPins (just below the last pin).
-    // "bottom"      — push to the bottom of the photo's own section.
-    //                 pinned   → index numPins - 1 (bottom of pins).
-    //                 non-pinned → index approved.length - 1 (end of queue).
+    // Pinned photos (other than the one being moved) are treated as fixed:
+    // a move skips past them via swap-with-skip so their absolute index stays.
+    //   "up" / "down" — one skip-step toward lower/higher index.
+    //   "top"         — repeatedly skip-step up until no further move possible
+    //                   (bubble to the topmost reachable slot).
+    //   "bottom"      — mirror of "top".
     const idx = entry.approved.findIndex((p) => p.id === photoId)
     if (idx >= 0) {
       const pinnedSet = new Set(entry.pinnedIds ?? [])
-      const isPinned = pinnedSet.has(photoId)
-      const numPins = getNumPins(entry)
-      if (direction === "top") {
-        const [p] = entry.approved.splice(idx, 1)
-        const targetIdx = isPinned ? 0 : numPins
-        entry.approved.splice(targetIdx, 0, p)
-      } else if (direction === "bottom") {
-        const [p] = entry.approved.splice(idx, 1)
-        const targetIdx = isPinned ? numPins - 1 : entry.approved.length
-        entry.approved.splice(Math.max(0, targetIdx), 0, p)
-      } else {
-        const targetIdx = direction === "up" ? idx - 1 : idx + 1
-        if (targetIdx >= 0 && targetIdx < entry.approved.length) {
-          // Respect the pin/non-pin section boundary — don't let a swap cross it.
-          const neighbourPinned = pinnedSet.has(entry.approved[targetIdx].id)
-          if (isPinned === neighbourPinned) {
-            ;[entry.approved[idx], entry.approved[targetIdx]] = [entry.approved[targetIdx], entry.approved[idx]]
-          }
+      if (direction === "up" || direction === "down") {
+        moveOne(entry.approved, idx, direction, pinnedSet)
+      } else if (direction === "top" || direction === "bottom") {
+        const step: "up" | "down" = direction === "top" ? "up" : "down"
+        let cur = idx
+        // Repeat until moveOne returns the same index (no further move).
+        // Bounded by arr.length to be safe against any logic bug.
+        for (let n = 0; n < entry.approved.length; n++) {
+          const next = moveOne(entry.approved, cur, step, pinnedSet)
+          if (next === cur) break
+          cur = next
         }
       }
     }

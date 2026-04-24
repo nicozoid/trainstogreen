@@ -1748,31 +1748,31 @@ export default function StationModal({
                 const reorderable = devMode && selectedTab === "approved"
                 const firstGroup = showDivider ? photos.slice(0, MAX_PHOTOS) : photos
                 const secondGroup = showDivider ? photos.slice(MAX_PHOTOS) : []
-                // numPins = length of the pinned prefix in approvedPhotos. Used
-                // to section-scope the reorder buttons' disabled state so e.g.
-                // the chevron-up on the top pin is disabled (no room to move up
-                // within its section), not "just" disabled when overall idx is 0.
-                let numPins = 0
-                for (const p of approvedPhotos) {
-                  if (pinnedIds.has(p.id)) numPins++
-                  else break
-                }
                 const renderCards = (list: FlickrPhoto[]) => list.map((photo) => {
                   const isApproved = approvedIds.has(photo.id)
                   const approvedIndex = approvedPhotos.findIndex((p) => p.id === photo.id)
                   const isPinned = pinnedIds.has(photo.id)
-                  // Section-scoped move capabilities: within the pinned section
-                  // or within the non-pinned section only — can't cross.
-                  // Non-approved photos always allow "jump to top" (it approves
-                  // the photo and places it at the top of the non-pinned section).
-                  const canMoveUp = !isApproved
-                    ? true
-                    : isPinned
-                      ? approvedIndex > 0
-                      : approvedIndex > numPins
-                  const canMoveDown = isPinned
-                    ? approvedIndex >= 0 && approvedIndex < numPins - 1
-                    : approvedIndex >= 0 && approvedIndex < approvedPhotos.length - 1
+                  // With pins-are-fixed semantics, a move is possible if ANY
+                  // non-pinned-except-self slot exists in that direction
+                  // (pins between don't block — we skip past them). Non-
+                  // approved photos always allow "jump to top" since it
+                  // approves + inserts into the list.
+                  const hasMovableSlotBefore = isApproved && approvedPhotos
+                    .slice(0, approvedIndex)
+                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  const hasMovableSlotAfter = isApproved && approvedPhotos
+                    .slice(approvedIndex + 1)
+                    .some((p) => !pinnedIds.has(p.id) || p.id === photo.id)
+                  const canMoveUp = !isApproved ? true : hasMovableSlotBefore
+                  const canMoveDown = hasMovableSlotAfter
+                  // Pin button shows only on Approved tab, only for photos
+                  // within the public-visible first MAX_PHOTOS slots. (Non-
+                  // approved photos never show it; approved-but-past-#12
+                  // "bench" photos never show it.)
+                  const showPin = selectedTab === "approved"
+                    && isApproved
+                    && approvedIndex >= 0
+                    && approvedIndex < MAX_PHOTOS
                   // onMoveToTop branches on approval state:
                   //   - Approved photo → in-place section-aware move (server "top" action).
                   //   - Non-approved photo → approve + place at top of non-pinned.
@@ -1787,6 +1787,7 @@ export default function StationModal({
                       devMode={devMode}
                       isApproved={isApproved}
                       isPinned={isPinned}
+                      showPin={showPin}
                       showReorder={reorderable && approvedIndex >= 0}
                       onApprove={() => onApprovePhoto?.(photo)}
                       onUnapprove={() => onUnapprovePhoto?.(photo.id)}
@@ -2254,11 +2255,13 @@ function DevActionButton({ label, icon, active, onClick }: {
 // buttons sit in the top-right cluster and only show for approved photos in
 // the Approved tab (gated by `showReorder`).
 
-function PhotoCard({ photo, devMode, isApproved, isPinned, showReorder = false, onApprove, onUnapprove, onPin, onUnpin, onMoveToTop, onMoveToBottom, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onImageError }: {
+function PhotoCard({ photo, devMode, isApproved, isPinned, showPin = false, showReorder = false, onApprove, onUnapprove, onPin, onUnpin, onMoveToTop, onMoveToBottom, onMoveUp, onMoveDown, canMoveUp, canMoveDown, onImageError }: {
   photo: FlickrPhoto
   devMode: boolean
   isApproved: boolean
   isPinned: boolean
+  /** When true, the pin button renders. Gated to Approved tab + first MAX_PHOTOS slots by the caller. */
+  showPin?: boolean
   /** When true AND the photo is approved, reorder buttons render. */
   showReorder?: boolean
   onApprove: () => void
@@ -2334,25 +2337,29 @@ function PhotoCard({ photo, devMode, isApproved, isPinned, showReorder = false, 
               </svg>
             </button>
             {/* Pin button — doubles as the pin indicator when isPinned.
+                Only rendered when `showPin` is true (gated by the parent to
+                the Approved tab + first MAX_PHOTOS slots).
                 When pinned: solid emerald bg (matches the approve indicator),
                 always visible, click unpins. When not pinned: semi-opaque
-                black, hover-only on desktop, click pins (implicitly approves
-                if not already approved). */}
-            <button
-              onClick={(e) => { e.stopPropagation(); (isPinned ? onUnpin?.() : onPin?.()) }}
-              title={isPinned ? 'Remove pin' : 'Pin photo (jumps to top)'}
-              className={
-                isPinned
-                  ? 'flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600/90 text-white backdrop-blur-sm transition-colors hover:bg-emerald-700 cursor-pointer opacity-100'
-                  : 'flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-emerald-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100'
-              }
-            >
-              {/* Pushpin icon — simple silhouette that reads clearly at 14px */}
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
-                fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2 L14 2 L15 8 L19 11 L19 13 L13 13 L13 22 L11 22 L11 13 L5 13 L5 11 L9 8 L10 2 Z" />
-              </svg>
-            </button>
+                black, hover-only on desktop, click pins (locks the photo at
+                its current position so other photos skip over it on reorder). */}
+            {showPin && (
+              <button
+                onClick={(e) => { e.stopPropagation(); (isPinned ? onUnpin?.() : onPin?.()) }}
+                title={isPinned ? 'Remove pin' : 'Pin photo at this position'}
+                className={
+                  isPinned
+                    ? 'flex h-7 w-7 items-center justify-center rounded-md bg-emerald-600/90 text-white backdrop-blur-sm transition-colors hover:bg-emerald-700 cursor-pointer opacity-100'
+                    : 'flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-all duration-150 hover:bg-emerald-600/90 cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100'
+                }
+              >
+                {/* Pushpin icon — simple silhouette that reads clearly at 14px */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                  fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2 L14 2 L15 8 L19 11 L19 13 L13 13 L13 22 L11 22 L11 13 L5 13 L5 11 L9 8 L10 2 Z" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Top-right cluster: reorder controls.
@@ -2365,12 +2372,12 @@ function PhotoCard({ photo, devMode, isApproved, isPinned, showReorder = false, 
               admins are doing the detailed list reordering. */}
           {(
             <div className="absolute top-0 right-0 flex gap-1 p-2 opacity-100 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100">
-              {/* Jump to top of section — available on all tabs.
-                  Pinned photo → position 0 (top of pins).
-                  Non-pinned photo → position just below the last pin. */}
+              {/* Jump to top — available on all tabs. Bubbles the photo up,
+                  skipping past any pinned photos (which stay at their slots)
+                  and stopping at the topmost reachable position. */}
               <button
                 onClick={(e) => { e.stopPropagation(); onMoveToTop?.() }}
-                title="Jump to top of section (below pins for non-pinned photos)"
+                title="Jump to top (skipping past pinned photos)"
                 disabled={!canMoveUp}
                 className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
               >
@@ -2406,12 +2413,11 @@ function PhotoCard({ photo, devMode, isApproved, isPinned, showReorder = false, 
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </button>
-                  {/* Jump to bottom of section — mirror of jump-up.
-                      Pinned photo → bottom of pins.
-                      Non-pinned photo → end of the approved queue. */}
+                  {/* Jump to bottom — mirror of jump-up. Bubbles the photo
+                      down past any pinned photos (which stay put). */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onMoveToBottom?.() }}
-                    title="Jump to bottom of section"
+                    title="Jump to bottom (skipping past pinned photos)"
                     disabled={!canMoveDown}
                     className="flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/30 cursor-pointer disabled:opacity-30 disabled:cursor-default"
                   >
