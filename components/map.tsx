@@ -6434,10 +6434,16 @@ export default function HikeMap() {
       )}
 
 
-      {/* Dev mode toggle + zoom badge — only rendered in local development.
-          process.env.NODE_ENV is inlined at build time by Next.js, so this
-          entire block is stripped from production bundles (dead-code elimination). */}
-      {process.env.NODE_ENV === "development" && (
+      {/* Admin bar — visible whenever either:
+            (a) we're in local development (so the "admin" enter button
+                is available), or
+            (b) admin mode is already active (devExcludeActive), so the
+                exit button + admin tools (zoom, rtt, walks, regenerate)
+                are available on cloud deployments too.
+          In production, admin is entered via the secret Boulogne marker
+          (see isSecretAdmin handler ~line 5930); the enter button itself
+          only renders in dev because NODE_ENV is inlined at build time. */}
+      {(process.env.NODE_ENV === "development" || devExcludeActive) && (
         // z-[60] keeps the admin bar on top of the StationModal dialog
         // (Radix renders its overlay + content at z-50), so the "admin"
         // toggle remains clickable while an overlay is showing — useful
