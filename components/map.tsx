@@ -1373,10 +1373,13 @@ function createRatingIcon(shape: 'star' | 'triangle-up' | 'triangle-down' | 'cir
     ctx.lineWidth = STATION_STROKE_WIDTH
     ctx.stroke()
   } else if (shape === 'hexagon') {
-    // Regular hexagon — 6 vertices evenly spaced, flat top edge
-    // Smaller radius (7) so it reads as a more compact shape
+    // Regular hexagon — 6 vertices evenly spaced, flat top edge.
+    // Radius tuned so the hexagon reads as visually balanced against
+    // the other rating shapes (triangle, star, circle) — a touch
+    // smaller than the natural bounding radius so its flat sides
+    // don't overpower the sparser silhouettes.
     ctx.beginPath()
-    const cx = 12, cy = 12, hexR = 5.8
+    const cx = 12, cy = 12, hexR = 5.22
     for (let i = 0; i < 6; i++) {
       // -π/6 rotates so the hexagon has a flat top edge (not a pointy top)
       const angle = (i * Math.PI) / 3 - Math.PI / 6
