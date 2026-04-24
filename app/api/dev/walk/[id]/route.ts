@@ -21,6 +21,7 @@ const EDITABLE_FIELDS = [
   "mudWarning",
   "warnings",
   "trainTips",
+  "privateNote",
   "rating",
   "terrain",
   "distanceKm",
@@ -77,6 +78,7 @@ function cleanField(key: string, value: unknown): unknown | undefined {
     case "komootUrl":
     case "warnings":
     case "trainTips":
+    case "privateNote":
     case "terrain":
     case "name":
     case "suffix": {

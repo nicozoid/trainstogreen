@@ -30,6 +30,8 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 // Static import: the sources registry is tiny (a handful of orgs) and
 // changes rarely. Importing directly lets the admin UI render the
 // dropdown without a separate fetch round-trip.
@@ -59,6 +61,8 @@ export type WalkPayload = {
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
   warnings: string
   trainTips: string
+  /** Admin-only free-text scratchpad, never rendered to the public. */
+  privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
@@ -106,6 +110,7 @@ type EditableFields = {
   mudWarning: boolean
   warnings: string
   trainTips: string
+  privateNote: string
   rating: number | null
   terrain: string
   distanceKm: number | null
@@ -281,6 +286,10 @@ export default function WalksAdminPanel({
   const [walks, setWalks] = useState<WalkPayload[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Dialog visibility flags — plain local booleans so we don't
+  // need a whole state machine.
+  const [infoOpen, setInfoOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   // Fetch walks whenever the station CRS changes. The endpoint returns
   // [] for stations with no attached walks — still a valid response, so
@@ -310,12 +319,62 @@ export default function WalksAdminPanel({
     if (onSaved) await onSaved()
   }, [stationCrs, onSaved])
 
+  // Create a new manual walk at this station (circular — start + end
+  // default to the current station's CRS). The admin fills in the
+  // details via the normal card editor after it appears in the list.
+  const handleCreate = useCallback(async () => {
+    setCreating(true)
+    try {
+      const r = await fetch("/api/dev/walk/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startStation: stationCrs, endStation: stationCrs }),
+      })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      await handleSaved()
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("create walk failed:", e)
+    } finally {
+      setCreating(false)
+    }
+  }, [stationCrs, handleSaved])
+
+  // Delete a walk. Called from inside a WalkCard's confirm flow.
+  const handleDelete = useCallback(async (id: string) => {
+    const r = await fetch(`/api/dev/walk/${id}`, { method: "DELETE" })
+    if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    await handleSaved()
+  }, [handleSaved])
+
 
   return (
     <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-orange-400 bg-orange-50/50 px-3 py-3 dark:bg-orange-950/10">
-      <p className="text-xs font-medium text-muted-foreground">
-        Walks{walks ? ` (${walks.length})` : ""}
-      </p>
+      {/* Header row — label on the left, info button + "+ New walk"
+          button on the right. flex + items-center keeps the buttons
+          baseline-aligned with the label. */}
+      <div className="flex items-center gap-2">
+        <p className="text-xs font-medium text-muted-foreground">
+          Walks{walks ? ` (${walks.length})` : ""}
+        </p>
+        <button
+          type="button"
+          onClick={() => setInfoOpen(true)}
+          className="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-muted-foreground/40 text-[10px] text-muted-foreground hover:bg-muted/60"
+          title="How are walks ordered and filtered?"
+          aria-label="How are walks ordered and filtered?"
+        >
+          i
+        </button>
+        <button
+          type="button"
+          onClick={handleCreate}
+          disabled={creating}
+          className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted/40 disabled:opacity-40"
+        >
+          {creating ? "Creating…" : "+ New walk"}
+        </button>
+      </div>
       {loading && <p className="mt-1 text-xs italic text-muted-foreground">Loading…</p>}
       {error && <p className="mt-1 text-xs text-destructive">Failed to load: {error}</p>}
       {walks && walks.length === 0 && (
@@ -326,10 +385,48 @@ export default function WalksAdminPanel({
       {walks && walks.length > 0 && (
         <div className="mt-2 flex flex-col gap-1.5">
           {walks.map((w) => (
-            <WalkCard key={w.id} walk={w} onSaved={handleSaved} />
+            <WalkCard key={w.id} walk={w} onSaved={handleSaved} onDelete={handleDelete} />
           ))}
         </div>
       )}
+
+      {/* Info dialog — explains the ordering + filtering rules so
+          the admin can reconcile what they see against what a
+          visitor sees. Kept in sync with
+          scripts/build-rambler-notes.mjs (filter) and
+          app/api/dev/walks-for-station/route.ts (CMS sort). */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Walks — order + visibility</DialogTitle>
+            <DialogDescription>
+              How the app decides which walks to show, and in what order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 text-sm text-foreground">
+            <div>
+              <p className="mb-1 font-medium">CMS order (admin-only, this panel)</p>
+              <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
+                <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
+                <li>Komoot-linked walks come first</li>
+                <li>Main walks before variants</li>
+                <li>Higher rating first (4 → 3 → 2 → unrated → 1)</li>
+                <li>Distance closest to 13 km</li>
+                <li>Alphabetic tiebreak</li>
+              </ol>
+            </div>
+            <div>
+              <p className="mb-1 font-medium">What the public sees</p>
+              <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
+                <li><strong>Always shown:</strong> every main walk + every Note.</li>
+                <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
+                <li><strong>Variants are hidden</strong> when the station has 3+ mains, OR when the variant's title (without its suffix) duplicates another walk's title at the same station.</li>
+                <li>Otherwise variants are shown.</li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -340,13 +437,18 @@ export default function WalksAdminPanel({
 function WalkCard({
   walk,
   onSaved,
+  onDelete,
 }: {
   walk: WalkPayload
   onSaved: () => void | Promise<void>
+  /** Delete this walk by id. Wrapped in a ConfirmDialog so the
+   *  admin can't nuke a walk with a single misclick. */
+  onDelete?: (id: string) => void | Promise<void>
 }) {
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
 
   // Draft state — initialised from the walk prop. useMemo keeps a
   // stable reference to the "server shape" for dirty-comparison.
@@ -359,6 +461,7 @@ function WalkCard({
       mudWarning: walk.mudWarning,
       warnings: walk.warnings,
       trainTips: walk.trainTips,
+      privateNote: walk.privateNote ?? "",
       rating: walk.rating,
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
@@ -374,7 +477,7 @@ function WalkCard({
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.warnings, walk.trainTips, walk.rating, walk.terrain,
+      walk.warnings, walk.trainTips, walk.privateNote, walk.rating, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
@@ -395,6 +498,7 @@ function WalkCard({
       draft.mudWarning !== serverState.mudWarning ||
       draft.warnings.trim() !== serverState.warnings.trim() ||
       draft.trainTips.trim() !== serverState.trainTips.trim() ||
+      draft.privateNote.trim() !== serverState.privateNote.trim() ||
       draft.rating !== serverState.rating ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
@@ -446,6 +550,7 @@ function WalkCard({
           mudWarning: draft.mudWarning,
           warnings: draft.warnings,
           trainTips: draft.trainTips,
+          privateNote: draft.privateNote,
           rating: draft.rating,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
@@ -890,7 +995,28 @@ function WalkCard({
             />
           </div>
 
-          {/* Save / error footer */}
+          {/* Private note — admin-only scratchpad. Never rendered in
+              public prose. Useful for curation TODOs ("distance
+              conflicts between Komoot and SWC", "check after bridge
+              reopens", etc). */}
+          <div className="mb-3">
+            <Label htmlFor={`priv-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+              Private note (admin-only)
+            </Label>
+            <Input
+              id={`priv-${walk.id}`}
+              value={draft.privateNote}
+              onChange={(e) => setDraft((d) => ({ ...d, privateNote: e.target.value }))}
+              placeholder="e.g. distance figures disagree with Komoot"
+              className="h-7 text-xs"
+            />
+          </div>
+
+          {/* Save / delete footer — delete sits on the right and is
+              gated behind a ConfirmDialog so a misclick doesn't
+              nuke a walk. Delete only renders when the parent wired
+              onDelete (it's the only surface that knows how to
+              refresh the list afterwards). */}
           <div className="mt-3 flex items-center gap-2">
             <Button
               size="sm"
@@ -901,7 +1027,27 @@ function WalkCard({
               {saving ? "Saving…" : "Save"}
             </Button>
             {saveError && <span className="text-xs text-destructive">{saveError}</span>}
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setConfirmDeleteOpen(true)}
+                className="ml-auto h-7 text-xs"
+              >
+                Delete walk
+              </Button>
+            )}
           </div>
+          {onDelete && (
+            <ConfirmDialog
+              open={confirmDeleteOpen}
+              onOpenChange={setConfirmDeleteOpen}
+              title="Delete this walk?"
+              description={<>This removes <span className="font-mono">{walk.id}</span> from the source data entirely. Can't be undone from the UI.</>}
+              confirmLabel="Delete walk"
+              onConfirm={() => onDelete(walk.id)}
+            />
+          )}
         </div>
       )}
     </div>

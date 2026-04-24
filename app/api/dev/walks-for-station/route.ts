@@ -59,6 +59,10 @@ type WalkPayload = {
   // editable
   warnings: string
   trainTips: string
+  // Admin-only scratchpad on the walk. Never exposed to the public
+  // (build script ignores it entirely). Useful for curation TODOs
+  // like "check distance, SWC says 14.5 but Komoot says 13.8".
+  privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
   komootUrl: string
@@ -164,6 +168,7 @@ export async function GET(req: NextRequest) {
           lunchStops: v.lunchStops ?? [],
           warnings: v.warnings ?? "",
           trainTips: v.trainTips ?? "",
+          privateNote: v.privateNote ?? "",
           mudWarning: !!v.mudWarning,
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
           komootUrl: v.komootUrl ?? "",

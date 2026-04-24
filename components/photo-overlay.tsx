@@ -61,6 +61,7 @@ async function fetchPhotosViaProxy(
 import { Button } from "@/components/ui/button"
 import { LogoSpinner } from "@/components/logo-spinner"
 import WalksAdminPanel from "@/components/walks-admin-panel"
+import { ConfirmDialog } from "@/components/confirm-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
@@ -2554,6 +2555,11 @@ function RamblerExtrasEditor({
 }) {
   const [draft, setDraft] = useState<string[]>(extras)
   const [saving, setSaving] = useState(false)
+  // When non-null, the ConfirmDialog renders asking whether to drop
+  // the note at this index. Deleting a note is local-only until Save
+  // is pressed, but the admin may have typed a long note they'd
+  // regret losing to a misclick — so it still gets a confirm.
+  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null)
   // Re-seed the draft if the server state updates from elsewhere
   // (e.g. a sibling edit, or an external edit flushed back via refetch).
   // Uses a JSON compare so identical-but-new-reference arrays don't
@@ -2605,7 +2611,7 @@ function RamblerExtrasEditor({
             />
             <button
               type="button"
-              onClick={() => setDraft(draft.filter((_, j) => j !== i))}
+              onClick={() => setConfirmDeleteIndex(i)}
               className="rounded px-1 text-muted-foreground hover:text-destructive"
               title="Delete note"
               aria-label={`Delete note ${i + 1}`}
@@ -2632,6 +2638,23 @@ function RamblerExtrasEditor({
           {saving ? "Saving…" : "Save"}
         </button>
       </div>
+      <ConfirmDialog
+        open={confirmDeleteIndex !== null}
+        onOpenChange={(open) => { if (!open) setConfirmDeleteIndex(null) }}
+        title="Delete this note?"
+        description={
+          confirmDeleteIndex !== null ? (
+            <>This removes the note from the local draft. Changes persist to the site after you click <strong>Save</strong>.</>
+          ) : null
+        }
+        confirmLabel="Delete note"
+        onConfirm={() => {
+          if (confirmDeleteIndex !== null) {
+            setDraft((d) => d.filter((_, j) => j !== confirmDeleteIndex))
+          }
+          setConfirmDeleteIndex(null)
+        }}
+      />
     </div>
   )
 }
