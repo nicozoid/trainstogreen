@@ -5571,5 +5571,19 @@
       "7793902440",
       "41070892495"
     ]
+  },
+  "1.07582,51.274185": {
+    "name": "Canterbury East",
+    "approved": [
+      {
+        "id": "18469350388",
+        "title": "Westgate city gate, c1379, Westgate Gardens, and Great Stour River - Canterbury, Kent, England..",
+        "ownerName": "edk7",
+        "thumbnailUrl": "https://live.staticflickr.com/463/18469350388_be44028b5b.jpg",
+        "largeUrl": "https://live.staticflickr.com/463/18469350388_be44028b5b_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/11200205@N02/18469350388",
+        "dateTaken": "2015-04-28 18:52:57"
+      }
+    ]
   }
 }
