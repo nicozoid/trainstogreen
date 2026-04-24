@@ -1,20 +1,39 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
-import type { FlickrPhoto } from "@/lib/flickr"
+import { type FlickrPhoto } from "@/lib/flickr"
 
 const FILE_PATH = "data/photo-curations.json"
 
-// Each station's curations: approved photos (full objects so they can always
-// be displayed) and rejected photo IDs (just need the ID to filter them out).
+// Each station's curations.
+//
+// `approved` is the canonical display order — admins reorder freely within it,
+// but the array MUST keep the invariant: every id in `pinnedIds` comes before
+// any non-pinned photo. All callers that move photos around enforce this.
+//
+// `pinnedIds` is the set of photo ids the admin has pinned. Their relative
+// order is derived from their order in `approved[]` (pinnedIds itself isn't
+// an ordered source of truth; it's just "which photos have the pin badge").
 type CurationEntry = {
   name: string
   approved: FlickrPhoto[]
-  rejected: string[]
+  pinnedIds?: string[]
 }
 
-// POST — approve or reject a photo for a station
-// Body: { coordKey, name, photoId, action: "approve" | "reject", photo?: FlickrPhoto }
-// "photo" is required when action is "approve" (stores the full object).
+// Helper — count how many of the currently-approved photos are pinned.
+// `approved.slice(0, numPins)` is the pinned prefix.
+function getNumPins(entry: CurationEntry): number {
+  if (!entry.pinnedIds?.length) return 0
+  const set = new Set(entry.pinnedIds)
+  let count = 0
+  for (const p of entry.approved) {
+    if (set.has(p.id)) count++
+    else break  // invariant: pins come first, so we can stop at the first non-pinned
+  }
+  return count
+}
+
+// POST — approve / unapprove / pin / unpin / move a photo for a station
+// Body: { coordKey, name, photoId, action, photo?, direction? }
 export async function POST(req: NextRequest) {
   const { coordKey, name, photoId, action, photo, direction } = await req.json()
 
@@ -23,71 +42,93 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: curations, sha } = await readDataFile<Record<string, CurationEntry>>(FILE_PATH)
-  const entry = curations[coordKey] ?? { name: name ?? coordKey, approved: [], rejected: [] }
+  const entry = curations[coordKey] ?? { name: name ?? coordKey, approved: [] }
   entry.name = name ?? entry.name
 
   if (action === "approve") {
     if (!photo) {
       return NextResponse.json({ error: "photo object required for approve" }, { status: 400 })
     }
-    // Remove from rejected if it was there
-    entry.rejected = entry.rejected.filter((id) => id !== photoId)
-    // Add to approved if not already there. Approved list is capped at
-    // MAX_APPROVED (mirrors MAX_PHOTOS in photo-overlay.tsx); once the
-    // cap is hit, a new approval replaces the last (12th) photo.
-    // The displaced photo returns to neutral state — not rejected — so
-    // it can be re-approved later or surface as a Flickr candidate again.
-    const MAX_APPROVED = 12
+    // Append to end — new approvals land at the bottom of the non-pinned section.
     if (!entry.approved.some((p) => p.id === photoId)) {
-      if (entry.approved.length >= MAX_APPROVED) {
-        entry.approved = entry.approved.slice(0, MAX_APPROVED - 1)
-      }
       entry.approved.push(photo)
     }
-  } else if (action === "reject") {
-    // Remove from approved if it was there
-    entry.approved = entry.approved.filter((p) => p.id !== photoId)
-    // Add to rejected if not already there
-    if (!entry.rejected.includes(photoId)) {
-      entry.rejected.push(photoId)
+  } else if (action === "approveAtTop") {
+    // "jump to top" on a non-approved photo: approve AND put at the top of
+    // the non-pinned section (just below the last pin). Keeps pins untouched.
+    if (!photo) {
+      return NextResponse.json({ error: "photo object required for approveAtTop" }, { status: 400 })
     }
-  } else if (action === "unapprove") {
-    // Remove from approved without adding to rejected — photo returns to neutral state
+    // Remove any existing entry for this id so we can re-insert cleanly.
     entry.approved = entry.approved.filter((p) => p.id !== photoId)
+    const numPins = getNumPins(entry)
+    entry.approved.splice(numPins, 0, photo)
+  } else if (action === "unapprove") {
+    entry.approved = entry.approved.filter((p) => p.id !== photoId)
+    entry.pinnedIds = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
+  } else if (action === "pin") {
+    // Pinning implicitly approves — if the photo isn't in the approved list
+    // yet, we need the full photo object so we can store it.
+    let existing = entry.approved.find((p) => p.id === photoId)
+    if (!existing) {
+      if (!photo) {
+        return NextResponse.json({ error: "photo object required to pin an unapproved photo" }, { status: 400 })
+      }
+      existing = photo
+    }
+    // Remove from current position (if already in approved[]) and from pinnedIds.
+    entry.approved = entry.approved.filter((p) => p.id !== photoId)
+    const prevPins = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
+    // Insert at position `numPins` (computed against the list AFTER removal) so
+    // the photo lands at the bottom of the pinned section — below any existing
+    // pins, above every non-pinned photo.
+    const numPinsAfterRemoval = prevPins.filter((id) => entry.approved.some((p) => p.id === id)).length
+    entry.approved.splice(numPinsAfterRemoval, 0, existing as FlickrPhoto)
+    entry.pinnedIds = [...prevPins, photoId]
+  } else if (action === "unpin") {
+    // Photo keeps its position — which, since it was at the bottom of the
+    // pinned section, becomes the top of the non-pinned section.
+    entry.pinnedIds = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
   } else if (action === "move") {
-    // "top"    — jump to the front.
-    // "bottom" — jump to the 12th slot (index 11). Matches the overlay cap
-    //            of 12 visible photos: "bottom" means bottom-of-visible, not
-    //            true end of list. On stations with <12 approved this
-    //            degrades to append (splice clamps to end).
-    // "up" / "down" — single-step swap with the neighbour.
+    // "up" / "down" — swap with immediate neighbour, clamped at the section
+    //                 boundary (can't cross between pinned and non-pinned).
+    // "top"         — push to the top of the photo's own section.
+    //                 pinned   → index 0
+    //                 non-pinned → index numPins (just below the last pin).
+    // "bottom"      — push to the bottom of the photo's own section.
+    //                 pinned   → index numPins - 1 (bottom of pins).
+    //                 non-pinned → index approved.length - 1 (end of queue).
     const idx = entry.approved.findIndex((p) => p.id === photoId)
     if (idx >= 0) {
+      const pinnedSet = new Set(entry.pinnedIds ?? [])
+      const isPinned = pinnedSet.has(photoId)
+      const numPins = getNumPins(entry)
       if (direction === "top") {
-        const [photo] = entry.approved.splice(idx, 1)
-        entry.approved.unshift(photo)
+        const [p] = entry.approved.splice(idx, 1)
+        const targetIdx = isPinned ? 0 : numPins
+        entry.approved.splice(targetIdx, 0, p)
       } else if (direction === "bottom") {
-        const [photo] = entry.approved.splice(idx, 1)
-        const targetIdx = Math.min(11, entry.approved.length)
-        entry.approved.splice(targetIdx, 0, photo)
-      } else if (direction === "end") {
-        // True end of approved list — used by refresh on approved photos
-        // to demote them past the visible 12.
-        const [photo] = entry.approved.splice(idx, 1)
-        entry.approved.push(photo)
+        const [p] = entry.approved.splice(idx, 1)
+        const targetIdx = isPinned ? numPins - 1 : entry.approved.length
+        entry.approved.splice(Math.max(0, targetIdx), 0, p)
       } else {
         const targetIdx = direction === "up" ? idx - 1 : idx + 1
         if (targetIdx >= 0 && targetIdx < entry.approved.length) {
-          ;[entry.approved[idx], entry.approved[targetIdx]] = [entry.approved[targetIdx], entry.approved[idx]]
+          // Respect the pin/non-pin section boundary — don't let a swap cross it.
+          const neighbourPinned = pinnedSet.has(entry.approved[targetIdx].id)
+          if (isPinned === neighbourPinned) {
+            ;[entry.approved[idx], entry.approved[targetIdx]] = [entry.approved[targetIdx], entry.approved[idx]]
+          }
         }
       }
     }
   } else {
-    return NextResponse.json({ error: "action must be 'approve', 'reject', 'unapprove', or 'move'" }, { status: 400 })
+    return NextResponse.json({ error: "action must be 'approve', 'approveAtTop', 'unapprove', 'pin', 'unpin', or 'move'" }, { status: 400 })
   }
 
-  // Clean up empty entries
-  if (entry.approved.length === 0 && entry.rejected.length === 0) {
+  // Tidy: drop empty pinnedIds and drop empty entries entirely.
+  if (entry.pinnedIds && entry.pinnedIds.length === 0) delete entry.pinnedIds
+  if (entry.approved.length === 0) {
     delete curations[coordKey]
   } else {
     curations[coordKey] = entry

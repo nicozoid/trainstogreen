@@ -11,6 +11,7 @@ import { HelpButton } from "@/components/help-button"
 import { AdminPublishButton } from "@/components/admin-publish-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
+import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
 import excludedStationsList from "@/data/excluded-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -1998,29 +1999,31 @@ export default function HikeMap() {
     () => new Set(["highlight", "verified"]),
   )
 
-  // Photo curations — per-station approved/rejected photo lists, loaded from
-  // data/photo-curations.json via API. Only used in admin mode.
-  type CurationEntry = { name: string; approved: FlickrPhoto[]; rejected: string[] }
+  // Photo curations — per-station approved photo list + pinned-ids subset.
+  // Loaded from data/photo-curations.json via API. Only used in admin mode.
+  // Invariant: all ids in pinnedIds appear at the start of approved[], in the
+  // same relative order as they do in approved[].
+  type CurationEntry = { name: string; approved: FlickrPhoto[]; pinnedIds?: string[] }
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
   type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
-  // Per-station Flickr-algorithm override. Admin picks one of four algos for a
-  // station; "custom" lets them fully control tags/exclusions/radius. Stations
-  // without an entry here use the auto-fallback (isOrigin → station,
-  // else landscapes). Curation state no longer promotes to hikes — that's manual.
-  type FlickrAlgo = "landscapes" | "hikes" | "station" | "custom"
+  // Per-station custom Flickr tag config (the "custom" fallback step). Only
+  // stations with an entry participate in that step — everything else skips
+  // straight to the next algo in the chain. The algo itself (landscapes /
+  // station) is now decided per-station based on cluster/excluded membership.
   type FlickrSort = "relevance" | "interestingness-desc"
-  type FlickrSettings = {
-    name?: string
-    algo: FlickrAlgo
-    // Custom payload only includes `sort` when the admin has explicitly
-    // picked one; default (when absent) is "relevance" server-side.
-    custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }
-  }
-  const [flickrSettings, setFlickrSettings] = useState<Record<string, FlickrSettings>>({})
+  type CustomSettings = { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort }
+  type FlickrCustomEntry = { name?: string; custom: CustomSettings }
+  const [flickrSettings, setFlickrSettings] = useState<Record<string, FlickrCustomEntry>>({})
+
+  // Global Flickr presets (landscapes/hikes/station). Hydrated from
+  // /api/dev/flickr-presets. Editing any of these affects every station that
+  // uses that algo.
+  type Presets = { landscapes: CustomSettings; hikes: CustomSettings; station: CustomSettings }
+  const [presets, setPresets] = useState<Presets | null>(null)
 
   // Fetch universal ratings and photo curations on mount
   useEffect(() => {
@@ -2036,6 +2039,9 @@ export default function HikeMap() {
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
+    fetch("/api/dev/flickr-presets")
+      .then((res) => res.json())
+      .then((data: Presets) => setPresets(data))
     // Stations flagged as "has issue" (admin triage). Server returns a
     // flat string[] of coordKeys; we wrap it in a Set for O(1) lookups.
     fetch("/api/dev/has-issue-station")
@@ -4384,19 +4390,18 @@ export default function HikeMap() {
             const entry = stationNotes[f.properties.coordKey as string]
             if (!entry?.privateNote?.trim()) return false
           } else if (primaryFeatureFilter === "sloppy-pics") {
-            // "Not fully curated yet" — fewer than MAX_PHOTOS (12) approved.
+            // "Not fully curated yet" — fewer than MAX_GALLERY_PHOTOS approved.
             // Stations never touched (entry undefined → approved.length = 0)
             // satisfy this, which is intentional.
             const entry = curations[f.properties.coordKey as string]
             const approvedCount = entry?.approved.length ?? 0
-            if (approvedCount >= 12) return false
+            if (approvedCount >= MAX_GALLERY_PHOTOS) return false
           } else if (primaryFeatureFilter === "all-sloppy-pics") {
-            // "Never touched" — no approvals AND no rejections. These are
-            // the stations still on the broad (no-curation) Flickr algo.
+            // "Never touched" — no approvals. These are the stations whose
+            // gallery is still entirely driven by the Flickr algo chain.
             const entry = curations[f.properties.coordKey as string]
             const approvedCount = entry?.approved.length ?? 0
-            const rejectedCount = entry?.rejected.length ?? 0
-            if (approvedCount > 0 || rejectedCount > 0) return false
+            if (approvedCount > 0) return false
           }
         }
         // When friend mode is active, also require the station to be reachable
@@ -4740,31 +4745,16 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: approve a photo for a station — persists to data/photo-curations.json
-  //
-  // Newly approved photos land at the BOTTOM of the approved list. The list is
-  // capped at 12 (matching MAX_PHOTOS in photo-overlay.tsx): once that cap is
-  // hit, a new approval replaces the existing 12th (last) photo. The dropped
-  // photo returns to neutral state (not rejected), so it can be re-approved
-  // later or surface again as a Flickr candidate.
+  // Dev action: approve a photo for a station — persists to data/photo-curations.json.
+  // Approvals are now uncapped (admins can keep a "bench" beyond the visible
+  // 12); the non-admin gallery still only shows the first 12.
   const handleApprovePhoto = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
-    const MAX_APPROVED = 12
-    // Optimistic update
     setCurations((prev) => {
-      const entry = prev[coordKey] ?? { name, approved: [], rejected: [] }
-      if (entry.approved.some((p) => p.id === photo.id)) return prev // already approved
-      // If already at cap, drop the last existing approval so the new one takes slot 12.
-      const base = entry.approved.length >= MAX_APPROVED
-        ? entry.approved.slice(0, MAX_APPROVED - 1)
-        : entry.approved
+      const entry = prev[coordKey] ?? { name, approved: [] }
+      if (entry.approved.some((p) => p.id === photo.id)) return prev
       return {
         ...prev,
-        [coordKey]: {
-          ...entry,
-          name,
-          approved: [...base, photo],
-          rejected: entry.rejected.filter((id) => id !== photo.id),
-        },
+        [coordKey]: { ...entry, name, approved: [...entry.approved, photo] },
       }
     })
     await fetch("/api/dev/curate-photo", {
@@ -4774,67 +4764,47 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: reject a photo for a station — it disappears and won't return
-  const handleRejectPhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
-    // Optimistic update
-    setCurations((prev) => {
-      const entry = prev[coordKey] ?? { name, approved: [], rejected: [] }
-      if (entry.rejected.includes(photoId)) return prev // already rejected
-      return {
-        ...prev,
-        [coordKey]: {
-          ...entry,
-          name,
-          approved: entry.approved.filter((p) => p.id !== photoId),
-          rejected: [...entry.rejected, photoId],
-        },
-      }
-    })
-    await fetch("/api/dev/curate-photo", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId, action: "reject" }),
-    })
-  }, [])
-
-  // Dev action: move an approved photo within the approved list.
-  //   "up" / "down" — swap with the neighbour one slot away.
-  //   "top"         — jump to the front of the approved list.
-  //   "bottom"      — jump to the 12th slot (index 11). Because the overlay
-  //                   only ever shows the first 12 approved photos, "bottom"
-  //                   means "bottom of what's visible". On legacy stations
-  //                   with >12 approved this is NOT the true end of the list;
-  //                   it's slot 12. If there are <12 approved, it degrades
-  //                   gracefully to "append to end" (same slot either way).
-  //   "end"         — true end of the approved list (past the visible 12).
-  //                   Used by the refresh button on approved photos to demote
-  //                   them off-screen — distinct from "bottom" (slot 12).
-  const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top" | "bottom" | "end") => {
-    // Optimistic update — swap with neighbour, or splice for "top"/"bottom"
+  // Dev action: move an approved photo within the approved list. All moves
+  // respect the pin/non-pin section boundary — pinned photos stay in the
+  // pinned prefix, non-pinned stay below it.
+  //   "up" / "down" — swap with the neighbour one slot away (no-op if that
+  //                   swap would cross the section boundary).
+  //   "top"         — push to the top of the photo's own section.
+  //                     pinned     → index 0
+  //                     non-pinned → index numPins (just below the last pin)
+  //   "bottom"      — push to the bottom of the photo's own section.
+  //                     pinned     → index numPins - 1 (bottom of pins)
+  //                     non-pinned → index approved.length - 1 (end of queue)
+  const handleMovePhoto = useCallback(async (coordKey: string, name: string, photoId: string, direction: "up" | "down" | "top" | "bottom") => {
     setCurations((prev) => {
       const entry = prev[coordKey]
       if (!entry) return prev
       const approved = [...entry.approved]
       const idx = approved.findIndex((p) => p.id === photoId)
       if (idx < 0) return prev
+      const pinnedSet = new Set(entry.pinnedIds ?? [])
+      const isPinned = pinnedSet.has(photoId)
+      // numPins = length of the pinned prefix in approved[]. Derived by
+      // walking from the start until the first non-pinned photo.
+      let numPins = 0
+      for (const p of approved) {
+        if (pinnedSet.has(p.id)) numPins++
+        else break
+      }
       if (direction === "top") {
         const [photo] = approved.splice(idx, 1)
-        approved.unshift(photo)
-      } else if (direction === "bottom") {
-        // Remove first, then insert at index 11 (12th slot). If the list is
-        // shorter than that after removal, splice clamps to the end — which
-        // is the intuitive fallback when there are <12 approved photos.
-        const [photo] = approved.splice(idx, 1)
-        const targetIdx = Math.min(11, approved.length)
+        const targetIdx = isPinned ? 0 : numPins
         approved.splice(targetIdx, 0, photo)
-      } else if (direction === "end") {
-        // True end of the approved list (past the visible 12). Used to demote
-        // a refreshed-away approved photo off-screen.
+      } else if (direction === "bottom") {
         const [photo] = approved.splice(idx, 1)
-        approved.push(photo)
+        const targetIdx = isPinned ? Math.max(0, numPins - 1) : approved.length
+        approved.splice(targetIdx, 0, photo)
       } else {
         const targetIdx = direction === "up" ? idx - 1 : idx + 1
         if (targetIdx < 0 || targetIdx >= approved.length) return prev
+        // Don't let single-step swaps cross the section boundary.
+        const neighbourPinned = pinnedSet.has(approved[targetIdx].id)
+        if (isPinned !== neighbourPinned) return prev
         ;[approved[idx], approved[targetIdx]] = [approved[targetIdx], approved[idx]]
       }
       return { ...prev, [coordKey]: { ...entry, approved } }
@@ -4846,17 +4816,19 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Dev action: un-approve a photo — removes from approved without rejecting it
+  // Dev action: un-approve a photo — removes from the approved list and from
+  // the pinned set (if it was pinned).
   const handleUnapprovePhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
     setCurations((prev) => {
       const entry = prev[coordKey]
       if (!entry) return prev
-      const updated = {
+      const updated: CurationEntry = {
         ...entry,
         approved: entry.approved.filter((p) => p.id !== photoId),
+        pinnedIds: (entry.pinnedIds ?? []).filter((id) => id !== photoId),
       }
-      // Clean up if both lists are now empty
-      if (updated.approved.length === 0 && updated.rejected.length === 0) {
+      if (updated.pinnedIds?.length === 0) delete updated.pinnedIds
+      if (updated.approved.length === 0) {
         const next = { ...prev }
         delete next[coordKey]
         return next
@@ -4867,6 +4839,82 @@ export default function HikeMap() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ coordKey, name, photoId, action: "unapprove" }),
+    })
+  }, [])
+
+  // Dev action: approve a photo and place it at the TOP of the non-pinned
+  // section (just below the last pin). Used by the "jump to top" button on
+  // algo tabs for photos that aren't yet approved.
+  const handleApproveAtTop = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
+    setCurations((prev) => {
+      const entry = prev[coordKey] ?? { name, approved: [] }
+      const photoId = photo.id
+      const approvedWithoutPhoto = entry.approved.filter((p) => p.id !== photoId)
+      const pinnedSet = new Set(entry.pinnedIds ?? [])
+      // numPins = length of the pinned prefix after the removal.
+      let numPins = 0
+      for (const p of approvedWithoutPhoto) {
+        if (pinnedSet.has(p.id)) numPins++
+        else break
+      }
+      const nextApproved = [...approvedWithoutPhoto]
+      nextApproved.splice(numPins, 0, photo)
+      return { ...prev, [coordKey]: { ...entry, name, approved: nextApproved } }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "approveAtTop", photo }),
+    })
+  }, [])
+
+  // Dev action: pin a photo. Pinning implicitly approves the photo if it
+  // isn't already in the approved list. The photo jumps to the bottom of
+  // the pinned section (just above the first non-pinned photo).
+  const handlePinPhoto = useCallback(async (coordKey: string, name: string, photo: FlickrPhoto) => {
+    setCurations((prev) => {
+      const entry = prev[coordKey] ?? { name, approved: [], pinnedIds: [] }
+      const photoId = photo.id
+      const existing = entry.approved.find((p) => p.id === photoId) ?? photo
+      const approvedWithoutPhoto = entry.approved.filter((p) => p.id !== photoId)
+      const prevPins = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
+      // numPins = how many of the prev pins remain in approved[] after the
+      // removal we just did (they do; we only removed the pinned photo itself).
+      const numPins = prevPins.filter((id) => approvedWithoutPhoto.some((p) => p.id === id)).length
+      const nextApproved = [...approvedWithoutPhoto]
+      nextApproved.splice(numPins, 0, existing)
+      return {
+        ...prev,
+        [coordKey]: {
+          ...entry,
+          name,
+          approved: nextApproved,
+          pinnedIds: [...prevPins, photoId],
+        },
+      }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "pin", photo }),
+    })
+  }, [])
+
+  // Dev action: unpin a photo. Photo stays in place (which becomes the top
+  // of the non-pinned section — a natural transition).
+  const handleUnpinPhoto = useCallback(async (coordKey: string, name: string, photoId: string) => {
+    setCurations((prev) => {
+      const entry = prev[coordKey]
+      if (!entry) return prev
+      const nextPins = (entry.pinnedIds ?? []).filter((id) => id !== photoId)
+      const updated: CurationEntry = { ...entry, pinnedIds: nextPins }
+      if (updated.pinnedIds?.length === 0) delete updated.pinnedIds
+      return { ...prev, [coordKey]: updated }
+    })
+    await fetch("/api/dev/curate-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coordKey, name, photoId, action: "unpin" }),
     })
   }, [])
 
@@ -4888,33 +4936,52 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Save / clear per-station Flickr settings (admin only). Pass algo=null to
-  // clear and revert to auto-fallback. `custom` is only meaningful when
-  // algo==="custom"; for the other algos it's ignored.
-  const handleSaveFlickrSettings = useCallback(
-    async (
-      coordKey: string,
-      name: string,
-      algo: FlickrAlgo | null,
-      custom?: { includeTags: string[]; excludeTags: string[]; radius: number; sort?: FlickrSort },
-    ) => {
-      // Optimistic update
+  // Save / clear per-station custom Flickr tag config. Pass custom=null to
+  // clear. Admins can no longer pick an algo per-station — that's decided by
+  // cluster/excluded membership (see defaultAlgoFor below).
+  const handleSaveCustom = useCallback(
+    async (coordKey: string, name: string, custom: CustomSettings | null) => {
       setFlickrSettings((prev) => {
         const next = { ...prev }
-        if (!algo) {
-          delete next[coordKey]
-        } else {
-          next[coordKey] = algo === "custom" && custom
-            ? { name, algo, custom }
-            : { name, algo }
-        }
+        if (!custom) delete next[coordKey]
+        else next[coordKey] = { name, custom }
         return next
       })
       await fetch("/api/dev/flickr-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ coordKey, name, algo, custom }),
+        body: JSON.stringify({ coordKey, name, custom }),
       })
+    },
+    [],
+  )
+
+  // Save a global Flickr preset. Affects every station that uses this algo as
+  // its default or fallback.
+  const handleSavePreset = useCallback(
+    async (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => {
+      setPresets((prev) => (prev ? { ...prev, [name]: preset } : prev))
+      await fetch("/api/dev/flickr-presets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, preset }),
+      })
+    },
+    [],
+  )
+
+  // Reset a global Flickr preset to its hardcoded default.
+  const handleResetPreset = useCallback(
+    async (name: "landscapes" | "hikes" | "station") => {
+      const res = await fetch("/api/dev/flickr-presets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, reset: true }),
+      })
+      const json = await res.json() as { preset?: CustomSettings }
+      if (json.preset) {
+        setPresets((prev) => (prev ? { ...prev, [name]: json.preset! } : prev))
+      }
     },
     [],
   )
@@ -7608,19 +7675,28 @@ export default function HikeMap() {
             onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}
             isExcluded={excludedStations.has(displayStation.coordKey)}
             approvedPhotos={curations[displayStation.coordKey]?.approved ?? []}
-            rejectedIds={new Set(curations[displayStation.coordKey]?.rejected ?? [])}
+            pinnedIds={new Set(curations[displayStation.coordKey]?.pinnedIds ?? [])}
             onApprovePhoto={(photo) => handleApprovePhoto(displayStation.coordKey, displayStation.name, photo)}
-            onRejectPhoto={(photoId) => handleRejectPhoto(displayStation.coordKey, displayStation.name, photoId)}
+            onApprovePhotoAtTop={(photo) => handleApproveAtTop(displayStation.coordKey, displayStation.name, photo)}
             onUnapprovePhoto={(photoId) => handleUnapprovePhoto(displayStation.coordKey, displayStation.name, photoId)}
+            onPinPhoto={(photo) => handlePinPhoto(displayStation.coordKey, displayStation.name, photo)}
+            onUnpinPhoto={(photoId) => handleUnpinPhoto(displayStation.coordKey, displayStation.name, photoId)}
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
             onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
-            flickrSettings={flickrSettings[displayStation.coordKey] ?? null}
-            onSaveFlickrSettings={(algo, custom) =>
-              handleSaveFlickrSettings(displayStation.coordKey, displayStation.name, algo, custom)
+            defaultAlgo={
+              // Central London terminals (18 + synthetic) and excluded stations
+              // default to "station"; everything else defaults to "landscapes".
+              londonClusterCoords.has(displayStation.coordKey) || excludedStations.has(displayStation.coordKey)
+                ? "station"
+                : "landscapes"
             }
+            customSettings={flickrSettings[displayStation.coordKey]?.custom ?? null}
+            onSaveCustom={(custom) => handleSaveCustom(displayStation.coordKey, displayStation.name, custom)}
+            presets={presets}
+            onSavePreset={handleSavePreset}
             // StationModal's internal API is name-based (it calls getEffectiveJourney
             // which expects a name, and prints "X minutes from <name>"). Translate
             // coord-keyed state → names at the boundary. journeys are re-keyed too.

@@ -2,6 +2,12 @@
 // Both functions fail silently (return 0 / []) when no API key is configured,
 // so the rest of the app works without Flickr.
 
+// The maximum number of photos shown in the non-admin station gallery. Also
+// the cutoff for the admin "Approved" tab's divider: photos beyond this slot
+// sit below the divider as a "bench" (admin-only). Single source of truth —
+// do not hardcode 12 in other files; import this constant instead.
+export const MAX_GALLERY_PHOTOS = 12
+
 export type FlickrPhoto = {
   id: string
   title: string
