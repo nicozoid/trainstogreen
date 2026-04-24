@@ -1,0 +1,155 @@
+# Plan: Structured walk data + Komoot + admin overlay
+
+Status: not started. This is a design doc for a future session to implement.
+
+## Goal
+
+Make the per-walk data in `data/rambler-walks.json` slightly richer so:
+
+1. **Komoot links** can live in source data and flow through the build into the rendered ramblerNote, rather than being hand-patched into `data/station-notes.json` (which gets wiped on every `node scripts/build-rambler-notes.mjs` run).
+2. **Mud warnings** and **best seasons** become structured fields instead of free-text, so they can be rendered as icons/chips in future UI and filtered on.
+3. **The per-station admin overlay** (wherever the ramblerNote is edited today) stops editing prose directly and instead edits structured fields — the prose gets regenerated from them.
+
+## Why not the full flatten?
+
+Open question from the conversation: *"how is this different from the big flatten-everything?"*
+
+Structurally it's close. If we add `komootUrl`, `bestSeasons`, `mudWarning` to each variant in the existing `walks[]` array, the variants effectively become the individual walk objects you described. The difference is:
+
+- **Keep current nesting**: page-level metadata (title, tagline, favourite, places, categories) sits above a `walks[]` array. Each variant holds its own stats + the new structured fields. No mass data migration.
+- **Full flatten**: every walk becomes a top-level record, and page-level metadata gets duplicated across all variants of the same page. ~1000 walks × migration work, with no user-visible benefit.
+
+**Recommendation: keep nesting, add fields.** The admin UI can still present walks as individual rows/cards regardless of underlying nesting.
+
+## Schema changes
+
+### `data/rambler-walks.json` — per walk (inside `walks[]`)
+
+Add three new optional fields to each variant object:
+
+```jsonc
+{
+  "role": "main",
+  "name": "Main Walk",
+  // ... existing fields ...
+  "komootUrl": "https://www.komoot.com/tour/2905513618",  // NEW — optional
+  "bestSeasons": ["jul", "aug"],                           // NEW — optional, array of 3-letter month codes
+  "mudWarning": true                                       // NEW — optional, default false
+}
+```
+
+Month codes: `"jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec"`.
+
+**Season → months mapping** (for migrating existing `bestTime` free-text):
+- spring → mar, apr, may
+- summer → jun, jul, aug
+- autumn / fall → sep, oct, nov
+- winter → dec, jan, feb
+- "late July/Aug" → jul, aug (use the inclusive reading — if a month is mentioned at all, include it)
+- "early/mid/late X" → just X
+- prose like "Can be very cold in winter" = usage advice, not a best-season. Leave empty in those cases.
+
+**Migration of `mudWarning`**: set `true` where the existing prose `warnings` string contains "mud" or "muddy" (case-insensitive). Don't delete the prose — `warnings` still holds the free-text for anything not captured by structured flags (e.g. "MOD closures apply").
+
+**Migration of `bestSeasons`**: parse the existing free-text `bestTime` field into month codes using the mapping above. Keep `bestTime` around as a legacy field for now (can drop in a later pass).
+
+### `scripts/build-rambler-notes.mjs` — emit the new fields
+
+In `buildSummary()`:
+
+1. **`komootUrl`**: emit a trailing clause `[Komoot](url).` (mirror the existing `entry.gpx` handling, but per-variant, not per-entry).
+2. **When `komootUrl` is present**: skip the distance and hours clauses. Komoot provides authoritative figures; the Rambler ones are often approximate and now conflict. (This replaces the feedback memory rule that says "hand-delete km/hours when adding Komoot".)
+3. **`bestSeasons`**: render as "Best in July, August." (join with commas, "and" before last, full month names). Replaces the old `variant.bestTime` rendering when structured is present; fall back to the free-text when not.
+4. **`mudWarning`**: when true, emit "Can be muddy." — but only if the free-text `warnings` doesn't already start with mud-related wording (avoid duplication). Other warnings still render as the free-text clause.
+
+Keep the favourites-first sort (already landed in this PR).
+
+## Book sources (new — allow walks cited from books, not just URLs)
+
+Some walks aren't sourced from a URL but from a book (e.g. *The Rough Guide to Walks in London & the South East*, 3rd edition). Today these live as hand-edited `publicNote` text. Going forward we want them as first-class walk entries alongside Rambler walks, so they share the same schema, admin UX, and rendering pipeline.
+
+Key constraint: **a single book will be cited by many walks.** Duplicating full book metadata on every walk would be wasteful and error-prone — update the edition once and it should propagate everywhere.
+
+### Proposed shape
+
+**New file: `data/book-sources.json`** — keyed by slug, holds book metadata once:
+
+```jsonc
+{
+  "rough-guide-walks-london-south-east-3rd": {
+    "title": "The Rough Guide to Walks in London & the South East",
+    "edition": "3rd",
+    "author": "Helena Smith, Judith Bamber",
+    "publisher": "Rough Guides",
+    "year": 2012,
+    "isbn": "…"
+  }
+}
+```
+
+**Walk entries** get an optional alternative source field instead of (or alongside) `url`:
+
+```jsonc
+{
+  "slug": "borough-green-to-sevenoaks-via-ightham-mote",
+  "title": "Borough Green to Sevenoaks, via Ightham Mote",
+  "source": { "book": "rough-guide-walks-london-south-east-3rd", "page": 42, "walkNumber": 15 },
+  // OR the existing URL-style:
+  // "source": { "url": "https://www.walkingclub.org.uk/…" }
+  // Existing top-level `url` becomes a legacy field; keep populated from `source.url` during migration.
+  "favourite": true,
+  "walks": [ … ]
+}
+```
+
+`page` / `walkNumber` are optional — whichever the book uses for referencing. We might want both.
+
+### Rendering
+
+In `buildSummary()`, the linked page title clause adapts to the source:
+
+- **URL source**: unchanged — `**[Walk Title](url)**:`
+- **Book source**: `**Walk Title**:` (no link on the title), with a trailing clause `Adapted from [book title, edition].` (possibly with page reference).
+
+The book metadata gets looked up from `book-sources.json` via the slug. If the book has no `url`, the title renders as plain text in the trailing clause; if it has an optional `url` field (e.g. publisher page or bookshop link) we can link it.
+
+### Admin UX
+
+The admin overlay needs a "source" field per walk with a picker: **URL** (text input) or **Book** (dropdown of existing book slugs + optional page/walkNumber). Adding a new book is a separate admin action (or just a manual edit of `book-sources.json` for now).
+
+### Extras integration
+
+The build script already merges `data/leicester-ramblers-walks.json`, `data/heart-rail-trails-walks.json`, `data/abbey-line-walks.json` via `EXTRA_WALKS_PATHS`. Book-sourced walks can follow the same pattern: a dedicated `data/rough-guide-london-walks.json` (or similar) registered in `EXTRA_WALKS_PATHS`. Each entry in it uses `source: { book: "..." }` instead of `source: { url: "..." }`. This keeps Rambler/SWC data and book data cleanly separated on disk.
+
+### Migration of existing hand-edited publicNote walks
+
+A small one-shot task: find every `publicNote` in `station-notes.json` that starts with a `**[Walk title](url)**: …` pattern, convert to a walk entry in the appropriate source file, then clear the `publicNote`. Sevenoaks's Borough-Green-via-Ightham-Mote entry is the first candidate. The user wants to do these by hand for now — fine, we're just making the target schema available.
+
+## Admin overlay changes
+
+> This is the biggest piece and the most uncertain — needs exploration in the session that implements this.
+
+The current `/admin/rambler-walks` page is a pipeline status table (extracted / onMap / issues), **not** a prose editor. Somewhere else — likely the map station overlay or a dedicated station-notes editor — is where ramblerNote is presented and possibly edited.
+
+Steps for the implementing session:
+
+1. **Find the editor**: grep for `ramblerNote` in `components/` and `app/`. Identify the component(s) that render an editable text area over the ramblerNote.
+2. **Decide the split**: the editor should present one card/section per walk (iterate `walks[]` of the entries whose start or end station matches the coord key). Each card shows: name, role, sights, terrain, distance, hours, lunch stops, Komoot URL (new editable), best seasons (new — month picker), mud warning (new — checkbox), other warnings (free text).
+3. **Page-level fields** (title, favourite, tagline) stay editable at the page level — one "page" section above the walks, or on a separate screen.
+4. **Save path**: when the admin edits any field, persist to `data/rambler-walks.json` (via an API route), then kick off the build script to regenerate `data/station-notes.json`. In dev, this can be synchronous; in a future prod setup, a CI hook.
+5. **Remove direct ramblerNote editing**: `station-notes.json` becomes purely a build output. The admin overlay never writes to it directly.
+
+## Migration + cutover order
+
+1. **Add the schema fields + build-script handling** (no data changes yet). Build script emits nothing new because no entries have the new fields. Safe to merge.
+2. **Add Komoot URL for Milford→Haslemere** (the one we already have) to `data/rambler-walks.json`. Run the build → verify it comes through in the ramblerNote. This replaces the hand-patch currently in `station-notes.json`.
+3. **Backfill `mudWarning` + `bestSeasons`** via a one-shot migration script (parse existing `warnings` and `bestTime` text). Dry-run first, eyeball a sample, then commit.
+4. **Update the admin overlay** to edit structured walks instead of prose. Biggest change; do last.
+5. **Optional later**: drop the legacy `bestTime` / `warnings` free-text fields if `mudWarning` + `bestSeasons` + any new structured warnings cover everything.
+
+## Open questions to resolve when implementing
+
+- Where is the ramblerNote editor today? (Answer will reshape step 4 above.)
+- Should `bestSeasons` support a range notation (`"jul-aug"`) or stay as an explicit array of month codes? Array is simpler; range compresses better — array wins for now.
+- Any other warning types worth structuring beyond mud? Possible: MOD closures, steep climbs, bull fields. Leave as free-text unless a clear pattern emerges during migration.
+- Do any walks have multiple Komoot URLs (e.g. one per variant)? Probably yes eventually — putting `komootUrl` on the variant rather than the page handles this.

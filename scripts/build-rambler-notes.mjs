@@ -262,7 +262,12 @@ function buildRamblerNotes(args) {
         if (!perStation.has(station.coordKey)) {
           perStation.set(station.coordKey, { name: station.name, ramblerParts: [] })
         }
-        perStation.get(station.coordKey).ramblerParts.push(summary)
+        // priority: 0 = Rambler-favourite walk, 1 = regular walk, 2 = extras.
+        // Sorted before join so favourites float to the top of the note.
+        perStation.get(station.coordKey).ramblerParts.push({
+          summary,
+          priority: entry.favourite ? 0 : 1,
+        })
       }
     }
   }
@@ -292,7 +297,9 @@ function buildRamblerNotes(args) {
         ramblerParts: [],
       })
     }
-    for (const line of lines) perStation.get(coordKey).ramblerParts.push(line)
+    for (const line of lines) {
+      perStation.get(coordKey).ramblerParts.push({ summary: line, priority: 2 })
+    }
   }
 
   // Apply to station-notes.json:
@@ -304,7 +311,9 @@ function buildRamblerNotes(args) {
   const changes = { added: 0, updated: 0, cleared: 0, removed: 0 }
 
   for (const [coordKey, { name, ramblerParts }] of perStation) {
-    const ramblerNote = ramblerParts.join("\n\n")
+    // Stable sort by priority: favourites first, then regular walks, then extras.
+    const ordered = [...ramblerParts].sort((a, b) => a.priority - b.priority)
+    const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const before = notes[coordKey].ramblerNote
       notes[coordKey].ramblerNote = ramblerNote
@@ -349,7 +358,9 @@ function buildRamblerNotes(args) {
       // eslint-disable-next-line no-console
       console.log("-".repeat(name.length + coordKey.length + 3))
       // eslint-disable-next-line no-console
-      console.log(ramblerParts.join("\n\n"))
+      const orderedSample = [...ramblerParts].sort((a, b) => a.priority - b.priority)
+      // eslint-disable-next-line no-console
+      console.log(orderedSample.map((p) => p.summary).join("\n\n"))
       // eslint-disable-next-line no-console
       console.log()
     }
