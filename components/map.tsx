@@ -2102,7 +2102,7 @@ export default function HikeMap() {
   // see a focused map (curated picks only), not every rated station plus
   // every "Okay" and every "Unknown". Admins can click extras on manually.
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
-    () => new Set(["highlight", "verified"]),
+    () => new Set(["highlight", "verified", "unverified"]),
   )
 
   // Photo curations — per-station approved photo list + pinned-ids subset.
@@ -7876,7 +7876,10 @@ export default function HikeMap() {
             {!isSearching && ([
               // [layerId, minzoom, filter]
               ["station-labels-highlight", isMobile ? 6 : 7, ["==", ["get", "rating"], "highlight"]],
-              ["station-labels-rated", 8, ["in", ["get", "rating"], ["literal", ["verified", "unverified"]]]],
+              ["station-labels-rated", 8, ["==", ["get", "rating"], "verified"]],
+              // Pleasant tier surfaces one zoom level later than Sublime/Charming
+              // so the map stays calmer at city-wide zooms.
+              ["station-labels-unverified", 9, ["==", ["get", "rating"], "unverified"]],
               ["station-labels-not-recommended", 8, ["==", ["get", "rating"], "not-recommended"]],
               // Unrated label tier — excludes "isExcluded" stations so their labels only
               // start showing at zoom 11+ (via station-labels-full).
