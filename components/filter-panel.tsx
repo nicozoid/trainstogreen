@@ -108,7 +108,7 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 // `adminOnly` entries only render when admin mode is active.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
-    key: "highlight", label: "Heavenly", tooltip: "A personal favourite of the T2G creator",
+    key: "highlight", label: "Sublime", tooltip: "A personal favourite of the T2G creator",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +117,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Good", tooltip: "Popular with ramblers",
+    key: "verified", label: "Charming", tooltip: "Popular with ramblers",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,16 +130,21 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Probably", tooltip: "Walks publicised by ramblers",
+    key: "unverified", label: "Pleasant", tooltip: "Walks publicised by ramblers",
     icon: (
-      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
+      // Filter-menu only — same hexagon points as before, rotated 45°
+      // for visual variety and scaled to 90% (w-[0.9rem]) to feel less
+      // dominant next to the star/triangle/diamond/circle siblings. Map
+      // icons are separate raster sprites (icon-unverified PNG) and are
+      // unaffected.
+      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.9rem] h-[0.9rem] rotate-45">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
         <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
       </svg>
     ),
   },
   {
-    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but this isn't the goodest",
+    key: "not-recommended", label: "Flawed", secondary: true, tooltip: "All green is good but this isn't the goodest",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -1412,55 +1417,54 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             ))}
           </div>
 
-          {/* Map-layer toggles — grouped under a single border-t divider.
-             The top rule separates this group from the ratings section
-             above; inside the group there's no further rule between
-             the two rows, so highlights + trails read as siblings. */}
-          <div className="mt-4 border-t pt-3">
-            {/* Current-season highlights toggle — visible to everyone
-               (not gated on adminMode). Label updates dynamically based
-               on `currentSeason` computed from today's date in map.tsx. */}
-            <div className="flex items-center justify-between">
-              <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
-                <span className="text-sm font-medium">{currentSeason} highlights</span>
-              </LabelTip>
-              <Checkbox
-                checked={currentSeasonHighlight}
-                onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
-                className="cursor-pointer"
-              />
-            </div>
+          {/* Map-layer toggles — admin-only. The whole block (including
+             the border-t divider above it) hides for non-admin users so
+             the public filter panel ends at the ratings section. */}
+          {adminMode && (
+            <div className="mt-4 border-t pt-3">
+              {/* Current-season highlights toggle. Label updates
+                 dynamically based on `currentSeason` from map.tsx. */}
+              <div className="flex items-center justify-between">
+                <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
+                  <span className="text-sm font-medium">{currentSeason} highlights</span>
+                </LabelTip>
+                <Checkbox
+                  checked={currentSeasonHighlight}
+                  onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
 
-            {/* Trails toggle — <div> instead of <label> so tapping the gap
-               on touchscreens doesn't toggle the checkbox.
-               mt-1.5 matches the rating-checkbox row spacing above so
-               the three map-layer toggles read as one tight stack. */}
-            <div className="mt-1.5 flex items-center justify-between">
-              <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
-                <span className="text-sm font-medium">Waymarked trails</span>
-              </LabelTip>
-              <Checkbox
-                checked={showTrails}
-                onCheckedChange={(checked) => onToggleTrails(checked === true)}
-                className="cursor-pointer"
-              />
-            </div>
+              {/* Trails toggle — <div> instead of <label> so tapping the
+                 gap on touchscreens doesn't toggle the checkbox.
+                 mt-1.5 matches the rating-checkbox row spacing above so
+                 the three map-layer toggles read as one tight stack. */}
+              <div className="mt-1.5 flex items-center justify-between">
+                <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
+                  <span className="text-sm font-medium">Waymarked trails</span>
+                </LabelTip>
+                <Checkbox
+                  checked={showTrails}
+                  onCheckedChange={(checked) => onToggleTrails(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
 
-            {/* Regions toggle — labels for English, Welsh and Scottish
-                counties + national parks + AONBs / National Landscapes.
-                Same on/off pattern as Waymarked trails so they sit
-                visually together. Off by default. */}
-            <div className="mt-1.5 flex items-center justify-between">
-              <LabelTip text="Show labels for counties, national parks, and AONBs / National Landscapes">
-                <span className="text-sm font-medium">Counties &amp; landscapes</span>
-              </LabelTip>
-              <Checkbox
-                checked={showRegions}
-                onCheckedChange={(checked) => onToggleRegions(checked === true)}
-                className="cursor-pointer"
-              />
+              {/* Regions toggle — labels for English, Welsh and Scottish
+                  counties + national parks + AONBs / National Landscapes.
+                  Off by default. */}
+              <div className="mt-1.5 flex items-center justify-between">
+                <LabelTip text="Show labels for counties, national parks, and AONBs / National Landscapes">
+                  <span className="text-sm font-medium">Counties &amp; landscapes</span>
+                </LabelTip>
+                <Checkbox
+                  checked={showRegions}
+                  onCheckedChange={(checked) => onToggleRegions(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

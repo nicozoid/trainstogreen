@@ -1525,6 +1525,18 @@ export default function HikeMap() {
   // reading correctly during the confirmation window.
   type NotificationPhase = "idle" | "loading" | "success"
   const [notificationPhase, setNotificationPhase] = useState<NotificationPhase>("idle")
+  // Filter-change notification — small pill at top-centre that flashes
+  // "Showing N stations" whenever any filter input changes. Distinct
+  // from the primary/friend "Looking up trains" pill above (different
+  // position, different copy, no spinner). Driven by a useEffect on
+  // displayedStations downstream; the visible flag controls the fade.
+  const [filterNotif, setFilterNotif] = useState<{ count: number; visible: boolean } | null>(null)
+  // Refs survive re-renders without retriggering the effect.
+  const filterNotifTimerRef = useRef<number | null>(null)
+  // First-render sentinel — skip the very first displayedStations
+  // computation (going from null → data) so the pill doesn't pop on
+  // initial page load.
+  const filterNotifReadyRef = useRef(false)
   // Ref to the auto-dismiss timer so a fast double-selection can
   // cancel the previous cycle's pending idle-flip. Without this,
   // picking station B while station A's success pill is still
@@ -1699,7 +1711,7 @@ export default function HikeMap() {
   // extends to 600min ("Max" = no upper limit).
   // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
   // does NOT persist across reloads — every visit starts from a clean slate.
-  const [maxMinutes, setMaxMinutes] = useState(120)
+  const [maxMinutes, setMaxMinutes] = useState(60)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations.
@@ -4888,6 +4900,31 @@ export default function HikeMap() {
         }),
     }
   }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
+
+  // Filter-change pill: flash "Showing N stations" at top-centre on
+  // every change to stationsForMap (which captures every filter
+  // input in its dep chain). The first computed value is skipped so
+  // the pill doesn't pop on initial page load — that's the
+  // filterNotifReadyRef sentinel. Each subsequent change resets a
+  // 1.5s timer so back-to-back filter tweaks coalesce into one pill
+  // session that fades out 1.5s after the LAST change.
+  useEffect(() => {
+    if (!stationsForMap) return
+    const count = stationsForMap.features.length
+    if (!filterNotifReadyRef.current) {
+      filterNotifReadyRef.current = true
+      return
+    }
+    setFilterNotif({ count, visible: true })
+    if (filterNotifTimerRef.current != null) {
+      clearTimeout(filterNotifTimerRef.current)
+    }
+    filterNotifTimerRef.current = window.setTimeout(() => {
+      setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
+      filterNotifTimerRef.current = null
+    }, 1500)
+  }, [stationsForMap])
+
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
   // no state delay, so icons don't flash before the shrink starts.
@@ -8249,6 +8286,26 @@ export default function HikeMap() {
             - animate-spin is Tailwind's stock 1s linear rotation,
               applied to a classic CSS ring (border-4 transparent on
               one side + coloured on the rest). */}
+      {/* Filter-change pill — top-centre. Same pill styling as the
+          "Looking up trains from..." notification below, just positioned
+          at top-centre with the same top margin as the filter panel
+          (top-2 mobile / sm:top-4 desktop) and shifted via -translate-x.
+          Fades out 1.5s after the most recent filter change. */}
+      <div
+        aria-hidden={!filterNotif?.visible}
+        className={cn(
+          "pointer-events-none absolute top-2 sm:top-4 left-1/2 -translate-x-1/2 z-[50]",
+          "transition-opacity duration-700",
+          filterNotif?.visible ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
+          <span className="text-sm font-medium">
+            Showing {filterNotif?.count ?? 0} stations
+          </span>
+        </div>
+      </div>
+
       <div
         aria-hidden={notificationPhase === "idle"}
         className={cn(

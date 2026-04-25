@@ -34,7 +34,6 @@
   { "name": "Surrey", "category": "county", "coord": [-0.53, 51.29] },
   { "name": "Sussex", "category": "county", "coord": [0.27, 50.90] },
   { "name": "Warwickshire", "category": "county", "coord": [-1.54, 52.21] },
-  { "name": "West Midlands", "category": "county", "coord": [-1.95, 52.50] },
   { "name": "Wiltshire", "category": "county", "coord": [-1.95, 51.30] },
   { "name": "Worcestershire", "category": "county", "coord": [-2.20, 52.20] },
   { "name": "Yorkshire", "category": "county", "coord": [-1.33, 54.03] },
