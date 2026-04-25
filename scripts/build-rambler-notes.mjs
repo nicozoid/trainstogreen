@@ -580,6 +580,22 @@ function buildSummary(variant, entry, crsIndex, sources) {
   const lunch = formatLunchStops(variant.lunchStops)
   if (lunch) parts.push(`Lunch at ${lunch}.`)
 
+  // Book source clause — emitted before distance so the book
+  // attribution reads as a lead-in to the trailing stats rather than
+  // trailing them. Only fires for book-style orgSlugs (Rough Guide
+  // etc); web sources were already handled above.
+  if (orgIsBook) {
+    const bookClause = formatSourceClause(variant, entry, sources)
+    if (bookClause) parts.push(bookClause)
+  }
+
+  // Related source — admin cross-reference rendered as a short
+  // "Adapted from [<Org> walk](url)." clause. Sits alongside the
+  // book source clause so any external attribution is grouped
+  // together just before the distance/time stats.
+  const relatedClause = formatRelatedSourceClause(variant, sources)
+  if (relatedClause) parts.push(relatedClause)
+
   // Distance and hours — each their own sentence, terse. Always
   // emitted when present, including alongside a Komoot route (the
   // "Pull distance" admin button keeps the structured fields in
@@ -588,22 +604,6 @@ function buildSummary(variant, entry, crsIndex, sources) {
   if (dist) parts.push(`${dist}.`)
   const time = formatHours(variant.hours)
   if (time) parts.push(`${time}.`)
-
-  // Book source clause — emitted after distance so the book
-  // attribution reads as a closing footnote rather than a
-  // header-line preface. Only fires for book-style orgSlugs (Rough
-  // Guide etc); web sources were already handled above.
-  if (orgIsBook) {
-    const bookClause = formatSourceClause(variant, entry, sources)
-    if (bookClause) parts.push(bookClause)
-  }
-
-  // Related source — admin cross-reference rendered as a short
-  // "Adapted from [<Org> walk](url)." clause. Sits after the book
-  // source clause so any external attribution is grouped together
-  // at the tail of the prose.
-  const relatedClause = formatRelatedSourceClause(variant, sources)
-  if (relatedClause) parts.push(relatedClause)
 
   // GPX file — entry-level (applies to the whole page, not per
   // variant). Renders as a trailing "[GPX file](URL)." clause so the
