@@ -1537,6 +1537,12 @@ export default function HikeMap() {
   // computation (going from null → data) so the pill doesn't pop on
   // initial page load.
   const filterNotifReadyRef = useRef(false)
+  // Track the last seen primary/friend so the pill suppresses itself
+  // when those change. Picking a new primary or friend fires the
+  // "Looking up trains from..." pill — flashing the count on top of
+  // that would feel like double-notification.
+  const filterNotifPrimaryRef = useRef<string | null>(null)
+  const filterNotifFriendRef = useRef<string | null>(null)
   // Ref to the auto-dismiss timer so a fast double-selection can
   // cancel the previous cycle's pending idle-flip. Without this,
   // picking station B while station A's success pill is still
@@ -2090,7 +2096,24 @@ export default function HikeMap() {
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
-  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
+  type NotesEntry = {
+    name: string
+    publicNote: string
+    privateNote: string
+    /** Admin's full unfiltered single-block prose: every walk + every
+     *  note for the station, joined with \n\n. Set by
+     *  scripts/build-rambler-notes.mjs. Replaces legacy `ramblerNote`. */
+    adminWalksAll?: string
+    /** Public sectioned prose — station-to-station walks. Filtered to
+     *  3 walks max (mains plus top variants up to the gap). */
+    publicWalksS2S?: string
+    /** Public sectioned prose — circular walks. Same 3-walks-per-section
+     *  filter as publicWalksS2S. */
+    publicWalksCircular?: string
+    /** Public free-form extras (notes about the station, not walks).
+     *  Always shown in full, no quota. Rendered without a section header. */
+    publicWalksExtras?: string
+  }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
   // Free-form "rambler extras" — admin-editable markdown paragraphs
@@ -4910,9 +4933,42 @@ export default function HikeMap() {
   // session that fades out 1.5s after the LAST change.
   useEffect(() => {
     if (!stationsForMap) return
-    const count = stationsForMap.features.length
+    // Exclude the primary origin (and any cluster members it expands
+    // to — Stratford → Stratford International, etc) plus the active
+    // friend origin from the count. Those are the user's own
+    // anchor points, not "destinations to consider".
+    const exclude = new Set<string>()
+    exclude.add(primaryOrigin)
+    for (const c of PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []) exclude.add(c)
+    if (friendOrigin) exclude.add(friendOrigin)
+    let count = 0
+    for (const f of stationsForMap.features) {
+      if (!exclude.has(f.properties.coordKey as string)) count += 1
+    }
     if (!filterNotifReadyRef.current) {
       filterNotifReadyRef.current = true
+      filterNotifPrimaryRef.current = primaryOrigin
+      filterNotifFriendRef.current = friendOrigin
+      return
+    }
+    // Suppress the pill when the primary or friend has just changed
+    // — those flows have their own "Looking up trains from..." pill.
+    // Update the trackers so subsequent stationsForMap updates after
+    // the origin change has settled (e.g. async routing diff load)
+    // also don't trigger the pill on a stale dep.
+    const originChanged =
+      filterNotifPrimaryRef.current !== primaryOrigin ||
+      filterNotifFriendRef.current !== friendOrigin
+    filterNotifPrimaryRef.current = primaryOrigin
+    filterNotifFriendRef.current = friendOrigin
+    if (originChanged) {
+      // Cancel any in-flight pill — the upcoming "Looking up trains"
+      // pill should have an empty stage to fade onto.
+      if (filterNotifTimerRef.current != null) {
+        clearTimeout(filterNotifTimerRef.current)
+        filterNotifTimerRef.current = null
+      }
+      setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
       return
     }
     setFilterNotif({ count, visible: true })
@@ -4922,8 +4978,8 @@ export default function HikeMap() {
     filterNotifTimerRef.current = window.setTimeout(() => {
       setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
       filterNotifTimerRef.current = null
-    }, 1500)
-  }, [stationsForMap])
+    }, 3000)
+  }, [stationsForMap, primaryOrigin, friendOrigin])
 
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
@@ -5222,21 +5278,44 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Save public/private/rambler notes for a station — called when the overlay closes
-  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string, ramblerNote: string) => {
-    // Optimistic update
+  // Save public/private notes for a station — called when the overlay
+  // closes. Walk prose (adminWalksAll / publicWalksS2S / publicWalksCircular
+  // / publicWalksExtras) is build-only and preserved on the existing entry
+  // by the API route, so we don't pass it in.
+  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string) => {
+    // Optimistic update — preserve the build-output walk fields from
+    // any existing entry so the optimistic state matches what the
+    // server will produce.
     setStationNotes((prev) => {
-      if (!publicNote && !privateNote && !ramblerNote) {
+      const existing = prev[coordKey]
+      const hasAnyWalkProse = !!(
+        existing?.adminWalksAll
+        || existing?.publicWalksS2S
+        || existing?.publicWalksCircular
+        || existing?.publicWalksExtras
+      )
+      if (!publicNote && !privateNote && !hasAnyWalkProse) {
         const next = { ...prev }
         delete next[coordKey]
         return next
       }
-      return { ...prev, [coordKey]: { name, publicNote, privateNote, ramblerNote } }
+      return {
+        ...prev,
+        [coordKey]: {
+          name,
+          publicNote,
+          privateNote,
+          adminWalksAll: existing?.adminWalksAll,
+          publicWalksS2S: existing?.publicWalksS2S,
+          publicWalksCircular: existing?.publicWalksCircular,
+          publicWalksExtras: existing?.publicWalksExtras,
+        },
+      }
     })
     await fetch("/api/dev/station-notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
+      body: JSON.stringify({ coordKey, name, publicNote, privateNote }),
     })
   }, [])
 
@@ -8204,9 +8283,11 @@ export default function HikeMap() {
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
-            ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
-            publicRamblerNote={stationNotes[displayStation.coordKey]?.publicRamblerNote ?? ""}
-            onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            adminWalksAll={stationNotes[displayStation.coordKey]?.adminWalksAll ?? ""}
+            publicWalksS2S={stationNotes[displayStation.coordKey]?.publicWalksS2S ?? ""}
+            publicWalksCircular={stationNotes[displayStation.coordKey]?.publicWalksCircular ?? ""}
+            publicWalksExtras={stationNotes[displayStation.coordKey]?.publicWalksExtras ?? ""}
+            onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             ramblerExtras={ramblerExtras[displayStation.coordKey] ?? []}
             onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}
             onWalkSaved={refreshStationDerivedData}
@@ -8286,25 +8367,49 @@ export default function HikeMap() {
             - animate-spin is Tailwind's stock 1s linear rotation,
               applied to a classic CSS ring (border-4 transparent on
               one side + coloured on the rest). */}
-      {/* Filter-change pill — top-centre. Same pill styling as the
-          "Looking up trains from..." notification below, just positioned
-          at top-centre with the same top margin as the filter panel
-          (top-2 mobile / sm:top-4 desktop) and shifted via -translate-x.
-          Fades out 1.5s after the most recent filter change. */}
-      <div
-        aria-hidden={!filterNotif?.visible}
-        className={cn(
-          "pointer-events-none absolute top-2 sm:top-4 left-1/2 -translate-x-1/2 z-[50]",
-          "transition-opacity duration-700",
-          filterNotif?.visible ? "opacity-100" : "opacity-0",
-        )}
-      >
-        <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
-          <span className="text-sm font-medium">
-            Showing {filterNotif?.count ?? 0} stations
-          </span>
-        </div>
-      </div>
+      {/* Filter-change pill — viewport-centred on sm+ desktop, pinned
+          to the bottom on sub-sm mobile (matches the loading pill below
+          so the two never collide vertically). Same chrome as the
+          "Looking up trains from..." notification: background, ring,
+          shadow, fixed-width spinner slot. Spinner is decorative here
+          (no actual async work) — it gives the pill the same "something
+          happened" energy as the loading one. Fades out 1.5s after the
+          most recent filter change. */}
+      {/* Visibility gate: filter pill hides whenever the loading pill
+          is active (notificationPhase !== "idle"). The two share the
+          same screen position; "Looking up trains" is always the
+          priority because it represents in-flight network work the
+          user kicked off intentionally. */}
+      {(() => {
+        const filterPillVisible = !!filterNotif?.visible && notificationPhase === "idle"
+        return (
+          <div
+            aria-hidden={!filterPillVisible}
+            className={cn(
+              "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
+              "transition-opacity duration-700",
+              filterPillVisible ? "opacity-100" : "opacity-0",
+            )}
+          >
+            <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
+              {/* Same fixed-width spinner slot as the loading pill, so
+                  the two pills are visually flush if they ever overlap
+                  mid-fade. */}
+              <span
+                className="inline-flex items-center justify-center text-primary"
+                style={{ width: "3.2rem", height: "1.25rem" }}
+              >
+                <LogoSpinner className="h-4" label="Updating" />
+              </span>
+              <span className="text-sm font-semibold text-muted-foreground">
+                {filterNotif?.count === 0
+                  ? "No stations. Try relaxing your criteria."
+                  : `${filterNotif?.count ?? 0} ${filterNotif?.count === 1 ? "station" : "stations"}`}
+              </span>
+            </div>
+          </div>
+        )
+      })()}
 
       <div
         aria-hidden={notificationPhase === "idle"}
@@ -8374,7 +8479,7 @@ export default function HikeMap() {
                 4. "new home" — generic fallback. Shouldn't happen in
                    practice; the outer opacity-0 hides the pill in
                    the idle phase anyway. */}
-          <span className="text-sm font-medium">
+          <span className="text-sm font-semibold text-muted-foreground">
             {goodbyeFriendCoord
               ? `Saying goodbye to ${
                   FRIEND_ORIGINS[goodbyeFriendCoord]?.displayName

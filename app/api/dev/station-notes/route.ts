@@ -3,15 +3,24 @@ import { readDataFile, writeDataFile } from "@/lib/github-data"
 
 const FILE_PATH = "data/station-notes.json"
 
-type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
+type NotesEntry = {
+  name: string
+  publicNote: string
+  privateNote: string
+  // Build-output walk fields — written by scripts/build-rambler-notes.mjs.
+  // NOT writable through this endpoint; structured walk edits go through
+  // /api/dev/walk/[id] which rewrites the source walk JSON and re-runs
+  // the build. The four below are preserved when this route writes the
+  // user-editable publicNote/privateNote so we don't clobber them.
+  adminWalksAll?: string
+  publicWalksS2S?: string
+  publicWalksCircular?: string
+  publicWalksExtras?: string
+}
 
-// POST accepts publicNote and privateNote only. `ramblerNote` and its
-// sidecar `publicRamblerNote` are pure build outputs
-// (scripts/build-rambler-notes.mjs) and are NOT writable through this
-// endpoint — structured edits happen via /api/dev/walk/[id] which
-// rewrites the source walk JSON and re-runs the build. Existing
-// build-output fields are preserved so writes to the other notes
-// don't clobber them.
+// POST accepts publicNote and privateNote only. The build-output walk
+// fields are preserved on the existing entry so user-note edits don't
+// clobber them.
 export async function POST(req: NextRequest) {
   const { coordKey, name, publicNote, privateNote } = await req.json()
   if (!coordKey) return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
@@ -19,16 +28,22 @@ export async function POST(req: NextRequest) {
   const { data: notes, sha } = await readDataFile<Record<string, NotesEntry>>(FILE_PATH)
 
   const existing = notes[coordKey]
-  const existingRambler = existing?.ramblerNote ?? ""
-  const existingPublicRambler = existing?.publicRamblerNote ?? ""
+  const existingAdminAll = existing?.adminWalksAll ?? ""
+  const existingPublicS2S = existing?.publicWalksS2S ?? ""
+  const existingPublicCircular = existing?.publicWalksCircular ?? ""
+  const existingPublicExtras = existing?.publicWalksExtras ?? ""
+  const hasAnyExistingWalkProse =
+    existingAdminAll || existingPublicS2S || existingPublicCircular || existingPublicExtras
 
-  if (publicNote || privateNote || existingRambler) {
+  if (publicNote || privateNote || hasAnyExistingWalkProse) {
     notes[coordKey] = {
       name: name ?? coordKey,
       publicNote: publicNote ?? "",
       privateNote: privateNote ?? "",
-      ramblerNote: existingRambler,
-      publicRamblerNote: existingPublicRambler,
+      adminWalksAll: existingAdminAll,
+      publicWalksS2S: existingPublicS2S,
+      publicWalksCircular: existingPublicCircular,
+      publicWalksExtras: existingPublicExtras,
     }
   } else {
     // Everything empty — remove the entry entirely

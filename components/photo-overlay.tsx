@@ -20,6 +20,11 @@ import { MAX_GALLERY_PHOTOS, type FlickrPhoto } from "@/lib/flickr"
 import { getEffectiveJourney, prettifyStationLabel } from "@/lib/effective-journey"
 import { categorizePlaceNames } from "@/lib/extract-place-names"
 import londonTerminalsData from "@/data/london-terminals.json"
+// CRS allowlist for the TfL Oyster / contactless PAYG zone. Same data
+// the map.tsx Feature filter consumes — see data/oyster-stations.json.
+// Used here to gate the "no National Rail ticket needed" hint at the
+// bottom of the train-info block.
+import oysterStationsData from "@/data/oyster-stations.json"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
 // Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
@@ -190,16 +195,19 @@ type StationModalProps = {
   publicNote?: string
   /** Private note — only visible in admin mode */
   privateNote?: string
-  /** Rambler recommendations — visible to everyone, sourced from walkingclub.org.uk extractions */
-  ramblerNote?: string
-  /** Filtered version of ramblerNote for non-admin viewers: always
-   *  includes all main walks and all notes; includes a variant only
-   *  when its base title (no suffix) doesn't duplicate any other
-   *  walk's full title at the station. Computed by the build script
-   *  alongside ramblerNote. */
-  publicRamblerNote?: string
-  /** Saves all three note types when the overlay closes */
-  onSaveNotes?: (publicNote: string, privateNote: string, ramblerNote: string) => void
+  /** Admin's full unfiltered single-block walk prose (every walk +
+   *  every note, joined). Rendered as one block when adminMode is on. */
+  adminWalksAll?: string
+  /** Public sectioned walk prose — station-to-station walks. Filtered
+   *  to 3 walks per section by the build script. */
+  publicWalksS2S?: string
+  /** Public sectioned walk prose — circular walks (start === end). */
+  publicWalksCircular?: string
+  /** Public free-form notes about the station (no quota, no header). */
+  publicWalksExtras?: string
+  /** Saves the user-editable notes when the overlay closes. The walk
+   *  prose fields are build-only and not edited here. */
+  onSaveNotes?: (publicNote: string, privateNote: string) => void
   /** Free-form markdown paragraphs that render AFTER the walk
    *  summaries in this station's ramblerNote prose. Admin-editable
    *  via the Notes section below the walks admin panel; persisted
@@ -365,6 +373,17 @@ function isNonNrStation(crs: string | undefined): boolean {
   if (!crs) return true
   if (!crs.startsWith("Z")) return false
   return !NR_Z_PREFIX_CRS.has(crs)
+}
+
+// Oyster CRS lookup. Combines the curated NR allowlist with the
+// "Z-prefix → Oyster" rule (covers Underground / DLR / most Elizabeth
+// line entries OSM tagged with Z*). Module-scope so the Set is built
+// once at import time, not per render.
+const OYSTER_CRS_SET = new Set(oysterStationsData.nrStations as string[])
+function isInOysterZone(crs: string | undefined): boolean {
+  if (!crs) return false
+  if (crs.startsWith("Z")) return true
+  return OYSTER_CRS_SET.has(crs)
 }
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
@@ -582,8 +601,10 @@ export default function StationModal({
   onMovePhoto,
   publicNote = "",
   privateNote = "",
-  ramblerNote = "",
-  publicRamblerNote = "",
+  adminWalksAll = "",
+  publicWalksS2S = "",
+  publicWalksCircular = "",
+  publicWalksExtras = "",
   onSaveNotes,
   ramblerExtras = [],
   onSaveRamblerExtras,
@@ -670,22 +691,20 @@ export default function StationModal({
 
   const handleAnimatedClose = useCallback(() => {
     if (isClosing) return
-    // Save public/private notes if anything changed. ramblerNote is no
-    // longer user-editable here (it's a build output); we still pass
-    // the current value through onSaveNotes to preserve the existing
-    // three-argument contract without touching map.tsx's handler.
+    // Save public/private notes if anything changed. Walk prose is a
+    // build output; not user-editable here.
     if (
       onSaveNotes &&
       (localPublicNote !== publicNote || localPrivateNote !== privateNote)
     ) {
-      onSaveNotes(localPublicNote, localPrivateNote, ramblerNote)
+      onSaveNotes(localPublicNote, localPrivateNote)
     }
     setIsClosing(true)
     closingTimer.current = setTimeout(() => {
       setIsClosing(false)
       onClose()
     }, ANIM_DURATION * 0.65)
-  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote, ramblerNote])
+  }, [isClosing, onClose, onSaveNotes, localPublicNote, localPrivateNote, publicNote, privateNote])
 
   // Swipe-down-to-dismiss for the mobile sheet. Attached only to the drag
   // handle bar (see <div className="mx-auto ... bg-muted" /> near the top
@@ -1436,6 +1455,16 @@ export default function StationModal({
                 )
               })()}
 
+              {/* Oyster zone hint — sits at the foot of the train-info
+                  block, before any user notes / walks. Detection mirrors
+                  the Feature dropdown's Oyster filter: curated NR list
+                  + "Z-prefix → Oyster" rule. */}
+              {isInOysterZone(stationCrs) && (
+                <p className="mt-[var(--para-gap)] text-sm italic text-foreground">
+                  {stationName} is within London&rsquo;s Oyster fare zone — no National Rail ticket needed when travelling from within London
+                </p>
+              )}
+
             </>
           )}
 
@@ -1500,50 +1529,86 @@ export default function StationModal({
             </button>
           ) : null}
 
-          {/* ── Walks: same format/behaviour as the
-              Trains to Green recommendations block above — subheader gated on
-              devMode || content so non-admins never see an empty
-              label, admins always do so they know where to type. */}
-          {(devMode || ramblerNote) && (() => {
-            // Everyone (admin + public) sees the FILTERED list here
-            // so the admin's prose preview matches what visitors get.
-            // Full walk list with per-variant editing lives in the
-            // WalksAdminPanel below for admins who want to curate.
-            const source = publicRamblerNote || ramblerNote
-            const count = source.split(/\n+/).filter(Boolean).length
-            return (
+          {/* ── Walks ──
+              Two flavours of rendering depending on viewer:
+                • Admin (devMode): single unfiltered block —
+                  adminWalksAll — under one "Featured walks" header.
+                  Same shape as the legacy ramblerNote view, just with
+                  the full walk list (no quota).
+                • Public: TWO sectioned blocks under their own headers
+                  ("Station-to-station walks", "Circular walks"), each
+                  filtered to 3 walks by the build script. Free-form
+                  notes (publicWalksExtras) appear after both sections
+                  with no header.
+              Each block is built from \n\n-joined paragraphs in
+              station-notes.json — paragraphs split with the same
+              regex used elsewhere in this file. */}
+          {(() => {
+            const renderParas = (text: string) => {
+              const paras = text.split(/\n+/).filter(Boolean)
+              return (
+                <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
+                  {paras.map((para, i) => (
+                    <p key={i}>{renderWithLinks(para)}</p>
+                  ))}
+                </div>
+              )
+            }
+            const sectionHeader = (label: string) => (
               <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-                Featured walk{count === 1 ? "" : "s"}
+                {label}
               </p>
             )
-          })()}
+            const countParas = (text: string) =>
+              text ? text.split(/\n+/).filter(Boolean).length : 0
 
-          {/* Rambler note — view-only. The prose is regenerated from
-              structured walk data by scripts/build-rambler-notes.mjs
-              and written to station-notes.json, so admins no longer
-              edit it directly here. Structured editing lives in the
-              WalksAdminPanel below (admin only).
+            // Admin view: single block, no sectioning.
+            if (devMode) {
+              if (!adminWalksAll) {
+                // Always show the header in admin so they know where the
+                // prose will land once walks are added for this station.
+                return sectionHeader("Featured walks")
+              }
+              return (
+                <>
+                  {sectionHeader(
+                    countParas(adminWalksAll) === 1 ? "Featured walk" : "Featured walks",
+                  )}
+                  {renderParas(adminWalksAll)}
+                </>
+              )
+            }
 
-              Visibility:
-                • Everyone (admin + public) sees `publicRamblerNote`
-                  here — always all mains + all notes, plus variants
-                  whose base title (derived title minus suffix) doesn't
-                  duplicate any other walk's full title at this station.
-                  Falls back to `ramblerNote` on older station-notes
-                  entries that predate the publicRamblerNote field.
-                • Admins get the FULL walk list (variants included) in
-                  the WalksAdminPanel below, where they can edit per-
-                  variant structured fields. */}
-          {(() => {
-            const source = publicRamblerNote || ramblerNote
-            if (!source) return null
-            const paras = source.split(/\n+/).filter(Boolean)
+            // Public view: up to two walk sections + an unheadered
+            // extras block. Each section only renders when it has
+            // content; the section header is singular when its block
+            // contains exactly one walk.
+            const s2sCount = countParas(publicWalksS2S)
+            const circularCount = countParas(publicWalksCircular)
+            const hasS2S = s2sCount > 0
+            const hasCircular = circularCount > 0
+            const hasExtras = !!publicWalksExtras
+            if (!hasS2S && !hasCircular && !hasExtras) return null
             return (
-              <div className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)]">
-                {paras.map((para, i) => (
-                  <p key={i}>{renderWithLinks(para)}</p>
-                ))}
-              </div>
+              <>
+                {hasS2S && (
+                  <>
+                    {sectionHeader(
+                      s2sCount === 1 ? "Station-to-station walk" : "Station-to-station walks",
+                    )}
+                    {renderParas(publicWalksS2S)}
+                  </>
+                )}
+                {hasCircular && (
+                  <>
+                    {sectionHeader(
+                      circularCount === 1 ? "Circular walk" : "Circular walks",
+                    )}
+                    {renderParas(publicWalksCircular)}
+                  </>
+                )}
+                {hasExtras && renderParas(publicWalksExtras)}
+              </>
             )
           })()}
 
@@ -1828,7 +1893,7 @@ export default function StationModal({
               onSaveCustom={onSaveCustom}
               stationName={stationName}
               publicNote={publicNote}
-              ramblerNote={ramblerNote}
+              adminWalksAll={adminWalksAll}
               presets={presets ?? null}
               onSavePreset={onSavePreset}
               // Refreshing bumps the counter, which changes the fetch effect's
@@ -2015,7 +2080,7 @@ function AdminTabsAndSettings({
   onSaveCustom,
   stationName,
   publicNote,
-  ramblerNote,
+  adminWalksAll,
   presets,
   onSavePreset,
   onRefresh,
@@ -2027,7 +2092,7 @@ function AdminTabsAndSettings({
   onSaveCustom?: (custom: CustomSettings | null) => void
   stationName: string
   publicNote: string
-  ramblerNote: string
+  adminWalksAll: string
   presets: { landscapes: CustomSettings; hikes: CustomSettings; station: CustomSettings } | null
   onSavePreset?: (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => void
   onRefresh?: () => void
@@ -2111,7 +2176,7 @@ function AdminTabsAndSettings({
           sessionSnapshot={activeSnapshot}
           stationName={stationName}
           publicNote={publicNote}
-          ramblerNote={ramblerNote}
+          adminWalksAll={adminWalksAll}
           onSaveCustom={onSaveCustom}
           onSavePreset={onSavePreset}
           onRefresh={onRefresh}
@@ -2130,7 +2195,7 @@ function TabSettingsPanel({
   sessionSnapshot,
   stationName,
   publicNote,
-  ramblerNote,
+  adminWalksAll,
   onSaveCustom,
   onSavePreset,
   onRefresh,
@@ -2143,7 +2208,7 @@ function TabSettingsPanel({
   sessionSnapshot: CustomSettings | null
   stationName: string
   publicNote: string
-  ramblerNote: string
+  adminWalksAll: string
   onSaveCustom?: (custom: CustomSettings | null) => void
   onSavePreset?: (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => void
   onRefresh?: () => void
@@ -2166,7 +2231,7 @@ function TabSettingsPanel({
   // Seed the per-station custom config on first use from extracted place names
   // in the station's notes — same ordering logic as before.
   const buildInitialCustom = (): CustomSettings => {
-    const { trails, terrains, sights, settlements } = categorizePlaceNames(publicNote, ramblerNote)
+    const { trails, terrains, sights, settlements } = categorizePlaceNames(publicNote, adminWalksAll)
     const stationTag = stationName.toLowerCase().replace(/\s+station$/, "").trim()
     const seen = new Set<string>()
     const includeTags: string[] = []
