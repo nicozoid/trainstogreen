@@ -1533,25 +1533,37 @@ export default function HikeMap() {
   const [filterNotif, setFilterNotif] = useState<{ count: number; visible: boolean } | null>(null)
   // Refs survive re-renders without retriggering the effect.
   const filterNotifTimerRef = useRef<number | null>(null)
-  // First-render sentinel — skip the very first displayedStations
-  // computation (going from null → data) so the pill doesn't pop on
-  // initial page load.
-  const filterNotifReadyRef = useRef(false)
-  // Track the last seen primary/friend so the pill suppresses itself
-  // when those change. Picking a new primary or friend fires the
-  // "Looking up trains from..." pill — flashing the count on top of
-  // that would feel like double-notification.
-  const filterNotifPrimaryRef = useRef<string | null>(null)
-  const filterNotifFriendRef = useRef<string | null>(null)
+  // Track the last filter-input signature so the pill fires on filter
+  // changes only — NOT on primary/friend origin changes or any other
+  // source of a stationsForMap recomputation. Signature is a JSON
+  // string of every input the user can toggle to narrow the visible
+  // station set. Origin changes (primary, friend) don't appear in the
+  // signature, so they leave it unchanged and the pill stays
+  // suppressed even though stationsForMap rebuilt.
+  const filterNotifSignatureRef = useRef<string | null>(null)
   // Ref to the auto-dismiss timer so a fast double-selection can
   // cancel the previous cycle's pending idle-flip. Without this,
   // picking station B while station A's success pill is still
   // visible would see A's setTimeout fire mid-loading-of-B and
   // wipe the new spinner back to idle.
   const dismissTimerRef = useRef<number | null>(null)
+  // Wall-clock time the pill entered "loading". Used to enforce a
+  // minimum 2000ms total visibility — fast routing recomputes (e.g.
+  // when the routing diff is already cached) would otherwise flash
+  // the pill for ~50ms which feels like a glitch rather than feedback.
+  const notificationLoadingStartRef = useRef<number | null>(null)
+  // Total visible duration floor: loading + success windows summed
+  // never drop below this. The post-load success window stretches
+  // to fill the gap when loading itself was very fast.
+  const MIN_LOOKING_UP_MS = 2000
+  // Default success-window length when load was already long enough
+  // that the pill has had plenty of stage time. Kept short so the
+  // tick (now spinner) doesn't linger when nothing else is happening.
+  const SUCCESS_TAIL_MS = 400
   useEffect(() => {
     if (isPending) {
       setNotificationPhase("loading")
+      notificationLoadingStartRef.current = Date.now()
       if (dismissTimerRef.current != null) {
         clearTimeout(dismissTimerRef.current)
         dismissTimerRef.current = null
@@ -1562,6 +1574,11 @@ export default function HikeMap() {
       // (phase starts "idle" while isPending is also already false).
       setNotificationPhase((prev) => {
         if (prev !== "loading") return prev
+        // Stretch the success tail when loading was very fast so the
+        // pill stays on screen for at least MIN_LOOKING_UP_MS total.
+        const start = notificationLoadingStartRef.current ?? Date.now()
+        const loadingElapsed = Date.now() - start
+        const tail = Math.max(SUCCESS_TAIL_MS, MIN_LOOKING_UP_MS - loadingElapsed)
         dismissTimerRef.current = window.setTimeout(() => {
           setNotificationPhase("idle")
           // Deliberately do NOT clear pendingPrimaryCoord here.
@@ -1574,7 +1591,7 @@ export default function HikeMap() {
           // It'll be overwritten naturally the next time the
           // user picks a primary.
           dismissTimerRef.current = null
-        }, 400)
+        }, tail)
         return "success"
       })
     }
@@ -1717,14 +1734,14 @@ export default function HikeMap() {
   // extends to 600min ("Max" = no upper limit).
   // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
   // does NOT persist across reloads — every visit starts from a clean slate.
-  const [maxMinutes, setMaxMinutes] = useState(60)
+  const [maxMinutes, setMaxMinutes] = useState(90)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations.
   // Not persisted — every reload starts with no friend (same as the other
   // filter state). Value is a "lng,lat" coord key.
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(90)
   // Keep the ref (declared above) in sync with friendOrigin so the
   // setFriendOriginWithTransition callback can read the latest value
   // on a removal without being forced to re-create on every
@@ -4924,52 +4941,72 @@ export default function HikeMap() {
     }
   }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
 
-  // Filter-change pill: flash "Showing N stations" at top-centre on
-  // every change to stationsForMap (which captures every filter
-  // input in its dep chain). The first computed value is skipped so
-  // the pill doesn't pop on initial page load — that's the
-  // filterNotifReadyRef sentinel. Each subsequent change resets a
-  // 1.5s timer so back-to-back filter tweaks coalesce into one pill
-  // session that fades out 1.5s after the LAST change.
+  // Filter-change pill: flash "{N} stations" at viewport-centre when
+  // the user toggles a filter input. Trigger is signature-based —
+  // only fires when one of the listed filter inputs has actually
+  // changed. Origin swaps (primary, friend) leave the signature
+  // alone, so they don't fire the pill even though stationsForMap
+  // rebuilt. Each fire resets a 3s fade-out timer so back-to-back
+  // filter tweaks coalesce.
   useEffect(() => {
     if (!stationsForMap) return
-    // Exclude the primary origin (and any cluster members it expands
-    // to — Stratford → Stratford International, etc) plus the active
-    // friend origin from the count. Those are the user's own
-    // anchor points, not "destinations to consider".
+    // Build a signature of every input that narrows the visible set —
+    // when this changes between renders we know the recompute came
+    // from a user filter action, not a primary/friend swap. Origin
+    // changes don't appear here, so picking a new home leaves the
+    // signature unchanged and the pill stays quiet.
+    const signature = JSON.stringify({
+      ratings: [...visibleRatings].sort(),
+      maxMinutes,
+      minMinutes,
+      friendMaxMinutes,
+      primaryDirectOnly,
+      friendDirectOnly,
+      primaryInterchangeFilter,
+      primaryFeatureFilter,
+      seasonFilter,
+      currentSeasonHighlight,
+      searchQuery,
+    })
+    // First time we see a signature — record it and skip. The pill
+    // shouldn't fire on initial page load.
+    if (filterNotifSignatureRef.current === null) {
+      filterNotifSignatureRef.current = signature
+      return
+    }
+    // Signature unchanged → recompute came from a non-filter source
+    // (origin change, routing data load, …). Stay quiet.
+    if (filterNotifSignatureRef.current === signature) return
+    filterNotifSignatureRef.current = signature
+    // Compute the visible-station count for the toast. Two adjustments
+    // versus a naive features.length:
+    //   1. Exclude the user's own anchor points (primary + cluster
+    //      members + friend) — those are the user's home dots, not
+    //      destinations to consider.
+    //   2. Exclude features that are only in stationsForMap because
+    //      they're animating out (rating just unchecked → tracked
+    //      via newlyRemovedRatings). Counting them would lag the toast
+    //      one tick behind the visible map: e.g. unchecking Sublime
+    //      with 11 sublime stations would say "11 stations" while the
+    //      map already shows 0. The count below reads visibleRatings
+    //      directly, so leaving features don't slip through.
     const exclude = new Set<string>()
     exclude.add(primaryOrigin)
     for (const c of PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []) exclude.add(c)
     if (friendOrigin) exclude.add(friendOrigin)
     let count = 0
     for (const f of stationsForMap.features) {
-      if (!exclude.has(f.properties.coordKey as string)) count += 1
-    }
-    if (!filterNotifReadyRef.current) {
-      filterNotifReadyRef.current = true
-      filterNotifPrimaryRef.current = primaryOrigin
-      filterNotifFriendRef.current = friendOrigin
-      return
-    }
-    // Suppress the pill when the primary or friend has just changed
-    // — those flows have their own "Looking up trains from..." pill.
-    // Update the trackers so subsequent stationsForMap updates after
-    // the origin change has settled (e.g. async routing diff load)
-    // also don't trigger the pill on a stale dep.
-    const originChanged =
-      filterNotifPrimaryRef.current !== primaryOrigin ||
-      filterNotifFriendRef.current !== friendOrigin
-    filterNotifPrimaryRef.current = primaryOrigin
-    filterNotifFriendRef.current = friendOrigin
-    if (originChanged) {
-      // Cancel any in-flight pill — the upcoming "Looking up trains"
-      // pill should have an empty stage to fade onto.
-      if (filterNotifTimerRef.current != null) {
-        clearTimeout(filterNotifTimerRef.current)
-        filterNotifTimerRef.current = null
+      const coordKey = f.properties.coordKey as string
+      if (exclude.has(coordKey)) continue
+      // Friend overrides everything — counted in `exclude` above, so
+      // this branch never sees the active friend origin coord.
+      if (f.properties.isExcluded) {
+        if (!visibleRatings.has("excluded")) continue
+      } else {
+        const category = (f.properties.rating as string | undefined) ?? "unrated"
+        if (!visibleRatings.has(category)) continue
       }
-      setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
-      return
+      count += 1
     }
     setFilterNotif({ count, visible: true })
     if (filterNotifTimerRef.current != null) {
@@ -4978,8 +5015,8 @@ export default function HikeMap() {
     filterNotifTimerRef.current = window.setTimeout(() => {
       setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
       filterNotifTimerRef.current = null
-    }, 3000)
-  }, [stationsForMap, primaryOrigin, friendOrigin])
+    }, 1300)
+  }, [stationsForMap, primaryOrigin, friendOrigin, visibleRatings, maxMinutes, minMinutes, friendMaxMinutes, primaryDirectOnly, friendDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, seasonFilter, currentSeasonHighlight, searchQuery])
 
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
@@ -6894,7 +6931,7 @@ export default function HikeMap() {
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.
                 setSeasonFilter("off")
-                if (maxMinutes > 120) setMaxMinutes(120)
+                if (maxMinutes > 150) setMaxMinutes(150)
               }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
@@ -8402,9 +8439,7 @@ export default function HikeMap() {
                 <LogoSpinner className="h-4" label="Updating" />
               </span>
               <span className="text-sm font-semibold text-muted-foreground">
-                {filterNotif?.count === 0
-                  ? "No stations. Try relaxing your criteria."
-                  : `${filterNotif?.count ?? 0} ${filterNotif?.count === 1 ? "station" : "stations"}`}
+                {filterNotif?.count ?? 0} {filterNotif?.count === 1 ? "station" : "stations"}
               </span>
             </div>
           </div>

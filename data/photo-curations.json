@@ -7230,5 +7230,64 @@
         "dateTaken": "2016-12-27 17:37:36"
       }
     ]
+  },
+  "-0.0045745,51.2578327": {
+    "name": "Oxted",
+    "approved": [
+      {
+        "id": "55196532732",
+        "title": "Scenic View of the Weald from Emmetts NT Kent",
+        "ownerName": "Adam Swaine",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/55196532732_3822ff8f53.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/55196532732_3822ff8f53_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/43499552@N03/55196532732",
+        "dateTaken": "2026-04-06 02:35:30"
+      },
+      {
+        "id": "54849941498",
+        "title": "UK - Surrey - Near Oxted - VIew to Autumn colour from North Downs Way",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54849941498_4b2d5688d4.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54849941498_4b2d5688d4_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/54849941498",
+        "dateTaken": "2025-10-11 15:51:50"
+      },
+      {
+        "id": "5761677596",
+        "title": "Little brackets",
+        "ownerName": "Darkroom Daze",
+        "thumbnailUrl": "https://live.staticflickr.com/3533/5761677596_b2ae1938b1.jpg",
+        "largeUrl": "https://live.staticflickr.com/3533/5761677596_b2ae1938b1_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/25453448@N02/5761677596",
+        "dateTaken": "2008-12-26 13:50:07"
+      },
+      {
+        "id": "54849727216",
+        "title": "UK - Surrey - Oxted - Pink roses in garden",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54849727216_50d915d8cb.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54849727216_50d915d8cb_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/54849727216",
+        "dateTaken": "2025-10-11 16:12:22"
+      },
+      {
+        "id": "54850024595",
+        "title": "UK - Surrey - Oxted - Red berries",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54850024595_682c3d1e5c.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54850024595_682c3d1e5c_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/54850024595",
+        "dateTaken": "2025-10-11 16:07:40"
+      },
+      {
+        "id": "54849451401",
+        "title": "UK - Surrey - Near Woldingham - View over Oxted Downs from North Downs Way",
+        "ownerName": "JulesFoto",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54849451401_be13f5c689.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54849451401_be13f5c689_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/55578087@N08/54849451401",
+        "dateTaken": "2025-10-11 15:24:14"
+      }
+    ]
   }
 }

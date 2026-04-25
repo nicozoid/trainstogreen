@@ -881,5 +881,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.0045745,51.2578327": {
+    "name": "Oxted",
+    "custom": {
+      "includeTags": [
+        "oxted circular",
+        "woldingham circular",
+        "north downs way",
+        "wooded greensand ridge",
+        "north downs",
+        "limpsfield common",
+        "meadows",
+        "greensand ridge",
+        "staffhurst wood",
+        "oxted downs",
+        "botley hill",
+        "mariners hill",
+        "titsey estate",
+        "st mary's church",
+        "tenchleys manor",
+        "st peter's church",
+        "st george's church",
+        "st mary's church oxted",
+        "st peter's church limpsfield",
+        "oxted"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }

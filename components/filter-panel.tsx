@@ -108,7 +108,7 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 // `adminOnly` entries only render when admin mode is active.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
-    key: "highlight", label: "Sublime", tooltip: "A personal favourite of the T2G creator",
+    key: "highlight", label: "Sublime", tooltip: "Among the very best stations for walking — an area you could visit forever",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +117,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Charming", tooltip: "Popular with ramblers",
+    key: "verified", label: "Charming", tooltip: "A station with real character and lovely walks nearby — well worth the journey",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,7 +130,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Pleasant", tooltip: "Walks publicised by ramblers",
+    key: "unverified", label: "Pleasant", tooltip: "Some good walks in the area — enjoyable without being unmissable",
     icon: (
       // Filter-menu only — same hexagon points as before, rotated 45°
       // for visual variety and scaled to 90% (w-[0.9rem]) to feel less
@@ -144,7 +144,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "not-recommended", label: "Flawed", secondary: true, tooltip: "All green is good but this isn't the goodest",
+    key: "not-recommended", label: "Flawed", secondary: true, tooltip: "Some worthwhile walks here, but the area has drawbacks — check the notes before making the trip",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -152,7 +152,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unrated", label: "Unknown", secondary: true, tooltip: "No rambling verdict on this area yet",
+    key: "unrated", label: "Unknown", secondary: true, tooltip: "No walk information found for this station yet",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <circle cx="12" cy="12" r="9" />
@@ -644,10 +644,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return m === 0 ? `${h}h` : `${h}h ${m}m`
   }
 
-  // Slider max constants. Non-admin users are capped at 2h. Admin mode
-  // extends to 10h — effectively unlimited for GB rail; the filter treats
-  // values at this cap as "no maximum".
-  const NON_ADMIN_MAX = 120
+  // Slider max constants. Non-admin users are capped at 2h30m. Admin
+  // mode extends to 10h — effectively unlimited for GB rail; the
+  // filter treats values at this cap as "no maximum".
+  const NON_ADMIN_MAX = 150
   const ADMIN_MAX = 600
   const sliderMax = adminMode ? ADMIN_MAX : NON_ADMIN_MAX
 

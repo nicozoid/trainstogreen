@@ -1446,8 +1446,8 @@ export default function StationModal({
                             origin (London synthetic primary — alts only
                             render in that mode) and NOT the friend. */}
                         {friendOrigin && journeys?.[friendOrigin]
-                          ? "Alternative routes from London"
-                          : "Alternative routes"}
+                          ? "Alternative train routes from London"
+                          : "Alternative train routes"}
                       </p>
                     )}
                     {alts.map(renderAlt)}
@@ -1529,20 +1529,14 @@ export default function StationModal({
             </button>
           ) : null}
 
-          {/* ── Walks ──
-              Two flavours of rendering depending on viewer:
-                • Admin (devMode): single unfiltered block —
-                  adminWalksAll — under one "Featured walks" header.
-                  Same shape as the legacy ramblerNote view, just with
-                  the full walk list (no quota).
-                • Public: TWO sectioned blocks under their own headers
-                  ("Station-to-station walks", "Circular walks"), each
-                  filtered to 3 walks by the build script. Free-form
-                  notes (publicWalksExtras) appear after both sections
-                  with no header.
-              Each block is built from \n\n-joined paragraphs in
-              station-notes.json — paragraphs split with the same
-              regex used elsewhere in this file. */}
+          {/* ── Walks (prose preview) ──
+              Same rendering for admin and public — TWO sectioned blocks
+              under their own headers ("Circular walks",
+              "Station-to-station walks") plus an unheadered extras
+              block. Admins see exactly what the public sees; the
+              full unfiltered walk list with editing controls lives in
+              the WalksAdminPanel below. Each block is built from
+              \n\n-joined paragraphs in station-notes.json. */}
           {(() => {
             const renderParas = (text: string) => {
               const paras = text.split(/\n+/).filter(Boolean)
@@ -1562,49 +1556,37 @@ export default function StationModal({
             const countParas = (text: string) =>
               text ? text.split(/\n+/).filter(Boolean).length : 0
 
-            // Admin view: single block, no sectioning.
-            if (devMode) {
-              if (!adminWalksAll) {
-                // Always show the header in admin so they know where the
-                // prose will land once walks are added for this station.
-                return sectionHeader("Featured walks")
-              }
-              return (
-                <>
-                  {sectionHeader(
-                    countParas(adminWalksAll) === 1 ? "Featured walk" : "Featured walks",
-                  )}
-                  {renderParas(adminWalksAll)}
-                </>
-              )
-            }
-
-            // Public view: up to two walk sections + an unheadered
-            // extras block. Each section only renders when it has
-            // content; the section header is singular when its block
-            // contains exactly one walk.
+            // Up to two walk sections + an unheadered extras block.
+            // Each section only renders when it has content; the section
+            // header is singular when its block contains exactly one walk.
             const s2sCount = countParas(publicWalksS2S)
             const circularCount = countParas(publicWalksCircular)
             const hasS2S = s2sCount > 0
             const hasCircular = circularCount > 0
             const hasExtras = !!publicWalksExtras
-            if (!hasS2S && !hasCircular && !hasExtras) return null
+            // Empty state when nothing's there yet. Admins see a
+            // placeholder header so the section's location is visible
+            // in the modal even before walks are added; public users
+            // see nothing.
+            if (!hasS2S && !hasCircular && !hasExtras) {
+              return devMode ? sectionHeader("Featured walks") : null
+            }
             return (
               <>
-                {hasS2S && (
-                  <>
-                    {sectionHeader(
-                      s2sCount === 1 ? "Station-to-station walk" : "Station-to-station walks",
-                    )}
-                    {renderParas(publicWalksS2S)}
-                  </>
-                )}
                 {hasCircular && (
                   <>
                     {sectionHeader(
                       circularCount === 1 ? "Circular walk" : "Circular walks",
                     )}
                     {renderParas(publicWalksCircular)}
+                  </>
+                )}
+                {hasS2S && (
+                  <>
+                    {sectionHeader(
+                      s2sCount === 1 ? "Station-to-station walk" : "Station-to-station walks",
+                    )}
+                    {renderParas(publicWalksS2S)}
                   </>
                 )}
                 {hasExtras && renderParas(publicWalksExtras)}
