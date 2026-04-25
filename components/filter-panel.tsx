@@ -132,12 +132,12 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // drive a secondary-tinted checkbox, so drop that flag too.
     key: "unverified", label: "Pleasant", tooltip: "Some good walks in the area — enjoyable without being unmissable",
     icon: (
-      // Filter-menu only — same hexagon points as before, rotated 45°
+      // Filter-menu only — same hexagon points as before, rotated 90°
       // for visual variety and scaled to 90% (w-[0.9rem]) to feel less
       // dominant next to the star/triangle/diamond/circle siblings. Map
       // icons are separate raster sprites (icon-unverified PNG) and are
       // unaffected.
-      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.9rem] h-[0.9rem] rotate-45">
+      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.9rem] h-[0.9rem] rotate-90">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
         <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
       </svg>
