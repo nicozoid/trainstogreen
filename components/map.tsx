@@ -2102,7 +2102,7 @@ export default function HikeMap() {
   // see a focused map (curated picks only), not every rated station plus
   // every "Okay" and every "Unknown". Admins can click extras on manually.
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
-    () => new Set(["highlight", "verified", "unverified"]),
+    () => new Set(["highlight", "verified"]),
   )
 
   // Photo curations — per-station approved photo list + pinned-ids subset.
