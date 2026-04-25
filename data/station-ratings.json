@@ -177,7 +177,7 @@
   },
   "-0.2052107,51.4220252": {
     "name": "Wimbledon",
-    "rating": "unverified"
+    "rating": "verified"
   },
   "-0.2110536,51.2947305": {
     "name": "Kingswood",
@@ -1241,7 +1241,7 @@
   },
   "0.1819438,51.2764117": {
     "name": "Sevenoaks",
-    "rating": "highlight"
+    "rating": "verified"
   },
   "0.1887766,51.3321241": {
     "name": "Shoreham",

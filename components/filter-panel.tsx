@@ -108,7 +108,7 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 // `adminOnly` entries only render when admin mode is active.
 const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
   {
-    key: "highlight", label: "Heavenly", tooltip: "A personal favourite of the T2G creator",
+    key: "highlight", label: "Sublime", tooltip: "Among the very best stations for walking — an area you could visit forever",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +117,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Good", tooltip: "Popular with ramblers",
+    key: "verified", label: "Charming", tooltip: "A station with real character and lovely walks nearby — well worth the journey",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,16 +130,21 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Probably", tooltip: "Walks publicised by ramblers",
+    key: "unverified", label: "Pleasant", tooltip: "Some good walks in the area — enjoyable without being unmissable",
     icon: (
-      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
+      // Filter-menu only — same hexagon points as before, rotated 45°
+      // for visual variety and scaled to 90% (w-[0.9rem]) to feel less
+      // dominant next to the star/triangle/diamond/circle siblings. Map
+      // icons are separate raster sprites (icon-unverified PNG) and are
+      // unaffected.
+      <svg viewBox="1 2 22 20" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[0.9rem] h-[0.9rem] rotate-45">
         {/* Hexagon: 6 vertices at radius 10, wider than tall */}
         <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
       </svg>
     ),
   },
   {
-    key: "not-recommended", label: "Okay", secondary: true, tooltip: "All green is good but this isn't the goodest",
+    key: "not-recommended", label: "Flawed", secondary: true, tooltip: "Some worthwhile walks here, but the area has drawbacks — check the notes before making the trip",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -147,7 +152,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "unrated", label: "Unknown", secondary: true, tooltip: "No rambling verdict on this area yet",
+    key: "unrated", label: "Unknown", secondary: true, tooltip: "No walk information found for this station yet",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <circle cx="12" cy="12" r="9" />
@@ -177,6 +182,13 @@ type FilterPanelProps = {
   onMinChange: (value: number) => void
   showTrails: boolean
   onToggleTrails: (value: boolean) => void
+  /** Region labels (counties, parks, AONBs/National Landscapes) toggle. */
+  showRegions: boolean
+  onToggleRegions: (value: boolean) => void
+  /** Admin-only "Show all" button — fired from filter panel, executed in
+   *  map.tsx where all the resetting state setters live. Clears every
+   *  filter back to "show everything". */
+  onShowAll: () => void
   visibleRatings: Set<string>
   onToggleRating: (key: string) => void
   searchQuery: string
@@ -257,8 +269,8 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
@@ -274,7 +286,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -514,7 +526,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     const disabledContains: typeof searchableStations = []
     for (const s of searchableStations) {
       const n = normalise(s.name)
-      const startsMatch = n.startsWith(q)
+      // CRS prefix match (e.g. "swl" → Swale) counts as a starts-with
+      // hit so typing the code surfaces the station at the top of the
+      // list, same as typing the start of its name. CRS codes have no
+      // punctuation so we don't need to run them through normalise().
+      const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
+      const startsMatch = crsMatch || n.startsWith(q)
       const containsMatch = !startsMatch && n.includes(q)
       if (!startsMatch && !containsMatch) continue
       const bucket = s.hasData
@@ -627,10 +644,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return m === 0 ? `${h}h` : `${h}h ${m}m`
   }
 
-  // Slider max constants. Non-admin users are capped at 2h. Admin mode
-  // extends to 10h — effectively unlimited for GB rail; the filter treats
-  // values at this cap as "no maximum".
-  const NON_ADMIN_MAX = 120
+  // Slider max constants. Non-admin users are capped at 2h30m. Admin
+  // mode extends to 10h — effectively unlimited for GB rail; the
+  // filter treats values at this cap as "no maximum".
+  const NON_ADMIN_MAX = 150
   const ADMIN_MAX = 600
   const sliderMax = adminMode ? ADMIN_MAX : NON_ADMIN_MAX
 
@@ -1145,7 +1162,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1162,6 +1179,23 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     variant carrying a Komoot tour URL. Surfaces
                     destinations that already have a planned route. */}
                 <option value="komoot">Komoot</option>
+                {/* "Issues" — keeps only stations flagged via the admin
+                    issue button. The flag is station-global, so the same
+                    set shows regardless of which primary origin is selected. */}
+                <option value="issues">Issues</option>
+                {/* "No travel data" — keeps only stations whose
+                    `londonMinutes` is null (no journey time from any
+                    primary origin). Selecting this option auto-opens
+                    both time sliders (max → admin ceiling, min → 0)
+                    because passesTimeFilter() hides null-time stations
+                    under any explicit constraint. */}
+                <option value="no-travel-data">No travel data</option>
+                {/* "Oyster" — keeps only stations within the TfL Oyster /
+                    contactless PAYG fare zone. Includes Underground / DLR
+                    / Elizabeth (Z-prefix CRS) plus the curated NR list
+                    in data/oyster-stations.json. Auto-opens the time
+                    sliders so no-RTT-data Underground stations still show. */}
+                <option value="oyster">Oyster</option>
               </select>
             </div>
           )}
@@ -1192,6 +1226,24 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     finding destinations that still need seasonality data. */}
                 <option value="None">None</option>
               </select>
+            </div>
+          )}
+
+          {/* Admin-only "Show all" — single-click reset that wipes every
+              filter so the map shows the full station set. Useful when the
+              admin has a dense filter combo applied and wants a clean
+              slate. The actual state-setter calls live in map.tsx (where
+              all the relevant useStates are declared); this button just
+              fires the prop. Sits right under the admin dropdowns it
+              resets, so the relationship reads spatially. */}
+          {adminMode && (
+            <div className="mt-1.5">
+              <button
+                onClick={onShowAll}
+                className="rounded bg-primary px-2 py-1 font-mono text-xs text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Show all
+              </button>
             </div>
           )}
 
@@ -1365,38 +1417,54 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             ))}
           </div>
 
-          {/* Map-layer toggles — grouped under a single border-t divider.
-             The top rule separates this group from the ratings section
-             above; inside the group there's no further rule between
-             the two rows, so highlights + trails read as siblings. */}
-          <div className="mt-4 border-t pt-3">
-            {/* Current-season highlights toggle — visible to everyone
-               (not gated on adminMode). Label updates dynamically based
-               on `currentSeason` computed from today's date in map.tsx. */}
-            <div className="flex items-center justify-between">
-              <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
-                <span className="text-sm font-medium">{currentSeason} highlights</span>
-              </LabelTip>
-              <Checkbox
-                checked={currentSeasonHighlight}
-                onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
-                className="cursor-pointer"
-              />
-            </div>
+          {/* Map-layer toggles — admin-only. The whole block (including
+             the border-t divider above it) hides for non-admin users so
+             the public filter panel ends at the ratings section. */}
+          {adminMode && (
+            <div className="mt-4 border-t pt-3">
+              {/* Current-season highlights toggle. Label updates
+                 dynamically based on `currentSeason` from map.tsx. */}
+              <div className="flex items-center justify-between">
+                <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
+                  <span className="text-sm font-medium">{currentSeason} highlights</span>
+                </LabelTip>
+                <Checkbox
+                  checked={currentSeasonHighlight}
+                  onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
 
-            {/* Trails toggle — <div> instead of <label> so tapping the gap
-               on touchscreens doesn't toggle the checkbox */}
-            <div className="mt-3 flex items-center justify-between">
-              <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
-                <span className="text-sm font-medium">Waymarked trails</span>
-              </LabelTip>
-              <Checkbox
-                checked={showTrails}
-                onCheckedChange={(checked) => onToggleTrails(checked === true)}
-                className="cursor-pointer"
-              />
+              {/* Trails toggle — <div> instead of <label> so tapping the
+                 gap on touchscreens doesn't toggle the checkbox.
+                 mt-1.5 matches the rating-checkbox row spacing above so
+                 the three map-layer toggles read as one tight stack. */}
+              <div className="mt-1.5 flex items-center justify-between">
+                <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
+                  <span className="text-sm font-medium">Waymarked trails</span>
+                </LabelTip>
+                <Checkbox
+                  checked={showTrails}
+                  onCheckedChange={(checked) => onToggleTrails(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              {/* Regions toggle — labels for English, Welsh and Scottish
+                  counties + national parks + AONBs / National Landscapes.
+                  Off by default. */}
+              <div className="mt-1.5 flex items-center justify-between">
+                <LabelTip text="Show labels for counties, national parks, and AONBs / National Landscapes">
+                  <span className="text-sm font-medium">Counties &amp; landscapes</span>
+                </LabelTip>
+                <Checkbox
+                  checked={showRegions}
+                  onCheckedChange={(checked) => onToggleRegions(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

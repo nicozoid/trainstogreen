@@ -22,6 +22,16 @@ import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originRoutesData from "@/data/origin-routes.json"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
+// Admin-only region labels — counties, national parks, AONBs (National Landscapes).
+// Each entry is { name, category, coord:[lng,lat] }. Hand-edit `coord` to nudge
+// a label to a better position. The list is converted to a Mapbox FeatureCollection
+// in a useMemo below; only mounted when admin mode is active.
+import regionLabelsData from "@/data/region-labels.json"
+// CRS codes accepted within the TfL Oyster / contactless PAYG zone.
+// Combined at runtime with a "Z-prefix → Oyster" rule (Underground / DLR
+// / Elizabeth line tagged with Z* in OSM). Used by the admin Feature
+// dropdown's "Oyster" option to surface only TfL-fare-area stations.
+import oysterStationsData from "@/data/oyster-stations.json"
 import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
@@ -1515,15 +1525,45 @@ export default function HikeMap() {
   // reading correctly during the confirmation window.
   type NotificationPhase = "idle" | "loading" | "success"
   const [notificationPhase, setNotificationPhase] = useState<NotificationPhase>("idle")
+  // Filter-change notification — small pill at top-centre that flashes
+  // "Showing N stations" whenever any filter input changes. Distinct
+  // from the primary/friend "Looking up trains" pill above (different
+  // position, different copy, no spinner). Driven by a useEffect on
+  // displayedStations downstream; the visible flag controls the fade.
+  const [filterNotif, setFilterNotif] = useState<{ count: number; visible: boolean } | null>(null)
+  // Refs survive re-renders without retriggering the effect.
+  const filterNotifTimerRef = useRef<number | null>(null)
+  // Track the last filter-input signature so the pill fires on filter
+  // changes only — NOT on primary/friend origin changes or any other
+  // source of a stationsForMap recomputation. Signature is a JSON
+  // string of every input the user can toggle to narrow the visible
+  // station set. Origin changes (primary, friend) don't appear in the
+  // signature, so they leave it unchanged and the pill stays
+  // suppressed even though stationsForMap rebuilt.
+  const filterNotifSignatureRef = useRef<string | null>(null)
   // Ref to the auto-dismiss timer so a fast double-selection can
   // cancel the previous cycle's pending idle-flip. Without this,
   // picking station B while station A's success pill is still
   // visible would see A's setTimeout fire mid-loading-of-B and
   // wipe the new spinner back to idle.
   const dismissTimerRef = useRef<number | null>(null)
+  // Wall-clock time the pill entered "loading". Used to enforce a
+  // minimum 2000ms total visibility — fast routing recomputes (e.g.
+  // when the routing diff is already cached) would otherwise flash
+  // the pill for ~50ms which feels like a glitch rather than feedback.
+  const notificationLoadingStartRef = useRef<number | null>(null)
+  // Total visible duration floor: loading + success windows summed
+  // never drop below this. The post-load success window stretches
+  // to fill the gap when loading itself was very fast.
+  const MIN_LOOKING_UP_MS = 2000
+  // Default success-window length when load was already long enough
+  // that the pill has had plenty of stage time. Kept short so the
+  // tick (now spinner) doesn't linger when nothing else is happening.
+  const SUCCESS_TAIL_MS = 400
   useEffect(() => {
     if (isPending) {
       setNotificationPhase("loading")
+      notificationLoadingStartRef.current = Date.now()
       if (dismissTimerRef.current != null) {
         clearTimeout(dismissTimerRef.current)
         dismissTimerRef.current = null
@@ -1534,6 +1574,11 @@ export default function HikeMap() {
       // (phase starts "idle" while isPending is also already false).
       setNotificationPhase((prev) => {
         if (prev !== "loading") return prev
+        // Stretch the success tail when loading was very fast so the
+        // pill stays on screen for at least MIN_LOOKING_UP_MS total.
+        const start = notificationLoadingStartRef.current ?? Date.now()
+        const loadingElapsed = Date.now() - start
+        const tail = Math.max(SUCCESS_TAIL_MS, MIN_LOOKING_UP_MS - loadingElapsed)
         dismissTimerRef.current = window.setTimeout(() => {
           setNotificationPhase("idle")
           // Deliberately do NOT clear pendingPrimaryCoord here.
@@ -1546,7 +1591,7 @@ export default function HikeMap() {
           // It'll be overwritten naturally the next time the
           // user picks a primary.
           dismissTimerRef.current = null
-        }, 400)
+        }, tail)
         return "success"
       })
     }
@@ -1689,14 +1734,14 @@ export default function HikeMap() {
   // extends to 600min ("Max" = no upper limit).
   // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
   // does NOT persist across reloads — every visit starts from a clean slate.
-  const [maxMinutes, setMaxMinutes] = useState(120)
+  const [maxMinutes, setMaxMinutes] = useState(90)
   // Admin-only lower bound on travel time — 0 means "no minimum" (disabled)
   const [minMinutes, setMinMinutes] = useState(0)
   // Friend origin mode — when non-null, a second origin filters stations.
   // Not persisted — every reload starts with no friend (same as the other
   // filter state). Value is a "lng,lat" coord key.
   const [friendOrigin, setFriendOrigin] = useState<string | null>(null)
-  const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
+  const [friendMaxMinutes, setFriendMaxMinutes] = useState(90)
   // Keep the ref (declared above) in sync with friendOrigin so the
   // setFriendOriginWithTransition callback can read the latest value
   // on a removal without being forced to re-create on every
@@ -1889,7 +1934,23 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
+  // Build the Oyster CRS Set with oysterStationsData as the dep — when
+  // the JSON hot-reloads in dev the import gives a new array reference,
+  // which busts this memo and the downstream filteredStations memo.
+  // useMemo([]) (empty deps) was the previous form and went stale on
+  // hot-reload, so updates to data/oyster-stations.json appeared not to
+  // take effect until a hard reload — Claverdon (CLV) and other false
+  // positives kept showing because the closed-over Set was the old one.
+  const OYSTER_NR_CRS = useMemo(
+    () => new Set(oysterStationsData.nrStations as string[]),
+    // List the imported array as a dep so the Set rebuilds when the JSON
+    // hot-reloads in dev (Next.js Fast Refresh gives a new array
+    // reference). Empty `[]` was the previous form and silently kept a
+    // stale Set across JSON edits — the cause of "CLV still shows after
+    // I update oyster-stations.json".
+    [oysterStationsData],
+  )
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
@@ -1901,6 +1962,10 @@ export default function HikeMap() {
   const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
+  // Region labels (counties, parks, AONBs) — controlled by a checkbox in
+  // FilterPanel sitting under "Waymarked trails". Off by default. Visible
+  // to all users (not admin-only) once toggled on.
+  const [showRegions, setShowRegions] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
   // "has seen welcome" flag — reloading brings the banner back. The
   // previous behaviour stored ttg:hasSeenWelcome in localStorage so
@@ -1918,6 +1983,17 @@ export default function HikeMap() {
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
+  // Admin-only readout — last known cursor lng/lat. Updated from
+  // handleMouseMove via e.lngLat. Rendered as a small badge next to the zoom
+  // indicator. Uses the same coordKey format as the rest of the app
+  // ("lng,lat" with 4 decimals) so the value can be copy-pasted into
+  // station-keyed JSON files (excluded-stations.json, station-notes.json,
+  // etc) without reformatting.
+  const [cursorCoord, setCursorCoord] = useState<{ lng: number; lat: number } | null>(null)
+  // Brief visual flag — turns the cursor-coord badge green for ~1s after a
+  // right-click clipboard copy lands, so the admin sees that the action
+  // succeeded without needing a separate toast component.
+  const [coordCopied, setCoordCopied] = useState(false)
   // The Mapbox style URL — switches between light and dark based on theme.
   const mapStyle = theme === "dark"
     ? "mapbox://styles/niczap/cmnepmfm2001p01sfe63j3ktq"
@@ -2037,7 +2113,24 @@ export default function HikeMap() {
   const [curations, setCurations] = useState<Record<string, CurationEntry>>({})
 
   // Station notes — public (visible to all) and private (admin-only) text per station
-  type NotesEntry = { name: string; publicNote: string; privateNote: string; ramblerNote?: string; publicRamblerNote?: string }
+  type NotesEntry = {
+    name: string
+    publicNote: string
+    privateNote: string
+    /** Admin's full unfiltered single-block prose: every walk + every
+     *  note for the station, joined with \n\n. Set by
+     *  scripts/build-rambler-notes.mjs. Replaces legacy `ramblerNote`. */
+    adminWalksAll?: string
+    /** Public sectioned prose — station-to-station walks. Filtered to
+     *  3 walks max (mains plus top variants up to the gap). */
+    publicWalksS2S?: string
+    /** Public sectioned prose — circular walks. Same 3-walks-per-section
+     *  filter as publicWalksS2S. */
+    publicWalksCircular?: string
+    /** Public free-form extras (notes about the station, not walks).
+     *  Always shown in full, no quota. Rendered without a section header. */
+    publicWalksExtras?: string
+  }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
   // Free-form "rambler extras" — admin-editable markdown paragraphs
@@ -2786,6 +2879,74 @@ export default function HikeMap() {
       }
     }
 
+    // London via-junction composition. Mirror of Extension A's
+    // buildViaDirectHubJourney, but for the London-as-home case: when a
+    // destination D isn't directly reachable from any London terminal,
+    // search for a junction H that
+    //   - reaches D directly (originRoutes[H].directReachable[D] exists), AND
+    //   - is itself directly reachable from at least one London terminal
+    //     (originRoutes[T].directReachable[H] exists for some T)
+    // and compose: T → H → D with a single change at H. Returns the fastest
+    // 1-change composition or null. Without this, destinations like Bury
+    // St Edmunds (reachable via Ipswich from Liverpool Street) silently
+    // disappear — they're not in any London terminal's directReachable
+    // list, but the chain through IPS is in the data.
+    //
+    // Only fires as a final fallback in the synthetic-London RTT branch
+    // when both directCandidate and stitchedCandidate are null. Doesn't
+    // override real direct trains or pre-fetched Google journeys.
+    const LONDON_INTERCHANGE_MIN = 5
+    // The set of coords we treat as "starting in London" for composition.
+    // PRIMARY_ORIGINS keys (minus the synthetic London anchor, which has no
+    // RTT data of its own) plus every cluster member (e.g. Waterloo East,
+    // Stratford International). Computed inside the useMemo body so any
+    // future cluster edits propagate without a manual sync step.
+    const londonTerminalCoords: string[] = []
+    for (const k of Object.keys(PRIMARY_ORIGINS)) {
+      if (PRIMARY_ORIGINS[k]?.isSynthetic) continue
+      londonTerminalCoords.push(k)
+    }
+    for (const cluster of Object.values(PRIMARY_ORIGIN_CLUSTER)) {
+      for (const c of cluster) londonTerminalCoords.push(c)
+    }
+    function composeLondonViaJunction(coordKey: string): { mins: number; journey: JourneyInfo } | null {
+      let best: { mins: number; journey: JourneyInfo } | null = null
+      for (const [hubCoord, hubRoutes] of Object.entries(originRoutes)) {
+        if (hubCoord === coordKey) continue
+        // Skip London terminals as the "hub" — composition through a
+        // London terminal is what direct/stitched already handles.
+        if (londonTerminalCoords.includes(hubCoord)) continue
+        const hubToDest = hubRoutes.directReachable?.[coordKey]
+        if (!hubToDest?.minMinutes) continue
+        // Find the fastest London terminal that reaches this hub directly.
+        let bestTermMins: number | null = null
+        let bestTerminalName = ""
+        for (const termCoord of londonTerminalCoords) {
+          const termRoutes = originRoutes[termCoord]
+          const termToHub = termRoutes?.directReachable?.[hubCoord]
+          if (!termToHub?.minMinutes) continue
+          if (bestTermMins === null || termToHub.minMinutes < bestTermMins) {
+            bestTermMins = termToHub.minMinutes
+            bestTerminalName = termRoutes.name ?? ""
+          }
+        }
+        if (bestTermMins === null) continue
+        const totalMins = bestTermMins + LONDON_INTERCHANGE_MIN + hubToDest.minMinutes
+        if (best != null && totalMins >= best.mins) continue
+        const hubName = hubRoutes.name ?? ""
+        const journey = {
+          durationMinutes: totalMins,
+          changes: 1,
+          legs: [
+            { vehicleType: "HEAVY_RAIL", departureStation: bestTerminalName, arrivalStation: hubName, stopCount: 0 },
+            { vehicleType: "HEAVY_RAIL", departureStation: hubName, arrivalStation: hubToDest.name ?? "", stopCount: Math.max(0, (hubToDest.fastestCallingPoints?.length ?? 0) - 2) },
+          ],
+        } as unknown as JourneyInfo
+        best = { mins: totalMins, journey }
+      }
+      return best
+    }
+
     return {
       ...baseStations,
       features: baseStations.features.map((f) => {
@@ -3224,8 +3385,20 @@ export default function HikeMap() {
           }
 
           if (!best) {
-            // No data at all for this destination → clear londonMinutes so it's filtered out.
-            rttClearLondonMinutes = true
+            // No direct or stitched candidate. Final fallback: try composing
+            // via a non-London junction hub (e.g. London → Ipswich → Bury St
+            // Edmunds). Without this, destinations served only by lines that
+            // change at a regional hub silently lose londonMinutes even
+            // though the data exists in origin-routes.json.
+            const viaJunction = composeLondonViaJunction(coordKey)
+            if (viaJunction) {
+              originMins = viaJunction.mins
+              effectiveChanges = 1
+              synthJourney = viaJunction.journey
+            } else {
+              // No data at all for this destination → clear londonMinutes so it's filtered out.
+              rttClearLondonMinutes = true
+            }
           } else {
             originMins = best.mins
             effectiveChanges = (best.journey.changes ?? 0)
@@ -4402,6 +4575,28 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "komoot") {
             return stationsWithKomoot.has(f.properties.coordKey as string)
           }
+          // "Issues" — admin-flagged stations only. hasIssue is station-global
+          // (set keyed by coordKey alone), so no primary-origin lookup needed.
+          if (primaryFeatureFilter === "issues") {
+            return issueStations.has(f.properties.coordKey as string)
+          }
+          // "No travel data" — destinations with no journey-time data
+          // (londonMinutes is null). Only effective when the time sliders
+          // are unconstrained, since passesTimeFilter() above already hides
+          // null-time stations under any explicit constraint.
+          if (primaryFeatureFilter === "no-travel-data") {
+            return mins == null
+          }
+          // "Oyster" — TfL fare-area stations. Includes Underground / DLR /
+          // Elizabeth (any Z-prefix CRS) plus the curated NR list in
+          // data/oyster-stations.json. Pulls in even no-RTT-data stations
+          // (Underground, DLR), so the auto-time-slider-open in the
+          // dropdown handler is what makes them visible on the map.
+          if (primaryFeatureFilter === "oyster") {
+            const crs = f.properties["ref:crs"] as string | undefined
+            if (!crs) return false
+            return crs.startsWith("Z") || OYSTER_NR_CRS.has(crs)
+          }
           return true
         }
 
@@ -4434,12 +4629,22 @@ export default function HikeMap() {
         // sliders are unconstrained, so moving either slider actually
         // filters these stations out the way an admin expects.
         // Non-admin users stay filtered — no time info = no action.
+        //
+        // PREVIOUSLY this early-returned true and silently skipped the
+        // Feature / Season filters below. That meant the admin's
+        // "Oyster" / "Issues" / etc. selections had no effect on
+        // null-time stations (e.g. Claverdon CLV would show under any
+        // Feature filter). Now we just gate the time check and fall
+        // through to the rest of the filter chain.
         if (mins == null) {
           if (!devExcludeActive) return false
-          return maxMinutes >= 600 && minMinutes <= 0
+          if (maxMinutes < 600 || minMinutes > 0) return false
+          // fall through to the remaining filters (direct, interchange,
+          // feature, season) so Feature/Season selections still apply.
+        } else {
+          if (maxMinutes < 600 && mins > maxMinutes) return false
+          if (minMinutes > 0 && mins < minMinutes) return false
         }
-        if (maxMinutes < 600 && mins > maxMinutes) return false
-        if (minMinutes > 0 && mins < minMinutes) return false
         // "Direct trains only" for the primary origin — require 0 EFFECTIVE changes.
         // `effectiveChanges` is pre-computed above and already accounts for the
         // Kings Cross cluster (so a tube hop to Euston doesn't count as a change).
@@ -4524,7 +4729,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -4534,9 +4739,16 @@ export default function HikeMap() {
     const q = searchQuery.toLowerCase()
     return {
       ...filteredStations,
-      features: filteredStations.features.filter((f) =>
-        (f.properties.name as string).toLowerCase().includes(q)
-      ),
+      features: filteredStations.features.filter((f) => {
+        // Match on station name (substring) OR CRS code (3-letter code,
+        // matched as a prefix so typing "swl" finds Swale, "swa" finds
+        // Swansea/Swanley/etc., but a single letter doesn't drag in
+        // every code starting with it via `includes`).
+        const name = (f.properties.name as string).toLowerCase()
+        if (name.includes(q)) return true
+        const crs = (f.properties["ref:crs"] as string | undefined)?.toLowerCase()
+        return !!crs && crs.startsWith(q)
+      }),
     }
   }, [filteredStations, isSearching, searchQuery])
 
@@ -4693,10 +4905,11 @@ export default function HikeMap() {
         .filter(f => {
           // The active friend origin always shows regardless of rating filters (coord-keyed)
           if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
-          // No filters active → show everything that reached this layer.
-          // (Non-admin users never see excluded — those are already removed
-          // upstream in filteredStations, so this branch is safe for them too.)
-          if (visibleRatings.size === 0 && newlyRemovedRatings.size === 0) return true
+          // Empty rating checkboxes = empty map. Falls straight through to
+          // the per-category gates below, both of which return false when
+          // visibleRatings + newlyRemovedRatings are both empty. Animations
+          // still work because newlyRemovedRatings keeps a category visible
+          // for the shrink-out frames after the user unchecks it.
           // Excluded stations (admin-only) — gated on the "excluded" checkbox.
           if (f.properties.isExcluded) {
             return visibleRatings.has('excluded') || newlyRemovedRatings.has('excluded')
@@ -4727,6 +4940,84 @@ export default function HikeMap() {
         }),
     }
   }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
+
+  // Filter-change pill: flash "{N} stations" at viewport-centre when
+  // the user toggles a filter input. Trigger is signature-based —
+  // only fires when one of the listed filter inputs has actually
+  // changed. Origin swaps (primary, friend) leave the signature
+  // alone, so they don't fire the pill even though stationsForMap
+  // rebuilt. Each fire resets a 3s fade-out timer so back-to-back
+  // filter tweaks coalesce.
+  useEffect(() => {
+    if (!stationsForMap) return
+    // Build a signature of every input that narrows the visible set —
+    // when this changes between renders we know the recompute came
+    // from a user filter action, not a primary/friend swap. Origin
+    // changes don't appear here, so picking a new home leaves the
+    // signature unchanged and the pill stays quiet.
+    const signature = JSON.stringify({
+      ratings: [...visibleRatings].sort(),
+      maxMinutes,
+      minMinutes,
+      friendMaxMinutes,
+      primaryDirectOnly,
+      friendDirectOnly,
+      primaryInterchangeFilter,
+      primaryFeatureFilter,
+      seasonFilter,
+      currentSeasonHighlight,
+      searchQuery,
+    })
+    // First time we see a signature — record it and skip. The pill
+    // shouldn't fire on initial page load.
+    if (filterNotifSignatureRef.current === null) {
+      filterNotifSignatureRef.current = signature
+      return
+    }
+    // Signature unchanged → recompute came from a non-filter source
+    // (origin change, routing data load, …). Stay quiet.
+    if (filterNotifSignatureRef.current === signature) return
+    filterNotifSignatureRef.current = signature
+    // Compute the visible-station count for the toast. Two adjustments
+    // versus a naive features.length:
+    //   1. Exclude the user's own anchor points (primary + cluster
+    //      members + friend) — those are the user's home dots, not
+    //      destinations to consider.
+    //   2. Exclude features that are only in stationsForMap because
+    //      they're animating out (rating just unchecked → tracked
+    //      via newlyRemovedRatings). Counting them would lag the toast
+    //      one tick behind the visible map: e.g. unchecking Sublime
+    //      with 11 sublime stations would say "11 stations" while the
+    //      map already shows 0. The count below reads visibleRatings
+    //      directly, so leaving features don't slip through.
+    const exclude = new Set<string>()
+    exclude.add(primaryOrigin)
+    for (const c of PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []) exclude.add(c)
+    if (friendOrigin) exclude.add(friendOrigin)
+    let count = 0
+    for (const f of stationsForMap.features) {
+      const coordKey = f.properties.coordKey as string
+      if (exclude.has(coordKey)) continue
+      // Friend overrides everything — counted in `exclude` above, so
+      // this branch never sees the active friend origin coord.
+      if (f.properties.isExcluded) {
+        if (!visibleRatings.has("excluded")) continue
+      } else {
+        const category = (f.properties.rating as string | undefined) ?? "unrated"
+        if (!visibleRatings.has(category)) continue
+      }
+      count += 1
+    }
+    setFilterNotif({ count, visible: true })
+    if (filterNotifTimerRef.current != null) {
+      clearTimeout(filterNotifTimerRef.current)
+    }
+    filterNotifTimerRef.current = window.setTimeout(() => {
+      setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
+      filterNotifTimerRef.current = null
+    }, 1300)
+  }, [stationsForMap, primaryOrigin, friendOrigin, visibleRatings, maxMinutes, minMinutes, friendMaxMinutes, primaryDirectOnly, friendDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, seasonFilter, currentSeasonHighlight, searchQuery])
+
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
   // no state delay, so icons don't flash before the shrink starts.
@@ -5024,21 +5315,44 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Save public/private/rambler notes for a station — called when the overlay closes
-  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string, ramblerNote: string) => {
-    // Optimistic update
+  // Save public/private notes for a station — called when the overlay
+  // closes. Walk prose (adminWalksAll / publicWalksS2S / publicWalksCircular
+  // / publicWalksExtras) is build-only and preserved on the existing entry
+  // by the API route, so we don't pass it in.
+  const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string) => {
+    // Optimistic update — preserve the build-output walk fields from
+    // any existing entry so the optimistic state matches what the
+    // server will produce.
     setStationNotes((prev) => {
-      if (!publicNote && !privateNote && !ramblerNote) {
+      const existing = prev[coordKey]
+      const hasAnyWalkProse = !!(
+        existing?.adminWalksAll
+        || existing?.publicWalksS2S
+        || existing?.publicWalksCircular
+        || existing?.publicWalksExtras
+      )
+      if (!publicNote && !privateNote && !hasAnyWalkProse) {
         const next = { ...prev }
         delete next[coordKey]
         return next
       }
-      return { ...prev, [coordKey]: { name, publicNote, privateNote, ramblerNote } }
+      return {
+        ...prev,
+        [coordKey]: {
+          name,
+          publicNote,
+          privateNote,
+          adminWalksAll: existing?.adminWalksAll,
+          publicWalksS2S: existing?.publicWalksS2S,
+          publicWalksCircular: existing?.publicWalksCircular,
+          publicWalksExtras: existing?.publicWalksExtras,
+        },
+      }
     })
     await fetch("/api/dev/station-notes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, publicNote, privateNote, ramblerNote }),
+      body: JSON.stringify({ coordKey, name, publicNote, privateNote }),
     })
   }, [])
 
@@ -5580,6 +5894,28 @@ export default function HikeMap() {
   // at the END of the fade (when opacity hits 0) — mirror of the journey-
   // line pattern.
   const [interTerminalData, setInterTerminalData] = useState(emptyCollection)
+
+  // Admin-only region labels — converts the hand-edited array in
+  // data/region-labels.json into the GeoJSON FeatureCollection shape Mapbox
+  // expects. Each entry becomes a Point feature carrying `name` and
+  // `category` properties so the symbol layer can render the label and (if
+  // we ever want per-category styling) branch on category. Computed only
+  // when admin mode is active — non-admin viewers never pay the cost.
+  const regionLabelsCollection = useMemo(() => {
+    // Empty collection when the Regions toggle is off — keeps the Source
+    // mounted in a stable position in the layer stack but renders nothing.
+    if (!showRegions) {
+      return { type: "FeatureCollection" as const, features: [] }
+    }
+    return {
+      type: "FeatureCollection" as const,
+      features: (regionLabelsData as Array<{ name: string; category: string; coord: [number, number] }>).map((r) => ({
+        type: "Feature" as const,
+        properties: { name: r.name, category: r.category },
+        geometry: { type: "Point" as const, coordinates: r.coord },
+      })),
+    }
+  }, [showRegions])
   const [interTerminalOpacity, setInterTerminalOpacity] = useState(0)
   const interFadeRef = useRef<number | null>(null)
   const interAnimRef = useRef<number | null>(null)
@@ -5743,6 +6079,10 @@ export default function HikeMap() {
   // between features in the same layer), onMouseMove always reports whatever
   // feature is under the cursor — so hover updates correctly between stations.
   const handleMouseMove = useCallback((e: MapMouseEvent) => {
+    // Track the raw cursor lng/lat for the admin-only coord-key readout.
+    // Cheap: one state update per mousemove. The readout UI is gated by
+    // devExcludeActive so non-admin users never see it.
+    setCursorCoord({ lng: e.lngLat.lng, lat: e.lngLat.lat })
     const feature = e.features?.[0]
     if (!feature) {
       if (hoveredRef.current !== null) {
@@ -5909,15 +6249,29 @@ export default function HikeMap() {
     // later refactor.
   }, [])
 
-  // Dev only — right-clicking a station immediately excludes it without opening the modal.
+  // Dev only. Right-click behaviour depends on what's under the cursor:
+  //   - On a regular station → toggle its exclusion (hide / re-show).
+  //   - On the London hexagon → no-op (it has its own click behaviour).
+  //   - On empty map → copy the cursor coord-key ("lng,lat", 2 decimals)
+  //     to the clipboard so the admin can paste it into a data file
+  //     (region-labels.json etc) without retyping. Format matches the
+  //     on-screen coord readout so what they see is what gets copied.
   const handleContextMenu = useCallback((e: MapMouseEvent) => {
     if (!devExcludeActive) return
     const feature = e.features?.[0]
-    if (!feature || feature.properties?.isLondon) return
-    const name = feature.properties?.name as string
-    const coordKey = feature.properties?.coordKey as string
-    // Right-click in admin mode toggles exclusion — either hide or re-show the station.
-    handleToggleExclusion(name, coordKey)
+    if (feature) {
+      if (feature.properties?.isLondon) return
+      const name = feature.properties?.name as string
+      const coordKey = feature.properties?.coordKey as string
+      handleToggleExclusion(name, coordKey)
+      return
+    }
+    // Empty space — copy coord to clipboard.
+    const coordKey = `${e.lngLat.lng.toFixed(2)},${e.lngLat.lat.toFixed(2)}`
+    navigator.clipboard.writeText(coordKey).then(() => {
+      setCoordCopied(true)
+      setTimeout(() => setCoordCopied(false), 1000)
+    }).catch(() => {/* clipboard blocked — silent fail */})
   }, [devExcludeActive, handleToggleExclusion])
 
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
@@ -6396,6 +6750,27 @@ export default function HikeMap() {
         onMinChange={setMinMinutes}
         showTrails={showTrails}
         onToggleTrails={setShowTrails}
+        showRegions={showRegions}
+        onToggleRegions={setShowRegions}
+        onShowAll={() => {
+          // Admin "Show all" — wipe every filter back to the most permissive
+          // state so every station passes through. Covers: rating
+          // checkboxes (all 6 ticked), all dropdowns to "off", max-time
+          // slider to admin ceiling (600 = unlimited), min-time slider
+          // to "off" (0), friend origin cleared, station-search field
+          // cleared, both direct-only checkboxes cleared.
+          setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended", "unrated", "excluded"]))
+          setPrimaryInterchangeFilter("off")
+          setPrimaryFeatureFilter("off")
+          setSeasonFilter("off")
+          setMaxMinutes(600)
+          setMinMinutes(0)
+          setFriendMaxMinutes(600)
+          setFriendOriginWithTransition(null)
+          setSearchQuery("")
+          setPrimaryDirectOnly(false)
+          setFriendDirectOnly(false)
+        }}
         visibleRatings={visibleRatings}
         onToggleRating={(key: string) => {
           setVisibleRatings((prev) => {
@@ -6556,7 +6931,7 @@ export default function HikeMap() {
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.
                 setSeasonFilter("off")
-                if (maxMinutes > 120) setMaxMinutes(120)
+                if (maxMinutes > 150) setMaxMinutes(150)
               }
             }}
             className={`rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
@@ -6569,6 +6944,18 @@ export default function HikeMap() {
           {devExcludeActive && (
             <div className="pointer-events-none rounded bg-black/60 px-2 py-1 font-mono text-xs text-white">
               z {zoom.toFixed(1)}
+            </div>
+          )}
+          {/* Cursor coord-key readout — admin-only, sibling of the zoom
+              indicator. Shows "lng,lat" rounded to 4 decimals (≈11 m
+              precision) — same shape as coordKey strings stored in
+              excluded-stations.json, station-notes.json etc, so the value
+              can be copy-pasted directly into those files. */}
+          {devExcludeActive && cursorCoord && (
+            <div className={`pointer-events-none rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
+              coordCopied ? "bg-green-600/80" : "bg-black/60"
+            }`}>
+              {cursorCoord.lng.toFixed(2)},{cursorCoord.lat.toFixed(2)}
             </div>
           )}
           {/* RTT status panel trigger — admin-only. Opens a modal
@@ -6896,6 +7283,73 @@ export default function HikeMap() {
             type="raster"
             layout={{ visibility: showTrails ? "visible" : "none" }}
             paint={{ "raster-opacity": 0.5 }}
+          />
+        </Source>
+
+        {/* Admin-only region labels — counties, national parks, AONBs.
+            Mounted near the bottom of the layer stack so labels sit BENEATH
+            station markers (stations win the visual battle when they
+            collide). The Source data is empty when admin mode is off, so the
+            layer renders nothing without changing position in the stack.
+            Visible roughly zoom 6–12: country-wide overview through to mid-
+            detail, dropping out at street-level zooms where they'd fight
+            with built-in place labels. */}
+        <Source id="region-labels-source" type="geojson" data={regionLabelsCollection}>
+          <Layer
+            id="region-labels"
+            type="symbol"
+            minzoom={6}
+            maxzoom={12}
+            layout={{
+              "text-field": ["get", "name"],
+              "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+              "text-size": 12,
+              // Allow all labels to render, even when they collide. With
+              // ~150 entries (counties, parks, AONBs across England,
+              // Wales, Scotland) Mapbox's default collision detection
+              // silently hides labels that sit close to each other —
+              // Surrey Hills swallowed by Surrey, Kent Downs by Kent.
+              // Showing overlapping labels is the visual cue that tells
+              // you which entries to nudge in data/region-labels.json.
+              "text-allow-overlap": true,
+              "text-ignore-placement": true,
+              // Long names like "Suffolk Coast & Heaths" wrap onto a
+              // second line at the default text-max-width (10 ems);
+              // bump to 20 so they stay on a single line.
+              "text-max-width": 20,
+            }}
+            paint={{
+              // Two visual groups, branched on the `category` property:
+              //   - counties → muted neutral grey: they're admin context
+              //     and should recede behind the map content.
+              //   - national parks + landscapes (AONBs) → green: they're
+              //     the "nature areas" a hiker actually cares about.
+              // ["match", input, label, output, …, defaultOutput] is
+              // Mapbox's switch expression — the trailing value is the
+              // default and catches both "national-park" and
+              // "national-landscape" without listing them twice.
+              "text-color": [
+                "match",
+                ["get", "category"],
+                "county", theme === "dark" ? "#a1a1aa" : "#6b7280",
+                // green for both park categories
+                theme === "dark" ? "#86efac" : "#15803d",
+              ],
+              // Halo is the soft outline behind the text. Counties keep
+              // the existing theme halo (white in light, black in dark) so
+              // they stay neutral; parks/landscapes get a tinted-green
+              // halo so the text reads as a green glow rather than a
+              // green letter on a white shape. Pale green-100 in light,
+              // deep green-900 in dark — both contrast the green text
+              // enough to keep it legible.
+              "text-halo-color": [
+                "match",
+                ["get", "category"],
+                "county", haloColor,
+                theme === "dark" ? "#14532d" : "#dcfce7",
+              ],
+              "text-halo-width": 1.5,
+            }}
           />
         </Source>
 
@@ -7543,7 +7997,37 @@ export default function HikeMap() {
                     ? ["format", ["get", "name"], { "font-scale": 1 }]
                     : [
                         "format",
-                        ["get", "name"], { "font-scale": 1 },
+                        // In admin mode, prefix the station name with its
+                        // CRS code — "TRI Tring" — for quick station
+                        // identification. Falls back to plain name when
+                        // ref:crs is absent (e.g. London terminus pseudo-
+                        // features). Built here at render time, not as a
+                        // Mapbox `case`, because devExcludeActive is React
+                        // state, not a feature property.
+                        devExcludeActive
+                          ? ["case",
+                              // Non-NR detection: no CRS, OR a Z-prefix
+                              // code that isn't on our allowlist of Z-prefix
+                              // codes that ARE actually National Rail
+                              // stations (ZFD Farringdon, ZLW Whitechapel,
+                              // ZEL Elephant & Castle, ZCW Canada Water,
+                              // ZTU Turnham Green). Without the allowlist,
+                              // ZFD would be wrongly flagged — it's a
+                              // critical Thameslink + Elizabeth stitcher
+                              // source. Mirrors isNonNrStation() in
+                              // photo-overlay.tsx; keep them in sync.
+                              ["any",
+                                ["!", ["has", "ref:crs"]],
+                                ["all",
+                                  ["==", ["index-of", "Z", ["get", "ref:crs"]], 0],
+                                  ["!", ["in", ["get", "ref:crs"], ["literal", ["ZFD", "ZLW", "ZEL", "ZCW", "ZTU"]]]],
+                                ],
+                              ],
+                              ["concat", "NULL ", ["get", "name"]],
+                              ["concat", ["get", "ref:crs"], " ", ["get", "name"]],
+                            ]
+                          : ["get", "name"],
+                        { "font-scale": 1 },
                         "\n", {},
                         // Time-to-station label at font-scale 0.9 —
                         // slightly smaller than the station name so
@@ -7836,9 +8320,11 @@ export default function HikeMap() {
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
             publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
-            ramblerNote={stationNotes[displayStation.coordKey]?.ramblerNote ?? ""}
-            publicRamblerNote={stationNotes[displayStation.coordKey]?.publicRamblerNote ?? ""}
-            onSaveNotes={(pub, priv, rambler) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv, rambler)}
+            adminWalksAll={stationNotes[displayStation.coordKey]?.adminWalksAll ?? ""}
+            publicWalksS2S={stationNotes[displayStation.coordKey]?.publicWalksS2S ?? ""}
+            publicWalksCircular={stationNotes[displayStation.coordKey]?.publicWalksCircular ?? ""}
+            publicWalksExtras={stationNotes[displayStation.coordKey]?.publicWalksExtras ?? ""}
+            onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             ramblerExtras={ramblerExtras[displayStation.coordKey] ?? []}
             onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}
             onWalkSaved={refreshStationDerivedData}
@@ -7918,6 +8404,48 @@ export default function HikeMap() {
             - animate-spin is Tailwind's stock 1s linear rotation,
               applied to a classic CSS ring (border-4 transparent on
               one side + coloured on the rest). */}
+      {/* Filter-change pill — viewport-centred on sm+ desktop, pinned
+          to the bottom on sub-sm mobile (matches the loading pill below
+          so the two never collide vertically). Same chrome as the
+          "Looking up trains from..." notification: background, ring,
+          shadow, fixed-width spinner slot. Spinner is decorative here
+          (no actual async work) — it gives the pill the same "something
+          happened" energy as the loading one. Fades out 1.5s after the
+          most recent filter change. */}
+      {/* Visibility gate: filter pill hides whenever the loading pill
+          is active (notificationPhase !== "idle"). The two share the
+          same screen position; "Looking up trains" is always the
+          priority because it represents in-flight network work the
+          user kicked off intentionally. */}
+      {(() => {
+        const filterPillVisible = !!filterNotif?.visible && notificationPhase === "idle"
+        return (
+          <div
+            aria-hidden={!filterPillVisible}
+            className={cn(
+              "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
+              "transition-opacity duration-700",
+              filterPillVisible ? "opacity-100" : "opacity-0",
+            )}
+          >
+            <div className="flex items-center gap-2 rounded-full bg-background/90 px-4 py-2 shadow-lg ring-1 ring-border">
+              {/* Same fixed-width spinner slot as the loading pill, so
+                  the two pills are visually flush if they ever overlap
+                  mid-fade. */}
+              <span
+                className="inline-flex items-center justify-center text-primary"
+                style={{ width: "3.2rem", height: "1.25rem" }}
+              >
+                <LogoSpinner className="h-4" label="Updating" />
+              </span>
+              <span className="text-sm font-semibold text-muted-foreground">
+                {filterNotif?.count ?? 0} {filterNotif?.count === 1 ? "station" : "stations"}
+              </span>
+            </div>
+          </div>
+        )
+      })()}
+
       <div
         aria-hidden={notificationPhase === "idle"}
         className={cn(
@@ -7986,7 +8514,7 @@ export default function HikeMap() {
                 4. "new home" — generic fallback. Shouldn't happen in
                    practice; the outer opacity-0 hides the pill in
                    the idle phase anyway. */}
-          <span className="text-sm font-medium">
+          <span className="text-sm font-semibold text-muted-foreground">
             {goodbyeFriendCoord
               ? `Saying goodbye to ${
                   FRIEND_ORIGINS[goodbyeFriendCoord]?.displayName

@@ -716,12 +716,17 @@ function buildRamblerNotes(args) {
         // come from the walk data itself (main/variant, komoot, rating,
         // distance).
         const sourceType = variant.source?.type ?? variant.role ?? "main"
+        // Circular walks: same start and end station. The public view
+        // splits walks into "Station-to-station" vs "Circular" sections;
+        // each section applies its own 3-walks-per-section quota.
+        const isCircular = !!variant.startStation && variant.startStation === variant.endStation
         perStation.get(station.coordKey).ramblerParts.push({
           summary,
           kind: 0,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
           isMain: sourceType === "main",
+          isCircular,
           // Raw source type kept for possible future per-subtype
           // filtering. Current filter only cares about isMain.
           sourceType,
@@ -798,6 +803,7 @@ function buildRamblerNotes(args) {
         ratingTier: Number.POSITIVE_INFINITY,
         hasKomoot: false,
         isMain: false,
+        isCircular: false,
         // Extras aren't walks — these fields are unused at kind=1 but
         // kept on the struct so all parts share the same shape.
         sourceType: "",
@@ -817,66 +823,82 @@ function buildRamblerNotes(args) {
   //   file stays clean.
   const changes = { added: 0, updated: 0, cleared: 0, removed: 0 }
 
-  for (const [coordKey, { name, ramblerParts }] of perStation) {
-    // Stable sort by priority: favourites first, then regular walks, then extras.
-    const ordered = [...ramblerParts].sort(compareRamblerParts)
-    const ramblerNote = ordered.map((p) => p.summary).join("\n\n")
-    // Public visibility rules (admin always sees the full list):
-    //   • Mains are always shown.
-    //   • Notes (free-form extras, kind=1) are always shown and
-    //     don't count toward the 5-walk cap.
-    //   • Bus-requiring walks never reach this filter — they're
-    //     excluded upstream by `stationToStation !== true`, which
-    //     buildSummary returns null for. (Admin CMS still shows them.)
-    //   • Variants: if the station already has 5+ mains, NONE are
-    //     shown. Otherwise we take the top-ranked variants (they
-    //     follow the mains in `ordered`) until the total walk count
-    //     would reach 5, or until there are no more variants. So a
-    //     station with 2 mains gets up to 3 variants, a station with
-    //     0 mains gets up to 5, and so on.
-    const mainCount = ordered.filter((p) => p.kind === 0 && p.isMain).length
-    const variantQuota = mainCount >= 5 ? 0 : 5 - mainCount
+  // Apply per-section quota: every main passes; variants fill up to
+  // 3 walks per section (so 0 mains → 3 variants, 1 main → 2, 2 mains
+  // → 1, 3+ mains → 0). Returns the gated subset preserving order.
+  function quotaFilterPerSection(parts) {
+    const mainCount = parts.filter((p) => p.isMain).length
+    const variantQuota = mainCount >= 3 ? 0 : 3 - mainCount
     let variantsAdded = 0
-    const publicParts = ordered.filter((p) => {
-      if (p.kind !== 0) return true // notes always pass
-      if (p.isMain) return true // mains always pass
-      // Variant — gated by quota. Because `ordered` has mains before
-      // variants and variants already sorted by the main comparator,
-      // the first `variantQuota` variants we see ARE the top-ranked
-      // ones.
+    return parts.filter((p) => {
+      if (p.isMain) return true
       if (variantsAdded >= variantQuota) return false
       variantsAdded++
       return true
     })
-    const publicRamblerNote = publicParts.map((p) => p.summary).join("\n\n")
+  }
+
+  for (const [coordKey, { name, ramblerParts }] of perStation) {
+    const ordered = [...ramblerParts].sort(compareRamblerParts)
+    // Admin's view: full unfiltered single block (every walk, every
+    // note, every variant — bus-tagged walks never make it this far
+    // because buildSummary returns null when stationToStation is
+    // false). Distinct from the public view's three sectioned blocks.
+    const adminWalksAll = ordered.map((p) => p.summary).join("\n\n")
+    // Public sectioning. Each walk routes into one of two sections
+    // by `isCircular` (set per-variant from startStation === endStation).
+    // Free-form extras (kind=1) skip sectioning and live in their own
+    // un-headered block.
+    const s2sParts = ordered.filter((p) => p.kind === 0 && !p.isCircular)
+    const circularParts = ordered.filter((p) => p.kind === 0 && p.isCircular)
+    const extraParts = ordered.filter((p) => p.kind === 1)
+    const publicWalksS2S = quotaFilterPerSection(s2sParts)
+      .map((p) => p.summary).join("\n\n")
+    const publicWalksCircular = quotaFilterPerSection(circularParts)
+      .map((p) => p.summary).join("\n\n")
+    const publicWalksExtras = extraParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
-      const before = notes[coordKey].ramblerNote
-      notes[coordKey].ramblerNote = ramblerNote
-      notes[coordKey].publicRamblerNote = publicRamblerNote
-      // Drop the legacy sidecar field from the earlier "mainCount"
-      // rule so it doesn't linger in the JSON.
+      const beforeAdmin = notes[coordKey].adminWalksAll
+      notes[coordKey].adminWalksAll = adminWalksAll
+      notes[coordKey].publicWalksS2S = publicWalksS2S
+      notes[coordKey].publicWalksCircular = publicWalksCircular
+      notes[coordKey].publicWalksExtras = publicWalksExtras
+      // Tidy legacy fields — replaced by the four above.
+      delete notes[coordKey].ramblerNote
+      delete notes[coordKey].publicRamblerNote
       if ("ramblerMainCount" in notes[coordKey]) delete notes[coordKey].ramblerMainCount
-      if (before !== ramblerNote) changes.updated++
+      if (beforeAdmin !== adminWalksAll) changes.updated++
     } else {
-      notes[coordKey] = { name, publicNote: "", privateNote: "", ramblerNote, publicRamblerNote }
+      notes[coordKey] = {
+        name,
+        publicNote: "",
+        privateNote: "",
+        adminWalksAll,
+        publicWalksS2S,
+        publicWalksCircular,
+        publicWalksExtras,
+      }
       changes.added++
     }
   }
 
   for (const [coordKey, entry] of Object.entries(notes)) {
     if (perStation.has(coordKey)) continue
-    if (entry.ramblerNote) {
-      entry.ramblerNote = ""
-      entry.publicRamblerNote = ""
+    if (entry.adminWalksAll || entry.publicWalksS2S || entry.publicWalksCircular || entry.publicWalksExtras) {
+      entry.adminWalksAll = ""
+      entry.publicWalksS2S = ""
+      entry.publicWalksCircular = ""
+      entry.publicWalksExtras = ""
       changes.cleared++
     }
-    // Tidy up the legacy sidecar field left behind by the earlier
-    // "mainCount-based" visibility rule. No longer read by the client.
+    // Drop legacy fields from any leftover entries too.
+    delete entry.ramblerNote
+    delete entry.publicRamblerNote
     if ("ramblerMainCount" in entry) delete entry.ramblerMainCount
   }
 
   for (const [coordKey, entry] of Object.entries(notes)) {
-    if (!entry.publicNote && !entry.privateNote && !entry.ramblerNote) {
+    if (!entry.publicNote && !entry.privateNote && !entry.adminWalksAll) {
       delete notes[coordKey]
       changes.removed++
     }

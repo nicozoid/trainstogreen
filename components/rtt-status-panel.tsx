@@ -10,7 +10,7 @@
 // devExcludeActive). The summary endpoint also lives under /api/dev/
 // in line with the other admin-only routes.
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Fragment, useCallback, useEffect, useRef, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -94,35 +94,71 @@ function formatEta(d: Date): string {
   })
 }
 
-// Primaries we care about getting proper 2-date coverage on. Anything in
-// origin-routes.json that isn't in this list still shows in the table
-// (it's "bonus" data), but isn't flagged as "missing" when absent. The
-// set mirrors v2-complete.sh's target list — keep in sync when we
-// expand or contract fetch targets.
-// Stations we explicitly fetched or are fetching (the "tracked" set).
-// Seeded with the original Phase 1-3 targets; every CRS later added to
-// QUEUE_ORDER for a batch orchestrator is auto-appended below so the
-// panel treats it as tracked (⚠️/✅ badges, colour, ETA column) without
-// manual upkeep every time we queue a new batch.
-const TRACKED_SEED = [
-  // 15 London termini — ALL need full 2-date 09:00–12:00 coverage
+// Station categorisation. Every CRS that appears in the panel falls into
+// exactly one of four buckets:
+//
+//   - public-primary  — non-admin user picks as their own home.
+//                       The 15 London termini + SRA + SFA = 17 stations.
+//   - friend          — non-admin user picks as a friend's home.
+//                       Currently BHM (Birmingham) + NOT (Nottingham).
+//   - admin-primary   — admin-only home pick. Empty for now; populate
+//                       as admin-only primaries are introduced.
+//   - junction        — pure RTT-composition routing data, never
+//                       user-pickable. Includes everything else in
+//                       data/origin-routes.json (CRE, RDG, GTW, BHM-the-
+//                       junction-side, …). Inferred — anything not in
+//                       the three sets above is a junction.
+//
+// Why these matter: the Queue tab uses the first three sets to
+// auto-synthesise "needs fetching" rows for any of the 17 + 2 + 0 = 19
+// curated stations not yet at full V2 data. Junctions are not auto-
+// queued — they're fetched on-demand, typically because a public-
+// primary's RTT composition needs them.
+const PUBLIC_PRIMARY_CRS = new Set([
+  // 15 London termini
   "CHX", "LST", "MOG", "BFR", "CST", "FST", "LBG", "MYB",
   "PAD", "VIC", "WAT", "WAE", "KGX", "STP", "EUS",
-  // Hub stations we care about for Option 2 splice routing + CLJ for
-  // general suburban coverage. CLJ was pulled from the home-selector
-  // dropdown's default seed but we're still fetching it — plan is to
-  // verify via admin mode, then re-seed it there once trusted.
-  "CLJ", "LWS", "MAI",
-  // Suburban / regional primaries added 2026-04-20 for broader
-  // Option-2 splice coverage. Keep in sync with the Phase 3 loop in
-  // /tmp/ttg-rtt/v2-complete.sh.
-  "RDG", "DFD", "WOK", "FPK", "ECR", "RMD", "WFJ", "WIJ",
-  "SVS", "HRW", "FOG", "HAY", "EAL",
-]
+  // Stratford + Stratford International — clustered with the termini
+  // group in the home-station picker (see PRIMARY_ORIGIN_CLUSTER in
+  // map.tsx).
+  "SRA", "SFA",
+])
+const FRIEND_CRS = new Set(["BHM", "NOT"])
+const ADMIN_PRIMARY_CRS = new Set<string>([])
 
-// Pretty names for missing-target synthesised rows. Only used when the
-// primary isn't yet present in origin-routes.json — once it's been
-// fetched, its real name from the JSON wins. Keyed by CRS.
+type StationCategory = "public-primary" | "friend" | "admin-primary" | "junction"
+function categoryOf(crs: string): StationCategory {
+  if (PUBLIC_PRIMARY_CRS.has(crs)) return "public-primary"
+  if (FRIEND_CRS.has(crs)) return "friend"
+  if (ADMIN_PRIMARY_CRS.has(crs)) return "admin-primary"
+  return "junction"
+}
+const CATEGORY_LABELS: Record<StationCategory, string> = {
+  "public-primary": "Public primaries",
+  "friend": "Friends",
+  "admin-primary": "Admin primaries",
+  "junction": "Junctions",
+}
+// Render order in the Fetched tab (Public primaries first, then Friends,
+// Admin primaries, then everything else as junctions). Matches the
+// importance ordering: things users see > things admins use > backend
+// routing data.
+const CATEGORY_ORDER: StationCategory[] = ["public-primary", "friend", "admin-primary", "junction"]
+
+// Stations we want to track in the Queue tab. Empty queue starts with
+// just the curated public-primary + friend + admin-primary lists so the
+// panel auto-shows missing data for any of those that aren't yet at
+// full V2 coverage. Append CRS codes here only if a JUNCTION needs to
+// be explicitly queued (for example to unlock a destination missing
+// travel data).
+const TRACKED_SEED: string[] = []
+
+// Pretty names for missing-target synthesised rows — used when a
+// curated CRS (public primary / friend / admin primary) isn't yet
+// present in origin-routes.json so we can't read its real name from
+// there. Once fetched, the JSON's name wins. Keyed by CRS; only needs
+// entries for stations whose name the API can't resolve from
+// public/stations.json.
 const STATION_DISPLAY_NAMES: Record<string, string> = {
   CHX: "Charing Cross", LST: "Liverpool Street", MOG: "Moorgate",
   BFR: "Blackfriars",   CST: "Cannon Street",    FST: "Fenchurch Street",
@@ -130,140 +166,39 @@ const STATION_DISPLAY_NAMES: Record<string, string> = {
   VIC: "Victoria",      WAT: "Waterloo",         WAE: "Waterloo East",
   KGX: "London King's Cross", STP: "London St. Pancras International",
   EUS: "Euston",
-  CLJ: "Clapham Junction", LWS: "Lewes", MAI: "Maidenhead",
-  RDG: "Reading",       DFD: "Dartford",         WOK: "Woking",
-  FPK: "Finsbury Park", ECR: "East Croydon",     RMD: "Richmond",
-  WFJ: "Watford Junction", WIJ: "Willesden Junction",
-  SVS: "Seven Sisters", HRW: "Harrow & Wealdstone",
-  FOG: "Forest Gate",   HAY: "Hayes & Harlington",
-  EAL: "Ealing Broadway",
+  SRA: "Stratford",     SFA: "Stratford International",
+  BHM: "Birmingham New Street", NOT: "Nottingham",
 }
 
 // Canonical queue order used by /tmp/ttg-rtt/v2-complete.sh. Anything
 // still in-flight or not-yet-started sorts to the TOP of the table by
 // its position here, so the admin reads the panel as a todo list.
 // Keep in sync with v2-complete.sh when phases change.
+// Cleared 2026-04-25; repopulated with the 84-junction "perfect public-
+// primary coverage" queue. Goal: every NR destination reachable from a
+// public primary via direct or 1-junction composition has travel data.
+// Phases ordered by impact — Phase A unlocks the 56 currently-rated
+// stations that lack travel data; later phases broaden coverage of
+// branch lines and regional networks.
 const QUEUE_ORDER: string[] = [
-  // Current pipeline is /tmp/ttg-rtt/v2-priority.sh, which replaced
-  // v2-complete.sh (killed at 14:15 local because its in-memory bash
-  // had cached an older script — mid-run edits didn't propagate).
-  //
-  // QUEUE_ORDER lists ONLY pending stations; already-completed Phase 1
-  // stations (CHX, LST, MYB, PAD, VIC, WAT, WAE, KGX, STP, EUS) are
-  // absent — their rows show generatedAt in the "Est. complete"
-  // column instead of using queue-derived ETAs.
-  //
-  // Phase A — retry the 4 Phase-1 failures (user priority: top)
-  "MOG", "CST", "FST", "LBG",
-  // Phase B — BFR (2026-04-25 had engineering works; fresh 2-date run)
-  "BFR",
-  // Phase C — hub fetches, high-priority first
-  "LWS", "MAI", "CLJ",
-  // Phase C continued — 13 suburban / regional stations, user-priority order
-  "RDG", "DFD", "WOK", "FPK", "ECR", "RMD", "WFJ", "WIJ",
-  "SVS", "HRW", "FOG", "HAY", "EAL",
-  // Phase D — /tmp/ttg-rtt/batch-2-hubs.sh (was first-after-v2 in the
-  // original chain; moved to head of queue after v2-priority.sh was
-  // killed mid-WIJ because the RTT rate-limit had burned out — the
-  // highest-priority suburban hubs were re-sequenced to the tail so
-  // they'd get the freshest API quota). Sourced from the London-as-
-  // home NRE spot-check: each fixes an over-estimated route.
-  "HAT", "PUR", "SVG", "HWN", "LTN",
-  // Phase E — /tmp/ttg-rtt/batch-3-hubs.sh. Top-ranked unfetched
-  // interchanges by day-hike-range frequency. Hiking-region gateways.
-  "BTN", "IPS", "WSB", "DVP", "SOO", "BLY", "TAM", "PBO",
-  // Phase F — /tmp/ttg-rtt/batch-4-hubs.sh. Second-tier interchanges.
-  "SOU", "SAY", "SIT", "BTH", "COV", "BHM", "CMB", "WIC", "MNG", "NOT",
-  // Phase G — /tmp/ttg-rtt/batch-5-hubs.sh. Third-tier AONB / National
-  // Park gateway hubs.
-  "HWY", "BCU", "OXF", "CBG", "TWY", "BAA", "COL", "DID", "BRI", "SOA",
-  // Phase H — /tmp/ttg-rtt/batch-6-hubs.sh (formerly suburban-hubs.sh,
-  // renamed to avoid colliding with batch-2's wait pattern). Highest-
-  // priority hubs — re-sequenced last so they fetch with maximum
-  // rate-limit headroom after everything else completes.
-  "RDH", "TON", "PDW",                           // high priority
-  "SEV", "AFK", "HHE", "GTW", "GLD",             // medium
-  "SLO", "SAC", "SNF", "BSK",                    // low
-  // Phase I — /tmp/ttg-rtt/batch-7-hubs.sh. Cleanup re-queue for the
-  // Phase C stations that got skipped when v2-priority.sh was killed
-  // mid-WIJ on 2026-04-20. Runs when the pipeline is otherwise idle.
-  "WIJ", "SVS", "HRW", "FOG", "HAY", "EAL",
-  // Phase J — /tmp/ttg-rtt/batch-8-hubs.sh. Comprehensive low-data-
-  // interchange pass: every station that appears as a rail-to-rail
-  // interchange in any Central-London journey but isn't yet fetched.
-  // Ordered by frequency across journeys. 62 hubs — from major
-  // regional termini (CRE, CDF, MAN) down to single-journey edges
-  // (SAL, FTN, WIN). Runs when everything else is idle.
-  "CRE", "CDF", "SOT", "DBY", "GRA", "NRW", "EXD", "SGB", "DON",
-  "WBQ", "RET", "GCR", "LTV", "STA", "SHF", "LEI", "LMS", "RGL",
-  "NUN", "WML", "CTR", "HIT", "WGN", "BDM", "SPT", "NWE", "MKT",
-  "TLS", "SWI", "HAV", "PTR", "CHD", "ELY", "LCN", "SFN", "ATL",
-  "LBO", "NBY", "SAL", "FTN", "WIN", "SBJ", "EGR", "ABW", "LGE",
-  "WMD", "TAU", "BGN", "BND", "HKM", "NWD", "HRH", "AHV", "ACT",
-  "HSL", "FEL", "WYB", "MAR", "BXB", "FAV", "BSR", "MAN",
-  // Phase K — /tmp/ttg-rtt/batch-9-hubs.sh. Every London-area NR /
-  // Elizabeth-line station that isn't already fully V2 captured.
-  // 321 codes total; order matches the script's for-loop so the
-  // panel's queue-rank logic produces correct ETAs.
-  "WAL", "WDT", "SMY", "MIL", "CTF", "WIM", "NLT", "KGL", "BWO",
-  "GSN", "WFN", "HWW", "DGC", "DNM", "SDH", "NDL", "IVR", "THD",
-  "CDN", "WME", "KND", "RHM", "SIH", "SUC", "RMF", "SUR", "MOT",
-  "SMO", "HEN", "RDT", "OLD", "BMN", "WDO", "HAF", "WCY", "UPM",
-  "BSH", "HGY", "SRH", "STW", "GFD", "IFD", "SVK", "WHR", "BAK",
-  "KDB", "ZLW", "DMK", "QRP", "EDR", "BRX", "CHP", "CSS", "ZFD",
-  "FLW", "HMP", "KMP", "SUU", "UPH", "SHP", "QRB", "VXH", "HYW",
-  "PNW", "WLI", "BNH", "ELW", "ERH", "WNT", "BRS", "NEM", "CTK",
-  "MAL", "TOL", "CSN", "STE", "EPH", "SUO", "BNS", "ESH", "HMW",
-  "CHE", "OTF", "EFF", "WBO", "NSH", "IMW", "EAD", "CHN", "WBY",
-  "TOO", "HYR", "WSW", "AHD", "ORP", "HNH", "CSD", "EPD", "BFN",
-  "BXY", "BAL", "MTL", "WSU", "BBL", "EYN", "WWC", "SMG", "OXS",
-  "CLG", "WRU", "HMC", "TAD", "CLW", "RIC", "HOH", "CAT", "WEH",
-  "SRA", "KLY", "WHS", "WHY", "UWL", "WOH", "LNY", "KTN", "GNW",
-  "LHS", "KCK", "HDW", "MTC", "MDS", "BKH", "DEP", "CYP", "BKA",
-  "HER", "RAY", "WCP", "SNL", "LHD", "CSH", "EWE", "SYD", "FOH",
-  "HPA", "NXG", "NWX", "SAJ", "WCB", "WWD", "WWA", "PLU", "SGR",
-  "GRP", "HGR", "ESD", "CIT", "PET", "CLD", "DNG", "SCY", "SNR",
-  "RDD", "LAD", "CFB", "LSY", "NBC", "CLK", "WWI", "EDN", "ELE",
-  "EGH", "SNS", "TWI", "WRY", "WTN", "BNI", "CHK", "KWB", "BFD",
-  "SYL", "ISL", "HOU", "CHY", "ASN", "NBT", "TED", "HCB", "KPA",
-  "SRU", "NUM", "BMD", "ENL", "WLC", "MIJ", "CUF", "CWH", "GDH",
-  "GPK", "PAL", "HRN", "BOP", "ANZ", "KNL", "HHY", "DYP", "BKG",
-  "TOM", "CMD", "MRW", "SBM", "MYL", "LEW", "WHP", "SRS", "HWV",
-  "BCY", "MNP", "EPS", "HXX", "TAT", "EWW", "EBD", "SRT", "LGF",
-  "WDU", "SYH", "PNE", "KTH", "BKJ", "BKL", "BMS", "SEH", "KMS",
-  "BRG", "FNR", "NHD", "CFT", "BGM", "BEC", "RVB", "LGJ", "GRY",
-  "DDK", "RNM", "CFH", "OCK", "ENC", "SFA", "CSB", "WLT", "PUO",
-  "BLM", "SRC", "NRB", "TTH", "LEE", "MTG", "NEH", "SID", "CRY",
-  "AYP", "NFL", "SWM", "GNH", "SCG", "GDP", "PFL", "PMR", "SPB",
-  "BRE", "HRO", "PBR", "WIH", "CTH", "WEA", "STL", "HAN", "GMY",
-  "AML", "HAC", "PUT", "EXR", "CRI", "HYS", "MZH", "BXH", "BVD",
-  "CDS", "AFS", "FCN", "CTN", "PON", "LEB", "ELS", "KNG", "BAD",
-  "WCX", "SUD", "WMB", "AAP", "NSG", "OKL", "NBA", "SUP", "WNW",
-  "GIP", "BIK", "EDW", "SGN", "CBP", "DRG", "TUH", "BCZ", "CWX",
-  "CUS", "BDS", "TCR", "PDX", "SPL", "LSX",
-  // Phase L — /tmp/ttg-rtt/batch-10-hubs.sh. Friend-origin candidates
-  // — stations where a friend of a London user plausibly lives, so
-  // they can be picked as a friend origin once the friend-picker
-  // feature lands. Covers major regional cities + Home Counties /
-  // coastal commuter towns.
-  "YRK", "LDS", "LIV", "NCL", "PMH", "PMS", "SOC", "BMO",
-  "EBN", "HGS", "CBE", "CBW", "BMH", "POO", "CCH", "WRH",
-  "TBW", "REI", "DKG", "CHM",
-  // Phase M — /tmp/ttg-rtt/batch-11-hubs.sh. Future-scope coverage
-  // for "any London home + any-within-3h friend": major cities,
-  // National Park gateways, cathedral / university towns.
-  "PRE", "WVH", "NMP", "LAN", "HFD", "SWA", "SHR", "WOF", "WOS", "BPN",
-  "WDM", "SKI", "MAT", "BUX", "KEI", "ALM", "BWK", "KGM", "MIM", "PAN", "GOR",
-  "DHM", "HUL", "TRU", "PLY", "WRW",
-  // Phase N — /tmp/ttg-rtt/batch-12-hubs.sh. Remaining 50k+ population
-  // centres within 3h45m of London not yet covered. MKC (Milton Keynes)
-  // was the biggest oversight; rest are Yorkshire textile cities,
-  // Medway towns, Sussex/Hampshire commuters, Midlands suburbs, etc.
-  "BBN", "BON", "RCD", "BDI", "BDQ", "HUD", "HFX", "WKF", "RMC",
-  "MBR", "SUN", "DAR", "MKC", "AYS", "BAN", "RUG", "BHI", "BSW",
-  "SUT", "SOL", "WSL", "RDC", "KID", "BUT", "MFT", "MDE", "MDW",
-  "CTM", "GLM", "FKC", "GRV", "BSO", "AHT", "FNB", "CRW", "WSM",
-  "CNM", "RAM", "SCA",
+  // Phase A — Rated-station unlocks (10)
+  "SOL", "SHF", "LDS", "NCL", "NBY", "MKT", "BBN", "EXD", "SPT", "WEA",
+  // Phase B — Major regional hubs (15)
+  "MAN", "YRK", "LIV", "PRE", "HFD", "HUL", "DON", "STA", "DAR", "MBR",
+  "DHM", "WGN", "SAL", "WIN", "ELY",
+  // Phase C — South-East branch junctions (16)
+  "HRH", "REI", "DKG", "FAV", "BSR", "MAR", "BXB", "FEL", "HSL", "EBN",
+  "HGS", "CBE", "CBW", "HAV", "PTR", "WYB",
+  // Phase D — Friend-candidate cities + commuter hubs (14)
+  "PMH", "PMS", "BMO", "POO", "CCH", "WRH", "TBW", "CHM", "BGN", "BND",
+  "HKM", "NWD", "AHV", "TAU",
+  // Phase E — Mid-England + tail (15)
+  "NUN", "LMS", "RGL", "LBO", "BDM", "HIT", "LTV", "LEI", "GCR", "RET",
+  "WML", "SBJ", "EGR", "SFN", "LCN",
+  // Phase F — Far north / Scotland (8)
+  "EDB", "GLC", "CAR", "ABD", "DDE", "PER", "INV", "STG",
+  // Phase G — Long-tail catch-all (6)
+  "ATL", "CTR", "BAR", "NWE", "BSE", "ACT",
 ]
 
 // Primaries we deliberately DON'T top up. Empty now — earlier we
@@ -274,39 +209,20 @@ const QUEUE_ORDER: string[] = [
 // stale-flags can still be added without reintroducing the const.
 const INTENTIONALLY_STALE_STATIONS = new Set<string>()
 
-// Union of TRACKED_SEED and every CRS in QUEUE_ORDER. Any station we
-// queue for a batch fetch automatically becomes a "tracked" primary in
-// the panel — gets the ⚠️/✅ badge, row colour, and completion-datetime
-// ETA. Without this the badge / ETA logic only recognised the original
-// 28 seed stations and every new-batch CRS (HAT, PUR, BTN, etc.)
-// rendered as a neutral "·" with no colour.
-const TARGET_STATIONS = new Set([...TRACKED_SEED, ...QUEUE_ORDER])
-
-// The 15 London termini — hardcoded CRS set used by the category
-// filter. A station is categorised as "termini" iff its CRS is in this
-// set; "london" iff its coord lies inside LONDON_BOX; "provincial"
-// otherwise. The CRS-first check for termini means WAE (Waterloo East,
-// technically just outside the Waterloo footprint) still counts as a
-// terminus even if its coord edges out of a tight London bounding box.
-const LONDON_TERMINI_CRS = new Set([
-  "CHX", "LST", "MOG", "BFR", "CST", "FST", "LBG", "MYB",
-  "PAD", "VIC", "WAT", "WAE", "KGX", "STP", "EUS",
+// Stations the panel proactively tracks (synthesises a "needs fetching"
+// row for if they're not yet in origin-routes.json). Public primaries +
+// friends + admin primaries are always tracked because the app requires
+// them. TRACKED_SEED + QUEUE_ORDER add any explicitly-queued junctions
+// on top. Junctions not in that explicit queue are still shown in the
+// Fetched tab once they have data; they just don't appear as "missing"
+// when absent.
+const TARGET_STATIONS = new Set([
+  ...PUBLIC_PRIMARY_CRS,
+  ...FRIEND_CRS,
+  ...ADMIN_PRIMARY_CRS,
+  ...TRACKED_SEED,
+  ...QUEUE_ORDER,
 ])
-// Loose bounding box around Greater London — roughly TfL zones 1–6
-// plus a small margin so edge-of-London stations (Dartford, Shenfield,
-// Watford Junction, Richmond) still fall inside. Anything outside the
-// box is classified as provincial.
-const LONDON_BOX = { minLng: -0.55, maxLng: 0.35, minLat: 51.28, maxLat: 51.72 }
-type StationCategory = "termini" | "london" | "provincial"
-function categoriseCoord(coord: string | undefined): StationCategory | null {
-  if (!coord || coord.startsWith("__")) return null
-  const [lngStr, latStr] = coord.split(",")
-  const lng = parseFloat(lngStr), lat = parseFloat(latStr)
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-  return lng >= LONDON_BOX.minLng && lng <= LONDON_BOX.maxLng &&
-         lat >= LONDON_BOX.minLat && lat <= LONDON_BOX.maxLat
-    ? "london" : "provincial"
-}
 
 export function RTTStatusPanel({ open, onOpenChange }: {
   open: boolean
@@ -315,10 +231,10 @@ export function RTTStatusPanel({ open, onOpenChange }: {
   const [data, setData] = useState<StatusPayload | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lastFetchAt, setLastFetchAt] = useState<Date | null>(null)
-  // Category filter — shows either "all", just London termini, just
-  // London non-termini, or just provincial. Not persisted; each modal
-  // open starts with "all" so the admin sees the complete pipeline.
-  const [categoryFilter, setCategoryFilter] = useState<"all" | StationCategory>("all")
+  // Tab — Queue (stations needing fetching) vs Fetched (full V2 data
+  // grouped by category). Not persisted; opens default to "queue" so the
+  // admin lands on the actionable list.
+  const [activeTab, setActiveTab] = useState<"queue" | "fetched">("queue")
   // AbortController for in-flight fetches — used so a rapid close+reopen
   // doesn't write stale data into state after unmount.
   const abortRef = useRef<AbortController | null>(null)
@@ -370,22 +286,21 @@ export function RTTStatusPanel({ open, onOpenChange }: {
           </div>
         )}
 
-        {/* Category filter pills. Four options; clicking an active pill
-            is a no-op (rather than clearing) because "all" is already
-            the explicit clear option. Pill style mirrors the compact
-            monospace aesthetic the rest of the panel uses. */}
+        {/* Two tabs — Queue (stations queued up for fetching, including
+            anything in PUBLIC_PRIMARY_CRS / FRIEND_CRS / ADMIN_PRIMARY_CRS
+            that doesn't yet have full V2 data) and Fetched (stations
+            with full V2 data, grouped by category). Same pill aesthetic
+            as the rest of the panel. */}
         <div className="flex items-center gap-1.5 text-xs font-mono">
           {([
-            { key: "all", label: "All" },
-            { key: "termini", label: "London termini" },
-            { key: "london", label: "London, other" },
-            { key: "provincial", label: "Provincial" },
+            { key: "queue", label: "Queue" },
+            { key: "fetched", label: "Fetched" },
           ] as const).map((opt) => (
             <button
               key={opt.key}
-              onClick={() => setCategoryFilter(opt.key)}
+              onClick={() => setActiveTab(opt.key)}
               className={`rounded px-2 py-1 transition-colors ${
-                categoryFilter === opt.key
+                activeTab === opt.key
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted-foreground/20"
               }`}
@@ -503,24 +418,27 @@ export function RTTStatusPanel({ open, onOpenChange }: {
             const recencyRank = -(Number.isFinite(ts) ? ts : 0)
             return [3, recencyRank, p.name]
           }
-          // Classify a row into termini / london / provincial. Termini
-          // wins purely on CRS (matches LONDON_TERMINI_CRS), since a
-          // few termini coords sit on the edge of the bounding box.
-          // Otherwise parses the coord: real rows carry a "lng,lat"
-          // string; synthetic rows carry "__queued:X" / "__missing:X"
-          // and fall back to the API-provided scrapedCoords map.
-          const rowCategory = (p: StationSummary): StationCategory | null => {
-            if (LONDON_TERMINI_CRS.has(p.crs)) return "termini"
-            const coord = p.coord.startsWith("__")
-              ? (data.scrapedCoords?.[p.crs] ?? "")
-              : p.coord
-            return categoriseCoord(coord)
+          // A row is "fetched" when it carries full V2 coverage —
+          // ≥ 2 sampled Saturdays AND ≥ 1 destination. Anything below
+          // the threshold belongs in the Queue tab (still being built
+          // up). Synthesised rows from TARGET_STATIONS / queue scraping
+          // always go to Queue (they've never been fetched at all).
+          const isFetched = (p: StationSummary) =>
+            !p.coord.startsWith("__") &&
+            p.dates.length >= 2 &&
+            p.destinations > 0
+          // Queue tab only shows rows the admin actually queued or is
+          // actively fetching — partial junction data (e.g. ZFD with
+          // 1 V2 date) doesn't appear here unless explicitly tracked.
+          const isInQueue = (p: StationSummary) => {
+            if (isFetched(p)) return false
+            if (TARGET_STATIONS.has(p.crs)) return true
+            if (data.inProgressCrs.includes(p.crs)) return true
+            if (p.coord.startsWith("__queued:") || p.coord.startsWith("__missing:")) return true
+            return false
           }
-          const rows = [...data.stations, ...synthesisedMissing]
-            .filter((p) => {
-              if (categoryFilter === "all") return true
-              return rowCategory(p) === categoryFilter
-            })
+          const allRows = [...data.stations, ...synthesisedMissing]
+            .filter((p) => activeTab === "queue" ? isInQueue(p) : isFetched(p))
             .sort((a, b) => {
               const [ga, na, sa] = groupAndTiebreaker(a)
               const [gb, nb, sb] = groupAndTiebreaker(b)
@@ -528,6 +446,17 @@ export function RTTStatusPanel({ open, onOpenChange }: {
               if (na !== nb) return na - nb
               return sa.localeCompare(sb)
             })
+          // Fetched view groups rows by station category so the admin
+          // can see at a glance whether each category is fully covered.
+          // Queue view stays flat — it's the actionable list, ordered
+          // by group/queue rank from groupAndTiebreaker above.
+          const groupedRows: Record<StationCategory, StationSummary[]> =
+            activeTab === "fetched"
+              ? CATEGORY_ORDER.reduce((acc, cat) => {
+                  acc[cat] = allRows.filter((r) => categoryOf(r.crs) === cat)
+                  return acc
+                }, {} as Record<StationCategory, StationSummary[]>)
+              : { "public-primary": [], "friend": [], "admin-primary": [], "junction": allRows }
 
           // Compute ETA (completion timestamp) per primary. Only meaningful
           // while the orchestrator is running and we have queue positions;
@@ -627,91 +556,98 @@ export function RTTStatusPanel({ open, onOpenChange }: {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((p) => {
-                  const isTracked = TARGET_STATIONS.has(p.crs)
-                  const dateCount = p.dates.length
-                  // Hourglass states (shown separately from the ⚠️/✅ badge):
-                  //   - in-progress: a fetch-direct-reachable.mjs is
-                  //     currently running for this CRS (pulse to show
-                  //     activity). Queued state is no longer marked
-                  //     with a dedicated icon — the Est. complete
-                  //     column is the visual signal instead.
-                  const isInProgress = data.inProgressCrs.includes(p.crs)
-                  // ⚠️ vs ✅ — based on the DATA itself, not fetch
-                  // activity. A primary that already has full data but
-                  // is being re-fetched / topped up reads as ✅ + 🏃,
-                  // not ⚠️ + 🏃. Incomplete when either:
-                  //   - zero destinations captured (fetch never landed)
-                  //   - only 1 Saturday sampled (need 2 for
-                  //     engineering-works resilience)
-                  // Activity (🏃 / ⏳) is rendered separately below.
-                  // Untracked primaries (Farringdon, Stratford — we
-                  // intentionally skip them) stay neutral (·).
-                  // Synthetic-queued rows come from orchestrator-script
-                  // scraping — they aren't in TARGET_STATIONS (which
-                  // pre-dates the batched hub additions), but visually
-                  // they ARE tracked: we WILL fetch them. Carry the
-                  // ⚠️/amber treatment through by detecting the coord
-                  // prefix. Without this, every batch-2-through-6 hub
-                  // rendered as a neutral "·" while the original 28
-                  // tracked stations kept their colour + icon.
-                  const isSyntheticQueued = p.coord.startsWith("__queued:")
-                  let rowClass = ""
-                  let badge = ""
-                  if (INTENTIONALLY_STALE_STATIONS.has(p.crs)) {
-                    // Deliberately frozen — Google Routes data covers
-                    // these primaries well enough that re-fetching is a
-                    // waste of RTT budget.
-                    rowClass = "text-muted-foreground"
-                    badge = "🪦"
-                  } else if (!isTracked && !isSyntheticQueued) {
-                    badge = "·"
-                  } else {
-                    const isIncomplete =
-                      isSyntheticQueued || p.destinations === 0 || dateCount < 2
-                    if (isIncomplete) {
-                      rowClass = "text-amber-700 dark:text-amber-400"
-                      badge = "⚠️"
+                {(() => {
+                  // Per-row JSX builder — used by both flat (Queue) and
+                  // grouped (Fetched) renders. Pulled into a closure so
+                  // the badge / colour / hourglass logic doesn't get
+                  // duplicated. Returns a single <tr>.
+                  const renderRow = (p: StationSummary) => {
+                    const isTracked = TARGET_STATIONS.has(p.crs)
+                    const dateCount = p.dates.length
+                    const isInProgress = data.inProgressCrs.includes(p.crs)
+                    // Synthetic-queued rows come from orchestrator-script
+                    // scraping — coord starts with "__queued:". Treat as
+                    // tracked-but-incomplete so they pick up the amber ⚠️.
+                    const isSyntheticQueued = p.coord.startsWith("__queued:")
+                    let rowClass = ""
+                    let badge = ""
+                    if (INTENTIONALLY_STALE_STATIONS.has(p.crs)) {
+                      rowClass = "text-muted-foreground"
+                      badge = "🪦"
+                    } else if (!isTracked && !isSyntheticQueued) {
+                      badge = "·"
                     } else {
-                      rowClass = "text-emerald-700 dark:text-emerald-400"
-                      badge = "✅"
+                      const isIncomplete =
+                        isSyntheticQueued || p.destinations === 0 || dateCount < 2
+                      if (isIncomplete) {
+                        rowClass = "text-amber-700 dark:text-amber-400"
+                        badge = "⚠️"
+                      } else {
+                        rowClass = "text-emerald-700 dark:text-emerald-400"
+                        badge = "✅"
+                      }
                     }
+                    return (
+                      <tr key={p.coord} className={`border-b border-border/40 ${rowClass}`}>
+                        <td className="py-1.5 pr-3">
+                          {badge}{" "}
+                          <span className="opacity-70">{p.crs}</span>{" "}
+                          {p.name}
+                          {isInProgress && (
+                            <span
+                              className="ml-1.5 inline-block animate-pulse"
+                              title="Fetch in progress — fetch-direct-reachable.mjs is running for this station right now"
+                            >
+                              🏃
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-1.5 pr-3 text-right tabular-nums">{p.destinations}</td>
+                        <td className="py-1.5 pr-3 text-right tabular-nums">{p.journeys}</td>
+                        <td className="py-1.5 pr-3">
+                          {p.dates.length > 0
+                            ? p.dates.map(formatShortDate).join(", ")
+                            : "—"}
+                        </td>
+                        <td className="py-1.5 pr-3 text-muted-foreground">
+                          {(() => {
+                            const eta = etaFor(p)
+                            return eta ? formatEta(eta) : "—"
+                          })()}
+                        </td>
+                      </tr>
+                    )
                   }
-                  return (
-                    <tr key={p.coord} className={`border-b border-border/40 ${rowClass}`}>
-                      <td className="py-1.5 pr-3">
-                        {badge}{" "}
-                        <span className="opacity-70">{p.crs}</span>{" "}
-                        {p.name}
-                        {isInProgress && (
-                          // 🏃 = "actively running right now". Pulses
-                          // so it catches the eye. Queued state is no
-                          // longer signalled with a separate icon —
-                          // the Est. complete column does that job.
-                          <span
-                            className="ml-1.5 inline-block animate-pulse"
-                            title="Fetch in progress — fetch-direct-reachable.mjs is running for this station right now"
-                          >
-                            🏃
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums">{p.destinations}</td>
-                      <td className="py-1.5 pr-3 text-right tabular-nums">{p.journeys}</td>
-                      <td className="py-1.5 pr-3">
-                        {p.dates.length > 0
-                          ? p.dates.map(formatShortDate).join(", ")
-                          : "—"}
-                      </td>
-                      <td className="py-1.5 pr-3 text-muted-foreground">
-                        {(() => {
-                          const eta = etaFor(p)
-                          return eta ? formatEta(eta) : "—"
-                        })()}
-                      </td>
-                    </tr>
-                  )
-                })}
+                  // Queue tab → flat render (everything sorted together
+                  // by group/queue rank). Fetched tab → group by category
+                  // with a heading row before each group, skipping empty
+                  // groups so we don't render dangling headers.
+                  if (activeTab === "queue") {
+                    return allRows.length > 0
+                      ? allRows.map(renderRow)
+                      : (
+                        <tr>
+                          <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                            Queue is empty — every tracked station is fetched.
+                          </td>
+                        </tr>
+                      )
+                  }
+                  return CATEGORY_ORDER.map((cat) => {
+                    const groupRows = groupedRows[cat]
+                    if (!groupRows || groupRows.length === 0) return null
+                    return (
+                      <Fragment key={cat}>
+                        <tr className="border-y border-border bg-muted/40">
+                          <td colSpan={5} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            {CATEGORY_LABELS[cat]} ({groupRows.length})
+                          </td>
+                        </tr>
+                        {groupRows.map(renderRow)}
+                      </Fragment>
+                    )
+                  })
+                })()}
               </tbody>
             </table>
 
@@ -731,11 +667,11 @@ export function RTTStatusPanel({ open, onOpenChange }: {
                 </div>
               )}
               <div className="mt-2">
-                Legend: ✅ tracked &amp; complete ·
-                {" "}⚠️ tracked but incomplete (missing destinations
-                {" "}or fewer than 2 Saturdays) ·
+                Legend: ✅ full V2 data ·
+                {" "}⚠️ incomplete (missing destinations or fewer than
+                {" "}2 Saturdays) ·
                 {" "}🪦 deliberately stale (Google Routes covers it) ·
-                {" "}· untracked (bonus data) ·
+                {" "}· not in any tracked category ·
                 {" "}🏃 fetch running now
               </div>
             </div>
