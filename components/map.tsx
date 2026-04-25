@@ -4577,12 +4577,22 @@ export default function HikeMap() {
         // sliders are unconstrained, so moving either slider actually
         // filters these stations out the way an admin expects.
         // Non-admin users stay filtered — no time info = no action.
+        //
+        // PREVIOUSLY this early-returned true and silently skipped the
+        // Feature / Season filters below. That meant the admin's
+        // "Oyster" / "Issues" / etc. selections had no effect on
+        // null-time stations (e.g. Claverdon CLV would show under any
+        // Feature filter). Now we just gate the time check and fall
+        // through to the rest of the filter chain.
         if (mins == null) {
           if (!devExcludeActive) return false
-          return maxMinutes >= 600 && minMinutes <= 0
+          if (maxMinutes < 600 || minMinutes > 0) return false
+          // fall through to the remaining filters (direct, interchange,
+          // feature, season) so Feature/Season selections still apply.
+        } else {
+          if (maxMinutes < 600 && mins > maxMinutes) return false
+          if (minMinutes > 0 && mins < minMinutes) return false
         }
-        if (maxMinutes < 600 && mins > maxMinutes) return false
-        if (minMinutes > 0 && mins < minMinutes) return false
         // "Direct trains only" for the primary origin — require 0 EFFECTIVE changes.
         // `effectiveChanges` is pre-computed above and already accounts for the
         // Kings Cross cluster (so a tube hop to Euston doesn't count as a change).
