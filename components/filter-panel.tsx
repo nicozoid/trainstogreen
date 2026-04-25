@@ -180,6 +180,10 @@ type FilterPanelProps = {
   /** Region labels (counties, parks, AONBs/National Landscapes) toggle. */
   showRegions: boolean
   onToggleRegions: (value: boolean) => void
+  /** Admin-only "Show all" button — fired from filter panel, executed in
+   *  map.tsx where all the resetting state setters live. Clears every
+   *  filter back to "show everything". */
+  onShowAll: () => void
   visibleRatings: Set<string>
   onToggleRating: (key: string) => void
   searchQuery: string
@@ -260,8 +264,8 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
@@ -277,7 +281,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1153,7 +1157,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1181,6 +1185,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     because passesTimeFilter() hides null-time stations
                     under any explicit constraint. */}
                 <option value="no-travel-data">No travel data</option>
+                {/* "Oyster" — keeps only stations within the TfL Oyster /
+                    contactless PAYG fare zone. Includes Underground / DLR
+                    / Elizabeth (Z-prefix CRS) plus the curated NR list
+                    in data/oyster-stations.json. Auto-opens the time
+                    sliders so no-RTT-data Underground stations still show. */}
+                <option value="oyster">Oyster</option>
               </select>
             </div>
           )}
@@ -1211,6 +1221,24 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     finding destinations that still need seasonality data. */}
                 <option value="None">None</option>
               </select>
+            </div>
+          )}
+
+          {/* Admin-only "Show all" — single-click reset that wipes every
+              filter so the map shows the full station set. Useful when the
+              admin has a dense filter combo applied and wants a clean
+              slate. The actual state-setter calls live in map.tsx (where
+              all the relevant useStates are declared); this button just
+              fires the prop. Sits right under the admin dropdowns it
+              resets, so the relationship reads spatially. */}
+          {adminMode && (
+            <div className="mt-1.5">
+              <button
+                onClick={onShowAll}
+                className="rounded bg-primary px-2 py-1 font-mono text-xs text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Show all
+              </button>
             </div>
           )}
 

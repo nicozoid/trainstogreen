@@ -353,6 +353,20 @@ function highlightTermini(
 const GHOST_STATIONS = new Set(["FIN", "PSW"])
 const GHOST_STATION_MESSAGE = "Ghost station — minimal service on weekends."
 
+// Z-prefix CRS codes that ARE real National Rail stations despite
+// looking like our Underground/DLR convention. These are interchanges
+// where OSM kept the Z-prefix tag even though the station also has NR
+// service (Thameslink at Farringdon, Elizabeth line at Whitechapel,
+// etc.). Without this allowlist, they'd be falsely flagged "Not a
+// National Rail Station". Extend if a future origin-routes fetch
+// surfaces another Z-prefix CRS in real RTT data.
+const NR_Z_PREFIX_CRS = new Set(["ZFD", "ZLW", "ZEL", "ZCW", "ZTU"])
+function isNonNrStation(crs: string | undefined): boolean {
+  if (!crs) return true
+  if (!crs.startsWith("Z")) return false
+  return !NR_Z_PREFIX_CRS.has(crs)
+}
+
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
 // Edge cases handled: "1 minute", "1 hour", "2 hours", "1 hour and 1 minute".
 function formatMinutes(minutes: number): string {
@@ -1116,12 +1130,21 @@ export default function StationModal({
                     // own name so the narrative reads "X from Kentish Town."
                     // rather than "from central London" (which was misleading
                     // when the user had explicitly chosen a non-London origin).
-                    // Ghost stations (FIN, PSW) override this with a
-                    // dedicated message — they have no usable Saturday
-                    // journey to report, so quoting a time would mislead.
-                    : (stationCrs && GHOST_STATIONS.has(stationCrs))
-                      ? GHOST_STATION_MESSAGE
-                      : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                    // Three special-case overrides ahead of the generic
+                    // "X minutes from Y" fallback:
+                    //   - Non-NR stations: admin-only readout calling out
+                    //     why there's no time. Detected by either no CRS
+                    //     (e.g. DLR features) OR a Z-prefix code (this
+                    //     codebase's convention for Underground/DLR
+                    //     stations: ZHM Hampstead, ZTH Tower Hill, etc).
+                    //   - Ghost stations (FIN, PSW): dedicated "minimal
+                    //     service on weekends" message; quoting a time would
+                    //     mislead.
+                    : (adminMode && isNonNrStation(stationCrs))
+                      ? "Not a National Rail Station: no RTT data."
+                      : (stationCrs && GHOST_STATIONS.has(stationCrs))
+                        ? GHOST_STATION_MESSAGE
+                        : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
                   isLondonHome,
                   // extraBold home origin when friend mode is on, so
                   // the home/friend sentences visually distinguish.

@@ -27,6 +27,11 @@ import terminalMatrixData from "@/data/terminal-matrix.json"
 // a label to a better position. The list is converted to a Mapbox FeatureCollection
 // in a useMemo below; only mounted when admin mode is active.
 import regionLabelsData from "@/data/region-labels.json"
+// CRS codes accepted within the TfL Oyster / contactless PAYG zone.
+// Combined at runtime with a "Z-prefix → Oyster" rule (Underground / DLR
+// / Elizabeth line tagged with Z* in OSM). Used by the admin Feature
+// dropdown's "Oyster" option to surface only TfL-fare-area stations.
+import oysterStationsData from "@/data/oyster-stations.json"
 import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
@@ -1894,7 +1899,11 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
+  // Memoise the Oyster CRS Set so it has a stable reference across
+  // renders. The JSON is statically imported and doesn't change at
+  // runtime; using useMemo just keeps dev-time hot-reload predictable.
+  const OYSTER_NR_CRS = useMemo(() => new Set(oysterStationsData.nrStations as string[]), [])
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
@@ -4514,6 +4523,16 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "no-travel-data") {
             return mins == null
           }
+          // "Oyster" — TfL fare-area stations. Includes Underground / DLR /
+          // Elizabeth (any Z-prefix CRS) plus the curated NR list in
+          // data/oyster-stations.json. Pulls in even no-RTT-data stations
+          // (Underground, DLR), so the auto-time-slider-open in the
+          // dropdown handler is what makes them visible on the map.
+          if (primaryFeatureFilter === "oyster") {
+            const crs = f.properties["ref:crs"] as string | undefined
+            if (!crs) return false
+            return crs.startsWith("Z") || OYSTER_NR_CRS.has(crs)
+          }
           return true
         }
 
@@ -4636,7 +4655,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -6558,6 +6577,25 @@ export default function HikeMap() {
         onToggleTrails={setShowTrails}
         showRegions={showRegions}
         onToggleRegions={setShowRegions}
+        onShowAll={() => {
+          // Admin "Show all" — wipe every filter back to the most permissive
+          // state so every station passes through. Covers: rating
+          // checkboxes (all 6 ticked), all dropdowns to "off", max-time
+          // slider to admin ceiling (600 = unlimited), min-time slider
+          // to "off" (0), friend origin cleared, station-search field
+          // cleared, both direct-only checkboxes cleared.
+          setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended", "unrated", "excluded"]))
+          setPrimaryInterchangeFilter("off")
+          setPrimaryFeatureFilter("off")
+          setSeasonFilter("off")
+          setMaxMinutes(600)
+          setMinMinutes(0)
+          setFriendMaxMinutes(600)
+          setFriendOriginWithTransition(null)
+          setSearchQuery("")
+          setPrimaryDirectOnly(false)
+          setFriendDirectOnly(false)
+        }}
         visibleRatings={visibleRatings}
         onToggleRating={(key: string) => {
           setVisibleRatings((prev) => {
@@ -6609,29 +6647,7 @@ export default function HikeMap() {
           if (v !== "off") setPrimaryDirectOnly(false)
         }}
         primaryFeatureFilter={primaryFeatureFilter}
-        onPrimaryFeatureFilterChange={(v) => {
-          setPrimaryFeatureFilter(v)
-          // Selecting any Feature option (anything other than "off") is a
-          // diagnostic / spot-check action — the admin wants to see EVERY
-          // station that matches that feature, not just ones that also
-          // happen to satisfy the current rating + time-slider state. So
-          // we open all the upstream filters so the Feature selection is
-          // the sole gate:
-          //   - max + min time sliders → unconstrained (admin ceiling /
-          //     zero), same shape that "no-travel-data" specifically
-          //     requires (it was the original trigger for this auto-open
-          //     behaviour, now generalised to all feature options).
-          //   - friend max time slider → ceiling too, so the friend
-          //     overlay doesn't silently hide matches.
-          //   - rating checkboxes → all 6 categories selected so no
-          //     station type is excluded.
-          if (v !== "off") {
-            setMaxMinutes(600)
-            setMinMinutes(0)
-            setFriendMaxMinutes(600)
-            setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended", "unrated", "excluded"]))
-          }
-        }}
+        onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
         seasonFilter={seasonFilter}
         onSeasonFilterChange={setSeasonFilter}
         currentSeason={currentSeason()}
@@ -7815,9 +7831,25 @@ export default function HikeMap() {
                         // state, not a feature property.
                         devExcludeActive
                           ? ["case",
-                              ["has", "ref:crs"],
+                              // Non-NR detection: no CRS, OR a Z-prefix
+                              // code that isn't on our allowlist of Z-prefix
+                              // codes that ARE actually National Rail
+                              // stations (ZFD Farringdon, ZLW Whitechapel,
+                              // ZEL Elephant & Castle, ZCW Canada Water,
+                              // ZTU Turnham Green). Without the allowlist,
+                              // ZFD would be wrongly flagged — it's a
+                              // critical Thameslink + Elizabeth stitcher
+                              // source. Mirrors isNonNrStation() in
+                              // photo-overlay.tsx; keep them in sync.
+                              ["any",
+                                ["!", ["has", "ref:crs"]],
+                                ["all",
+                                  ["==", ["index-of", "Z", ["get", "ref:crs"]], 0],
+                                  ["!", ["in", ["get", "ref:crs"], ["literal", ["ZFD", "ZLW", "ZEL", "ZCW", "ZTU"]]]],
+                                ],
+                              ],
+                              ["concat", "NULL ", ["get", "name"]],
                               ["concat", ["get", "ref:crs"], " ", ["get", "name"]],
-                              ["get", "name"],
                             ]
                           : ["get", "name"],
                         { "font-scale": 1 },
