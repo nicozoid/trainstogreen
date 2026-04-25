@@ -177,6 +177,9 @@ type FilterPanelProps = {
   onMinChange: (value: number) => void
   showTrails: boolean
   onToggleTrails: (value: boolean) => void
+  /** Region labels (counties, parks, AONBs/National Landscapes) toggle. */
+  showRegions: boolean
+  onToggleRegions: (value: boolean) => void
   visibleRatings: Set<string>
   onToggleRating: (key: string) => void
   searchQuery: string
@@ -274,7 +277,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -514,7 +517,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     const disabledContains: typeof searchableStations = []
     for (const s of searchableStations) {
       const n = normalise(s.name)
-      const startsMatch = n.startsWith(q)
+      // CRS prefix match (e.g. "swl" → Swale) counts as a starts-with
+      // hit so typing the code surfaces the station at the top of the
+      // list, same as typing the start of its name. CRS codes have no
+      // punctuation so we don't need to run them through normalise().
+      const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
+      const startsMatch = crsMatch || n.startsWith(q)
       const containsMatch = !startsMatch && n.includes(q)
       if (!startsMatch && !containsMatch) continue
       const bucket = s.hasData
@@ -1145,7 +1153,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1162,6 +1170,17 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     variant carrying a Komoot tour URL. Surfaces
                     destinations that already have a planned route. */}
                 <option value="komoot">Komoot</option>
+                {/* "Issues" — keeps only stations flagged via the admin
+                    issue button. The flag is station-global, so the same
+                    set shows regardless of which primary origin is selected. */}
+                <option value="issues">Issues</option>
+                {/* "No travel data" — keeps only stations whose
+                    `londonMinutes` is null (no journey time from any
+                    primary origin). Selecting this option auto-opens
+                    both time sliders (max → admin ceiling, min → 0)
+                    because passesTimeFilter() hides null-time stations
+                    under any explicit constraint. */}
+                <option value="no-travel-data">No travel data</option>
               </select>
             </div>
           )}
@@ -1393,6 +1412,21 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               <Checkbox
                 checked={showTrails}
                 onCheckedChange={(checked) => onToggleTrails(checked === true)}
+                className="cursor-pointer"
+              />
+            </div>
+
+            {/* Regions toggle — labels for English, Welsh and Scottish
+                counties + national parks + AONBs / National Landscapes.
+                Same on/off pattern as Waymarked trails so they sit
+                visually together. Off by default. */}
+            <div className="mt-3 flex items-center justify-between">
+              <LabelTip text="Show labels for counties, national parks, and AONBs / National Landscapes">
+                <span className="text-sm font-medium">Counties &amp; landscapes</span>
+              </LabelTip>
+              <Checkbox
+                checked={showRegions}
+                onCheckedChange={(checked) => onToggleRegions(checked === true)}
                 className="cursor-pointer"
               />
             </div>

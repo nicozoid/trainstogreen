@@ -22,6 +22,11 @@ import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originRoutesData from "@/data/origin-routes.json"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
+// Admin-only region labels — counties, national parks, AONBs (National Landscapes).
+// Each entry is { name, category, coord:[lng,lat] }. Hand-edit `coord` to nudge
+// a label to a better position. The list is converted to a Mapbox FeatureCollection
+// in a useMemo below; only mounted when admin mode is active.
+import regionLabelsData from "@/data/region-labels.json"
 import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
@@ -1889,7 +1894,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
@@ -1901,6 +1906,10 @@ export default function HikeMap() {
   const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   const [showTrails, setShowTrails] = useState(false)
+  // Region labels (counties, parks, AONBs) — controlled by a checkbox in
+  // FilterPanel sitting under "Waymarked trails". Off by default. Visible
+  // to all users (not admin-only) once toggled on.
+  const [showRegions, setShowRegions] = useState(false)
   // Banner shows on EVERY page load. We deliberately DON'T persist a
   // "has seen welcome" flag — reloading brings the banner back. The
   // previous behaviour stored ttg:hasSeenWelcome in localStorage so
@@ -1918,6 +1927,17 @@ export default function HikeMap() {
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
+  // Admin-only readout — last known cursor lng/lat. Updated from
+  // handleMouseMove via e.lngLat. Rendered as a small badge next to the zoom
+  // indicator. Uses the same coordKey format as the rest of the app
+  // ("lng,lat" with 4 decimals) so the value can be copy-pasted into
+  // station-keyed JSON files (excluded-stations.json, station-notes.json,
+  // etc) without reformatting.
+  const [cursorCoord, setCursorCoord] = useState<{ lng: number; lat: number } | null>(null)
+  // Brief visual flag — turns the cursor-coord badge green for ~1s after a
+  // right-click clipboard copy lands, so the admin sees that the action
+  // succeeded without needing a separate toast component.
+  const [coordCopied, setCoordCopied] = useState(false)
   // The Mapbox style URL — switches between light and dark based on theme.
   const mapStyle = theme === "dark"
     ? "mapbox://styles/niczap/cmnepmfm2001p01sfe63j3ktq"
@@ -2786,6 +2806,74 @@ export default function HikeMap() {
       }
     }
 
+    // London via-junction composition. Mirror of Extension A's
+    // buildViaDirectHubJourney, but for the London-as-home case: when a
+    // destination D isn't directly reachable from any London terminal,
+    // search for a junction H that
+    //   - reaches D directly (originRoutes[H].directReachable[D] exists), AND
+    //   - is itself directly reachable from at least one London terminal
+    //     (originRoutes[T].directReachable[H] exists for some T)
+    // and compose: T → H → D with a single change at H. Returns the fastest
+    // 1-change composition or null. Without this, destinations like Bury
+    // St Edmunds (reachable via Ipswich from Liverpool Street) silently
+    // disappear — they're not in any London terminal's directReachable
+    // list, but the chain through IPS is in the data.
+    //
+    // Only fires as a final fallback in the synthetic-London RTT branch
+    // when both directCandidate and stitchedCandidate are null. Doesn't
+    // override real direct trains or pre-fetched Google journeys.
+    const LONDON_INTERCHANGE_MIN = 5
+    // The set of coords we treat as "starting in London" for composition.
+    // PRIMARY_ORIGINS keys (minus the synthetic London anchor, which has no
+    // RTT data of its own) plus every cluster member (e.g. Waterloo East,
+    // Stratford International). Computed inside the useMemo body so any
+    // future cluster edits propagate without a manual sync step.
+    const londonTerminalCoords: string[] = []
+    for (const k of Object.keys(PRIMARY_ORIGINS)) {
+      if (PRIMARY_ORIGINS[k]?.isSynthetic) continue
+      londonTerminalCoords.push(k)
+    }
+    for (const cluster of Object.values(PRIMARY_ORIGIN_CLUSTER)) {
+      for (const c of cluster) londonTerminalCoords.push(c)
+    }
+    function composeLondonViaJunction(coordKey: string): { mins: number; journey: JourneyInfo } | null {
+      let best: { mins: number; journey: JourneyInfo } | null = null
+      for (const [hubCoord, hubRoutes] of Object.entries(originRoutes)) {
+        if (hubCoord === coordKey) continue
+        // Skip London terminals as the "hub" — composition through a
+        // London terminal is what direct/stitched already handles.
+        if (londonTerminalCoords.includes(hubCoord)) continue
+        const hubToDest = hubRoutes.directReachable?.[coordKey]
+        if (!hubToDest?.minMinutes) continue
+        // Find the fastest London terminal that reaches this hub directly.
+        let bestTermMins: number | null = null
+        let bestTerminalName = ""
+        for (const termCoord of londonTerminalCoords) {
+          const termRoutes = originRoutes[termCoord]
+          const termToHub = termRoutes?.directReachable?.[hubCoord]
+          if (!termToHub?.minMinutes) continue
+          if (bestTermMins === null || termToHub.minMinutes < bestTermMins) {
+            bestTermMins = termToHub.minMinutes
+            bestTerminalName = termRoutes.name ?? ""
+          }
+        }
+        if (bestTermMins === null) continue
+        const totalMins = bestTermMins + LONDON_INTERCHANGE_MIN + hubToDest.minMinutes
+        if (best != null && totalMins >= best.mins) continue
+        const hubName = hubRoutes.name ?? ""
+        const journey = {
+          durationMinutes: totalMins,
+          changes: 1,
+          legs: [
+            { vehicleType: "HEAVY_RAIL", departureStation: bestTerminalName, arrivalStation: hubName, stopCount: 0 },
+            { vehicleType: "HEAVY_RAIL", departureStation: hubName, arrivalStation: hubToDest.name ?? "", stopCount: Math.max(0, (hubToDest.fastestCallingPoints?.length ?? 0) - 2) },
+          ],
+        } as unknown as JourneyInfo
+        best = { mins: totalMins, journey }
+      }
+      return best
+    }
+
     return {
       ...baseStations,
       features: baseStations.features.map((f) => {
@@ -3224,8 +3312,20 @@ export default function HikeMap() {
           }
 
           if (!best) {
-            // No data at all for this destination → clear londonMinutes so it's filtered out.
-            rttClearLondonMinutes = true
+            // No direct or stitched candidate. Final fallback: try composing
+            // via a non-London junction hub (e.g. London → Ipswich → Bury St
+            // Edmunds). Without this, destinations served only by lines that
+            // change at a regional hub silently lose londonMinutes even
+            // though the data exists in origin-routes.json.
+            const viaJunction = composeLondonViaJunction(coordKey)
+            if (viaJunction) {
+              originMins = viaJunction.mins
+              effectiveChanges = 1
+              synthJourney = viaJunction.journey
+            } else {
+              // No data at all for this destination → clear londonMinutes so it's filtered out.
+              rttClearLondonMinutes = true
+            }
           } else {
             originMins = best.mins
             effectiveChanges = (best.journey.changes ?? 0)
@@ -4402,6 +4502,18 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "komoot") {
             return stationsWithKomoot.has(f.properties.coordKey as string)
           }
+          // "Issues" — admin-flagged stations only. hasIssue is station-global
+          // (set keyed by coordKey alone), so no primary-origin lookup needed.
+          if (primaryFeatureFilter === "issues") {
+            return issueStations.has(f.properties.coordKey as string)
+          }
+          // "No travel data" — destinations with no journey-time data
+          // (londonMinutes is null). Only effective when the time sliders
+          // are unconstrained, since passesTimeFilter() above already hides
+          // null-time stations under any explicit constraint.
+          if (primaryFeatureFilter === "no-travel-data") {
+            return mins == null
+          }
           return true
         }
 
@@ -4534,9 +4646,16 @@ export default function HikeMap() {
     const q = searchQuery.toLowerCase()
     return {
       ...filteredStations,
-      features: filteredStations.features.filter((f) =>
-        (f.properties.name as string).toLowerCase().includes(q)
-      ),
+      features: filteredStations.features.filter((f) => {
+        // Match on station name (substring) OR CRS code (3-letter code,
+        // matched as a prefix so typing "swl" finds Swale, "swa" finds
+        // Swansea/Swanley/etc., but a single letter doesn't drag in
+        // every code starting with it via `includes`).
+        const name = (f.properties.name as string).toLowerCase()
+        if (name.includes(q)) return true
+        const crs = (f.properties["ref:crs"] as string | undefined)?.toLowerCase()
+        return !!crs && crs.startsWith(q)
+      }),
     }
   }, [filteredStations, isSearching, searchQuery])
 
@@ -5580,6 +5699,28 @@ export default function HikeMap() {
   // at the END of the fade (when opacity hits 0) — mirror of the journey-
   // line pattern.
   const [interTerminalData, setInterTerminalData] = useState(emptyCollection)
+
+  // Admin-only region labels — converts the hand-edited array in
+  // data/region-labels.json into the GeoJSON FeatureCollection shape Mapbox
+  // expects. Each entry becomes a Point feature carrying `name` and
+  // `category` properties so the symbol layer can render the label and (if
+  // we ever want per-category styling) branch on category. Computed only
+  // when admin mode is active — non-admin viewers never pay the cost.
+  const regionLabelsCollection = useMemo(() => {
+    // Empty collection when the Regions toggle is off — keeps the Source
+    // mounted in a stable position in the layer stack but renders nothing.
+    if (!showRegions) {
+      return { type: "FeatureCollection" as const, features: [] }
+    }
+    return {
+      type: "FeatureCollection" as const,
+      features: (regionLabelsData as Array<{ name: string; category: string; coord: [number, number] }>).map((r) => ({
+        type: "Feature" as const,
+        properties: { name: r.name, category: r.category },
+        geometry: { type: "Point" as const, coordinates: r.coord },
+      })),
+    }
+  }, [showRegions])
   const [interTerminalOpacity, setInterTerminalOpacity] = useState(0)
   const interFadeRef = useRef<number | null>(null)
   const interAnimRef = useRef<number | null>(null)
@@ -5743,6 +5884,10 @@ export default function HikeMap() {
   // between features in the same layer), onMouseMove always reports whatever
   // feature is under the cursor — so hover updates correctly between stations.
   const handleMouseMove = useCallback((e: MapMouseEvent) => {
+    // Track the raw cursor lng/lat for the admin-only coord-key readout.
+    // Cheap: one state update per mousemove. The readout UI is gated by
+    // devExcludeActive so non-admin users never see it.
+    setCursorCoord({ lng: e.lngLat.lng, lat: e.lngLat.lat })
     const feature = e.features?.[0]
     if (!feature) {
       if (hoveredRef.current !== null) {
@@ -5909,15 +6054,29 @@ export default function HikeMap() {
     // later refactor.
   }, [])
 
-  // Dev only — right-clicking a station immediately excludes it without opening the modal.
+  // Dev only. Right-click behaviour depends on what's under the cursor:
+  //   - On a regular station → toggle its exclusion (hide / re-show).
+  //   - On the London hexagon → no-op (it has its own click behaviour).
+  //   - On empty map → copy the cursor coord-key ("lng,lat", 2 decimals)
+  //     to the clipboard so the admin can paste it into a data file
+  //     (region-labels.json etc) without retyping. Format matches the
+  //     on-screen coord readout so what they see is what gets copied.
   const handleContextMenu = useCallback((e: MapMouseEvent) => {
     if (!devExcludeActive) return
     const feature = e.features?.[0]
-    if (!feature || feature.properties?.isLondon) return
-    const name = feature.properties?.name as string
-    const coordKey = feature.properties?.coordKey as string
-    // Right-click in admin mode toggles exclusion — either hide or re-show the station.
-    handleToggleExclusion(name, coordKey)
+    if (feature) {
+      if (feature.properties?.isLondon) return
+      const name = feature.properties?.name as string
+      const coordKey = feature.properties?.coordKey as string
+      handleToggleExclusion(name, coordKey)
+      return
+    }
+    // Empty space — copy coord to clipboard.
+    const coordKey = `${e.lngLat.lng.toFixed(2)},${e.lngLat.lat.toFixed(2)}`
+    navigator.clipboard.writeText(coordKey).then(() => {
+      setCoordCopied(true)
+      setTimeout(() => setCoordCopied(false), 1000)
+    }).catch(() => {/* clipboard blocked — silent fail */})
   }, [devExcludeActive, handleToggleExclusion])
 
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
@@ -6396,6 +6555,8 @@ export default function HikeMap() {
         onMinChange={setMinMinutes}
         showTrails={showTrails}
         onToggleTrails={setShowTrails}
+        showRegions={showRegions}
+        onToggleRegions={setShowRegions}
         visibleRatings={visibleRatings}
         onToggleRating={(key: string) => {
           setVisibleRatings((prev) => {
@@ -6447,7 +6608,17 @@ export default function HikeMap() {
           if (v !== "off") setPrimaryDirectOnly(false)
         }}
         primaryFeatureFilter={primaryFeatureFilter}
-        onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
+        onPrimaryFeatureFilterChange={(v) => {
+          setPrimaryFeatureFilter(v)
+          // "No travel data" only matches stations whose passesTimeFilter()
+          // would otherwise hide them under any constraint (mins == null
+          // gates on max>=600 && min<=0). Auto-open both sliders so the
+          // user sees results immediately instead of an empty map.
+          if (v === "no-travel-data") {
+            setMaxMinutes(600)
+            setMinMinutes(0)
+          }
+        }}
         seasonFilter={seasonFilter}
         onSeasonFilterChange={setSeasonFilter}
         currentSeason={currentSeason()}
@@ -6569,6 +6740,18 @@ export default function HikeMap() {
           {devExcludeActive && (
             <div className="pointer-events-none rounded bg-black/60 px-2 py-1 font-mono text-xs text-white">
               z {zoom.toFixed(1)}
+            </div>
+          )}
+          {/* Cursor coord-key readout — admin-only, sibling of the zoom
+              indicator. Shows "lng,lat" rounded to 4 decimals (≈11 m
+              precision) — same shape as coordKey strings stored in
+              excluded-stations.json, station-notes.json etc, so the value
+              can be copy-pasted directly into those files. */}
+          {devExcludeActive && cursorCoord && (
+            <div className={`pointer-events-none rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
+              coordCopied ? "bg-green-600/80" : "bg-black/60"
+            }`}>
+              {cursorCoord.lng.toFixed(2)},{cursorCoord.lat.toFixed(2)}
             </div>
           )}
           {/* RTT status panel trigger — admin-only. Opens a modal
@@ -6896,6 +7079,73 @@ export default function HikeMap() {
             type="raster"
             layout={{ visibility: showTrails ? "visible" : "none" }}
             paint={{ "raster-opacity": 0.5 }}
+          />
+        </Source>
+
+        {/* Admin-only region labels — counties, national parks, AONBs.
+            Mounted near the bottom of the layer stack so labels sit BENEATH
+            station markers (stations win the visual battle when they
+            collide). The Source data is empty when admin mode is off, so the
+            layer renders nothing without changing position in the stack.
+            Visible roughly zoom 6–12: country-wide overview through to mid-
+            detail, dropping out at street-level zooms where they'd fight
+            with built-in place labels. */}
+        <Source id="region-labels-source" type="geojson" data={regionLabelsCollection}>
+          <Layer
+            id="region-labels"
+            type="symbol"
+            minzoom={6}
+            maxzoom={12}
+            layout={{
+              "text-field": ["get", "name"],
+              "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+              "text-size": 12,
+              // Allow all labels to render, even when they collide. With
+              // ~150 entries (counties, parks, AONBs across England,
+              // Wales, Scotland) Mapbox's default collision detection
+              // silently hides labels that sit close to each other —
+              // Surrey Hills swallowed by Surrey, Kent Downs by Kent.
+              // Showing overlapping labels is the visual cue that tells
+              // you which entries to nudge in data/region-labels.json.
+              "text-allow-overlap": true,
+              "text-ignore-placement": true,
+              // Long names like "Suffolk Coast & Heaths" wrap onto a
+              // second line at the default text-max-width (10 ems);
+              // bump to 20 so they stay on a single line.
+              "text-max-width": 20,
+            }}
+            paint={{
+              // Two visual groups, branched on the `category` property:
+              //   - counties → muted neutral grey: they're admin context
+              //     and should recede behind the map content.
+              //   - national parks + landscapes (AONBs) → green: they're
+              //     the "nature areas" a hiker actually cares about.
+              // ["match", input, label, output, …, defaultOutput] is
+              // Mapbox's switch expression — the trailing value is the
+              // default and catches both "national-park" and
+              // "national-landscape" without listing them twice.
+              "text-color": [
+                "match",
+                ["get", "category"],
+                "county", theme === "dark" ? "#a1a1aa" : "#6b7280",
+                // green for both park categories
+                theme === "dark" ? "#86efac" : "#15803d",
+              ],
+              // Halo is the soft outline behind the text. Counties keep
+              // the existing theme halo (white in light, black in dark) so
+              // they stay neutral; parks/landscapes get a tinted-green
+              // halo so the text reads as a green glow rather than a
+              // green letter on a white shape. Pale green-100 in light,
+              // deep green-900 in dark — both contrast the green text
+              // enough to keep it legible.
+              "text-halo-color": [
+                "match",
+                ["get", "category"],
+                "county", haloColor,
+                theme === "dark" ? "#14532d" : "#dcfce7",
+              ],
+              "text-halo-width": 1.5,
+            }}
           />
         </Source>
 
@@ -7543,7 +7793,21 @@ export default function HikeMap() {
                     ? ["format", ["get", "name"], { "font-scale": 1 }]
                     : [
                         "format",
-                        ["get", "name"], { "font-scale": 1 },
+                        // In admin mode, prefix the station name with its
+                        // CRS code — "TRI Tring" — for quick station
+                        // identification. Falls back to plain name when
+                        // ref:crs is absent (e.g. London terminus pseudo-
+                        // features). Built here at render time, not as a
+                        // Mapbox `case`, because devExcludeActive is React
+                        // state, not a feature property.
+                        devExcludeActive
+                          ? ["case",
+                              ["has", "ref:crs"],
+                              ["concat", ["get", "ref:crs"], " ", ["get", "name"]],
+                              ["get", "name"],
+                            ]
+                          : ["get", "name"],
+                        { "font-scale": 1 },
                         "\n", {},
                         // Time-to-station label at font-scale 0.9 —
                         // slightly smaller than the station name so

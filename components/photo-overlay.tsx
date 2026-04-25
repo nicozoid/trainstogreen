@@ -340,6 +340,19 @@ function highlightTermini(
   return parts
 }
 
+// "Ghost stations" — request stops with such minimal service that a
+// normal Saturday-morning RTT fetch (09:00–12:00) almost never captures
+// them. They have no usable journey time from London; instead of
+// rendering "null minutes from London" or a misleading time we surface
+// a dedicated message in their station modal.
+//
+// FIN (Finstock) — Cotswold Line; ~2 trains/day, frequently no Saturday
+//   service in the sampled window.
+// PSW (Polesworth) — WCML; one train per week (Saturday morning) on a
+//   request-stop basis. Famously the least-served station in Britain.
+const GHOST_STATIONS = new Set(["FIN", "PSW"])
+const GHOST_STATION_MESSAGE = "Ghost station — minimal service on weekends."
+
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
 // Edge cases handled: "1 minute", "1 hour", "2 hours", "1 hour and 1 minute".
 function formatMinutes(minutes: number): string {
@@ -1103,7 +1116,12 @@ export default function StationModal({
                     // own name so the narrative reads "X from Kentish Town."
                     // rather than "from central London" (which was misleading
                     // when the user had explicitly chosen a non-London origin).
-                    : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                    // Ghost stations (FIN, PSW) override this with a
+                    // dedicated message — they have no usable Saturday
+                    // journey to report, so quoting a time would mislead.
+                    : (stationCrs && GHOST_STATIONS.has(stationCrs))
+                      ? GHOST_STATION_MESSAGE
+                      : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
                   isLondonHome,
                   // extraBold home origin when friend mode is on, so
                   // the home/friend sentences visually distinguish.
