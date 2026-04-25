@@ -58,7 +58,7 @@ export type WalkPayload = {
   hours: number | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: boolean }[]
+  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
   warnings: string
   trainTips: string
   /** Admin-only free-text scratchpad, never rendered to the public. */
@@ -75,6 +75,8 @@ export type WalkPayload = {
   // list — these walks are NEVER shown to the public.
   requiresBus?: boolean
   rating: number | null
+  /** Admin-authored sentence rendered after the rating flourish. */
+  ratingExplanation: string
   source?: {
     orgSlug: string
     pageName: string
@@ -101,13 +103,16 @@ type SightDraft = { name: string; url: string; description: string }
 // "" when unset so the same empty-string → unset pattern covers all
 // the optional text fields uniformly.
 type LunchRating = "" | "good" | "fine" | "poor"
+// Tri-state busy — mirrors the rating enum shape so the editor can
+// reuse the same toggle-button pattern. "" = no opinion.
+type LunchBusy = "" | "busy" | "quiet"
 type LunchDraft = {
   name: string
   location: string
   url: string
   notes: string
   rating: LunchRating
-  busy: boolean
+  busy: LunchBusy
 }
 
 type EditableFields = {
@@ -120,6 +125,12 @@ type EditableFields = {
   trainTips: string
   privateNote: string
   rating: number | null
+  ratingExplanation: string
+  // Admin-only log of when this walk was personally completed —
+  // each entry is a `YYYY-MM-DD` ISO date. Drives the
+  // "Undiscovered" admin filter on the map (any non-empty array
+  // marks the station as "hiked").
+  previousWalkDates: string[]
   terrain: string
   distanceKm: number | null
   hours: number | null
@@ -181,7 +192,7 @@ function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
     rating: (s.rating === "good" || s.rating === "fine" || s.rating === "poor"
       ? s.rating
       : "") as LunchRating,
-    busy: s.busy === true,
+    busy: (s.busy === "busy" || s.busy === "quiet" ? s.busy : "") as LunchBusy,
   }))
 }
 
@@ -300,6 +311,108 @@ function cardHeadline(w: WalkPayload) {
   return derivedTitleOf(w, w.suffix ?? "")
 }
 
+// Tiny search-as-you-type station picker for the "+ New walk" form.
+//
+// UX: the input shows the currently-selected station's "Name (CRS)"
+// label. Focusing the input swaps to the raw search query (so the
+// admin can edit it freely); typing 2+ chars opens a dropdown of
+// matching stations. Clicking a row commits the new CRS and
+// collapses the dropdown. Blur reverts the visible label without
+// changing the CRS.
+//
+// We deliberately don't reuse the heavier `searchableStations`
+// shape from the filter panel — for picking a CRS in a manual-walk
+// form we only need {crs, name}, and threading the full prop down
+// would mean piping the cluster + RTT-data fields through a tree
+// that doesn't care about them.
+function StationPicker({
+  label,
+  value,
+  onChange,
+  stations,
+}: {
+  label: string
+  value: string
+  onChange: (crs: string) => void
+  stations: { crs: string; name: string }[] | null
+}) {
+  // Shown name for the currently-selected CRS — purely a display
+  // helper. If `stations` hasn't loaded yet we fall back to the
+  // CRS code so the input never goes blank.
+  const selectedLabel = useMemo(() => {
+    if (!stations) return value
+    const match = stations.find((s) => s.crs === value)
+    return match ? `${match.name} (${match.crs})` : value
+  }, [stations, value])
+  const [query, setQuery] = useState("")
+  const [open, setOpen] = useState(false)
+  // Match against name OR CRS, case-insensitive. Cap to 12 rows so
+  // the dropdown never explodes — admins refine via more keystrokes.
+  const matches = useMemo(() => {
+    if (!stations || query.trim().length < 2) return []
+    const q = query.trim().toLowerCase()
+    const out: { crs: string; name: string }[] = []
+    for (const s of stations) {
+      if (s.name.toLowerCase().includes(q) || s.crs.toLowerCase().includes(q)) {
+        out.push(s)
+        if (out.length >= 12) break
+      }
+    }
+    return out
+  }, [stations, query])
+  const inputId = `station-picker-${label.replace(/\s+/g, "-").toLowerCase()}`
+  return (
+    <div className="relative">
+      <Label htmlFor={inputId} className="mb-1 block text-[10px] text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        id={inputId}
+        // When focused, show the raw query so the admin types into
+        // an empty field. When blurred, show the friendly label of
+        // the committed selection.
+        value={open ? query : selectedLabel}
+        onFocus={() => { setOpen(true); setQuery("") }}
+        onBlur={() => {
+          // setTimeout so onMouseDown on a row fires before we
+          // collapse the dropdown — otherwise the click would land
+          // on a vanished element.
+          setTimeout(() => setOpen(false), 120)
+        }}
+        onChange={(e) => setQuery(e.target.value)}
+        className="h-7 text-xs"
+      />
+      {open && matches.length > 0 && (
+        <ul
+          // Absolute popover — scrolls if there are 12 matches.
+          // z-10 keeps it above neighbouring picker columns.
+          className="absolute left-0 right-0 z-10 mt-0.5 max-h-48 overflow-y-auto rounded border border-border bg-background py-0.5 text-xs shadow-lg"
+        >
+          {matches.map((s) => (
+            <li key={s.crs}>
+              <button
+                type="button"
+                // onMouseDown fires before the input's blur, so we
+                // commit the selection before the popover collapses.
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  onChange(s.crs)
+                  setOpen(false)
+                  setQuery("")
+                }}
+                className="flex w-full items-center justify-between gap-2 px-2 py-1 text-left hover:bg-muted/60"
+              >
+                <span className="truncate">{s.name}</span>
+                <span className="text-[10px] text-muted-foreground">{s.crs}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 export default function WalksAdminPanel({
   stationCrs,
   onSaved,
@@ -316,6 +429,48 @@ export default function WalksAdminPanel({
   // need a whole state machine.
   const [infoOpen, setInfoOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  // "+ New walk" expands an inline form with start/end station
+  // pickers (both default to the current station). The form state
+  // lives here so the pickers stay controlled. Keep the start/end
+  // CRS in state — the actual list of all stations is fetched
+  // lazily when the form first opens (see effect below).
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createStart, setCreateStart] = useState(stationCrs)
+  const [createEnd, setCreateEnd] = useState(stationCrs)
+  // Lightweight {crs, name} list driving the pickers' search-as-
+  // you-type dropdown. Loaded on first open of the create form;
+  // null = not yet fetched.
+  const [allStations, setAllStations] = useState<{ crs: string; name: string }[] | null>(null)
+  // Reset the pickers when the modal switches station — otherwise
+  // an old station's CRS would linger as the default.
+  useEffect(() => {
+    setCreateStart(stationCrs)
+    setCreateEnd(stationCrs)
+    setCreateOpen(false)
+  }, [stationCrs])
+  // Lazy-load the full station list the first time the form opens.
+  // /stations.json is the public GeoJSON used by the map; we only
+  // need name + ref:crs from each feature, so we strip everything
+  // else immediately to keep memory in check.
+  useEffect(() => {
+    if (!createOpen || allStations !== null) return
+    let cancelled = false
+    fetch("/stations.json")
+      .then((r) => r.json())
+      .then((d: { features: Array<{ properties?: Record<string, unknown> }> }) => {
+        if (cancelled) return
+        const list: { crs: string; name: string }[] = []
+        for (const f of d.features) {
+          const crs = f.properties?.["ref:crs"] as string | undefined
+          const name = f.properties?.name as string | undefined
+          if (crs && name) list.push({ crs, name })
+        }
+        list.sort((a, b) => a.name.localeCompare(b.name))
+        setAllStations(list)
+      })
+      .catch(() => { /* best-effort; the picker stays empty if fetch fails */ })
+    return () => { cancelled = true }
+  }, [createOpen, allStations])
 
   // Fetch walks whenever the station CRS changes. The endpoint returns
   // [] for stations with no attached walks — still a valid response, so
@@ -345,18 +500,23 @@ export default function WalksAdminPanel({
     if (onSaved) await onSaved()
   }, [stationCrs, onSaved])
 
-  // Create a new manual walk at this station (circular — start + end
-  // default to the current station's CRS). The admin fills in the
-  // details via the normal card editor after it appears in the list.
+  // Create a new manual walk. Start/end CRS come from the inline
+  // form pickers (which default to the current station). If the
+  // admin picks a different start station, the saved walk attaches
+  // there — i.e. it disappears from this station's list after save.
   const handleCreate = useCallback(async () => {
     setCreating(true)
     try {
       const r = await fetch("/api/dev/walk/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startStation: stationCrs, endStation: stationCrs }),
+        body: JSON.stringify({ startStation: createStart, endStation: createEnd }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      // Collapse the form and reset to defaults for the next create.
+      setCreateOpen(false)
+      setCreateStart(stationCrs)
+      setCreateEnd(stationCrs)
       await handleSaved()
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -364,7 +524,7 @@ export default function WalksAdminPanel({
     } finally {
       setCreating(false)
     }
-  }, [stationCrs, handleSaved])
+  }, [createStart, createEnd, stationCrs, handleSaved])
 
   // Delete a walk. Called from inside a WalkCard's confirm flow.
   const handleDelete = useCallback(async (id: string) => {
@@ -381,7 +541,7 @@ export default function WalksAdminPanel({
           baseline-aligned with the label. */}
       <div className="flex items-center gap-2">
         <p className="text-xs font-medium text-muted-foreground">
-          Walks{walks ? ` (${walks.length})` : ""}
+          Featured walks{walks ? ` (${walks.length})` : ""}
         </p>
         <button
           type="button"
@@ -394,13 +554,54 @@ export default function WalksAdminPanel({
         </button>
         <button
           type="button"
-          onClick={handleCreate}
+          onClick={() => setCreateOpen((v) => !v)}
           disabled={creating}
           className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[11px] text-muted-foreground hover:bg-muted/40 disabled:opacity-40"
         >
-          {creating ? "Creating…" : "+ New walk"}
+          {creating ? "Creating…" : createOpen ? "Cancel" : "+ New walk"}
         </button>
       </div>
+
+      {/* Inline create-walk form. Two station pickers (start + end)
+          default to the current station. Picking a different start
+          station means the walk attaches to that other station after
+          save — surfaced via the muted note below. */}
+      {createOpen && (
+        <div className="mt-2 rounded border border-dashed border-border bg-background/50 p-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <StationPicker
+              label="Start station"
+              value={createStart}
+              onChange={setCreateStart}
+              stations={allStations}
+            />
+            <StationPicker
+              label="End station"
+              value={createEnd}
+              onChange={setCreateEnd}
+              stations={allStations}
+            />
+          </div>
+          {/* Warn the admin when they're about to create a walk that
+              will leave this station's list on save. Only renders
+              when the start station differs from the modal station. */}
+          {createStart !== stationCrs && (
+            <p className="mt-1.5 text-[10px] italic text-muted-foreground">
+              Heads up: this walk will attach to {createStart}, not this station, so it'll disappear from the list after saving.
+            </p>
+          )}
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={creating || !createStart || !createEnd}
+              className="rounded border border-border bg-foreground px-2 py-0.5 text-[11px] text-background hover:opacity-90 disabled:opacity-40"
+            >
+              {creating ? "Creating…" : "Create"}
+            </button>
+          </div>
+        </div>
+      )}
       {loading && <p className="mt-1 text-xs italic text-muted-foreground">Loading…</p>}
       {error && <p className="mt-1 text-xs text-destructive">Failed to load: {error}</p>}
       {walks && walks.length === 0 && (
@@ -480,12 +681,27 @@ function WalkCard({
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  // Brief flash state for the "click id to copy" affordance — flips
+  // true for ~1.2s after a successful copy so the chip can render
+  // "Copied!" feedback in place of the id.
+  const [idCopied, setIdCopied] = useState(false)
   // Related Source section — admin cross-reference, collapsed by
   // default. Auto-expand when the walk already has a related source
   // set so the admin sees it on open.
   const [relatedSourceExpanded, setRelatedSourceExpanded] = useState(
     !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
   )
+  // Source section — collapsed by default. Most admin edits on a
+  // walk are about the rated content (komoot, ratings, name) rather
+  // than provenance, so the section sits folded until the admin
+  // explicitly opens it. The Subordinate button stays in the header
+  // row so it remains reachable without expanding.
+  const [sourceExpanded, setSourceExpanded] = useState(false)
+  // "Pull distance" button next to the komoot URL field. Spinner +
+  // ephemeral error string while the scrape runs. Error is cleared
+  // by the next attempt or by editing the URL.
+  const [pullingDistance, setPullingDistance] = useState(false)
+  const [pullDistanceError, setPullDistanceError] = useState<string | null>(null)
 
   // Draft state — initialised from the walk prop. useMemo keeps a
   // stable reference to the "server shape" for dirty-comparison.
@@ -500,6 +716,8 @@ function WalkCard({
       trainTips: walk.trainTips,
       privateNote: walk.privateNote ?? "",
       rating: walk.rating,
+      ratingExplanation: walk.ratingExplanation ?? "",
+      previousWalkDates: Array.isArray(walk.previousWalkDates) ? walk.previousWalkDates : [],
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
       hours: walk.hours,
@@ -515,12 +733,15 @@ function WalkCard({
         orgSlug: walk.relatedSource?.orgSlug ?? "",
         pageName: walk.relatedSource?.pageName ?? "",
         pageURL: walk.relatedSource?.pageURL ?? "",
-        type: walk.relatedSource?.type ?? "variant",
+        // Default unset relatedSource.type to "adapted" — most
+        // cross-references describe a Trains-to-Green walk that's
+        // an adaptation of an external page.
+        type: walk.relatedSource?.type ?? "adapted",
       },
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.warnings, walk.trainTips, walk.privateNote, walk.rating, walk.terrain,
+      walk.warnings, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
@@ -544,6 +765,8 @@ function WalkCard({
       draft.trainTips.trim() !== serverState.trainTips.trim() ||
       draft.privateNote.trim() !== serverState.privateNote.trim() ||
       draft.rating !== serverState.rating ||
+      draft.ratingExplanation.trim() !== serverState.ratingExplanation.trim() ||
+      JSON.stringify(draft.previousWalkDates) !== JSON.stringify(serverState.previousWalkDates) ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
       draft.hours !== serverState.hours ||
@@ -597,6 +820,8 @@ function WalkCard({
           trainTips: draft.trainTips,
           privateNote: draft.privateNote,
           rating: draft.rating,
+          ratingExplanation: draft.ratingExplanation,
+          previousWalkDates: draft.previousWalkDates,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
           hours: draft.hours,
@@ -629,8 +854,42 @@ function WalkCard({
         className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-muted/40"
       >
         <span className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}>▸</span>
-        <code className="rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground">
-          {walk.id}
+        {/* Walk id — click-to-copy. Stop event propagation so the
+            outer header button doesn't also toggle expand/collapse.
+            Rendered as <code role="button"> rather than a nested
+            <button> to avoid invalid nested-interactive HTML. */}
+        <code
+          role="button"
+          tabIndex={0}
+          aria-label={`Copy walk id ${walk.id}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            navigator.clipboard.writeText(walk.id).then(
+              () => {
+                setIdCopied(true)
+                window.setTimeout(() => setIdCopied(false), 1200)
+              },
+              () => { /* ignore — clipboard.writeText may reject in non-secure contexts */ },
+            )
+          }}
+          onKeyDown={(e) => {
+            // Keyboard parity for screen-reader / keyboard users.
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              e.stopPropagation()
+              navigator.clipboard.writeText(walk.id).then(
+                () => {
+                  setIdCopied(true)
+                  window.setTimeout(() => setIdCopied(false), 1200)
+                },
+                () => {},
+              )
+            }
+          }}
+          title="Click to copy walk id"
+          className="cursor-pointer rounded bg-muted px-1 py-0.5 font-mono text-[10px] text-muted-foreground hover:bg-muted/80"
+        >
+          {idCopied ? "Copied!" : walk.id}
         </code>
         <span className="truncate font-medium text-foreground">{cardHeadline(walk)}</span>
         {/* Inline metadata chips, visible while the card is collapsed
@@ -694,9 +953,67 @@ function WalkCard({
               variant of [X](url)." clause; source.pageName/pageURL
               populate the link. */}
           <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
-            <div className="mb-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-              Source
+            {/* Section header — flex row. The "Source" label is now a
+                button that toggles the section open/closed (chevron
+                rotates), and the "Subordinate" action button sits at
+                the right edge alongside it. The Subordinate button
+                stays in the header (not the body) so it remains
+                reachable when the section is collapsed. */}
+            <div className="mb-1.5 flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setSourceExpanded((v) => !v)}
+                aria-expanded={sourceExpanded}
+                aria-controls={`source-body-${walk.id}`}
+                className="flex items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+              >
+                <span
+                  aria-hidden="true"
+                  className={`inline-block transition-transform ${sourceExpanded ? "rotate-90" : ""}`}
+                >
+                  ▸
+                </span>
+                Source
+              </button>
+              {/* Subordinate — demote the current external source to a
+                  Related Source entry and rebrand this walk as a
+                  Trains-to-Green main walk. Used when we're taking
+                  ownership of a walk that started life as someone
+                  else's route (e.g. a Saturday Walkers Club page we've
+                  rewritten). The Related Source `type` is preserved
+                  so the admin can pre-set it (e.g. "Adapted from")
+                  before clicking. */}
+              <button
+                type="button"
+                onClick={() => {
+                  setDraft((d) => ({
+                    ...d,
+                    relatedSource: {
+                      ...d.relatedSource,
+                      orgSlug: d.source.orgSlug,
+                      pageName: d.source.pageName,
+                      pageURL: d.source.pageURL,
+                    },
+                    source: {
+                      ...d.source,
+                      orgSlug: "trains-to-green",
+                      type: d.source.type === "main" ? d.source.type : "main",
+                      pageName: "",
+                      pageURL: "",
+                    },
+                  }))
+                  // Auto-expand the Related Source panel so the admin
+                  // can immediately see (and tweak) the copied values.
+                  setRelatedSourceExpanded(true)
+                }}
+                className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/40"
+                title="Move current source into Related Source and mark this walk as a Trains-to-Green main walk"
+              >
+                Subordinate
+              </button>
             </div>
+            {sourceExpanded && (
+            <div id={`source-body-${walk.id}`}>
             <div className="grid grid-cols-2 gap-1.5">
               {/* Organisation — dropdown of slugs from sources.json.
                   Adding a new org requires editing data/sources.json
@@ -853,6 +1170,8 @@ function WalkCard({
                 </div>
               )}
             </div>
+            </div>
+            )}
           </div>
 
           {/* Title preview (read-only) + Suffix input + Custom-title
@@ -892,7 +1211,6 @@ function WalkCard({
               id={`suffix-${walk.id}`}
               value={draft.suffix}
               onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
-              placeholder="e.g. via Ightham Mote"
               className="h-7 text-xs"
               disabled={!!draft.name.trim()}
             />
@@ -913,7 +1231,6 @@ function WalkCard({
               id={`name-${walk.id}`}
               value={draft.name}
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              placeholder="Leave blank to use derived title"
               className="h-7 text-xs"
             />
           </div>
@@ -965,6 +1282,34 @@ function WalkCard({
                 </span>
               )}
             </div>
+            {/* Optional sentence appended to the rating flourish in
+                public prose (e.g. "Highly recommended by T2G! Best
+                springtime walk."). The renderer adds the trailing
+                period; the admin types just the sentence. */}
+            <div className="mt-2">
+              <Label htmlFor={`rating-explanation-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                Rating explanation
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  appended after the rating flourish
+                </span>
+              </Label>
+              <Input
+                id={`rating-explanation-${walk.id}`}
+                value={draft.ratingExplanation}
+                onChange={(e) => setDraft((d) => ({ ...d, ratingExplanation: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
+            {/* Previously hiked — admin-only log of personal walk
+                dates. Each chip is a single ISO date with an ✕ to
+                remove; the date input + "Add" button appends a new
+                date. Server-side cleanField dedupes + sorts on save,
+                so we don't need to do that here. */}
+            <PreviousWalkDatesEditor
+              walkId={walk.id}
+              dates={draft.previousWalkDates}
+              onChange={(previousWalkDates) => setDraft((d) => ({ ...d, previousWalkDates }))}
+            />
           </div>
 
           {/* Terrain — comma-separated list of short tags (no
@@ -984,7 +1329,6 @@ function WalkCard({
               id={`terrain-${walk.id}`}
               value={draft.terrain}
               onChange={(e) => setDraft((d) => ({ ...d, terrain: e.target.value }))}
-              placeholder="e.g. chalk downland, bluebell woods, open farmland"
               className="h-7 text-xs"
             />
           </div>
@@ -1088,19 +1432,84 @@ function WalkCard({
           </div>
 
           {/* Komoot tour URL — when set, the build drops the km/hours
-              line because Komoot provides the authoritative figures. */}
+              line because Komoot provides the authoritative figures.
+              "Pull distance" scrapes the tour page for distance +
+              duration and writes them into the draft (Distance / Hours
+              fields elsewhere on the card). */}
           <div className="mb-3">
             <Label htmlFor={`komoot-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
               Komoot URL
             </Label>
-            <Input
-              id={`komoot-${walk.id}`}
-              type="url"
-              value={draft.komootUrl}
-              onChange={(e) => setDraft((d) => ({ ...d, komootUrl: e.target.value }))}
-              placeholder="https://www.komoot.com/tour/…"
-              className="h-7 text-xs"
-            />
+            <div className="flex items-center gap-1.5">
+              <Input
+                id={`komoot-${walk.id}`}
+                type="url"
+                value={draft.komootUrl}
+                onChange={(e) => {
+                  setDraft((d) => ({ ...d, komootUrl: e.target.value }))
+                  // Clear the previous error as soon as the URL changes
+                  // — otherwise stale messages stick around forever.
+                  if (pullDistanceError) setPullDistanceError(null)
+                }}
+                className="h-7 text-xs"
+              />
+              <button
+                type="button"
+                onClick={async () => {
+                  if (pullingDistance) return
+                  setPullDistanceError(null)
+                  setPullingDistance(true)
+                  try {
+                    const r = await fetch("/api/dev/komoot-distance", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ url: draft.komootUrl }),
+                    })
+                    const j = await r.json()
+                    if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+                    // Round distance to 2 decimals to match the rest of
+                    // the dataset shape (e.g. 19.09); hours comes back
+                    // already rounded server-side.
+                    setDraft((d) => ({
+                      ...d,
+                      distanceKm: Math.round(j.distanceKm * 100) / 100,
+                      hours: j.hours,
+                    }))
+                  } catch (e) {
+                    setPullDistanceError((e as Error).message)
+                  } finally {
+                    setPullingDistance(false)
+                  }
+                }}
+                disabled={pullingDistance || !draft.komootUrl.trim()}
+                className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
+                title="Fetch distance and duration from the Komoot tour page"
+              >
+                {pullingDistance ? (
+                  <span className="inline-flex items-center gap-1">
+                    {/* Inline SVG spinner — keeps the button width
+                        roughly stable while the request is in flight. */}
+                    <svg
+                      aria-hidden="true"
+                      className="h-3 w-3 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
+                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                    </svg>
+                    Pulling…
+                  </span>
+                ) : (
+                  "Pull distance"
+                )}
+              </button>
+            </div>
+            {pullDistanceError && (
+              <p className="mt-1 text-[11px] text-destructive">
+                {pullDistanceError}
+              </p>
+            )}
           </div>
 
           {/* Free-text warnings — still useful for non-mud stuff like
@@ -1116,7 +1525,6 @@ function WalkCard({
               id={`warn-${walk.id}`}
               value={draft.warnings}
               onChange={(e) => setDraft((d) => ({ ...d, warnings: e.target.value }))}
-              placeholder="e.g. MOD closures apply"
               className="h-7 text-xs"
             />
           </div>
@@ -1135,7 +1543,6 @@ function WalkCard({
               id={`tips-${walk.id}`}
               value={draft.trainTips}
               onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
-              placeholder="e.g. Buy two singles — cheaper than a return"
               className="h-7 text-xs"
             />
           </div>
@@ -1155,7 +1562,6 @@ function WalkCard({
               id={`priv-${walk.id}`}
               value={draft.privateNote}
               onChange={(e) => setDraft((d) => ({ ...d, privateNote: e.target.value }))}
-              placeholder="e.g. distance figures disagree with Komoot"
               className="h-7 text-xs"
             />
           </div>
@@ -1203,6 +1609,93 @@ function WalkCard({
 }
 
 // ── List editors ──────────────────────────────────────────────────────────
+
+// Compact "previously hiked dates" editor — a row of ISO date chips
+// (each with ✕ to remove) followed by a date <input> + Add button.
+// Strictly admin-only; the dates never surface in public prose, only
+// drive the "Undiscovered" filter on the map.
+function PreviousWalkDatesEditor({
+  walkId,
+  dates,
+  onChange,
+}: {
+  walkId: string
+  dates: string[]
+  onChange: (next: string[]) => void
+}) {
+  // Pending-date state — what's currently in the date input but not
+  // yet committed to the array. Cleared after Add.
+  const [pending, setPending] = useState("")
+  const inputId = `prev-walk-dates-${walkId}`
+  const addPending = () => {
+    const trimmed = pending.trim()
+    // Strict ISO format check — matches the server's cleanField rule
+    // so we don't push values the server would silently drop.
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return
+    if (dates.includes(trimmed)) { setPending(""); return }
+    // Keep the chips in chronological order so the user reads them
+    // left-to-right as a timeline. Server also sorts on save, so
+    // this is purely a UX nicety.
+    onChange([...dates, trimmed].sort())
+    setPending("")
+  }
+  return (
+    <div className="mt-2">
+      <Label htmlFor={inputId} className="mb-1 block text-[10px] text-muted-foreground">
+        Previously hiked
+        <span className="ml-1 font-normal italic text-muted-foreground/70">
+          admin-only — drives the &quot;Undiscovered&quot; filter
+        </span>
+      </Label>
+      {dates.length > 0 && (
+        <div className="mb-1.5 flex flex-wrap gap-1">
+          {dates.map((d) => (
+            <span
+              key={d}
+              className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+            >
+              {d}
+              <button
+                type="button"
+                aria-label={`Remove ${d}`}
+                onClick={() => onChange(dates.filter((x) => x !== d))}
+                className="cursor-pointer text-muted-foreground/70 hover:text-destructive"
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center gap-1.5">
+        <Input
+          id={inputId}
+          type="date"
+          value={pending}
+          onChange={(e) => setPending(e.target.value)}
+          // Pressing Enter inside the date input commits the date —
+          // matches the more familiar "type and press enter" pattern
+          // for tag inputs even though this one is a date picker.
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault()
+              addPending()
+            }
+          }}
+          className="h-7 text-xs"
+        />
+        <button
+          type="button"
+          onClick={addPending}
+          disabled={!pending}
+          className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // Sights: a simple repeatable list with name (required), URL and
 // description (both optional). Rows with empty names are silently
@@ -1364,6 +1857,14 @@ const LUNCH_RATINGS: Array<{ value: "good" | "fine" | "poor"; label: string; cla
   { value: "poor", label: "Poor", classes: "bg-red-500 text-white hover:bg-red-600" },
 ]
 
+// Busy is a tri-state (busy / quiet / no opinion). Active tints
+// borrow the rating palette so the visual language stays consistent:
+// "busy" reads as a warning amber, "quiet" as a positive green.
+const LUNCH_BUSY_OPTIONS: Array<{ value: "busy" | "quiet"; label: string; classes: string }> = [
+  { value: "busy",  label: "Busy",  classes: "bg-amber-400 text-white hover:bg-amber-500" },
+  { value: "quiet", label: "Quiet", classes: "bg-green-500 text-white hover:bg-green-600" },
+]
+
 function LunchStopsEditor({
   walkId,
   stops,
@@ -1491,10 +1992,10 @@ function LunchStopsEditor({
                 placeholder="Notes (optional, admin-only for now)"
                 className="h-7 text-xs"
               />
-              {/* Rating + busy flag — small controls on one row.
-                  Clicking the active rating clears it; busy is a
-                  single checkbox (presence-only — stored as `true`
-                  or absent in the JSON). */}
+              {/* Rating + busy — small toggle-button rows. Clicking
+                  the active button clears it back to "no opinion".
+                  Both fields share the same button-row shape so the
+                  controls scan as a parallel pair. */}
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
                 <div className="flex items-center gap-1">
                   <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
@@ -1523,18 +2024,33 @@ function LunchStopsEditor({
                     )
                   })}
                 </div>
-                <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-                  <Checkbox
-                    checked={s.busy}
-                    onCheckedChange={(v) => {
-                      const next = [...stops]
-                      next[i] = { ...next[i], busy: v === true }
-                      onChange(next)
-                    }}
-                    className="cursor-pointer"
-                  />
-                  Busy
-                </label>
+                <div className="flex items-center gap-1">
+                  <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Busy
+                  </span>
+                  {LUNCH_BUSY_OPTIONS.map((b) => {
+                    const active = s.busy === b.value
+                    return (
+                      <button
+                        key={b.value}
+                        type="button"
+                        onClick={() => {
+                          const next = [...stops]
+                          next[i] = { ...next[i], busy: active ? "" : b.value }
+                          onChange(next)
+                        }}
+                        className={
+                          "rounded px-1.5 py-0.5 text-[10px] transition-colors " +
+                          (active
+                            ? b.classes
+                            : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                        }
+                      >
+                        {b.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -1545,7 +2061,7 @@ function LunchStopsEditor({
         onClick={() =>
           onChange([
             ...stops,
-            { name: "", location: "", url: "", notes: "", rating: "", busy: false },
+            { name: "", location: "", url: "", notes: "", rating: "", busy: "" },
           ])
         }
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"

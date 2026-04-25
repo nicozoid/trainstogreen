@@ -1,3 +1,55 @@
 {
-  "_readme": "Manually-added walks with no external source — admin-created via the WalksAdminPanel '+ New walk' button. Entry shape matches data/rambler-walks.json so the build + API pipeline treats them uniformly. Slug convention: `manual-{id}` where {id} is the walk's own 4-char id."
+  "_readme": "Manually-added walks with no external source — admin-created via the WalksAdminPanel '+ New walk' button. Entry shape matches data/rambler-walks.json so the build + API pipeline treats them uniformly. Slug convention: `manual-{id}` where {id} is the walk's own 4-char id.",
+  "manual-0xfy": {
+    "slug": "manual-0xfy",
+    "title": "Manual MOR to BMY",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "MOR",
+        "endStation": "BMY",
+        "stationToStation": true,
+        "lunchStops": [
+          {
+            "name": "the Cavella Arms",
+            "location": "Silchester",
+            "notes": "limited menu on Sundays",
+            "rating": "good"
+          }
+        ],
+        "sights": [],
+        "id": "0xfy",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-25T00:00:13.654Z",
+        "komootUrl": "https://www.komoot.com/tour/2902544251",
+        "distanceKm": 12.7,
+        "hours": 3.28,
+        "rating": 4,
+        "ratingExplanation": "Perhaps an idiosyncratic love of mine, as this isn't a popular hiking spot, but I find it exceptionally charming. This route takes you through what little remains of the once-thriving Roman city of Calleva Atrebatum, including the original walls, and a large amphitheatre where gladiatorial combats entertained up to 7,000 people at a time",
+        "suffix": "via Roman Silchester",
+        "previousWalkDates": [
+          "2025-05-17"
+        ]
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  }
 }

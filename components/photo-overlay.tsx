@@ -1472,7 +1472,7 @@ export default function StationModal({
             const count = source.split(/\n+/).filter(Boolean).length
             return (
               <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-                Walk{count === 1 ? "" : "s"}
+                Featured walk{count === 1 ? "" : "s"}
               </p>
             )
           })()}
