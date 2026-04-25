@@ -4812,10 +4812,11 @@ export default function HikeMap() {
         .filter(f => {
           // The active friend origin always shows regardless of rating filters (coord-keyed)
           if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
-          // No filters active → show everything that reached this layer.
-          // (Non-admin users never see excluded — those are already removed
-          // upstream in filteredStations, so this branch is safe for them too.)
-          if (visibleRatings.size === 0 && newlyRemovedRatings.size === 0) return true
+          // Empty rating checkboxes = empty map. Falls straight through to
+          // the per-category gates below, both of which return false when
+          // visibleRatings + newlyRemovedRatings are both empty. Animations
+          // still work because newlyRemovedRatings keeps a category visible
+          // for the shrink-out frames after the user unchecks it.
           // Excluded stations (admin-only) — gated on the "excluded" checkbox.
           if (f.properties.isExcluded) {
             return visibleRatings.has('excluded') || newlyRemovedRatings.has('excluded')
@@ -6610,13 +6611,25 @@ export default function HikeMap() {
         primaryFeatureFilter={primaryFeatureFilter}
         onPrimaryFeatureFilterChange={(v) => {
           setPrimaryFeatureFilter(v)
-          // "No travel data" only matches stations whose passesTimeFilter()
-          // would otherwise hide them under any constraint (mins == null
-          // gates on max>=600 && min<=0). Auto-open both sliders so the
-          // user sees results immediately instead of an empty map.
-          if (v === "no-travel-data") {
+          // Selecting any Feature option (anything other than "off") is a
+          // diagnostic / spot-check action — the admin wants to see EVERY
+          // station that matches that feature, not just ones that also
+          // happen to satisfy the current rating + time-slider state. So
+          // we open all the upstream filters so the Feature selection is
+          // the sole gate:
+          //   - max + min time sliders → unconstrained (admin ceiling /
+          //     zero), same shape that "no-travel-data" specifically
+          //     requires (it was the original trigger for this auto-open
+          //     behaviour, now generalised to all feature options).
+          //   - friend max time slider → ceiling too, so the friend
+          //     overlay doesn't silently hide matches.
+          //   - rating checkboxes → all 6 categories selected so no
+          //     station type is excluded.
+          if (v !== "off") {
             setMaxMinutes(600)
             setMinMinutes(0)
+            setFriendMaxMinutes(600)
+            setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended", "unrated", "excluded"]))
           }
         }}
         seasonFilter={seasonFilter}
