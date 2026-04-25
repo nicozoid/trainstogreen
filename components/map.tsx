@@ -1900,10 +1900,22 @@ export default function HikeMap() {
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
   type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
-  // Memoise the Oyster CRS Set so it has a stable reference across
-  // renders. The JSON is statically imported and doesn't change at
-  // runtime; using useMemo just keeps dev-time hot-reload predictable.
-  const OYSTER_NR_CRS = useMemo(() => new Set(oysterStationsData.nrStations as string[]), [])
+  // Build the Oyster CRS Set with oysterStationsData as the dep — when
+  // the JSON hot-reloads in dev the import gives a new array reference,
+  // which busts this memo and the downstream filteredStations memo.
+  // useMemo([]) (empty deps) was the previous form and went stale on
+  // hot-reload, so updates to data/oyster-stations.json appeared not to
+  // take effect until a hard reload — Claverdon (CLV) and other false
+  // positives kept showing because the closed-over Set was the old one.
+  const OYSTER_NR_CRS = useMemo(
+    () => new Set(oysterStationsData.nrStations as string[]),
+    // List the imported array as a dep so the Set rebuilds when the JSON
+    // hot-reloads in dev (Next.js Fast Refresh gives a new array
+    // reference). Empty `[]` was the previous form and silently kept a
+    // stale Set across JSON edits — the cause of "CLV still shows after
+    // I update oyster-stations.json".
+    [oysterStationsData],
+  )
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
