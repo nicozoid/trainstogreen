@@ -1404,8 +1404,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </div>
 
             {/* Trails toggle — <div> instead of <label> so tapping the gap
-               on touchscreens doesn't toggle the checkbox */}
-            <div className="mt-3 flex items-center justify-between">
+               on touchscreens doesn't toggle the checkbox.
+               mt-1.5 matches the rating-checkbox row spacing above so
+               the three map-layer toggles read as one tight stack. */}
+            <div className="mt-1.5 flex items-center justify-between">
               <LabelTip text="Show sign-posted walking routes from OpenStreetMaps">
                 <span className="text-sm font-medium">Waymarked trails</span>
               </LabelTip>
@@ -1420,7 +1422,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 counties + national parks + AONBs / National Landscapes.
                 Same on/off pattern as Waymarked trails so they sit
                 visually together. Off by default. */}
-            <div className="mt-3 flex items-center justify-between">
+            <div className="mt-1.5 flex items-center justify-between">
               <LabelTip text="Show labels for counties, national parks, and AONBs / National Landscapes">
                 <span className="text-sm font-medium">Counties &amp; landscapes</span>
               </LabelTip>
