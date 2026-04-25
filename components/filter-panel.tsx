@@ -257,8 +257,8 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
@@ -1145,7 +1145,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1158,6 +1158,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     we've personally logged in previousWalkDates. Surfaces
                     destinations still to explore. */}
                 <option value="undiscovered">Undiscovered</option>
+                {/* "Komoot" — keeps only stations with ≥1 attached walk
+                    variant carrying a Komoot tour URL. Surfaces
+                    destinations that already have a planned route. */}
+                <option value="komoot">Komoot</option>
               </select>
             </div>
           )}

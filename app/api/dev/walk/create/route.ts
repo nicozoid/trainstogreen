@@ -103,12 +103,14 @@ export async function POST(req: NextRequest) {
     warnings: "",
     id,
     suffix: "",
-    // Required by cleanSource on subsequent PATCHes — populate a
-    // minimal valid shape so the admin can edit other fields first.
+    // Manual walks are Trains-to-Green-owned by default with no
+    // external source page; pageName/pageURL stay empty so the
+    // renderer leaves the title un-linked. cleanSource only requires
+    // orgSlug, so subsequent PATCHes work fine.
     source: {
       orgSlug: "trains-to-green",
-      pageName: "Manual entry",
-      pageURL: `manual://${id}`,
+      pageName: "",
+      pageURL: "",
       type: "main",
     },
     updatedAt: now,

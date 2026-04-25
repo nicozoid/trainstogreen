@@ -23,6 +23,8 @@ const EDITABLE_FIELDS = [
   "trainTips",
   "privateNote",
   "rating",
+  "ratingExplanation",
+  "previousWalkDates",
   "terrain",
   "distanceKm",
   "hours",
@@ -91,6 +93,7 @@ function cleanField(key: string, value: unknown): unknown | undefined {
     case "warnings":
     case "trainTips":
     case "privateNote":
+    case "ratingExplanation":
     case "terrain": {
       if (typeof value !== "string") return undefined
       const trimmed = value.trim().replace(/[.!?]+$/, "").trim()
@@ -126,6 +129,19 @@ case "mudWarning": {
       )]
       return cleaned.length === 0 ? undefined : cleaned
     }
+    // Admin-only log of when this walk was personally completed.
+    // Strict YYYY-MM-DD validation — anything else gets dropped.
+    // Deduped + sorted ascending so the file diff is stable across
+    // edits regardless of the order the admin added them.
+    case "previousWalkDates": {
+      if (!Array.isArray(value)) return undefined
+      const cleaned = [...new Set(
+        value
+          .map((d) => (typeof d === "string" ? d.trim() : ""))
+          .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+      )].sort()
+      return cleaned.length === 0 ? undefined : cleaned
+    }
     case "sights": {
       if (!Array.isArray(value)) return undefined
       const cleaned = value
@@ -151,10 +167,12 @@ case "mudWarning": {
   }
 }
 
-// Source provenance — all four keys required (we've already backfilled
-// every walk with a source, so missing orgSlug/pageName/pageURL on a
-// PATCH means the admin accidentally cleared a required field; drop
-// the update silently rather than corrupting the record).
+// Source provenance — only `orgSlug` is mandatory. `pageName` and
+// `pageURL` are optional (manual walks owned by Trains-to-Green
+// frequently have no external source page; the renderer falls back to
+// a plain, non-linked title when pageURL is empty). For relatedSource,
+// an empty orgSlug is the signal to delete the field — callers rely
+// on cleanSource returning null in that case.
 function cleanSource(raw: unknown): {
   orgSlug: string
   pageName: string
@@ -167,7 +185,7 @@ function cleanSource(raw: unknown): {
   const pageName = typeof r.pageName === "string" ? r.pageName.trim() : ""
   const pageURL = typeof r.pageURL === "string" ? r.pageURL.trim() : ""
   const typeRaw = typeof r.type === "string" ? r.type.trim() : ""
-  if (!orgSlug || !pageName || !pageURL) return null
+  if (!orgSlug) return null
   const type = SOURCE_TYPES.has(typeRaw) ? typeRaw : "variant"
   return { orgSlug, pageName, pageURL, type }
 }
@@ -187,13 +205,19 @@ function cleanSight(raw: unknown): { name: string; url?: string; description?: s
   return out
 }
 
+// `busy` is a tri-state matching the rating field's shape:
+// "busy" (popular / loud), "quiet" (calm / room to spare), or absent
+// (no opinion). Stored as a string so it parallels rating's enum
+// rather than the legacy boolean.
+const LUNCH_BUSY = new Set(["busy", "quiet"])
+
 function cleanLunchStop(raw: unknown): {
   name: string
   location?: string
   url?: string
   notes?: string
   rating?: "good" | "fine" | "poor"
-  busy?: true
+  busy?: "busy" | "quiet"
 } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
@@ -205,7 +229,7 @@ function cleanLunchStop(raw: unknown): {
     url?: string
     notes?: string
     rating?: "good" | "fine" | "poor"
-    busy?: true
+    busy?: "busy" | "quiet"
   } = { name }
   if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
   if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
@@ -213,9 +237,9 @@ function cleanLunchStop(raw: unknown): {
   if (typeof r.rating === "string" && LUNCH_RATINGS.has(r.rating)) {
     out.rating = r.rating as "good" | "fine" | "poor"
   }
-  // `busy` collapses to absence when false so the JSON file stays
-  // tidy — presence of the key is the signal.
-  if (r.busy === true) out.busy = true
+  if (typeof r.busy === "string" && LUNCH_BUSY.has(r.busy)) {
+    out.busy = r.busy as "busy" | "quiet"
+  }
   return out
 }
 

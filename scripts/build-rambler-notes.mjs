@@ -44,6 +44,9 @@ const EXTRA_WALKS_PATHS = [
 const EXTRAS_PATH = join(PROJECT_ROOT, "data", "station-rambler-extras.json")
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
+// Organisation registry — slug → { name, url }. Used to render the
+// human-readable "<Org> walk" link text in the relatedSource clause.
+const SOURCES_PATH = join(PROJECT_ROOT, "data", "sources.json")
 // Derived file: per-station season arrays ("Spring" | "Summer" | …) for the
 // season dropdown + "[current-season] highlights" checkbox in the filter
 // panel. Purely an output of this script — aggregated from each walk
@@ -56,6 +59,11 @@ const SEASONS_PATH = join(PROJECT_ROOT, "data", "station-seasons.json")
 // it. Drives the admin-only "Undiscovered" filter, which inverts the
 // match to surface destinations still to explore.
 const HIKED_PATH = join(PROJECT_ROOT, "data", "stations-hiked.json")
+
+// Derived list of stations where at least one attached walk has a
+// non-empty `komootUrl`. Drives the admin-only "Komoot" filter, which
+// surfaces destinations that already have a Komoot tour wired up.
+const KOMOOT_PATH = join(PROJECT_ROOT, "data", "stations-with-komoot.json")
 
 // Month codes used in each variant's structured `bestSeasons` field.
 // Order matters — renders in calendar order regardless of how the source
@@ -213,7 +221,12 @@ function formatLunchStops(stops) {
     const linked = s.url ? `[${cleanedName}](${s.url})` : cleanedName
     const base = `the ${linked}`
     const loc = s.location?.trim()
-    return loc ? `${base} in ${loc}` : base
+    const main = loc ? `${base} in ${loc}` : base
+    // Optional admin notes about the stop (e.g. "good Sunday roast",
+    // "no kitchen on Mondays"). Renders in parentheses so the prose
+    // surfaces the colour without bloating the main clause.
+    const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.!?]+$/, "") : ""
+    return note ? `${main} (${note})` : main
   })
   if (fmts.length === 1) return fmts[0]
   if (fmts.length === 2) return `${fmts[0]}, or ${fmts[1]}`
@@ -235,26 +248,49 @@ function formatLunchStops(stops) {
 // Capitalised at sentence start (follows the opening colon). Returns
 // null only if the walk has no identifiable source — in practice this
 // never fires post-backfill, but the build script stays defensive.
-function formatSourceClause(variant, entry) {
-  // Prefer the structured source info, falling back to entry-level
-  // fields for any walk that predates the source backfill. role is
-  // the legacy field; source.type is its modern home.
+// Some sources are books rather than per-walk web pages — there's
+// no pageURL to link to, so the source clause renders against the
+// org-level name/URL from sources.json instead. Detected by slug
+// prefix for now (extend the check when we add more book sources).
+function isBookSource(orgSlug) {
+  return typeof orgSlug === "string" && orgSlug.startsWith("rough-guide-")
+}
+
+function formatSourceClause(variant, entry, sources) {
   const type = variant.source?.type ?? variant.role ?? "main"
+  const orgSlug = variant.source?.orgSlug
+  // Book sources (e.g. the Rough Guide series) have no per-walk URL,
+  // so the link target is the publisher's landing page from
+  // sources.json and the link text is the book's title.
+  if (isBookSource(orgSlug)) {
+    const org = sources?.[orgSlug]
+    if (!org?.name) return null
+    const linked = org.url ? `[${org.name}](${org.url})` : org.name
+    const phrase = type === "main" ? "From" : variantPhrase(type)
+    return `${phrase} ${linked}.`
+  }
+  // Web-page sources — prefer structured source info, falling back
+  // to entry-level fields for walks that predate the source backfill.
   const pageName = variant.source?.pageName ?? entry.title
   const pageURL = variant.source?.pageURL ?? entry.url
   if (!pageName || !pageURL) return null
-  let phrase
-  switch (type) {
-    case "main":        phrase = "From"; break
-    case "shorter":     phrase = "A shorter variant of"; break
-    case "longer":      phrase = "A longer variant of"; break
-    case "alternative": phrase = "An alternative variant of"; break
-    case "variant":     phrase = "A variant of"; break
-    case "similar":     phrase = "Similar to"; break
-    case "adapted":     phrase = "Adapted from"; break
-    default:            phrase = "From"; break
-  }
+  const phrase = type === "main" ? "From" : variantPhrase(type)
   return `${phrase} [${pageName}](${pageURL}).`
+}
+
+// Per-type prefix shared between formatSourceClause (web sources +
+// book sources) and the relatedSource clause. Kept tight so the
+// switch arms stay terse at each call site.
+function variantPhrase(type) {
+  switch (type) {
+    case "shorter":     return "A shorter variant of"
+    case "longer":      return "A longer variant of"
+    case "alternative": return "An alternative variant of"
+    case "variant":     return "A variant of"
+    case "similar":     return "Similar to"
+    case "adapted":     return "Adapted from"
+    default:            return "From"
+  }
 }
 
 // Sights: "[Lacey Green Windmill](URL), Roald Dahl Museum, and [Hastings Castle](URL)".
@@ -263,7 +299,15 @@ function formatSourceClause(variant, entry) {
 // formatter's style so the rendered prose reads consistently.
 function formatSights(sights) {
   if (!Array.isArray(sights) || sights.length === 0) return null
-  const items = sights.map((s) => (s.url ? `[${s.name}](${s.url})` : s.name))
+  const items = sights.map((s) => {
+    const linked = s.url ? `[${s.name}](${s.url})` : s.name
+    // Optional descriptive blurb — surfaces in parentheses after the
+    // sight's name so a reader gets a one-line gloss without leaving
+    // the prose. Trimmed of any trailing sentence punctuation so the
+    // outer comma/period flow stays natural.
+    const desc = typeof s.description === "string" ? s.description.trim().replace(/[.!?]+$/, "") : ""
+    return desc ? `${linked} (${desc})` : linked
+  })
   if (items.length === 1) return items[0]
   if (items.length === 2) return `${items[0]} and ${items[1]}`
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`
@@ -363,7 +407,37 @@ function withPeriod(s) {
 // scraped. It no longer drives rendering or any user-visible
 // hierarchy, but may be useful later for filtering or showing the
 // "canonical" version of a page's walks.
-function buildSummary(variant, entry, crsIndex) {
+// relatedSource → "Adapted from [<Org> walk](url)." (or "Similar to …").
+//
+// Emitted as a sentence between the lunch line and the distance line
+// in the rendered prose. Triggered solely by relatedSource.orgSlug
+// being populated; pageURL is optional — when missing, the link
+// collapses to plain text. Falls back to the slug itself when the
+// org isn't registered in sources.json (avoids a broken summary if
+// an admin adds a new orgSlug without registering it first).
+function formatRelatedSourceClause(variant, sources) {
+  const rs = variant.relatedSource
+  if (!rs || typeof rs.orgSlug !== "string" || rs.orgSlug.trim() === "") return null
+  const orgName = sources?.[rs.orgSlug]?.name || rs.orgSlug
+  const linkText = `${orgName} walk`
+  const pageURL = typeof rs.pageURL === "string" ? rs.pageURL.trim() : ""
+  const labelled = pageURL ? `[${linkText}](${pageURL})` : linkText
+  let phrase
+  switch (rs.type) {
+    case "main":        phrase = "From"; break
+    case "shorter":     phrase = "A shorter variant of"; break
+    case "longer":      phrase = "A longer variant of"; break
+    case "alternative": phrase = "An alternative variant of"; break
+    case "variant":     phrase = "A variant of"; break
+    case "similar":     phrase = "Similar to"; break
+    // Unknown / unset types fall back to the most generic phrasing.
+    case "adapted":
+    default:            phrase = "Adapted from"; break
+  }
+  return `${phrase} ${labelled}.`
+}
+
+function buildSummary(variant, entry, crsIndex, sources) {
   const start = crsIndex.get(variant.startStation)
   const end = crsIndex.get(variant.endStation)
   if (!start || !end) return null
@@ -408,7 +482,14 @@ function buildSummary(variant, entry, crsIndex) {
   //    "A shorter variant of [X](url)." clause right after.
   const sourceType = variant.source?.type ?? variant.role ?? "main"
   const isMain = sourceType === "main"
-  const sourceUrl = variant.source?.pageURL ?? entry.url
+  // Title-link target. For book sources we deliberately skip the
+  // entry-level URL fallback — book entries often inherit a legacy
+  // entry.url from a previous source (e.g. the original SWC page),
+  // which would mislink the title. Book attribution flows through
+  // the source clause instead.
+  const sourceUrl = isBookSource(variant.source?.orgSlug)
+    ? null
+    : (variant.source?.pageURL || entry.url)
 
   let opening
   if (isMain && sourceUrl) {
@@ -419,10 +500,16 @@ function buildSummary(variant, entry, crsIndex) {
 
   const parts = [opening]
 
-  // Variant-of clause — only emitted for non-main walks. Mains don't
-  // need one because their title IS the link to the source page.
-  if (!isMain) {
-    const sourceClause = formatSourceClause(variant, entry)
+  // Source clause for WEB sources sits right after the title.
+  //  - non-main walks always emit ("A shorter variant of [X](url).")
+  //  - main walks skip it (the title is already linked to the source).
+  // Book sources (Rough Guide etc) defer to a clause emitted AFTER
+  // distance — see further down. They're handled separately because
+  // a book attribution reads more naturally as a closing footnote
+  // than as an opening clause.
+  const orgIsBook = isBookSource(variant.source?.orgSlug)
+  if (!orgIsBook && (!isMain || !sourceUrl)) {
+    const sourceClause = formatSourceClause(variant, entry, sources)
     if (sourceClause) parts.push(sourceClause)
   }
 
@@ -431,8 +518,28 @@ function buildSummary(variant, entry, crsIndex) {
   // which applied to every variant of a starred page; the rating
   // lives per-variant so individual variants can be singled out.
   // Threshold: rating >= 3 (backfill starts favourites at 3).
-  if (typeof variant.rating === "number" && variant.rating >= 3) {
+  // Top-tier walks (rating 4) get a stronger Trains-to-Green
+  // endorsement; rating-3 walks fall back to the legacy
+  // "Rambler favourite!" flourish.
+  if (variant.rating === 4) {
+    parts.push("An essential walk!")
+  } else if (typeof variant.rating === "number" && variant.rating >= 3) {
     parts.push("Rambler favourite!")
+  }
+
+  // Optional admin-authored sentence anchored to the rating-flourish
+  // slot. When a flourish exists ("Rambler favourite!" / "An
+  // essential walk!") this sits right after it; otherwise it
+  // becomes the first sentence after the colon. Always emitted
+  // regardless of rating — even rating-1 walks can carry a caveat
+  // (e.g. "Epic scenery sadly ruined by the constant drone of the
+  // M25"). Stored without a trailing period; withPeriod() tacks
+  // one on so callers don't need to remember it.
+  if (
+    typeof variant.ratingExplanation === "string" &&
+    variant.ratingExplanation.trim() !== ""
+  ) {
+    parts.push(withPeriod(variant.ratingExplanation.trim()))
   }
 
   // Terrain — stored as comma-separated tags; renderer joins with
@@ -473,16 +580,30 @@ function buildSummary(variant, entry, crsIndex) {
   const lunch = formatLunchStops(variant.lunchStops)
   if (lunch) parts.push(`Lunch at ${lunch}.`)
 
-  // Distance and hours — each their own sentence, terse.
-  // Suppressed when a Komoot URL is present: Komoot provides the
-  // authoritative figures, and the Rambler ones are often approximate
-  // and end up conflicting with the Komoot route.
-  if (!variant.komootUrl) {
-    const dist = formatDistance(variant.distanceKm)
-    if (dist) parts.push(`${dist}.`)
-    const time = formatHours(variant.hours)
-    if (time) parts.push(`${time}.`)
+  // Distance and hours — each their own sentence, terse. Always
+  // emitted when present, including alongside a Komoot route (the
+  // "Pull distance" admin button keeps the structured fields in
+  // sync with the Komoot tour, so they no longer disagree).
+  const dist = formatDistance(variant.distanceKm)
+  if (dist) parts.push(`${dist}.`)
+  const time = formatHours(variant.hours)
+  if (time) parts.push(`${time}.`)
+
+  // Book source clause — emitted after distance so the book
+  // attribution reads as a closing footnote rather than a
+  // header-line preface. Only fires for book-style orgSlugs (Rough
+  // Guide etc); web sources were already handled above.
+  if (orgIsBook) {
+    const bookClause = formatSourceClause(variant, entry, sources)
+    if (bookClause) parts.push(bookClause)
   }
+
+  // Related source — admin cross-reference rendered as a short
+  // "Adapted from [<Org> walk](url)." clause. Sits after the book
+  // source clause so any external attribution is grouped together
+  // at the tail of the prose.
+  const relatedClause = formatRelatedSourceClause(variant, sources)
+  if (relatedClause) parts.push(relatedClause)
 
   // GPX file — entry-level (applies to the whole page, not per
   // variant). Renders as a trailing "[GPX file](URL)." clause so the
@@ -494,7 +615,7 @@ function buildSummary(variant, entry, crsIndex) {
   // Komoot tour link — per-variant. Different variants of the same
   // page can each have their own route, so this lives on the walk
   // variant rather than the entry.
-  if (variant.komootUrl) parts.push(`[Komoot route](${variant.komootUrl}).`)
+  if (variant.komootUrl) parts.push(`**[Komoot route →](${variant.komootUrl})**`)
 
   // Return the rendered string PLUS the title pieces — callers need
   // `displayName` / `baseDisplayName` to run the duplicate-variant
@@ -527,6 +648,10 @@ function buildRamblerNotes(args) {
   const walks = loadAllWalks()
   const notes = JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
   const crsIndex = buildCrsIndex()
+  // sources.json — organisation registry. Loaded once here and threaded
+  // into buildSummary so the relatedSource clause can render
+  // "<Org> walk" link text without each call re-reading from disk.
+  const sources = JSON.parse(readFileSync(SOURCES_PATH, "utf-8"))
 
   // coordKey → { name, ramblerParts[] }
   const perStation = new Map()
@@ -539,6 +664,11 @@ function buildRamblerNotes(args) {
   // data/stations-hiked.json as a sorted array; the admin "Undiscovered"
   // filter hides these to surface the stations still to visit.
   const perStationHiked = new Set()
+  // coordKey → true. Any station whose attached walks include at least
+  // one variant with a non-empty `komootUrl`. Written to
+  // data/stations-with-komoot.json as a sorted array; the admin "Komoot"
+  // filter keeps only these.
+  const perStationKomoot = new Set()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
   const urlsUsed = new Set()
@@ -558,7 +688,7 @@ function buildRamblerNotes(args) {
     const stationToStation = entry.walks.filter((v) => v.stationToStation)
 
     for (const variant of stationToStation) {
-      const built = buildSummary(variant, entry, crsIndex)
+      const built = buildSummary(variant, entry, crsIndex, sources)
       if (!built) continue
       const { summary, displayName, baseDisplayName } = built
       // Each walk attaches ONLY to its starting station in the public
@@ -625,6 +755,12 @@ function buildRamblerNotes(args) {
         // "undiscovered" to "hiked" in the derived output.
         if (Array.isArray(variant.previousWalkDates) && variant.previousWalkDates.length > 0) {
           perStationHiked.add(station.coordKey)
+        }
+
+        // Track stations with at least one walk variant carrying a
+        // Komoot tour URL.
+        if (typeof variant.komootUrl === "string" && variant.komootUrl.trim() !== "") {
+          perStationKomoot.add(station.coordKey)
         }
       }
     }
@@ -803,6 +939,15 @@ function buildRamblerNotes(args) {
   writeFileSync(HIKED_PATH, JSON.stringify(hikedOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${hikedOut.length} entries to ${HIKED_PATH}`)
+
+  // ── Derived file: stations-with-komoot.json ────────────────────────
+  // Sorted array of coordKeys for stations with at least one attached
+  // walk variant carrying a Komoot tour URL. Drives the admin-only
+  // "Komoot" filter on the map.
+  const komootOut = [...perStationKomoot].sort()
+  writeFileSync(KOMOOT_PATH, JSON.stringify(komootOut, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${komootOut.length} entries to ${KOMOOT_PATH}`)
 
   if (args.flipOnMap) {
     // Update onMap per-source so each file only holds its own entries —

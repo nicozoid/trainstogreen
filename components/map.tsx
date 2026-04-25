@@ -1886,7 +1886,10 @@ export default function HikeMap() {
   // to explore. Lives on the Feature dropdown (rather than a separate
   // checkbox) so admin-only filters that exclude stations all share a
   // single UI control.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered"
+  // `komoot` — keeps only stations whose attached walks include at least
+  // one variant with a non-empty `komootUrl`. Membership comes from the
+  // pre-built stations-with-komoot.json set.
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot"
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
   // Admin-only "Season" dropdown — slice destinations to those recommended
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
@@ -2060,6 +2063,12 @@ export default function HikeMap() {
   // "Undiscovered" admin filter (which hides anything in this set).
   const [stationsHiked, setStationsHiked] = useState<Set<string>>(new Set())
 
+  // Set of coordKeys for stations with at least one attached walk that
+  // has a non-empty komootUrl. Derived by the build script and served
+  // as a flat string[]; wrapped in a Set for O(1) lookups in the
+  // admin-only "Komoot" feature filter.
+  const [stationsWithKomoot, setStationsWithKomoot] = useState<Set<string>>(new Set())
+
   // Per-station custom Flickr tag config (the "custom" fallback step). Only
   // stations with an entry participate in that step — everything else skips
   // straight to the next algo in the chain. The algo itself (landscapes /
@@ -2095,6 +2104,9 @@ export default function HikeMap() {
     fetch("/api/dev/stations-hiked")
       .then((res) => res.json())
       .then((data: string[]) => setStationsHiked(new Set(data)))
+    fetch("/api/dev/stations-with-komoot")
+      .then((res) => res.json())
+      .then((data: string[]) => setStationsWithKomoot(new Set(data)))
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
@@ -4357,6 +4369,42 @@ export default function HikeMap() {
           return true
         }
 
+        // Shared helper — admin-only Feature filter. Pulled out into
+        // a helper so excluded stations (which take an early return
+        // path below) also get filtered. Previously this lived only
+        // inline in the regular-station branch, so e.g. selecting
+        // "Komoot" still showed every excluded station regardless
+        // of whether they had Komoot data.
+        const passesFeatureFilter = () => {
+          if (primaryFeatureFilter === "off") return true
+          if (primaryFeatureFilter === "alt-routes") {
+            const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
+            const alts = (journey as unknown as { alternativeRoutes?: unknown[] } | undefined)?.alternativeRoutes
+            return !!alts && alts.length > 0
+          }
+          if (primaryFeatureFilter === "private-notes") {
+            const entry = stationNotes[f.properties.coordKey as string]
+            return !!entry?.privateNote?.trim()
+          }
+          if (primaryFeatureFilter === "sloppy-pics") {
+            const entry = curations[f.properties.coordKey as string]
+            const approvedCount = entry?.approved.length ?? 0
+            return approvedCount < MAX_GALLERY_PHOTOS
+          }
+          if (primaryFeatureFilter === "all-sloppy-pics") {
+            const entry = curations[f.properties.coordKey as string]
+            const approvedCount = entry?.approved.length ?? 0
+            return approvedCount === 0
+          }
+          if (primaryFeatureFilter === "undiscovered") {
+            return !stationsHiked.has(f.properties.coordKey as string)
+          }
+          if (primaryFeatureFilter === "komoot") {
+            return stationsWithKomoot.has(f.properties.coordKey as string)
+          }
+          return true
+        }
+
         // Excluded stations: admin-only, and now respect the time sliders so
         // admins can narrow the view to excluded stations in a specific band.
         // The direct-only checkbox applies here too — an excluded station with
@@ -4372,6 +4420,10 @@ export default function HikeMap() {
             const primaryChanges = f.properties.effectiveChanges as number | undefined
             if (primaryChanges == null || primaryChanges > 0) return false
           }
+          // Apply the admin Feature filter to excluded stations too —
+          // narrowing filters like "Komoot" or "Undiscovered" should
+          // respect their criterion regardless of exclusion status.
+          if (!passesFeatureFilter()) return false
           return true
         }
 
@@ -4432,42 +4484,9 @@ export default function HikeMap() {
             // "any" requires interchanges.length >= 1 which we already checked.
           }
         }
-        // Admin-only Feature filter — slices destinations by which
-        // optional modal features they'd surface on click. Useful for
-        // spot-checking coverage (e.g. "which stations show alt
-        // routes?", "where did I stash a private note?"). See
-        // `primaryFeatureFilter` state comment.
-        if (primaryFeatureFilter !== "off") {
-          if (primaryFeatureFilter === "alt-routes") {
-            const journey = (f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
-            const alts = (journey as unknown as { alternativeRoutes?: unknown[] } | undefined)?.alternativeRoutes
-            if (!alts || alts.length === 0) return false
-          } else if (primaryFeatureFilter === "private-notes") {
-            // Private note lookup uses the live stationNotes state
-            // (coord-keyed). An entry with an empty privateNote
-            // string doesn't count — we require actual content.
-            const entry = stationNotes[f.properties.coordKey as string]
-            if (!entry?.privateNote?.trim()) return false
-          } else if (primaryFeatureFilter === "sloppy-pics") {
-            // "Not fully curated yet" — fewer than MAX_GALLERY_PHOTOS approved.
-            // Stations never touched (entry undefined → approved.length = 0)
-            // satisfy this, which is intentional.
-            const entry = curations[f.properties.coordKey as string]
-            const approvedCount = entry?.approved.length ?? 0
-            if (approvedCount >= MAX_GALLERY_PHOTOS) return false
-          } else if (primaryFeatureFilter === "all-sloppy-pics") {
-            // "Never touched" — no approvals. These are the stations whose
-            // gallery is still entirely driven by the Flickr algo chain.
-            const entry = curations[f.properties.coordKey as string]
-            const approvedCount = entry?.approved.length ?? 0
-            if (approvedCount > 0) return false
-          } else if (primaryFeatureFilter === "undiscovered") {
-            // "Undiscovered" — hide stations we've personally walked any
-            // variant from. Membership in stationsHiked is single .has()
-            // lookup; stations never walked don't appear in the set.
-            if (stationsHiked.has(f.properties.coordKey as string)) return false
-          }
-        }
+        // Admin-only Feature filter — see `passesFeatureFilter` helper
+        // above for the per-option criteria.
+        if (!passesFeatureFilter()) return false
         // Season filters. Two independent filters both look up this
         // station's recommended seasons in stationSeasons:
         //   • seasonFilter (admin dropdown) — hides stations whose seasons
@@ -4505,7 +4524,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.

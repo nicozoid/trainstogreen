@@ -55,7 +55,7 @@ type WalkPayload = {
   hours: number | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string }[]
+  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
   // editable
   warnings: string
   trainTips: string
@@ -77,6 +77,11 @@ type WalkPayload = {
   // field is an admin-only visibility signal.
   requiresBus: boolean
   rating: number | null
+  // Optional admin-authored sentence appended to the rating flourish
+  // in the public prose (e.g. "Highly recommended by T2G! Best
+  // springtime walk."). Stored without a trailing period — the
+  // renderer adds it.
+  ratingExplanation: string
   updatedAt: string | null
   // provenance (read-only in v1 — populated by
   // scripts/backfill-walk-source-metadata.mjs)
@@ -185,6 +190,7 @@ export async function GET(req: NextRequest) {
           gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
           requiresBus: !!v.requiresBus,
           rating: typeof v.rating === "number" ? v.rating : null,
+          ratingExplanation: typeof v.ratingExplanation === "string" ? v.ratingExplanation : "",
           updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
           source: v.source && typeof v.source === "object" ? v.source : undefined,
           relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
