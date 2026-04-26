@@ -319,23 +319,21 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
   "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
-  // Kings Cross primary represents the KX/St Pancras/Euston group — they're
-  // next-door and share a tube interchange, so most riders pick any of the
-  // three interchangeably. Cluster members are declared below. Searchable
-  // (not adminOnly) but not pre-populated — the default dropdown only
-  // shows the synthetic "Central London" primary; individual termini
-  // including this cluster surface via the search box or the recents
-  // list once the user picks them.
-  "-0.1239491,51.530609":  { canonicalName: "Kings Cross St Pancras", displayName: "Kings Cross",      menuName: "Kings Cross, St Pancras, & Euston" },
+  // Stratford synthetic — anchor at the midpoint between SRA and SFA so
+  // the cluster reads as a balanced pair on the map (not pinned to one
+  // station). The synthetic coord isn't in origin-routes.json, but the
+  // diff merge below mirrors the first cluster member's journey data
+  // under this anchor key so primary-side filters still resolve.
+  "-0.0061483,51.5430422": { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford", isSynthetic: true },
   "-0.1236888,51.5074975": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
   "-0.163592,51.5243712":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
   "-0.177317,51.5170952":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
   "-0.1445802,51.4947328": { canonicalName: "Victoria",                displayName: "Victoria",         menuName: "Victoria" },
-  // Waterloo primary — clustered with Waterloo East (cross-platform walk).
-  "-0.112801,51.5028379":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo & Waterloo East" },
-  // Stratford primary — clustered with Stratford International (a short
-  // walk across the plaza). Cluster member declared below.
-  "-0.0035472,51.541289":  { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford & Stratford International" },
+  // Waterloo primary — standalone. Waterloo East is reachable via the
+  // Central London synthetic; users wanting WAT specifically still get
+  // it as their own primary here, but its old WAE cluster mapping is
+  // gone.
+  "-0.112801,51.5028379":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo" },
   // Remaining standalone termini — each has RTT direct-reachable data
   // (see data/origin-routes.json) and matches a london-terminals.json entry
   // by canonicalName or alias, so stitching works too.
@@ -390,23 +388,12 @@ const PRIMARY_ORIGIN_GROUPS_PUBLIC: string[][] = PRIMARY_ORIGIN_GROUPS_ALL
 //    Admin-only while we validate whether aggregating 6 origins into one is
 //    useful UX.
 const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
-  // Waterloo primary ← Waterloo East. Cross-platform walkway makes them a
-  // single practical interchange.
-  "-0.112801,51.5028379": ["-0.1082027,51.5042171"],
-  // Stratford primary ← Stratford International. Separate-but-near (a few
-  // minutes' walk across the plaza), historically treated as one logical
-  // origin — tapping either maps back to the Stratford primary.
-  "-0.0035472,51.541289": ["-0.0087494,51.5447954"],
-  // Kings Cross primary ← all NR/Underground variants of KX, St Pancras,
-  // and Euston. Underground + NR coords appear at slightly different OSM
-  // nodes, so listing each ensures a tap on any of them maps back to the
-  // one primary.
-  "-0.1239491,51.530609": [
-    "-0.1230224,51.5323954",   // Kings Cross (National Rail / KGX)
-    "-0.1270027,51.5327196",   // St Pancras International (STP, main concourse)
-    "-0.1276185,51.5322106",   // St Pancras International (SPL, HS1/domestic concourse)
-    "-0.1341909,51.5288526",   // Euston (National Rail / EUS)
-    "-0.1338745,51.5282865",   // Euston (Underground)
+  // Stratford synthetic ← SRA + SFA. Both render as satellite diamonds
+  // around the midpoint anchor; first member's journey data drives the
+  // routing alias on the synthetic coord (see diff merge below).
+  "-0.0061483,51.5430422": [
+    "-0.0035472,51.541289",   // Stratford (SRA)
+    "-0.0087494,51.5447954",  // Stratford International (SFA)
   ],
   // London — the 18 true termini. Primary coord is the Charles I statue
   // (synthetic, no station there). Every cluster member is a real terminus;
@@ -466,14 +453,73 @@ function getActivePrimaryCoords(primaryOrigin: string): string[] {
 const PRIMARY_CLICK_BEHAVIOUR: "modal" | "banner" = "modal"
 
 // Friend origins — the secondary station used for filtering in "meet a friend"
-// mode. Same shape as PRIMARY_ORIGINS.
+// mode. Same shape as PRIMARY_ORIGINS. Synthetic friends (e.g. Birmingham,
+// Manchester) anchor at one of their cluster member's coords (so RTT + Google
+// Routes journey data still resolves) and declare satellite cluster members
+// in FRIEND_ORIGIN_CLUSTER below. The synthetic flag triggers diamond
+// rendering for those satellites and a cluster header in the overlay.
 const FRIEND_ORIGINS: Record<string, OriginDef> = {
-  "-1.898694,52.4776459":  { canonicalName: "Birmingham New Street", displayName: "Birmingham", menuName: "Birmingham New St" },
-  "-1.1449555,52.9473037": { canonicalName: "Nottingham",            displayName: "Nottingham", menuName: "Nottingham" },
+  // Birmingham synthetic — anchor at the centroid of BHM/BMO/BSW so the
+  // cluster reads as a balanced trio. Friend journeys are RTT-derived
+  // (scripts/build-friend-journeys-from-rtt.mjs), so coverage matches the
+  // primary side rather than the older Google Routes set.
+  "-1.8967682,52.4801267": { canonicalName: "Birmingham",          displayName: "Birmingham", menuName: "Birmingham", isSynthetic: true },
+  // Manchester synthetic — anchor at the centroid of MAN/MCV/MCO. Same
+  // RTT-derived journey-file approach as Birmingham; no Google Routes
+  // spend was needed thanks to the BMO/BSW + queue junction fetches.
+  "-2.2383003,53.4796574": { canonicalName: "Manchester",          displayName: "Manchester", menuName: "Manchester", isSynthetic: true },
+  "-1.1449555,52.9473037": { canonicalName: "Nottingham",          displayName: "Nottingham", menuName: "Nottingham" },
+}
+
+// Friend cluster members — same shape as PRIMARY_ORIGIN_CLUSTER. Listed
+// coords appear as satellite diamonds when the parent friend is active,
+// and tap-to-resolve back to the parent. Anchors live at the FIRST listed
+// real station for each friend, so the anchor itself isn't included as a
+// member.
+const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
+  // Birmingham (synthetic centroid anchor) ← BHM + BMO + BSW.
+  "-1.8967682,52.4801267": [
+    "-1.898694,52.4776459",    // Birmingham New Street (BHM)
+    "-1.8919518,52.4789357",   // Birmingham Moor Street (BMO)
+    "-1.8996588,52.4837984",   // Birmingham Snow Hill (BSW)
+  ],
+  // Manchester (synthetic centroid anchor) ← MAN + MCV + MCO.
+  "-2.2383003,53.4796574": [
+    "-2.2301402,53.4772197",   // Manchester Piccadilly (MAN)
+    "-2.2424846,53.4879748",   // Manchester Victoria (MCV)
+    "-2.2422762,53.4737777",   // Manchester Oxford Road (MCO)
+  ],
 }
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
+
+// Resolve the effective journey from a friend origin to a destination,
+// falling back to cluster members when the friend is a SYNTHETIC anchor
+// (e.g. Birmingham) — synthetic anchors aren't in origin-routes.json, so
+// reading journeys[anchorCoord] always returns undefined. Picks the
+// quickest cluster-member journey for the destination, since "fastest
+// from any of {BHM, BMO, BSW}" matches what a real friend in Birmingham
+// would actually do.
+function getFriendJourney(
+  journeys: Record<string, { durationMinutes?: number; changes?: number }> | undefined,
+  friendOrigin: string,
+): { durationMinutes?: number; changes?: number } | undefined {
+  if (!journeys) return undefined
+  const direct = journeys[friendOrigin]
+  if (direct) return direct
+  if (!FRIEND_ORIGINS[friendOrigin]?.isSynthetic) return undefined
+  const members = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
+  let best: { durationMinutes?: number; changes?: number } | undefined
+  for (const m of members) {
+    const j = journeys[m]
+    if (!j || j.durationMinutes == null) continue
+    if (best == null || best.durationMinutes == null || j.durationMinutes < best.durationMinutes) {
+      best = j
+    }
+  }
+  return best
+}
 
 // Unified lookup for display/menu strings — used by the single callback we
 // pass into filter-panel (which renders labels for both primary AND friend origins).
@@ -1446,18 +1492,12 @@ export default function HikeMap() {
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
   // pick items beneath the main origin list so they can hop back easily.
-  // Seeded on first load (when localStorage is empty) with a single
-  // commonly-used pick: Stratford. Gives new users something to click
-  // immediately rather than an empty recents section. Existing users
-  // keep whatever's in their localStorage. More stations would only
-  // confuse non-admin users today — most non-terminal origins only
-  // cover direct-reachable destinations (no stitching), so their
-  // coverage would look much thinner than Central London's.
+  // Empty by default — Stratford used to be seeded here, but it's now its
+  // own synthetic primary in the top group, so seeding it would make it
+  // appear twice.
   const [recentCustomPrimaries, setRecentCustomPrimaries] = usePersistedState<string[]>(
     "ttg:recentCustomPrimaries",
-    [
-      "-0.0035472,51.541289",   // Stratford
-    ],
+    [],
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
   // coord isn't a current primary option (e.g. we removed the Liverpool Street
@@ -1468,6 +1508,19 @@ export default function HikeMap() {
   // from localStorage asynchronously via its own effect.
   useEffect(() => {
     if (!primaryOrigin) return
+    // Coord-key migrations: when a previously-standalone primary moves to
+    // a new synthetic anchor coord, redirect stored picks so users don't
+    // get reset to the default.
+    const COORD_MIGRATIONS: Record<string, string> = {
+      // Old Stratford (SRA) standalone primary → new synthetic midpoint
+      "-0.0035472,51.541289": "-0.0061483,51.5430422",
+      // Old Kings Cross cluster primary (now removed) → Central London synthetic
+      "-0.1239491,51.530609": "-0.1269,51.5196",
+    }
+    if (COORD_MIGRATIONS[primaryOrigin]) {
+      setPrimaryOriginRaw(COORD_MIGRATIONS[primaryOrigin])
+      return
+    }
     if (!primaryOrigin.includes(",")) {
       setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1269,51.5196"))
     } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
@@ -1475,6 +1528,18 @@ export default function HikeMap() {
       setPrimaryOriginRaw("-0.1269,51.5196")
     }
   }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
+
+  // Recents-list cleanup: any synthetic primary anchor that ends up in the
+  // recents list (e.g. Stratford, which used to be seeded as a recent before
+  // it was promoted to a synthetic primary in the top group) gets removed,
+  // since synthetic primaries already have a permanent slot in the dropdown
+  // and shouldn't appear twice.
+  useEffect(() => {
+    const cleaned = recentCustomPrimaries.filter((c) => !PRIMARY_ORIGINS[c]?.isSynthetic)
+    if (cleaned.length !== recentCustomPrimaries.length) {
+      setRecentCustomPrimaries(cleaned)
+    }
+  }, [recentCustomPrimaries, setRecentCustomPrimaries])
   // useTransition lets us defer the heavy stations-recompute that happens
   // when primaryOrigin changes. startTransition wraps the state setter;
   // React paints the dropdown close + loading spinner IMMEDIATELY (those
@@ -1649,19 +1714,18 @@ export default function HikeMap() {
     }
     return out
   }, [])
-  // Set of coords inside the LONDON SYNTHETIC cluster (the 18 true termini
-  // plus the synthetic coord itself). Used to decide whether a search-picked
-  // coord should bypass the "recents" list. Only London-terminus coords
-  // bypass recents — Stratford, Farringdon, Kentish Town, East Croydon etc.
-  // all go to recents even if they happen to be in PRIMARY_ORIGINS.
+  // Set of coords inside ANY synthetic primary's cluster (anchor + all
+  // members). Used to decide whether a search-picked coord should bypass the
+  // "recents" list. Synthetic-cluster coords bypass recents because their
+  // anchor is already in the curated dropdown; non-synthetic standalone
+  // primaries (Charing Cross, Waterloo) and other NR stations (Farringdon,
+  // East Croydon) all go to recents.
   const londonClusterCoords = useMemo(() => {
-    const syntheticCoord = Object.keys(PRIMARY_ORIGINS).find(
-      (k) => PRIMARY_ORIGINS[k]?.isSynthetic,
-    )
     const set = new Set<string>()
-    if (syntheticCoord) {
-      set.add(syntheticCoord)
-      for (const m of PRIMARY_ORIGIN_CLUSTER[syntheticCoord] ?? []) set.add(m)
+    for (const k of Object.keys(PRIMARY_ORIGINS)) {
+      if (!PRIMARY_ORIGINS[k]?.isSynthetic) continue
+      set.add(k)
+      for (const m of PRIMARY_ORIGIN_CLUSTER[k] ?? []) set.add(m)
     }
     return set
   }, [])
@@ -1851,12 +1915,17 @@ export default function HikeMap() {
   const PRIMARY_SLUG: Record<string, string> = {
     "-0.1269,51.5196":       "central-london",
     "-0.0035472,51.541289":  "stratford",
+    // Synthetic Stratford midpoint anchor — uses the same routing diff
+    // as the SRA primary above; the diff merge in routedStations mirrors
+    // SRA's journey data under this synthetic key so filters resolve.
+    "-0.0061483,51.5430422": "stratford",
     // Preloaded friend-dropdown defaults — also precomputable as
     // primaries in case admin / a future feature wants to use them
     // as home origins. Their journey-file counterparts live under
     // public/journeys/ for friend-side rendering; these are the
     // home-side precomputed routing diffs.
     "-1.898694,52.4776459":  "birmingham",
+    "-2.2301402,53.4772197": "manchester",
     "-1.1449555,52.9473037": "nottingham",
   }
   // Lazy-fetch the precomputed routing diff for the currently active
@@ -2057,6 +2126,13 @@ export default function HikeMap() {
     "-0.0035472,51.541289": "stratford",
     "-1.1449555,52.9473037": "nottingham",
     "-1.898694,52.4776459": "birmingham",
+    // Synthetic anchors map to the same journey file as their first cluster
+    // member. ensureOriginLoaded stamps the loaded journeys under whatever
+    // origin coord we pass in — passing the synthetic coord makes
+    // journeys[syntheticAnchor] resolve directly without any fallback chain.
+    "-0.0061483,51.5430422": "stratford",
+    "-1.8967682,52.4801267": "birmingham",
+    "-2.2383003,53.4796574": "manchester",
   }
   // `mapReady` flips true on the style's `load` event — style + icons
   // are wired, but tiles / markers may not yet be painted. For the
@@ -2102,7 +2178,7 @@ export default function HikeMap() {
   // see a focused map (curated picks only), not every rated station plus
   // every "Okay" and every "Unknown". Admins can click extras on manually.
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
-    () => new Set(["highlight", "verified"]),
+    () => new Set(["highlight", "verified", "unverified"]),
   )
 
   // Photo curations — per-station approved photo list + pinned-ids subset.
@@ -4717,12 +4793,13 @@ export default function HikeMap() {
         // from the friend's origin within the friend's max travel time
         if (friendOrigin) {
           const journeys = f.properties.journeys as Record<string, { durationMinutes?: number; changes?: number }> | undefined
-          const friendMins = journeys?.[friendOrigin]?.durationMinutes
+          const friendJourney = getFriendJourney(journeys, friendOrigin)
+          const friendMins = friendJourney?.durationMinutes
           if (friendMins == null) return false
           if (friendMaxMinutes < 600 && friendMins > friendMaxMinutes) return false
           // "Direct trains only" for the friend origin — require 0 changes
           if (friendDirectOnly) {
-            const friendChanges = journeys?.[friendOrigin]?.changes
+            const friendChanges = friendJourney?.changes
             if (friendChanges == null || friendChanges > 0) return false
           }
         }
@@ -4770,8 +4847,8 @@ export default function HikeMap() {
         if (r) extra.rating = r
         // Flatten friend journey duration so Mapbox label expressions can read it
         if (friendOrigin) {
-          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number }> | undefined
-          const mins = journeys?.[friendOrigin]?.durationMinutes
+          const journeys = f.properties.journeys as Record<string, { durationMinutes?: number; changes?: number }> | undefined
+          const mins = getFriendJourney(journeys, friendOrigin)?.durationMinutes
           if (mins != null) extra.friendMinutes = mins
           // Stamp `isFriendOrigin` on the feature that IS the friend —
           // used below by the rating-icons layer to render it as a
@@ -4824,11 +4901,13 @@ export default function HikeMap() {
   // pass through to whatever's underneath.
   const londonTerminusFeatures = useMemo(() => {
     if (!baseStations) return null
-    const syntheticCoord = Object.keys(PRIMARY_ORIGINS).find(
-      (k) => PRIMARY_ORIGINS[k]?.isSynthetic,
-    )
-    if (!syntheticCoord) return null
-    const clusterCoords = PRIMARY_ORIGIN_CLUSTER[syntheticCoord] ?? []
+    // Diamonds render for whichever primary OR friend is currently active
+    // AND synthetic — single set of features, gated by whichever is live.
+    // The Source/Layer below stays mounted only when the active primary is
+    // synthetic; the friend variant has its own separate Source.
+    const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
+    if (!primaryDef?.isSynthetic) return null
+    const clusterCoords = PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []
     type PointFeature = {
       type: "Feature"
       geometry: { type: "Point"; coordinates: [number, number] }
@@ -4866,7 +4945,15 @@ export default function HikeMap() {
       })
       if (nearPrevious) continue
       const rawName = bf?.properties?.name as string | undefined
-      const cleanName = cleanTerminusLabel(rawName)
+      let cleanName = cleanTerminusLabel(rawName)
+      // Disambiguate when a satellite's name collides with the
+      // synthetic anchor's displayName (e.g. SRA cleans to "Stratford",
+      // which is also the Stratford-cluster anchor's label). Append
+      // " Station" so the satellite reads "Stratford Station" while
+      // the anchor stays "Stratford".
+      if (cleanName === primaryDef.displayName) {
+        cleanName = `${cleanName} Station`
+      }
       iconFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
@@ -4892,7 +4979,65 @@ export default function HikeMap() {
     return {
       icons: { type: "FeatureCollection" as const, features: iconFeatures },
     }
-  }, [baseStations])
+  }, [baseStations, primaryOrigin])
+
+  // Friend cluster diamonds — same shape as the primary version above, but
+  // sourced from the active synthetic friend (if any). Returns null when the
+  // current friend isn't synthetic, so the friend Source/Layer below stays
+  // unmounted in the common single-station case.
+  const friendClusterFeatures = useMemo(() => {
+    if (!baseStations || !friendOrigin) return null
+    const friendDef = FRIEND_ORIGINS[friendOrigin]
+    if (!friendDef?.isSynthetic) return null
+    const clusterCoords = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
+    type PointFeature = {
+      type: "Feature"
+      geometry: { type: "Point"; coordinates: [number, number] }
+      properties: Record<string, unknown>
+    }
+    const iconFeatures: PointFeature[] = []
+    for (const coord of clusterCoords) {
+      const [lngStr, latStr] = coord.split(",")
+      const lng = parseFloat(lngStr)
+      const lat = parseFloat(latStr)
+      if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+      const bf = baseStations.features.find((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return `${l},${a}` === coord
+      })
+      const network = (bf?.properties?.network as string | undefined) ?? ""
+      const isNR = /National Rail|Elizabeth line/.test(network)
+      if (!isNR) continue
+      const nearPrevious = iconFeatures.some((f) => {
+        const [l, a] = f.geometry.coordinates as [number, number]
+        return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
+      })
+      if (nearPrevious) continue
+      const rawName = bf?.properties?.name as string | undefined
+      let cleanName = cleanTerminusLabel(rawName)
+      // Disambiguate satellite labels that collide with the friend
+      // anchor's displayName (e.g. BHM cleans to "Birmingham New
+      // Street" — fine — but if any cleaned name matches the cluster
+      // label we'd append " Station" the same way the primary side
+      // does for SRA).
+      if (cleanName === friendDef.displayName) {
+        cleanName = `${cleanName} Station`
+      }
+      iconFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: {
+          coord: coord,
+          coordKey: coord,
+          name: cleanName,
+          isTerminus: true,
+        },
+      })
+    }
+    return {
+      icons: { type: "FeatureCollection" as const, features: iconFeatures },
+    }
+  }, [baseStations, friendOrigin])
 
   // Stamps boolean flags (isNew / isLeaving) — NOT the scale values themselves.
   // Scale values live in the Layer expressions so stationsForMap doesn't recompute
@@ -6293,6 +6438,40 @@ export default function HikeMap() {
     let feature =
       e.features?.find((f) => f.layer?.id === "hovered-station-hit")
       ?? e.features?.[0]
+
+    // Friend-anchor click — opens the synthetic friend's stripped-down
+    // overlay (with the cluster header). Same UX as clicking a London
+    // hexagon when London is the active primary. Handled before the
+    // general feature dispatch because the friend-anchor's coord is
+    // synthetic and won't match any baseStations feature.
+    const friendAnchorHit = e.features?.find(
+      (f) => f.layer?.id === "friend-anchor-icon" || f.layer?.id === "friend-anchor-hit",
+    )
+    if (friendAnchorHit && friendOrigin) {
+      const friendDef = FRIEND_ORIGINS[friendOrigin]
+      if (friendDef?.isSynthetic) {
+        const [aLngStr, aLatStr] = friendOrigin.split(",")
+        const aLng = parseFloat(aLngStr)
+        const aLat = parseFloat(aLatStr)
+        const pt = mapRef.current?.project([aLng, aLat])
+        setSelectedStation({
+          name: friendDef.displayName,
+          lng: aLng,
+          lat: aLat,
+          minutes: 0,
+          coordKey: friendOrigin,
+          flickrCount: null,
+          screenX: pt?.x ?? window.innerWidth / 2,
+          screenY: pt?.y ?? window.innerHeight / 2,
+        })
+        hoveredRef.current = null
+        touchFirstTapCoord.current = null
+        touchFirstTapAt.current = 0
+        setHovered(null)
+        return
+      }
+    }
+
     if (!feature) {
       // Tap on empty map — clear BOTH two-tap layers so the next station
       // tap starts fresh as a first tap, rather than a stale "second tap".
@@ -6303,24 +6482,58 @@ export default function HikeMap() {
       setSelectedStation(null)
       return
     }
-    // Terminus diamond click — resolve to the real station feature so
-    // the usual modal opens. The diamond's properties carry coordKey
-    // already, so we can look up the baseStations feature directly.
-    // No `getActivePrimaryCoords` short-circuit needed: since London
-    // synthetic IS the active primary whenever these layers are
-    // interactive, and every diamond's coord is in the cluster, the
-    // stripped-down modal branch fires on its own via the existing
-    // isPrimaryOrigin plumbing.
+    // Cluster diamond click — open the synthetic's stripped-down overlay
+    // directly (NOT the individual member's). User UX rule: a tap on any
+    // diamond reads as "open the cluster", since the diamond is the
+    // visual representation of cluster membership. The synthetic anchor
+    // owns the cluster-header copy and shared photos.
     if (
       feature.layer?.id === "london-terminus-icon" ||
-      feature.layer?.id === "london-terminus-origin-icon"
+      feature.layer?.id === "london-terminus-origin-icon" ||
+      feature.layer?.id === "friend-cluster-icon"
     ) {
       const diamondCoord = feature.properties?.coordKey as string | undefined
-      if (diamondCoord) {
-        const real = stations?.features.find(
-          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === diamondCoord
-        )
-        if (real) feature = real as unknown as typeof feature
+      // Determine which synthetic owns this diamond — the active primary or
+      // the active friend. Members exclusively belong to one of the two
+      // because diamonds are only mounted when their owning synthetic is
+      // active, so a single owning-anchor lookup is unambiguous.
+      const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
+      const primaryMembers = primaryDef?.isSynthetic
+        ? (PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])
+        : []
+      const friendDef = friendOrigin ? FRIEND_ORIGINS[friendOrigin] : undefined
+      const friendMembers = friendOrigin && friendDef?.isSynthetic
+        ? (FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? [])
+        : []
+      let anchorCoord: string | null = null
+      let anchorName: string | null = null
+      if (diamondCoord && primaryMembers.includes(diamondCoord)) {
+        anchorCoord = primaryOrigin
+        anchorName = primaryDef?.displayName ?? null
+      } else if (diamondCoord && friendOrigin && friendMembers.includes(diamondCoord)) {
+        anchorCoord = friendOrigin
+        anchorName = friendDef?.displayName ?? null
+      }
+      if (anchorCoord && anchorName) {
+        const [aLngStr, aLatStr] = anchorCoord.split(",")
+        const aLng = parseFloat(aLngStr)
+        const aLat = parseFloat(aLatStr)
+        const pt = mapRef.current?.project([aLng, aLat])
+        setSelectedStation({
+          name: anchorName,
+          lng: aLng,
+          lat: aLat,
+          minutes: 0,
+          coordKey: anchorCoord,
+          flickrCount: null,
+          screenX: pt?.x ?? window.innerWidth / 2,
+          screenY: pt?.y ?? window.innerHeight / 2,
+        })
+        hoveredRef.current = null
+        touchFirstTapCoord.current = null
+        touchFirstTapAt.current = 0
+        setHovered(null)
+        return
       }
     }
 
@@ -7007,7 +7220,19 @@ export default function HikeMap() {
           {devExcludeActive && (
             <button
               onClick={async () => {
-                const slugEntries = Object.entries(PRIMARY_SLUG)
+                // Dedupe by slug — multiple coords can map to the same slug
+                // (e.g. SRA coord + synthetic Stratford midpoint both map to
+                // "stratford"). Keep the LAST entry per slug, which favours
+                // the synthetic anchor over its real-station member when
+                // both exist (the synthetic is what the user actually picks
+                // as primary). Plain Record rather than `Map` — the latter
+                // is shadowed by the react-map-gl import at the top of this
+                // file.
+                const slugSeen: Record<string, string> = {}
+                for (const [coord, slug] of Object.entries(PRIMARY_SLUG)) {
+                  slugSeen[slug] = coord
+                }
+                const slugEntries: [string, string][] = Object.entries(slugSeen).map(([slug, coord]) => [coord, slug])
                 // Auto-clear the friend origin if one is active —
                 // precomputed diffs are saved from a clean friend-less
                 // state so the file reflects the "visitor lands here
@@ -7255,7 +7480,8 @@ export default function HikeMap() {
           // only, no journey info, no Hike button). Both main (zoom 9+)
           // and origin-overlay layers are interactive so the diamond
           // works at every zoom level where it's visible.
-          "london-terminus-icon", "london-terminus-origin-icon",
+          "london-terminus-icon", "london-terminus-origin-icon", "friend-cluster-icon",
+          "friend-anchor-icon", "friend-anchor-hit",
         ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
@@ -7694,6 +7920,44 @@ export default function HikeMap() {
               />
             </Source>
           </>
+        )}
+
+        {/* Friend-cluster reference markers — only when the active friend is
+            synthetic (e.g. Birmingham). Same diamond + label pattern as the
+            primary cluster above, but no journey-origin overlay (friend has
+            no animated polyline). */}
+        {friendOrigin && FRIEND_ORIGINS[friendOrigin]?.isSynthetic && friendClusterFeatures && (
+          <Source id="friend-cluster-icons" type="geojson" data={friendClusterFeatures.icons}>
+            <Layer
+              id="friend-cluster-icon"
+              type="symbol"
+              minzoom={9}
+              layout={{
+                "icon-image": "icon-london-terminus",
+                "icon-size": 0.6,
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+              }}
+            />
+            <Layer
+              id="friend-cluster-icon-label"
+              type="symbol"
+              minzoom={12}
+              layout={{
+                "text-field": ["get", "name"],
+                "text-size": 11,
+                "text-offset": [0, 1.2],
+                "text-anchor": "top",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+              }}
+              paint={{
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
+                "text-halo-width": 1.5,
+              }}
+            />
+          </Source>
         )}
 
         {stationsForMap && (
@@ -8148,6 +8412,84 @@ export default function HikeMap() {
           />
         </Source>
 
+        {/* Friend-anchor marker — same hexagon + label treatment as the
+            primary's london-marker, but pinned to the active friend's
+            synthetic centroid. Only mounts when a synthetic friend is
+            selected; non-synthetic friends already render their own
+            primary-colour square via the rating-icons layer (the friend's
+            real station coord matches a baseStations feature, which then
+            gets isFriendOrigin=1 stamped on it). The synthetic centroid
+            doesn't match any real station, so without this layer the
+            friend would have no visible anchor on the map. */}
+        {friendOrigin && FRIEND_ORIGINS[friendOrigin]?.isSynthetic && (() => {
+          const [fLngStr, fLatStr] = friendOrigin.split(",")
+          const fLng = parseFloat(fLngStr)
+          const fLat = parseFloat(fLatStr)
+          if (!Number.isFinite(fLng) || !Number.isFinite(fLat)) return null
+          return (
+            <Source
+              id="friend-marker"
+              type="geojson"
+              data={{
+                type: "FeatureCollection",
+                features: [{
+                  type: "Feature",
+                  geometry: { type: "Point", coordinates: [fLng, fLat] },
+                  // isFriendOrigin = 1 mirrors the property used by the
+                  // standard friend rendering, but the source it lives on is
+                  // separate — drives this layer alone, not the stations
+                  // rating-icons layer.
+                  properties: { isFriendOrigin: 1, coordKey: friendOrigin },
+                }],
+              }}
+            >
+              {mapReady && (
+                <Layer
+                  id="friend-anchor-icon"
+                  type="symbol"
+                  layout={{
+                    "icon-image": "icon-origin",
+                    "icon-allow-overlap": true,
+                    "icon-ignore-placement": true,
+                  }}
+                />
+              )}
+              {mapReady && (
+                <Layer
+                  id="friend-anchor-label"
+                  type="symbol"
+                  layout={{
+                    "text-field": FRIEND_ORIGINS[friendOrigin]?.displayName ?? "",
+                    "text-size": 11,
+                    "text-offset": [0, 1.4],
+                    "text-anchor": "top",
+                    "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                    "text-allow-overlap": true,
+                    "text-ignore-placement": true,
+                  }}
+                  paint={{
+                    "text-color": labelColor,
+                    "text-halo-color": haloColor,
+                    "text-halo-width": 1.5,
+                  }}
+                />
+              )}
+              {/* Invisible hit area for click detection — same pattern as
+                  the london-marker. Without this the icon-symbol layer
+                  alone has tiny pixel-accurate hit detection. */}
+              <Layer
+                id="friend-anchor-hit"
+                type="circle"
+                paint={{
+                  "circle-radius": 16,
+                  "circle-color": "#000000",
+                  "circle-opacity": 0.01,
+                }}
+              />
+            </Source>
+          )
+        })()}
+
         {/* Hovered-station decorations (mobile two-tap "preview" state).
             - A soft green glow that animates via setPaintProperty (see the
               useEffect above) — visual indicator that the station is armed for
@@ -8374,8 +8716,62 @@ export default function HikeMap() {
             // as the title — too verbose for a single-station click.
             isSynthetic={
               !!PRIMARY_ORIGINS[displayStation.coordKey]?.isSynthetic ||
-              (displayStation.coordKey === primaryOrigin && !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic)
+              !!FRIEND_ORIGINS[displayStation.coordKey]?.isSynthetic ||
+              (displayStation.coordKey === primaryOrigin && !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic) ||
+              (!!friendOrigin && displayStation.coordKey === friendOrigin && !!FRIEND_ORIGINS[friendOrigin]?.isSynthetic)
             }
+            // Cluster header — populated when the open modal's coord is a
+            // synthetic anchor. Resolves member coords → station names via
+            // baseStations (origin-routes also has names but baseStations is
+            // already in scope for this render). Falls back gracefully when
+            // a member isn't found in baseStations.
+            clusterMemberNames={(() => {
+              const isPrimarySynthetic = displayStation.coordKey === primaryOrigin
+                && !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
+              const isFriendSynthetic = !!friendOrigin
+                && displayStation.coordKey === friendOrigin
+                && !!FRIEND_ORIGINS[friendOrigin]?.isSynthetic
+              if (!isPrimarySynthetic && !isFriendSynthetic) return undefined
+              const memberCoords = isPrimarySynthetic
+                ? (PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])
+                : (FRIEND_ORIGIN_CLUSTER[friendOrigin!] ?? [])
+              const names: string[] = []
+              const seen = new Set<string>()
+              for (const c of memberCoords) {
+                const f = baseStations?.features.find(
+                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                )
+                const network = (f?.properties?.network as string | undefined) ?? ""
+                const isNR = /National Rail|Elizabeth line/.test(network)
+                if (!isNR) continue
+                const raw = f?.properties?.name as string | undefined
+                const cleaned = cleanTerminusLabel(raw)
+                if (!cleaned || seen.has(cleaned)) continue
+                seen.add(cleaned)
+                names.push(cleaned)
+              }
+              return names.length > 0 ? names : undefined
+            })()}
+            // Friend cluster-member full station names — used by the
+            // friend journey paragraph to extra-bold the WHOLE station
+            // name (e.g. "Birmingham New Street") rather than only the
+            // first matching word ("Birmingham"). Only populated when
+            // the active friend is synthetic; undefined otherwise so
+            // non-synthetic friends keep the existing single-word bold.
+            friendClusterMemberNames={(() => {
+              if (!friendOrigin) return undefined
+              if (!FRIEND_ORIGINS[friendOrigin]?.isSynthetic) return undefined
+              const memberCoords = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
+              const names: string[] = []
+              for (const c of memberCoords) {
+                const f = baseStations?.features.find(
+                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                )
+                const raw = f?.properties?.name as string | undefined
+                if (raw) names.push(raw)
+              }
+              return names.length > 0 ? names : undefined
+            })()}
           />
         )}
         </>}

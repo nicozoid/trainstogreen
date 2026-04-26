@@ -249,6 +249,17 @@ type StationModalProps = {
   /** When true, the station name represents a PLACE rather than a specific
    *  station (e.g. "City of London"). Suppresses the " Station" title suffix. */
   isSynthetic?: boolean
+  /** Display names of the synthetic cluster's member stations, in declared
+   *  order. When set (i.e. the modal is open for a synthetic primary or
+   *  friend) we render a one-line header below the title:
+   *  "A cluster of N stations: A, B, and C". */
+  clusterMemberNames?: string[]
+  /** Cluster-member full station names of the ACTIVE FRIEND, when the
+   *  friend is synthetic. Used to extra-bold the full station name in
+   *  the friend journey paragraph: e.g. "Birmingham New Street" rather
+   *  than just "Birmingham". Different from clusterMemberNames above,
+   *  which is for the OVERLAY's own synthetic (cluster header copy). */
+  friendClusterMemberNames?: string[]
   /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
    *  adminMode is true, the title is prefixed with the code — helps
    *  cross-reference the admin RTT status panel and origin-routes.json. */
@@ -619,6 +630,8 @@ export default function StationModal({
   isFriendOrigin = false,
   isPrimaryOrigin = false,
   isSynthetic = false,
+  clusterMemberNames,
+  friendClusterMemberNames,
   stationCrs,
   adminMode = false,
   isLondonHome = false,
@@ -1091,9 +1104,26 @@ export default function StationModal({
           }}
           className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
         >
-          <DialogTitle className="text-2xl sm:text-3xl">
-            {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
-          </DialogTitle>
+          <div className="flex flex-col gap-1 min-w-0">
+            <DialogTitle className="text-2xl sm:text-3xl">
+              {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
+            </DialogTitle>
+            {/* Cluster header — only when the modal is open for a synthetic
+                primary or friend (e.g. "Stratford", "Birmingham"). Lists
+                the underlying member stations using the standard "A, B,
+                and C" English serial form. */}
+            {clusterMemberNames && clusterMemberNames.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                {`A cluster of ${clusterMemberNames.length} stations: ${
+                  clusterMemberNames.length === 1
+                    ? clusterMemberNames[0]
+                    : clusterMemberNames.length === 2
+                      ? `${clusterMemberNames[0]} and ${clusterMemberNames[1]}`
+                      : `${clusterMemberNames.slice(0, -1).join(", ")}, and ${clusterMemberNames[clusterMemberNames.length - 1]}`
+                }.`}
+              </p>
+            )}
+          </div>
           {/* Desktop-only Hike button. Hidden for friend/primary origins
               (they don't get a Hike action). min-w-0 isn't needed on the
               title because the button has shrink-0 and the row has gap. */}
@@ -1342,7 +1372,12 @@ export default function StationModal({
                     // from the home journey paragraph above. Termini
                     // in the friend's path still get the muted +
                     // medium treatment when home is Central London.
-                    [friendOrigin],
+                    // For synthetic friends, also include the full
+                    // cluster-member station names ("Birmingham New
+                    // Street", "Birmingham Moor Street", etc.) so the
+                    // entire station name reads bold rather than just
+                    // the first matching word ("Birmingham").
+                    [friendOrigin, ...(friendClusterMemberNames ?? [])],
                   )}
                 </p>
               )}

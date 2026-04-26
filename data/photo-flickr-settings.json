@@ -911,5 +911,16 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-1.898694,52.4776459": {
+    "name": "Birmingham New Street",
+    "custom": {
+      "includeTags": [
+        "birmingham new street"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
