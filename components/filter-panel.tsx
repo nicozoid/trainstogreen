@@ -689,68 +689,63 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
 
   // Friend dropdown content — rendered in BOTH the active and inactive
   // friend states. Mirrors the primary dropdown's pinned + capped-recents
-  // + search shape, with a "Remove friend's station" entry pinned at the
-  // top whenever a friend is currently active. Caps are 1 lower than the
-  // primary side (11/4 vs 12/5) to absorb the visual weight of the Remove
-  // row + separator without making the dropdown taller than the primary's.
+  // + search shape. The active friend renders as a ghost-styled row with
+  // an X icon on the right; clicking it removes the friend (i.e. clears
+  // friendOrigin). Cap matches the primary side (12/5) — there's no
+  // separate "Remove" row eating a slot anymore.
   function renderFriendDropdownContent() {
     const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
-    const desktopRoom = Math.max(0, 11 - pinnedFriends.length)
-    const mobileRoom = Math.max(0, 4 - pinnedFriends.length)
+    const desktopRoom = Math.max(0, 12 - pinnedFriends.length)
+    const mobileRoom = Math.max(0, 5 - pinnedFriends.length)
+    // Helper that renders a single friend row. Branches on whether it's
+    // the active friend: active rows get muted text + an X icon and
+    // remove-on-click; inactive rows are normal selectable picks.
+    const renderRow = (coord: string, idx?: number) => {
+      const menu = originMenuName(coord)
+      const label = menu !== coord ? menu : coordToName[coord] ?? coord
+      const isActive = coord === friendOrigin
+      const hiddenOnMobile = idx != null && mobileRoom != null && idx >= mobileRoom
+      if (isActive) {
+        return (
+          <DropdownMenuItem
+            key={coord}
+            onSelect={() => onDeactivateFriend()}
+            className={cn(
+              // flex items-center keeps the label and the X aligned on
+              // the same baseline; justify-between pushes the X to the
+              // right edge of the row.
+              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer text-muted-foreground",
+              hiddenOnMobile && "hidden sm:flex",
+            )}
+            aria-label={`Remove ${label} as friend's station`}
+          >
+            <span>{label}</span>
+            <IconX size={14} className="shrink-0" />
+          </DropdownMenuItem>
+        )
+      }
+      return (
+        <DropdownMenuItem
+          key={coord}
+          onSelect={() => onFriendOriginChange(coord)}
+          className={cn(
+            "whitespace-normal leading-tight cursor-pointer",
+            hiddenOnMobile && "hidden sm:flex",
+          )}
+        >
+          {label}
+        </DropdownMenuItem>
+      )
+    }
     return (
       <>
-        {/* "Remove friend's station" — top of the menu, only when a
-            friend is active. text-muted-foreground signals secondary
-            intent so it doesn't compete with the actual picks below. */}
-        {friendOrigin && (
-          <>
-            <DropdownMenuItem
-              onSelect={() => onDeactivateFriend()}
-              className="cursor-pointer text-muted-foreground"
-            >
-              Remove friend&apos;s station
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
         {/* Pinned friends — always shown, always near the top. Currently
             empty; reserved for future curated picks. */}
-        {pinnedFriends.map((coord) => {
-          const menu = originMenuName(coord)
-          const label = menu !== coord ? menu : coordToName[coord] ?? coord
-          return (
-            <DropdownMenuItem
-              key={coord}
-              onSelect={() => onFriendOriginChange(coord)}
-              className={cn(
-                "whitespace-normal leading-tight cursor-pointer",
-                coord === friendOrigin && "bg-accent/50 focus:bg-accent/50"
-              )}
-            >
-              {label}
-            </DropdownMenuItem>
-          )
-        })}
-        {/* Recents — capped at 11 (≥sm) / 4 (<sm) total when no pinned
-            items are present. Items past the mobile slice get
+        {pinnedFriends.map((coord) => renderRow(coord))}
+        {/* Recents — capped at 12 (≥sm) / 5 (<sm) total INCLUDING any
+            pinned items above. Items past the mobile slice get
             `hidden sm:flex` so the small-viewport list stays scannable. */}
-        {dedup.slice(0, desktopRoom).map((coord, idx) => {
-          const menu = originMenuName(coord)
-          const label = menu !== coord ? menu : coordToName[coord] ?? coord
-          return (
-            <DropdownMenuItem
-              key={coord}
-              onSelect={() => onFriendOriginChange(coord)}
-              className={cn(
-                "whitespace-normal leading-tight cursor-pointer",
-                coord === friendOrigin && "bg-accent/50 focus:bg-accent/50",
-                idx >= mobileRoom && "hidden sm:flex",
-              )}
-            >
-              {label}
-            </DropdownMenuItem>
-          )
-        })}
+        {dedup.slice(0, desktopRoom).map((coord, idx) => renderRow(coord, idx))}
         {/* Search input + matches. Same pattern as the primary side —
             stopPropagation keeps Radix's typeahead from hijacking
             keystrokes. Universe is currently the merged recents list, so
