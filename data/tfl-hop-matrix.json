@@ -1,0 +1,79 @@
+{
+  "Clapham Junction": {
+    "Paddington": {
+      "minutes": 27,
+      "polyline": "exbyHrh`@}_A|oA_eAhgAqAhA[n@OVW^qA|AiAbAk@b@y@\\e@Bq@Cq@Om@_@k@o@a@q@Ui@i@_A]o@Y_@eAkAY_@g@y@s@iAc@w@]i@S_@k@sAm@eA}EaIeBmC{AaDiAwAsBmBu@m@]UYIw@QmADQBc@N[LmAlAaAbAg@h@}@lAU^q@vA]j@k@l@Tc@_@d@SZcClCq@p@q@r@p@s@p@q@bCmCR[^e@Ub@[h@aChCq@r@u@r@cB`BkCnBcDxAyCfAcDv@QBgMhDqA\\mElAq@LmBh@lBi@p@MlEmApA]fMiDPCbDw@xCgAbDyAjCoBbBaBt@s@p@s@`CiCZi@Tc@_@d@SZcClCq@p@_AbAyArAkClBcDvAiCv@qDdAQDeMjDsA\\mEnAu@L_Cp@WFK@WAi@Ca@E]Ee@I]K_@Mc@Qe@]QMUWo@{@_AmBc@uAO{@QeAUgBSyA[{Bc@{HG{AA[GkBCg@I{CCk@KsGOiF[}ECyBE_CKuAKwAe@eDK_A_@gCo@mCO_@Og@e@iAeEkJeA{DOi@i@mA",
+      "vehicleType": "SUBWAY"
+    },
+    "Kings Cross": {
+      "minutes": 26,
+      "polyline": "kwbyHbh`@q|@mqCodAmuCU|@AAHFAF^L?FAF?B?NCp@CRABFLCJCNALGtCO^JNZ{@??q@rBaA~BwFpNkAnDo@~Cm@hDg@nDWzDEfAAPOnDCfASvHCzEMvD[|Da@~Cq@fEy@pDeAfCiBjCcCzAiC|@yAN_@FK?}BBmCMeCWgAScBg@c@Oc@UcAm@m@c@]W??oz@Eey@uB??kAT_B^gBFuH@}ELsAKk@U}@[w@]k@[mCgBi@g@SUU[q@gAgBsBoD{Dc@a@y@w@qGsHeA{AaAqAgAwBWm@Wm@aByDm@sA_@gAe@sA]oAGW[}Ak@qC_@cB_@gB_@kBg@yC_@sC[kC]uDa@uFc@qE_@aDg@{CY_BQaA",
+      "vehicleType": "SUBWAY"
+    },
+    "St Pancras": {
+      "minutes": 30,
+      "polyline": "kwbyHbh`@q|@mqCodAmuCU|@AAHFAF^L?FAF?B?NCp@CRABFLCJCNALGtCO^JNZ{@??q@rBaA~BwFpNkAnDo@~Cm@hDg@nDWzDEfAAPOnDCfASvHCzEMvD[|Da@~Cq@fEy@pDeAfCiBjCcCzAiC|@yAN_@FK?}BBmCMeCWgAScBg@c@Oc@UcAm@m@c@]W??oz@Eey@uB??kAT_B^gBFuH@}ELsAKk@U}@[w@]k@[mCgBi@g@SUU[q@gAgBsBoD{Dc@a@y@w@qGsHeA{AaAqAgAwBWm@Wm@aByDm@sA_@gAe@sA]oAGW[}Ak@qC_@cB_@gB_@kBg@yC_@sC[kC]uDa@uFc@qE_@aDg@{CY_BQaAGB?X?T?H@F?F?J?H?\\Ap@?b@?|@Ab@D??`AKXCVBBG^G\\DBKVOTQNC@A@@DDNDL?DBJThA@tBlA}@H\\",
+      "vehicleType": "SUBWAY"
+    },
+    "Euston": {
+      "minutes": 25,
+      "polyline": "kwbyHbh`@q|@mqCodAmuCU|@AAHFAF^L?FAF?B?NCp@CRABFLCJCNALGtCO^JNZ{@??q@rBaA~BwFpNkAnDo@~Cm@hDg@nDWzDEfAAPOnDCfASvHCzEMvD[|Da@~Cq@fEy@pDeAfCiBjCcCzAiC|@yAN_@FK?}BBmCMeCWgAScBg@c@Oc@UcAm@m@c@]W??oz@Eey@uB??kAT_B^gBFuH@}ELsAKk@U}@[w@]k@[mCgBi@g@SUU[q@gAgBsBoD{Dc@a@y@w@qGsHeA{AaAqAgAwBWm@Wm@aByDm@sA_@gAe@sA]oAGW",
+      "vehicleType": "SUBWAY"
+    },
+    "Victoria": {
+      "minutes": 7,
+      "polyline": "orbyHvb`@{|D_xC",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "Waterloo": {
+      "minutes": 9,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "Waterloo East": {
+      "minutes": 14,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@EJQM[]w@aA[c@s@aAC??CSb@KOJa@VkABK[WF]CQXs@Wc@aAiCQ{BYMCi@AA",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "Liverpool Street": {
+      "minutes": 31,
+      "polyline": "kwbyHbh`@q|@mqCodAmuC_eB{t@qFj@kAr@}ArAy@r@s@r@Y^aAfAo@lAm@zAY~@o@~Bc@|Aa@hB_@zB]`CM~@I~@SzBEXGh@Mj@Qr@GTCFMZYn@a@|@M`@K^YdBSz@Mj@Un@O`@y@hBQf@Yt@Sr@{@lDc@|AWn@a@r@c@b@i@XWFUDyAAgCA]@o@DI@K@UDSHQFu@\\mB`AUJeAd@o@RgGfBuAf@iA^ACAKIBE?AIE@Ee@KBAMGBG@I?CBCD@ZCCA[GwAOwBCMzAo@E[PKQg@i@wBk@yA@E@I@AAMACGLWiA]VAEE[A@A?K}AC[A?SsDQcF?NCR?ZC[EOAMWqGA?GeAAe@GcAASKoACWAEQyBAGCAEBEc@ASDI@IAGEyAEyAAE?CBU@KBOIOEG?CAFEFGFEDGBs@PWFIi@[oBWaBMs@a@sCBAQkCIsAD?C{@A{@?ADC?C~Aq@f@UHAKkCGiB?W?W?oB@o@DaAByB?[@]Bk@BCH_A?ABS?ALwBN_DKCyBWw@Bi@JC?GiACCACAGC@KmAAI@?BAC_@BA]eF?AACC@MuBAG?GQcACKAGAMKBCS?ECc@WmAQo@`As@LPBJEUQLQLKHOL[ZWVSPQN?A?@PORQVWZ[NMJIPMPMDTCKMQaAr@CKMq@CGAC@KB]?c@AaD@KBgABu@@ULa@TW@C@I?KAUICG??O?KV@BA@A@C?A?C?EOcAQy@CIKo@Oq@Gi@@GAGOcAEQOw@WcBCEGQ?GASAY??@A?AYgDACCEH?BAtAWJA@JAFG??C@??A_@{@?CAIPEBMEc@Gu@Q{CA_@UmBGI_@iDGGCSKiAAQK{@CYHAHIJGLBHEDQbBq@HCFBR_@`@cDB[t@mFB@D[UMIMDYm@]GGAC?EJk@GCX_BJi@XqANs@F[Nq@Ja@H[FOZwAD[BONs@Hc@DGDOz@kE{Ay@eAi@XqBDBJu@FDBQn@XP?L[FWFB@CBU`@PBC@?@?JFFBr@cEFBj@\\@IDUHq@c@UAC@EEKICKv@[Mh@oEGE@GcBw@",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "Marylebone": {
+      "minutes": 28,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@yBjBr@F~I|@j@?|@G^Kb@_@`@gAjBeFNo@Wb@kCrHc@ZYH_@D]@k@A}Iu@u@Em@Ae@Jg@Rk@n@Wn@WbA_C|OKp@K`@M`@Mb@mE|J[v@_AnCQl@Id@Q|@ALsBnQUtBOxAMjBEh@Cp@AfAA|CIlBQ|DEd@I^[n@e@l@cFlDy@l@a@b@c@j@S^M^Ef@?f@DlGBh@R|AKsACs@EmG?e@Dc@L[R_@`@k@`@_@x@o@fFqDd@o@Xo@Lg@LuBLcBLwBB_D@o@An@C~CMvBMbBMtBMf@Yn@e@n@gFpDy@n@a@^a@j@S^MZEb@?d@DlGBr@@FHjAF`AB|@@`@Ap@Cf@C`@CZE\\GVEPIXO\\INW\\GFg@b@gR|OiDrB}@VcCd@g@JKB{@To@RkE|Am@\\_@T[`@Sd@c@lASf@O\\URmZfKe@Pa@PeBx@_A^i@Z]XW\\a@r@Qf@Kp@Et@?~@DbAFbAdDf^P|AVlBXfBTbBTxAb@|C^hCz@lJt@fIJhBNvEDr@",
+      "vehicleType": "SUBWAY"
+    },
+    "Charing Cross": {
+      "minutes": 19,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@yBjBr@F~I|@j@?|@G^Kb@_@`@gAjBeFNo@Wb@kCrHc@ZYH_@D]@k@A}Iu@u@Em@Ae@Jg@Rk@n@Wn@WbA_C|OKp@K`@M`@Mb@mE|J[v@_AnCQl@Id@Q|@ALsBnQUtBOxAMjBEh@Cp@AfAA|CIlBQ|DEd@I^[n@e@l@cFlDy@l@a@b@c@j@S^M^Ef@?f@DlGBh@R|AKsACs@EmG?e@Dc@L[R_@`@k@`@_@x@o@fFqDd@o@Xo@Lg@LuBLcBLwBB_D@o@",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "London Bridge": {
+      "minutes": 21,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@_GkM[iCs@uGw@cGUeECoA?_A@mE?eB@yADcBX_PH}HIiI]yZKkBUkBsAgI_@gFEkEFiD",
+      "vehicleType": "HEAVY_RAIL"
+    },
+    "Blackfriars": {
+      "minutes": 26,
+      "polyline": "orbyHvb`@{|D_xC{IcH?a@Ai@AWCWKaAe@gCS}@_AmDI_@Ia@Ik@Io@I}@MiAM{@E_@WqAI_@I_@Uy@GUe@wAkA}B[q@Si@c@uAg@wAa@eBIYQw@G]YaBKg@G_@Iu@Eq@Cg@Ai@AgA?uBB}F?}@Aw@Ac@Ca@Gy@Ec@Gc@Kk@Oo@Mm@YcA_AqDyAqFQi@ISMYUe@KUUa@S[SYII]]OIMKi@[[Km@OkCc@}Cc@{AYaAUcB[uBEm@Gg@Mc@Qc@Qo@[a@[UOoBwAwAsA]a@u@eAq@iAq@aBWu@Wy@U}@UaA[}AcCeLcAeFSmACOQuAGk@Eg@CWAYCc@Ci@CaACuAE}BAmA?s@@o@@oN@sG@yGA_@A[Iy@I{@Ii@Ms@i@yCS}@",
+      "vehicleType": "SUBWAY"
+    },
+    "Fenchurch Street": {
+      "minutes": 37,
+      "polyline": "orbyHvb`@}pAqgC}jBmO{IcH?a@Ai@AWCWKaAe@gCS}@_AmDI_@Ia@Ik@Io@I}@MiAM{@E_@WqAI_@I_@Uy@GUe@wAkA}B[q@Si@c@uAg@wAa@eBIYQw@G]YaBKg@G_@Iu@Eq@Cg@Ai@AgA?uBB}F?}@Aw@Ac@Ca@Gy@Ec@Gc@Kk@Oo@Mm@YcA_AqDyAqFQi@ISMYUe@KUUa@S[SYII]]OIMKi@[[Km@OkCc@}Cc@{AYaAUcB[uBEm@Gg@Mc@Qc@Qo@[a@[UOoBwAwAsA]a@u@eAq@iAq@aBWu@Wy@U}@UaA[}AcCeLcAeFSmACOQuAGk@Eg@CWAYCc@Ci@CaACuAE}BAmA?s@@o@@oN@sG@yGA_@A[Iy@I{@Ii@Ms@i@yCS}@c@sBQ_AIq@Ce@Ci@Ao@@m@LuELuFLkG?iAD}CEaCGwCCcAA}@F{@H}@NoEDu@h@wFJ}A?c@As@@o@BqABo@XoCNqAh@cDReBFk@VqADSBYD[Bc@Ds@@Y?M?O?uD@o@?o@@k@J}AT{AnAuEL[HUFYH[Hc@Fc@BS@SBUBU@[@mB@U@aAHiB?g@C[KWUw@Aa@Ln@Lb@JTD^?X?ZK`B?`AE`CA\\CTCTARCRGb@Id@IZIXGRMZmAvEU`BItACh@A~AA~C?R?f@AP?REj@ANAHAREZIb@EVO~@Gl@OtAm@`DOrAWjCEp@Cf@@d@Ap@?P??rCiYpDux@ACCg@?QGe@A?CM]B?MD?Bp@?VHVM?]DYBW@G@_@HYJGFE?GBEB]L",
+      "vehicleType": "SUBWAY"
+    },
+    "Cannon Street": {
+      "minutes": 33,
+      "polyline": "orbyHvb`@{|D_xC{IcH?a@Ai@AWCWKaAe@gCS}@_AmDI_@Ia@Ik@Io@I}@MiAM{@E_@WqAI_@I_@Uy@GUe@wAkA}B[q@Si@c@uAg@wAa@eBIYQw@G]YaBKg@G_@Iu@Eq@Cg@Ai@AgA?uBB}F?}@Aw@Ac@Ca@Gy@Ec@Gc@Kk@Oo@Mm@YcA_AqDyAqFQi@ISMYUe@KUUa@S[SYII]]OIMKi@[[Km@OkCc@}Cc@{AYaAUcB[uBEm@Gg@Mc@Qc@Qo@[a@[UOoBwAwAsA]a@u@eAq@iAq@aBWu@Wy@U}@UaA[}AcCeLcAeFSmACOQuAGk@Eg@CWAYCc@Ci@CaACuAE}BAmA?s@@o@@oN@sG@yGA_@A[Iy@I{@Ii@Ms@i@yCS}@c@sBQ_AIq@Ce@Ci@Ao@@m@LuELuFLkG?iAD}CEaCGwCCcAA}@F{@H}@NoEDu@h@wFJ}A?c@As@@o@BqABo@XoCNqAh@cDReBFk@VqADSBYD[Bc@Ds@@Y?M?O?uD@o@?o@@k@J}AT{AnAuEL[HUFYH[Hc@Fc@BS@SBUBU@[@mB@U@aAHiB?g@C[KWUw@Aa@Ln@Lb@JTD^?X?ZK`B?`AE`CA\\CTCTARCRGb@Id@IZIXGRMZmAvEU`BItACh@A~AA~C?R?f@AP?REj@ANAHAREZIb@EVO~@Gl@OtAm@`DOrAWjCEp@Cf@@d@Ap@?PLEQECAECGj@",
+      "vehicleType": "SUBWAY"
+    },
+    "Moorgate": {
+      "minutes": 31,
+      "polyline": "aubyHxe`@{~@coCadAgxCmeBar@|VqR??@EJs@Fu@@o@BaBE{Ak@oTAyAFaBV}At@eBvJ}M\\k@LQn@}@jFuAN@hCVnBPVJj@Zr@l@`BbCrB|ChAvAjGlG`DtCrAlAjEbEzA~Al@r@jGjGn@XZRmFsF}A}AmAgAaAcAkEgEqAeAcD{Cc@e@gFgFeAqAU]_BaCcBgCu@k@k@]YKc@G{AOwAIkDI[C[I_@K[Og@_@mBsA}AiAgHkI{@wAu@mAi@_A{A_Do@uAgDsH_@o@??i[a[ki@kF_h@A",
+      "vehicleType": "HEAVY_RAIL"
+    }
+  }
+}

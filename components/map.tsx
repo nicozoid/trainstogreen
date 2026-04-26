@@ -22,6 +22,14 @@ import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originRoutesData from "@/data/origin-routes.json"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
+// Parallel hop matrix: non-terminal primaries (CLJ, future ECR/FPK/etc.)
+// → each of the 15 London termini, fetched from TfL Journey Planner via
+// scripts/fetch-tfl-hops.mjs. Merged into the live matrix at module load
+// so stitchJourney can resolve "primary → terminal" hops the same way it
+// resolves "terminal → terminal" hops today. Lives in a separate file
+// from terminal-matrix.json to keep provenance clean (terminal-matrix is
+// hand-curated + TfL-fetched; this is purely TfL-fetched per primary).
+import tflHopMatrixData from "@/data/tfl-hop-matrix.json"
 // Admin-only region labels — counties, national parks, AONBs (National Landscapes).
 // Each entry is { name, category, coord:[lng,lat] }. Hand-edit `coord` to nudge
 // a label to a better position. The list is converted to a Mapbox FeatureCollection
@@ -625,7 +633,15 @@ const originRoutes = originRoutesData as OriginRoutes
 // Ramsgate via HS1 from St Pancras beats the direct SE mainline route from
 // Charing Cross — get the better time.
 const londonTerminals = londonTerminalsData as Terminal[]
-const terminalMatrix = terminalMatrixData as TerminalMatrix
+// Merged matrix: terminal-matrix entries take precedence for terminal-keyed
+// rows (the 15 termini), tfl-hop-matrix adds parallel rows for non-terminal
+// primaries like Clapham Junction. Same shape as terminal-matrix —
+// stitchJourney's lookup `matrix[newOrigin.name][mainlineTerminal]`
+// resolves both cases without any code change.
+const terminalMatrix: TerminalMatrix = {
+  ...(tflHopMatrixData as TerminalMatrix),
+  ...(terminalMatrixData as TerminalMatrix),
+}
 
 // ---------------------------------------------------------------------------
 // Option 2 — hybrid splice
@@ -1112,18 +1128,30 @@ function tryComposeViaTerminal(
   return best
 }
 
-// Station-to-station walking/short-tube hops between non-terminal coords
-// that the standard terminal-matrix path can't express (matrix is keyed
-// by terminal NAME, this is keyed by raw COORD for the customHub
-// composition path in tryComposeViaWalkingDoubleHub).
+// Coord-keyed walking links between stations that share a physical
+// concourse — distinct from terminal-matrix entries even when the same
+// pair appears there. terminal-matrix is consumed by the standard
+// stitcher (newOrigin: terminal name → matrix lookup); this map is
+// consumed by tryComposeViaWalkingDoubleHub (4-leg RTT-only
+// composition for non-terminal primaries like CLJ, which the standard
+// stitcher can't help with when the destination has no pre-fetched
+// source journey).
 //
-// Currently empty: the original WAT↔WAE entry was removed once Waterloo
-// East was promoted to its own terminal in london-terminals.json — that
-// hop is now in terminal-matrix.json and reachable via the standard
-// stitching path. Keep this map (and the function below) as
-// infrastructure for any future "need to walk between adjacent
-// non-terminal stations" cases that surface.
-const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {}
+// Polylines are intentionally null so the map draws a straight line
+// between the two station coords — good enough for a 150m pedestrian
+// link. Each entry should appear symmetrically (both directions) so
+// the composition loop doesn't need to care which side is the rail
+// origin. Add new entries only for stations that are physically
+// adjacent (sharing a concourse / footbridge); for actual tube/walk
+// hops between separate stations, terminal-matrix is the right place.
+const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {
+  // Waterloo ↔ Waterloo East — covered pedestrian link, ~5 min.
+  // Unlocks CLJ→YAL class journeys: CLJ→WAT (rail) → walk → WAE →
+  // Paddock Wood (rail) → Yalding (branch rail). Both sides are in
+  // origin-routes.json (WAE has its own RTT-fetched entry).
+  "-0.112801,51.5028379":   { "-0.1082027,51.5042171": { minutes: 5 } },  // WAT → WAE
+  "-0.1082027,51.5042171":  { "-0.112801,51.5028379":  { minutes: 5 } },  // WAE → WAT
+}
 
 /**
  * Extension B — triple-hop "walking interchange" composition. Handles
@@ -2933,6 +2961,70 @@ export default function HikeMap() {
       }
       return best
     }
+    // Extension C: TfL-hop composition for non-terminal primaries. Uses
+    // the pre-fetched primary→terminal hops from data/tfl-hop-matrix.json
+    // (merged into terminalMatrix at module load) to compose:
+    //   primary → T (TfL hop) → T.directReachable[D] (rail)
+    //
+    // Unlocks destinations directly reachable from a terminus the primary
+    // doesn't have rail to (CLJ→Wendover via MYB, CLJ→WelwynGC via KGX,
+    // CLJ→Hertford via LST, etc.). Pure RTT — no source journey required,
+    // unlike stitchJourney's via-source-journey path.
+    //
+    // Only fires when the primary has tfl-hop-matrix entries (currently
+    // CLJ; future ECR, FPK, RMD, etc. as they're added). Returns the
+    // fastest 1-change composition or null.
+    function tryComposeViaPrimaryHop(
+      primaryName: string,
+      coordKey: string,
+      customCoord: string,
+    ): { journey: JourneyInfo; mins: number; changes: number } | null {
+      const hopRow = terminalMatrix[primaryName]
+      if (!hopRow) return null
+      let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+      const { lng: pLng, lat: pLat } = parseCoordKey(customCoord)
+      for (const T of londonTerminals) {
+        const hop = hopRow[T.name]
+        if (!hop?.minutes) continue
+        const tCoord = findOriginRoutesCoord(T.name)
+        if (!tCoord) continue
+        const tRoutes = originRoutes[tCoord]
+        const tToD = tRoutes?.directReachable?.[coordKey]
+        if (!tToD?.minMinutes) continue
+        const mins = hop.minutes + CUSTOM_INTERCHANGE_MIN + tToD.minMinutes
+        if (best != null && mins >= best.mins) continue
+        // Polyline: TfL hop polyline (primary → T) + T→D calling-points.
+        // Falls back to a straight primary-coord → T-coord segment if the
+        // hop entry has no polyline (rare — only WALK entries with 0min).
+        const hopCoords = hop.polyline ? decodePolyline(hop.polyline) : [[pLng, pLat] as [number, number]]
+        const tToDCoords = (tToD.fastestCallingPoints ?? [])
+          .map((crs) => crsToCoord[crs])
+          .filter((c): c is [number, number] => !!c)
+        const polylineCoords = tToDCoords.length > 1
+          ? [...hopCoords, ...tToDCoords]
+          : undefined
+        const cp = buildCallingPoints(tCoord, coordKey)
+        const journey = {
+          durationMinutes: mins,
+          changes: 1,
+          legs: [
+            { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
+            {
+              vehicleType: "HEAVY_RAIL",
+              departureStation: T.name,
+              arrivalStation: tToD.name ?? "",
+              stopCount: Math.max(0, (tToD.fastestCallingPoints?.length ?? 0) - 2),
+            },
+          ],
+          polylineCoords,
+          londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+          londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+          callingPointsLegArrival: tToD.name,
+        } as unknown as JourneyInfo
+        best = { journey, mins, changes: 1 }
+      }
+      return best
+    }
     // Pre-filter origin-routes entries that direct-reach the custom station,
     // so the inner loop over destinations only iterates the relevant primaries.
     // Each entry gets the P→custom time cached for quick use below.
@@ -3563,14 +3655,11 @@ export default function HikeMap() {
               }
             }
             // Extension B: triple-hop walking-interchange composition.
-            // Originally unlocked CLJ→YAL via CLJ → WAT → walk → WAE →
-            // PKW → YAL — that specific path is now reachable through
-            // the standard stitching path because WAE was promoted to
-            // its own terminal in london-terminals.json (so the
-            // WAT↔WAE walking link lives in terminal-matrix.json).
-            // The function below is currently a no-op (WALKING_HOPS is
-            // empty) but kept as infrastructure for any future
-            // non-terminal walking-interchange cases that surface.
+            // Unlocks CLJ→YAL class journeys (CLJ → WAT → walk → WAE →
+            // PKW → YAL). Only wins when the walking-chain path is
+            // STRICTLY faster than what we already have — it's 2 rail
+            // changes, so direct or single-change options beat it by
+            // the change-count tiebreak automatically.
             const viaWalk = tryComposeViaWalkingDoubleHub(
               customHubs,
               coordKey,
@@ -3585,6 +3674,26 @@ export default function HikeMap() {
                 (viaWalk.changes === curChanges && viaWalk.mins < curMins)
               ) {
                 effectiveSourceJourney = viaWalk.journey
+              }
+            }
+            // Extension C: TfL-hop composition. For destinations that
+            // need a terminal the primary can't reach by direct rail
+            // (CLJ→Wendover via MYB, CLJ→WelwynGC via KGX, etc.),
+            // bridge primary→T using the TfL hop matrix and finish
+            // with T→D rail from origin-routes. 1 change.
+            const viaTflHop = tryComposeViaPrimaryHop(
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              coordKey,
+              primaryOrigin,
+            )
+            if (viaTflHop) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                viaTflHop.changes < curChanges ||
+                (viaTflHop.changes === curChanges && viaTflHop.mins < curMins)
+              ) {
+                effectiveSourceJourney = viaTflHop.journey
               }
             }
 
@@ -3971,6 +4080,30 @@ export default function HikeMap() {
                   hub: customHubs[0],
                   kind: "composed",
                   composedJourney: viaWalk.journey,
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+            }
+            // Option F: Extension C — TfL-hop primary→T→D composition.
+            // Uses data/tfl-hop-matrix.json to bridge primary→T even
+            // when the primary has no direct rail to T. Unlocks
+            // destinations directly reachable from termini the primary
+            // can't reach via customHubs (CLJ→Wendover via MYB,
+            // CLJ→WelwynGC via KGX, etc.). Same rendering path as
+            // "composed" — the journey ships with pre-assembled legs.
+            {
+              const viaTflHop = tryComposeViaPrimaryHop(
+                coordToName[primaryOrigin] ?? primaryOrigin,
+                coordKey,
+                primaryOrigin,
+              )
+              if (viaTflHop && customHubs[0]) {
+                const candidate: RouteCandidate = {
+                  mins: viaTflHop.mins,
+                  changes: viaTflHop.changes,
+                  hub: customHubs[0],
+                  kind: "composed",
+                  composedJourney: viaTflHop.journey,
                 }
                 if (isBetter(candidate, winner)) winner = candidate
               }
