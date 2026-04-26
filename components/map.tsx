@@ -490,6 +490,48 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   // spend was needed thanks to the BMO/BSW + queue junction fetches.
   "-2.2383003,53.4796574": { canonicalName: "Manchester",          displayName: "Manchester", menuName: "Manchester", isSynthetic: true },
   "-1.1449555,52.9473037": { canonicalName: "Nottingham",          displayName: "Nottingham", menuName: "Nottingham" },
+  // Tier 2 — UK city friends, RTT-derived journeys built via
+  // scripts/build-friend-journeys-from-rtt.mjs and stored under
+  // public/journeys/<slug>.json. Cities with multiple central
+  // stations (Edinburgh / Glasgow / Cardiff / Portsmouth) are
+  // synthetic anchors with cluster members listed in
+  // FRIEND_ORIGIN_CLUSTER below; everywhere else is single-station.
+  "-3.1904199,55.9519018":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
+  "-4.2584361,55.8583132":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
+  "-3.1797057,51.4755495":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
+  "-2.5804029,51.4490991":  { canonicalName: "Bristol",       displayName: "Bristol",        menuName: "Bristol" },
+  "-2.3567189,51.3776019":  { canonicalName: "Bath",          displayName: "Bath",           menuName: "Bath" },
+  "-1.2699542,51.7534512":  { canonicalName: "Oxford",        displayName: "Oxford",         menuName: "Oxford" },
+  "0.1377154,52.1941089":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
+  "-0.1407393,50.8288602":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
+  "-1.548621,53.794414":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
+  "-2.9775854,53.4076085":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool" },
+  "-1.616046,54.9683364":   { canonicalName: "Newcastle",     displayName: "Newcastle",      menuName: "Newcastle" },
+  "-1.4621381,53.3783713":  { canonicalName: "Sheffield",     displayName: "Sheffield",      menuName: "Sheffield" },
+  "-1.0937301,53.9577037":  { canonicalName: "York",          displayName: "York",           menuName: "York" },
+  "-1.1236065,52.6321088":  { canonicalName: "Leicester",     displayName: "Leicester",      menuName: "Leicester" },
+  "-1.5135474,52.400739":   { canonicalName: "Coventry",      displayName: "Coventry",       menuName: "Coventry" },
+  "-1.462612,52.9165243":   { canonicalName: "Derby",         displayName: "Derby",          menuName: "Derby" },
+  "-2.1810781,53.0079887":  { canonicalName: "Stoke-on-Trent",displayName: "Stoke-on-Trent", menuName: "Stoke-on-Trent", mobileDisplayName: "Stoke" },
+  "-2.120242,52.5879884":   { canonicalName: "Wolverhampton", displayName: "Wolverhampton",  menuName: "Wolverhampton",  mobileDisplayName: "Wolves" },
+  "-4.1433925,50.3780967":  { canonicalName: "Plymouth",      displayName: "Plymouth",       menuName: "Plymouth" },
+  "-3.5435703,50.7292155":  { canonicalName: "Exeter",        displayName: "Exeter",         menuName: "Exeter" },
+  "-1.4142289,50.9074977":  { canonicalName: "Southampton",   displayName: "Southampton",    menuName: "Southampton",    mobileDisplayName: "S'hampton" },
+  "-1.0906787,50.7982014":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
+  "1.3076876,52.626307":    { canonicalName: "Norwich",       displayName: "Norwich",        menuName: "Norwich" },
+  "1.1447878,52.0504188":   { canonicalName: "Ipswich",       displayName: "Ipswich",        menuName: "Ipswich" },
+  "-0.2503162,52.5746038":  { canonicalName: "Peterborough",  displayName: "Peterborough",   menuName: "Peterborough",   mobileDisplayName: "P'borough" },
+  "-1.1399149,53.5219538":  { canonicalName: "Doncaster",     displayName: "Doncaster",      menuName: "Doncaster" },
+  "-0.3475977,53.7438351":  { canonicalName: "Hull",          displayName: "Hull",           menuName: "Hull" },
+  "-2.0976346,57.1426487":  { canonicalName: "Aberdeen",      displayName: "Aberdeen",       menuName: "Aberdeen" },
+  "-4.2227142,57.4802331":  { canonicalName: "Inverness",     displayName: "Inverness",      menuName: "Inverness" },
+  "-3.9403729,51.6256789":  { canonicalName: "Swansea",       displayName: "Swansea",        menuName: "Swansea" },
+  "-0.7748261,52.0342006":  { canonicalName: "Milton Keynes", displayName: "Milton Keynes",  menuName: "Milton Keynes",  mobileDisplayName: "Milton K" },
+  "-0.9069697,52.2373719":  { canonicalName: "Northampton",   displayName: "Northampton",    menuName: "Northampton",    mobileDisplayName: "N'hampton" },
+  "-2.4326364,53.0889629":  { canonicalName: "Crewe",         displayName: "Crewe",          menuName: "Crewe" },
+  "-2.7071573,53.7552898":  { canonicalName: "Preston",       displayName: "Preston",        menuName: "Preston" },
+  "-2.807799,54.0488361":   { canonicalName: "Lancaster",     displayName: "Lancaster",      menuName: "Lancaster" },
+  "-2.9330473,54.8902575":  { canonicalName: "Carlisle",      displayName: "Carlisle",       menuName: "Carlisle" },
 }
 
 // Friend cluster members — same shape as PRIMARY_ORIGIN_CLUSTER. Listed
@@ -509,6 +551,22 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
     "-2.2301402,53.4772197",   // Manchester Piccadilly (MAN)
     "-2.2424846,53.4879748",   // Manchester Victoria (MCV)
     "-2.2422762,53.4737777",   // Manchester Oxford Road (MCO)
+  ],
+  // Edinburgh (Waverley anchor) ← Haymarket satellite.
+  "-3.1904199,55.9519018": [
+    "-3.2193738,55.9451838",   // Haymarket (HYM)
+  ],
+  // Glasgow (Central anchor) ← Queen Street satellite.
+  "-4.2584361,55.8583132": [
+    "-4.2511172,55.8625587",   // Glasgow Queen Street (GLQ)
+  ],
+  // Cardiff (Central anchor) ← Queen Street satellite.
+  "-3.1797057,51.4755495": [
+    "-3.1702926,51.4820022",   // Cardiff Queen Street (CDQ)
+  ],
+  // Portsmouth (& Southsea anchor) ← Harbour satellite.
+  "-1.0906787,50.7982014": [
+    "-1.1087807,50.7967035",   // Portsmouth Harbour (PMH)
   ],
 }
 
