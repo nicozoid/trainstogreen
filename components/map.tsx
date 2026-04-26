@@ -22,6 +22,14 @@ import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originRoutesData from "@/data/origin-routes.json"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
+// Parallel hop matrix: non-terminal primaries (CLJ, future ECR/FPK/etc.)
+// → each of the 15 London termini, fetched from TfL Journey Planner via
+// scripts/fetch-tfl-hops.mjs. Merged into the live matrix at module load
+// so stitchJourney can resolve "primary → terminal" hops the same way it
+// resolves "terminal → terminal" hops today. Lives in a separate file
+// from terminal-matrix.json to keep provenance clean (terminal-matrix is
+// hand-curated + TfL-fetched; this is purely TfL-fetched per primary).
+import tflHopMatrixData from "@/data/tfl-hop-matrix.json"
 // Admin-only region labels — counties, national parks, AONBs (National Landscapes).
 // Each entry is { name, category, coord:[lng,lat] }. Hand-edit `coord` to nudge
 // a label to a better position. The list is converted to a Mapbox FeatureCollection
@@ -36,7 +44,8 @@ import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
-import { stitchJourney, matchTerminal, MIN_CHANGE_BUFFER_MIN, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { interchangeBufferFor } from "@/lib/interchange-buffers"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -159,18 +168,12 @@ function decodePolyline(encoded: string): [number, number][] {
  *   "Mortimer"                               → "Mortimer"
  *
  * Primary path is `matchTerminal`, which resolves aliases via
- * london-terminals.json. BUT there's one trap: Waterloo East is listed as
- * an alias of "Waterloo" (intentional for stitchJourney's leg-matching
- * logic — a Waterloo East leg should resolve to the Waterloo terminal
- * family). That's wrong for display purposes, where Waterloo East is its
- * own station. Explicit regex short-circuit keeps the label distinct.
- *
- * Final fallback strips "London " prefix — catches other cluster-satellite
- * raw names that aren't in the terminals file at all.
+ * london-terminals.json. Final fallback strips "London " prefix —
+ * catches other cluster-satellite raw names that aren't in the
+ * terminals file at all.
  */
 function cleanTerminusLabel(rawName: string | undefined): string {
   if (!rawName) return ""
-  if (/^(London\s+)?Waterloo East$/i.test(rawName.trim())) return "Waterloo East"
   const canonical = matchTerminal(rawName, londonTerminalsData as Terminal[])
   if (canonical) return canonical
   return rawName.replace(/^London\s+/i, "")
@@ -294,7 +297,7 @@ type OriginDef = {
 // animation, and the londonMinutes override.
 //  - Farringdon, Kings Cross, Stratford: full Google Routes journey data per
 //    destination (fetched via scripts/fetch-journeys.mjs).
-//  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT+WAE):
+//  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT, WAE):
 //    hybrid — RTT direct times for destinations on their own lines, stitched
 //    via terminal-matrix + existing KX/Farringdon journeys for everywhere else.
 const PRIMARY_ORIGINS: Record<string, OriginDef> = {
@@ -360,25 +363,29 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
 //      are visually separated from the single-station options below.
 //   2. Public single-station primaries (Charing Cross, Kings Cross, …).
 //   3. Admin-only primaries (hidden from non-admin users).
-const byDisplayName = (a: string, b: string) =>
-  (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
-// ONLY the synthetic primary (currently just "Any London terminus") is shown
-// as a permanent curated dropdown item. Individual London termini (Charing
-// Cross, Victoria, Waterloo, …) are treated like any other London NR station
-// — reachable via search + promoted into the "recents" list when picked.
-// Admin mode still gets to see admin-only entries as an extra group below
-// the synthetic so they remain one-click accessible for dev work.
-const PRIMARY_ORIGIN_GROUPS_ALL: string[][] = [
-  Object.keys(PRIMARY_ORIGINS)
-    .filter((k) => !PRIMARY_ORIGINS[k]?.adminOnly && PRIMARY_ORIGINS[k]?.isSynthetic)
-    .sort(byDisplayName),
-  Object.keys(PRIMARY_ORIGINS)
-    .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
-    .sort(byDisplayName),
-].filter((group) => group.length > 0)
-const PRIMARY_ORIGIN_GROUPS_PUBLIC: string[][] = PRIMARY_ORIGIN_GROUPS_ALL
-  .map((group) => group.filter((key) => !PRIMARY_ORIGINS[key]?.adminOnly))
-  .filter((group) => group.length > 0)
+// Central London is the canonical default primary and must always sort to
+// the top of any synthetic-primary list it appears in — even if a future
+// synthetic (e.g. "Birmingham") would otherwise alphabetise before it.
+const CENTRAL_LONDON_COORD = "-0.1269,51.5196"
+const byDisplayName = (a: string, b: string) => {
+  if (a === CENTRAL_LONDON_COORD) return -1
+  if (b === CENTRAL_LONDON_COORD) return 1
+  return (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
+}
+// Pinned primary coords — always shown at the top of the primary dropdown,
+// always present, never evicted. For now just Central London; the rest of
+// the menu is composed of seeded/user recents below.
+const PINNED_PRIMARIES: string[] = [CENTRAL_LONDON_COORD]
+// Pinned friend coords — same idea on the friend side, currently empty.
+// Kept as a const so future "always-visible" picks can be added without
+// touching the dropdown rendering.
+const PINNED_FRIENDS: string[] = []
+// Admin-only primary group — separate from pinned, only rendered when
+// adminMode is on. Hidden from regular users; useful as a one-click pick
+// for dev work on partially-fetched origins.
+const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
+  .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
+  .sort(byDisplayName)
 
 // Coord-key migrations: when a previously-standalone primary moves to a new
 // synthetic anchor coord, redirect stored picks (in primaryOrigin AND recents)
@@ -390,6 +397,34 @@ const COORD_MIGRATIONS: Record<string, string> = {
   // Old Kings Cross cluster primary (now removed) → Central London synthetic
   "-0.1239491,51.530609": "-0.1269,51.5196",
 }
+
+// Seeded recents for the primary dropdown — coords pre-populated as if
+// the user had recently searched for and picked each one. Merged with
+// the actual user recents at render time (user picks float to the top,
+// defaults below — deduped). Picked for major-interchange status,
+// geographic spread, and population catchment.
+const DEFAULT_RECENT_PRIMARIES: string[] = [
+  "-0.1705184,51.4644589",   // Clapham Junction (CLJ)
+  "-0.0035472,51.541289",    // Stratford (SRA)
+  "-0.2435041,51.5321956",   // Willesden Junction (WIJ)
+  "-0.0746988,51.3971695",   // Norwood Junction (NWD)
+  "-0.1064144,51.5648345",   // Finsbury Park (FPK)
+  "-0.0599442,51.588123",    // Tottenham Hale (TOM)
+  "-0.3004067,51.5149803",   // Ealing Broadway (EAL)
+  "0.0232808,51.549251",     // Forest Gate (FOG)
+  "-0.0927317,51.3758448",   // East Croydon (ECR)
+  "0.2191164,51.4474203",    // Dartford (DFD)
+  "0.0887195,51.3736037",    // Orpington (ORP)
+  "-0.3004127,51.4632072",   // Richmond (RMD)
+  "-0.3961114,51.6639446",   // Watford Junction (WFJ)
+  "-0.3276687,51.7504966",   // St Albans City (SAC)
+  "0.1826107,51.5747271",    // Romford (RMF)
+  "-0.4191564,51.5029246",   // Hayes and Harlington (HAY)
+  "-0.104555,51.519964",     // Farringdon (ZFD)
+]
+// DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
+// just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
+// keeps maintenance simple.
 
 // Clustered satellite stations — when a primary is active, these extra coord
 // keys are also consulted for direct-reachable lookups AND stitching attempts,
@@ -480,6 +515,56 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   // spend was needed thanks to the BMO/BSW + queue junction fetches.
   "-2.2383003,53.4796574": { canonicalName: "Manchester",          displayName: "Manchester", menuName: "Manchester", isSynthetic: true },
   "-1.1449555,52.9473037": { canonicalName: "Nottingham",          displayName: "Nottingham", menuName: "Nottingham" },
+  // Tier 2 — UK city friends, RTT-derived journeys built via
+  // scripts/build-friend-journeys-from-rtt.mjs and stored under
+  // public/journeys/<slug>.json. Cities with multiple central
+  // stations (Edinburgh / Glasgow / Cardiff / Portsmouth) are
+  // synthetic anchors with cluster members listed in
+  // FRIEND_ORIGIN_CLUSTER below; everywhere else is single-station.
+  // Centroid-anchored synthetics — same pattern as Birmingham / Manchester.
+  // The synthetic coord sits at the geographic mean of the cluster
+  // members so the principal station can render as a normal diamond
+  // alongside its siblings instead of doubling as the synthetic square.
+  "-3.2048968,55.9485428":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
+  "-4.2547767,55.8604359":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
+  "-3.1749991,51.4787758":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
+  "-2.5804029,51.4490991":  { canonicalName: "Bristol",       displayName: "Bristol",        menuName: "Bristol" },
+  "-2.3567189,51.3776019":  { canonicalName: "Bath",          displayName: "Bath",           menuName: "Bath" },
+  "-1.2699542,51.7534512":  { canonicalName: "Oxford",        displayName: "Oxford",         menuName: "Oxford" },
+  "0.1377154,52.1941089":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
+  "-0.1407393,50.8288602":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
+  "-1.548621,53.794414":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
+  "-2.9831014,53.4056107":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
+  // Reading — single-station anchor. Useful as a friend for the
+  // M4-corridor commuter belt; not part of the central-Bristol/Cardiff
+  // mega-cluster.
+  "-0.9723182,51.4592197":  { canonicalName: "Reading",       displayName: "Reading",        menuName: "Reading" },
+  "-1.616046,54.9683364":   { canonicalName: "Newcastle",     displayName: "Newcastle",      menuName: "Newcastle" },
+  "-1.4621381,53.3783713":  { canonicalName: "Sheffield",     displayName: "Sheffield",      menuName: "Sheffield" },
+  "-1.0937301,53.9577037":  { canonicalName: "York",          displayName: "York",           menuName: "York" },
+  "-1.1236065,52.6321088":  { canonicalName: "Leicester",     displayName: "Leicester",      menuName: "Leicester" },
+  "-1.5135474,52.400739":   { canonicalName: "Coventry",      displayName: "Coventry",       menuName: "Coventry" },
+  "-1.462612,52.9165243":   { canonicalName: "Derby",         displayName: "Derby",          menuName: "Derby" },
+  "-2.1810781,53.0079887":  { canonicalName: "Stoke-on-Trent",displayName: "Stoke-on-Trent", menuName: "Stoke-on-Trent", mobileDisplayName: "Stoke" },
+  "-2.120242,52.5879884":   { canonicalName: "Wolverhampton", displayName: "Wolverhampton",  menuName: "Wolverhampton",  mobileDisplayName: "Wolves" },
+  "-4.1433925,50.3780967":  { canonicalName: "Plymouth",      displayName: "Plymouth",       menuName: "Plymouth" },
+  "-3.5435703,50.7292155":  { canonicalName: "Exeter",        displayName: "Exeter",         menuName: "Exeter" },
+  "-1.4142289,50.9074977":  { canonicalName: "Southampton",   displayName: "Southampton",    menuName: "Southampton",    mobileDisplayName: "S'hampton" },
+  "-1.0997297,50.7974525":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
+  "1.3076876,52.626307":    { canonicalName: "Norwich",       displayName: "Norwich",        menuName: "Norwich" },
+  "1.1447878,52.0504188":   { canonicalName: "Ipswich",       displayName: "Ipswich",        menuName: "Ipswich" },
+  "-0.2503162,52.5746038":  { canonicalName: "Peterborough",  displayName: "Peterborough",   menuName: "Peterborough",   mobileDisplayName: "P'borough" },
+  "-1.1399149,53.5219538":  { canonicalName: "Doncaster",     displayName: "Doncaster",      menuName: "Doncaster" },
+  "-0.3475977,53.7438351":  { canonicalName: "Hull",          displayName: "Hull",           menuName: "Hull" },
+  "-2.0976346,57.1426487":  { canonicalName: "Aberdeen",      displayName: "Aberdeen",       menuName: "Aberdeen" },
+  "-4.2227142,57.4802331":  { canonicalName: "Inverness",     displayName: "Inverness",      menuName: "Inverness" },
+  "-3.9403729,51.6256789":  { canonicalName: "Swansea",       displayName: "Swansea",        menuName: "Swansea" },
+  "-0.7748261,52.0342006":  { canonicalName: "Milton Keynes", displayName: "Milton Keynes",  menuName: "Milton Keynes",  mobileDisplayName: "Milton K" },
+  "-0.9069697,52.2373719":  { canonicalName: "Northampton",   displayName: "Northampton",    menuName: "Northampton",    mobileDisplayName: "N'hampton" },
+  "-2.4326364,53.0889629":  { canonicalName: "Crewe",         displayName: "Crewe",          menuName: "Crewe" },
+  "-2.7071573,53.7552898":  { canonicalName: "Preston",       displayName: "Preston",        menuName: "Preston" },
+  "-2.807799,54.0488361":   { canonicalName: "Lancaster",     displayName: "Lancaster",      menuName: "Lancaster" },
+  "-2.9330473,54.8902575":  { canonicalName: "Carlisle",      displayName: "Carlisle",       menuName: "Carlisle" },
 }
 
 // Friend cluster members — same shape as PRIMARY_ORIGIN_CLUSTER. Listed
@@ -500,10 +585,84 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
     "-2.2424846,53.4879748",   // Manchester Victoria (MCV)
     "-2.2422762,53.4737777",   // Manchester Oxford Road (MCO)
   ],
+  // Edinburgh (centroid anchor) ← Waverley + Haymarket satellites.
+  "-3.2048968,55.9485428": [
+    "-3.1904199,55.9519018",   // Edinburgh Waverley (EDB)
+    "-3.2193738,55.9451838",   // Haymarket (HYM)
+  ],
+  // Glasgow (centroid anchor) ← Central + Queen Street satellites.
+  "-4.2547767,55.8604359": [
+    "-4.2584361,55.8583132",   // Glasgow Central (GLC)
+    "-4.2511172,55.8625587",   // Glasgow Queen Street (GLQ)
+  ],
+  // Cardiff (centroid anchor) ← Central + Queen Street satellites.
+  "-3.1749991,51.4787758": [
+    "-3.1797057,51.4755495",   // Cardiff Central (CDF)
+    "-3.1702926,51.4820022",   // Cardiff Queen Street (CDQ)
+  ],
+  // Portsmouth (centroid anchor) ← & Southsea + Harbour satellites.
+  "-1.0997297,50.7974525": [
+    "-1.0906787,50.7982014",   // Portsmouth & Southsea (PMS)
+    "-1.1087807,50.7967035",   // Portsmouth Harbour (PMH)
+  ],
+  // Liverpool (centroid anchor) ← Lime Street + Central + James Street.
+  // All three sit within ~1 km of each other in central Liverpool.
+  "-2.9831014,53.4056107": [
+    "-2.9775854,53.4076085",   // Liverpool Lime Street (LIV)
+    "-2.9795092,53.4042207",   // Liverpool Central (LVC)
+    "-2.9922097,53.4050028",   // Liverpool James Street (LVJ)
+  ],
 }
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
+
+// Coord → journey-file slug for every friend in FRIEND_ORIGINS. Slugs
+// match the filenames under public/journeys/ that
+// scripts/build-friend-journeys-from-rtt.mjs writes. Without this
+// mapping, ensureOriginLoaded can't fetch the right file when the user
+// picks Leicester (et al.) as a friend, so the map appears empty even
+// though the data exists on disk.
+const FRIEND_SLUGS: Record<string, string> = (() => {
+  const out: Record<string, string> = {}
+  // Kebab-case the canonical name to match the on-disk slug —
+  // 'Stoke-on-Trent' → 'stoke-on-trent', 'Milton Keynes' → 'milton-keynes'.
+  const kebab = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  for (const [coord, def] of Object.entries(FRIEND_ORIGINS)) {
+    if (def?.canonicalName) out[coord] = kebab(def.canonicalName)
+  }
+  return out
+})()
+
+// Seeded recents for the friend dropdown. Order is the user's curated
+// priority — picked for population catchment + geographic spread, with
+// the largest cities first. Each coord is the friend's anchor (the
+// synthetic centroid for cluster friends like Birmingham/Manchester,
+// or the single-station coord for everywhere else). Other friends still
+// exist in FRIEND_ORIGINS for searchability — they're just not seeded.
+const DEFAULT_RECENT_FRIENDS: string[] = [
+  "-1.8967682,52.4801267",   // Birmingham (BHM·BMO·BSW cluster)
+  "-0.9723182,51.4592197",   // Reading
+  "-0.1407393,50.8288602",   // Brighton
+  "-1.1236065,52.6321088",   // Leicester
+  "-2.2383003,53.4796574",   // Manchester (MAN·MCV·MCO cluster)
+  "-1.5135474,52.400739",    // Coventry
+  "-2.5804029,51.4490991",   // Bristol (Temple Meads only — not a cluster)
+  "-1.1449555,52.9473037",   // Nottingham
+  "-1.548621,53.794414",     // Leeds
+  "-1.4142289,50.9074977",   // Southampton (Central only — not a cluster)
+  "-3.1749991,51.4787758",   // Cardiff (CDF·CDQ cluster, centroid anchor)
+  "-2.9831014,53.4056107",   // Liverpool (LIV·LVC·LVJ cluster, centroid anchor)
+  "-1.4621381,53.3783713",   // Sheffield
+  "-1.2699542,51.7534512",   // Oxford
+  "-1.0997297,50.7974525",   // Portsmouth (PMS·PMH cluster, centroid anchor)
+  "0.1377154,52.1941089",    // Cambridge
+  "-0.7748261,52.0342006",   // Milton Keynes
+  "-4.2547767,55.8604359",   // Glasgow (GLC·GLQ cluster, centroid anchor)
+  "-1.462612,52.9165243",    // Derby
+  "-3.2048968,55.9485428",   // Edinburgh (EDB·HYM cluster, centroid anchor)
+]
 
 // Resolve the effective journey from a friend origin to a destination,
 // falling back to cluster members when the friend is a SYNTHETIC anchor
@@ -631,7 +790,15 @@ const originRoutes = originRoutesData as OriginRoutes
 // Ramsgate via HS1 from St Pancras beats the direct SE mainline route from
 // Charing Cross — get the better time.
 const londonTerminals = londonTerminalsData as Terminal[]
-const terminalMatrix = terminalMatrixData as TerminalMatrix
+// Merged matrix: terminal-matrix entries take precedence for terminal-keyed
+// rows (the 15 termini), tfl-hop-matrix adds parallel rows for non-terminal
+// primaries like Clapham Junction. Same shape as terminal-matrix —
+// stitchJourney's lookup `matrix[newOrigin.name][mainlineTerminal]`
+// resolves both cases without any code change.
+const terminalMatrix: TerminalMatrix = {
+  ...(tflHopMatrixData as TerminalMatrix),
+  ...(terminalMatrixData as TerminalMatrix),
+}
 
 // ---------------------------------------------------------------------------
 // Option 2 — hybrid splice
@@ -749,7 +916,9 @@ function tryHybridSplice(journey: JourneyInfo): JourneyInfo | null {
   const nextDepMs = new Date(nextLeg.departureTime).getTime()
   const continuationDepMin = msToUKMinutesOfDay(nextDepMs)
   const originalDepMin = msToUKMinutesOfDay(firstDepMs)
-  const latestArrMin = continuationDepMin - MIN_CHANGE_BUFFER_MIN
+  // Per-station interchange buffer at the change station — bigger
+  // interchanges need more time than the default 3 min.
+  const latestArrMin = continuationDepMin - interchangeBufferFor(interchangeName)
 
   // Pick the latest-arriving service with arr ≤ latestArrMin.
   let bestDepMin = -1
@@ -828,8 +997,9 @@ function tryHybridSplice(journey: JourneyInfo): JourneyInfo | null {
  * set — INCLUDING the current interchange — pair V2 observations from
  * primary→hub and hub→finalDest using service-level scheduling. Pick
  * the combination that minimises journey duration (hub.arr − primary.dep)
- * with at least MIN_CHANGE_BUFFER_MIN between legs. Return the rebuilt
- * journey when it beats the current one by ≥ 5 min.
+ * with at least the hub's interchange buffer between legs (see
+ * interchangeBufferFor). Return the rebuilt journey when it beats the
+ * current one by ≥ 5 min.
  *
  * Uses actual (depMin, durMin) observation pairs so the result is a
  * REAL, CONNECTABLE pair of services, not a theoretical min-time sum.
@@ -863,12 +1033,13 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
 
   // Pick the latest service-pair (A→hub, hub→finalDest) that:
   //   - both have valid V2 observations
-  //   - hub.dep ≥ A.arr + MIN_CHANGE_BUFFER_MIN (real connection)
+  //   - hub.dep ≥ A.arr + interchangeBufferFor(hub) (real connection)
   //   - minimises (hub.arr − A.dep) = journey duration
   // Returns null when no valid pair exists.
   function bestPairThroughHub(
     p2h: DirectReachable,
     h2f: DirectReachable,
+    hubName: string,
   ): { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null {
     const aDeps = p2h.serviceDepMinutes
     const aDurs = p2h.serviceDurationsMinutes
@@ -877,11 +1048,14 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
     if (!aDeps || !aDurs || !hDeps || !hDurs) return null
     if (aDeps.length === 0 || hDeps.length === 0) return null
     if (aDeps.length !== aDurs.length || hDeps.length !== hDurs.length) return null
+    // Per-station interchange buffer at the hub — bigger interchanges
+    // need more time than the default 3-min floor.
+    const buffer = interchangeBufferFor(hubName)
     let best: { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null = null
     for (let i = 0; i < hDeps.length; i++) {
       const hDep = hDeps[i]
       const hDur = hDurs[i]
-      const latestAArr = hDep - MIN_CHANGE_BUFFER_MIN
+      const latestAArr = hDep - buffer
       // Latest A-service arriving by latestAArr = maximises A.dep =
       // minimises journey duration for this fixed hub dep.
       let bestA: { dep: number; dur: number; arr: number } | null = null
@@ -914,7 +1088,7 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
       if (e.name === finalDestName) { h2fEntry = e; break }
     }
     if (!h2fEntry) continue
-    const pair = bestPairThroughHub(p2hEntry, h2fEntry)
+    const pair = bestPairThroughHub(p2hEntry, h2fEntry, p2hEntry.name)
     if (!pair) continue
     if (!best || pair.totalMin < best.pair.totalMin) {
       best = { hubName: p2hEntry.name, pair }
@@ -988,11 +1162,11 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
   }
 }
 
-// Interchange buffer (minutes) used when a custom-primary journey composes
-// X→hub→(matrix hop)→terminal→destination. Duplicates CUSTOM_INTERCHANGE_MIN
-// defined inside the useMemo scope because tryComposeViaTerminal lives at
-// module scope. Keep both in sync.
-const CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE = 5
+// Per-station interchange buffer is now provided by interchangeBufferFor()
+// from lib/interchange-buffers.ts. The previous flat 5-min constant has
+// been replaced inline at each compose site so the buffer reflects the
+// actual interchange station (CLJ, Reading etc. get longer than the
+// 3-min default). See data/station-interchange-buffers.json.
 
 /**
  * Compose a custom-primary journey by hub-hopping to an ALTERNATIVE London
@@ -1057,12 +1231,14 @@ function tryComposeViaTerminal(
       let matrixLeg: JourneyInfo["legs"][number] | null = null
 
       if (T.name === hubCanonical) {
-        mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE + stitchedMins
+        // Interchange happens at the hub (where customer→rail change occurs).
+        mins = hub.pToCustomMins + interchangeBufferFor(hubCanonical) + stitchedMins
         changes = 1 + stitchedChanges
       } else {
         const hop = terminalMatrix[hubCanonical]?.[T.name]
         if (!hop?.minutes) continue
-        mins = hub.pToCustomMins + hop.minutes + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE * 2 + stitchedMins
+        // Two interchanges: at the hub (X→hub→matrix hop) and at T (hop→rail).
+        mins = hub.pToCustomMins + hop.minutes + interchangeBufferFor(hubCanonical) + interchangeBufferFor(T.name) + stitchedMins
         changes = 2 + stitchedChanges
         matrixLeg = {
           vehicleType: "OTHER",
@@ -1118,26 +1294,27 @@ function tryComposeViaTerminal(
   return best
 }
 
-// Station-to-station walking/short-tube hops that aren't in the terminal
-// matrix (because the matrix only contains terminal-to-terminal routes,
-// and one endpoint here — Waterloo East — is aliased to Waterloo in
-// london-terminals.json rather than being its own terminal entry).
+// Coord-keyed walking links between stations that share a physical
+// concourse — distinct from terminal-matrix entries even when the same
+// pair appears there. terminal-matrix is consumed by the standard
+// stitcher (newOrigin: terminal name → matrix lookup); this map is
+// consumed by tryComposeViaWalkingDoubleHub (4-leg RTT-only
+// composition for non-terminal primaries like CLJ, which the standard
+// stitcher can't help with when the destination has no pre-fetched
+// source journey).
 //
-// Keyed by coord string on both sides so lookups are direct and no
-// name-normalisation is required. Minutes are realistic walking times
-// through the covered concourse; polylines are intentionally null so
-// the map draws a straight line between the two station coords — good
-// enough for a 150m pedestrian link.
-//
-// Expand this map as more "need to walk between adjacent stations"
-// cases surface. Each entry should appear symmetrically (both
-// directions) so the composition loop doesn't need to care which side
-// is the rail origin.
+// Polylines are intentionally null so the map draws a straight line
+// between the two station coords — good enough for a 150m pedestrian
+// link. Each entry should appear symmetrically (both directions) so
+// the composition loop doesn't need to care which side is the rail
+// origin. Add new entries only for stations that are physically
+// adjacent (sharing a concourse / footbridge); for actual tube/walk
+// hops between separate stations, terminal-matrix is the right place.
 const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {
   // Waterloo ↔ Waterloo East — covered pedestrian link, ~5 min.
   // Unlocks CLJ→YAL class journeys: CLJ→WAT (rail) → walk → WAE →
   // Paddock Wood (rail) → Yalding (branch rail). Both sides are in
-  // origin-routes.json already (WAE is an independent fetched primary).
+  // origin-routes.json (WAE has its own RTT-fetched entry).
   "-0.112801,51.5028379":   { "-0.1082027,51.5042171": { minutes: 5 } },  // WAT → WAE
   "-0.1082027,51.5042171":  { "-0.112801,51.5028379":  { minutes: 5 } },  // WAE → WAT
 }
@@ -1164,17 +1341,20 @@ function tryComposeViaWalkingDoubleHub(
   customCoord: string,
 ): { journey: JourneyInfo; mins: number; changes: number } | null {
   if (customHubs.length === 0) return null
-  const INTERCHANGE = 5
   let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
 
   for (const h1 of customHubs) {
     const walks = WALKING_HOPS[h1.pCoord]
     if (!walks) continue
     const h1Name = h1.routes.name ?? ""
+    // Three interchange buffers, one per hand-off station:
+    //   H1 (walk-pair start) → H2 (walk-pair end) → H3 (rail change) → D
+    const bufH1 = interchangeBufferFor(h1Name)
     for (const [h2Coord, walk] of Object.entries(walks)) {
       const h2Routes = originRoutes[h2Coord]
       if (!h2Routes) continue
       const h2Name = h2Routes.name ?? ""
+      const bufH2 = interchangeBufferFor(h2Name)
       // For every H3 in H2's directReachable that's ALSO a top-level
       // origin-routes entry, see if H3 reaches D directly. H3 being an
       // origin-routes entry is required so we can look up H3→D times.
@@ -1185,11 +1365,12 @@ function tryComposeViaWalkingDoubleHub(
         if (!h3Routes) continue
         const h3ToD = h3Routes.directReachable?.[destCoordKey]
         if (!h3ToD?.minMinutes) continue
+        const bufH3 = interchangeBufferFor(h3Routes.name)
         const total =
           h1.pToCustomMins +
-          INTERCHANGE + walk.minutes +
-          INTERCHANGE + h2ToH3.minMinutes +
-          INTERCHANGE + h3ToD.minMinutes
+          bufH1 + walk.minutes +
+          bufH2 + h2ToH3.minMinutes +
+          bufH3 + h3ToD.minMinutes
         if (best != null && total >= best.mins) continue
         const h3Name = h3Routes.name ?? ""
         const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
@@ -1510,6 +1691,14 @@ export default function HikeMap() {
     "ttg:recentCustomPrimaries",
     [],
   )
+  // Mirror of recentCustomPrimaries on the friend side — coord keys the
+  // user has previously picked as a friend's home. Merged with
+  // DEFAULT_RECENT_FRIENDS at render time so user picks float to the top
+  // of the friend dropdown.
+  const [recentCustomFriends, setRecentCustomFriends] = usePersistedState<string[]>(
+    "ttg:recentCustomFriends",
+    [],
+  )
   // One-shot localStorage migration: name → coord key, and reset if the stored
   // coord isn't a current primary option (e.g. we removed the Liverpool Street
   // standalone primary — users who had LST selected should fall back to default).
@@ -1702,9 +1891,16 @@ export default function HikeMap() {
       // Add / switch: drive the "Looking up trains from <X>" label.
       setPendingFriendCoord(next)
       setGoodbyeFriendCoord(null)
+      // Bump this friend to the top of recents so it floats above the
+      // seeded defaults next time the dropdown is opened. Same shape as
+      // selectCustomPrimary's recents handling.
+      setRecentCustomFriends((prev) => {
+        const filtered = prev.filter((c) => c !== next)
+        return [next, ...filtered].slice(0, 9)
+      })
     }
     startTransition(() => setFriendOrigin(next))
-  }, [])
+  }, [setRecentCustomFriends])
   // Reverse lookup: cluster-member coord → parent primary coord. Lets the
   // search-based picker redirect a tap on (e.g.) Waterloo East to the
   // Waterloo primary, or St Pancras to the Kings Cross primary, instead of
@@ -1718,7 +1914,13 @@ export default function HikeMap() {
   const clusterMemberToPrimary = useMemo(() => {
     const out: Record<string, string> = {}
     for (const [primary, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
-      if (PRIMARY_ORIGINS[primary]?.isSynthetic) continue
+      // Synthetic clusters (Central London, Stratford) are now ALSO
+      // included so picking a member station via search redirects to
+      // the synthetic. Previously this map excluded synthetic clusters
+      // — a search for "Kings Cross" used to land on KGX as a custom
+      // primary and route via the wrong path (no public-primary
+      // coverage). Redirecting to Central London routes the cluster
+      // properly via terminal-matrix.
       for (const m of members) out[m] = primary
     }
     return out
@@ -1775,9 +1977,12 @@ export default function HikeMap() {
     // callback so they commit together and the spinner covers the
     // entire gap.
     startTransition(() => {
-      // Synthetic primary — no recents entry, just select.
-      if (PRIMARY_ORIGINS[coord]?.isSynthetic) {
-        setPrimaryOriginRaw(coord)
+      // Synthetic primary — no recents entry, just select. Check
+      // `resolved` (not `coord`) so picking a cluster member like Kings
+      // Cross or Charing Cross — which now resolves to its synthetic
+      // anchor — also takes this branch.
+      if (PRIMARY_ORIGINS[resolved]?.isSynthetic) {
+        setPrimaryOriginRaw(resolved)
         return
       }
       setPrimaryOriginRaw(resolved)
@@ -2130,18 +2335,25 @@ export default function HikeMap() {
   // origins. Any origin not in this map isn't lazy-loadable and
   // falls through to the RTT-based routing path.
   const ORIGIN_SLUGS: Record<string, string> = {
+    // Primary-side journey files (same shape as friend files, just
+    // generated for primaries we want fully precomputed).
     "-0.104555,51.519964": "farringdon",
     "-0.1239491,51.530609": "kings-cross",
     "-0.0035472,51.541289": "stratford",
     "-1.1449555,52.9473037": "nottingham",
     "-1.898694,52.4776459": "birmingham",
-    // Synthetic anchors map to the same journey file as their first cluster
-    // member. ensureOriginLoaded stamps the loaded journeys under whatever
-    // origin coord we pass in — passing the synthetic coord makes
-    // journeys[syntheticAnchor] resolve directly without any fallback chain.
+    // Cluster-anchor coords for Stratford / Birmingham / Manchester —
+    // ensureOriginLoaded stamps the loaded journeys under whatever
+    // origin coord we pass in, so passing the synthetic coord makes
+    // journeys[syntheticAnchor] resolve directly without any fallback.
     "-0.0061483,51.5430422": "stratford",
     "-1.8967682,52.4801267": "birmingham",
     "-2.2383003,53.4796574": "manchester",
+    // Every other friend in FRIEND_ORIGINS — its anchor coord maps to
+    // the slug derived from its canonicalName. Without this, picking
+    // Leicester (or any of the 35 other tier-2 friends) would leave the
+    // map empty because no journey file ever gets fetched.
+    ...FRIEND_SLUGS,
   }
   // `mapReady` flips true on the style's `load` event — style + icons
   // are wired, but tiles / markers may not yet be painted. For the
@@ -2366,10 +2578,12 @@ export default function HikeMap() {
     //       cluster primaries, it's the cluster's menuName ("Kings Cross,
     //       St Pancras, & Euston"). For isolated stations, just the
     //       station name.
-    //   - hasData: true if the station (or its cluster primary, for cluster
-    //       members) has full RTT origin-routes data. Drives the dropdown's
-    //       "Coming soon" disabled state — rows without data are greyed out
-    //       and unselectable, with a tooltip on desktop hover.
+    //   - hasData: true when the station is fully usable as a primary —
+    //       RTT data present AND (terminus OR has TfL hops to all 15
+    //       termini in tfl-hop-matrix). Stations with RTT data alone
+    //       fall back to "Coming soon" disabled rows in search because
+    //       custom-primary composition into central London needs the
+    //       hop coverage to work.
     type SearchableStation = {
       coord: string
       name: string
@@ -2378,12 +2592,39 @@ export default function HikeMap() {
       displayLabel: string
       hasData: boolean
     }
-    // Set of coord keys that have fetched RTT data — check once per station
-    // rather than indexing into originRoutesData inside the loop.
+    // Strict hasData definition: a station counts as "fully usable as a
+    // primary" only when both RTT and TfL-hop data are available.
+    //   - Termini get a free pass (they ARE central London — no TfL
+    //     hops needed to compose journeys).
+    //   - Non-terminus primaries need an entry in tfl-hop-matrix.json,
+    //     keyed by the station's name.
+    // Stations with RTT data only (no TfL hops) would partially work
+    // as primaries (direct destinations from their own lines render)
+    // but custom-primary composition into central London breaks, so
+    // we render them as 'Coming soon' disabled rows in search.
     const dataCoords = new Set(Object.keys(originRoutesData))
+    const TERMINI_CRS = new Set([
+      "KGX","STP","EUS","CHX","VIC","WAT","WAE","MYB","PAD",
+      "MOG","LST","CST","FST","BFR","LBG",
+    ])
+    const tflHopNames = new Set(Object.keys(terminalMatrix))
+    const originRoutesByCoord = originRoutesData as Record<string, { crs?: string; name?: string }>
+    const hasFullDataAtCoord = (c: string): boolean => {
+      if (!dataCoords.has(c)) return false
+      const entry = originRoutesByCoord[c]
+      if (!entry?.crs) return false
+      if (TERMINI_CRS.has(entry.crs)) return true
+      return tflHopNames.has(entry.name ?? "")
+    }
     const out: SearchableStation[] = []
+    // Bounding box for the primary-search dropdown. Wide enough to
+    // include every station we have full RTT + TfL hop data for —
+    // outer-belt commuter origins (Reading, Luton, St Albans, Watford
+    // Junction) and airport rail-heads (Gatwick, Stansted) included.
+    // Outliers defining the bounds: Gatwick (south), Stansted (north),
+    // Reading (west), Shenfield (east).
     const isLondonBox = (lat: number, lng: number) =>
-      lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
+      lat > 51.10 && lat < 51.95 && lng > -1.05 && lng < 0.40
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
       if (!crs) continue
@@ -2400,9 +2641,10 @@ export default function HikeMap() {
       if (excludedPrimariesSet.has(coord)) continue
       const stationName = f.properties.name as string
       // Resolve to the parent cluster primary if this coord is a cluster
-      // member. clusterMemberToPrimary deliberately excludes synthetic
-      // clusters (London "Any London terminus") so a search for "kings
-      // cross" maps to the KX primary, not the London-synthetic.
+      // member. clusterMemberToPrimary now INCLUDES synthetic clusters,
+      // so a search for "Kings Cross" lands on the Central London
+      // synthetic — the cluster routing covers it correctly, whereas
+      // KGX as a standalone custom primary had degraded coverage.
       const primaryCoord = clusterMemberToPrimary[coord] ?? coord
       const hasCluster = !!PRIMARY_ORIGIN_CLUSTER[primaryCoord]
       const displayLabel = hasCluster
@@ -2411,7 +2653,7 @@ export default function HikeMap() {
       // Check primaryCoord first so cluster members (St Pancras, Waterloo
       // East, etc.) inherit their parent's data status — picking St Pancras
       // redirects to the KX primary, which has data.
-      const hasData = dataCoords.has(primaryCoord) || dataCoords.has(coord)
+      const hasData = hasFullDataAtCoord(primaryCoord) || hasFullDataAtCoord(coord)
       out.push({
         coord,
         name: stationName,
@@ -2419,6 +2661,27 @@ export default function HikeMap() {
         primaryCoord,
         displayLabel,
         hasData,
+      })
+    }
+    // Synthetic anchors (Central London, Stratford) aren't in OSM but
+    // we still want them findable by typing their name directly. Add
+    // one entry per non-admin synthetic in PRIMARY_ORIGINS — the
+    // dedupe-by-primaryCoord step in matchingStations collapses any
+    // overlap with cluster-member rows.
+    for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
+      if (!def?.isSynthetic) continue
+      if (def.adminOnly) continue
+      const label = def.menuName ?? def.canonicalName ?? coord
+      out.push({
+        coord,
+        name: label,           // searchable via "central london" / "stratford"
+        crs: "",
+        primaryCoord: coord,
+        displayLabel: label,
+        // Synthetics are always usable as primaries — the cluster covers
+        // routing via terminal-matrix even if the synthetic coord
+        // itself isn't in origin-routes.
+        hasData: true,
       })
     }
     return out
@@ -2431,6 +2694,66 @@ export default function HikeMap() {
     for (const s of searchableStations) map[s.coord] = s.name
     return map
   }, [searchableStations])
+
+  // Cluster-member → anchor lookup for friend origins. Mirrors
+  // clusterMemberToPrimary on the friend side so picking a cluster
+  // member (e.g. Birmingham Moor Street, Cardiff Queen Street) via
+  // friend search activates the parent cluster rather than the
+  // individual station.
+  const friendClusterMemberToPrimary = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
+      for (const m of members) map[m] = anchor
+    }
+    return map
+  }, [])
+
+  // Searchable universe for the friend dropdown — every UK NR station
+  // (no London-box filter — friends live anywhere). Each entry's
+  // hasData flag tells the dropdown whether to render the row enabled
+  // or as a disabled 'Coming soon' tooltip row. hasData is true for
+  // coords that map to a friend in FRIEND_ORIGINS (either directly or
+  // via a cluster-member redirect).
+  const searchableFriendStations = useMemo(() => {
+    if (!baseStations) return []
+    type SearchableStation = {
+      coord: string
+      name: string
+      crs: string
+      primaryCoord: string
+      displayLabel: string
+      hasData: boolean
+    }
+    const friendAnchors = new Set(Object.keys(FRIEND_ORIGINS))
+    const out: SearchableStation[] = []
+    for (const f of baseStations.features) {
+      const crs = f.properties?.["ref:crs"] as string | undefined
+      if (!crs) continue
+      const network = f.properties?.["network"] as string | undefined
+      if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
+      const [lng, lat] = f.geometry.coordinates
+      const coord = `${lng},${lat}`
+      const stationName = f.properties.name as string
+      // Cluster members redirect to their anchor for selection. The
+      // displayed label still uses the cluster's menuName (e.g.
+      // 'Birmingham') rather than the station's own OSM name (e.g.
+      // 'Birmingham Moor Street') so search results dedupe naturally.
+      const anchorCoord = friendClusterMemberToPrimary[coord] ?? coord
+      const hasData = friendAnchors.has(anchorCoord)
+      const displayLabel = hasData && FRIEND_ORIGINS[anchorCoord]?.menuName
+        ? (FRIEND_ORIGINS[anchorCoord]?.menuName as string)
+        : stationName
+      out.push({
+        coord,
+        name: stationName,
+        crs,
+        primaryCoord: anchorCoord,
+        displayLabel,
+        hasData,
+      })
+    }
+    return out
+  }, [baseStations, friendClusterMemberToPrimary])
 
   // StationModal's internals (getEffectiveJourney + display text) still speak
   // in station NAMES. Our journeys are coord-keyed now, so we re-key them to
@@ -2895,7 +3218,10 @@ export default function HikeMap() {
     // get custom→P is a safe approximation. The interchange buffer covers
     // the walk + wait at P.
     const isCustomPrimary = !PRIMARY_ORIGINS[primaryOrigin]
-    const CUSTOM_INTERCHANGE_MIN = 5
+    // Per-station interchange buffer at the hub the user changes at.
+    // interchangeBufferFor() returns the default 3-min for stations not
+    // listed in data/station-interchange-buffers.json — bigger interchanges
+    // (CLJ, KX, London Bridge, Reading) get more time per the curated list.
 
     // Extension A: via-direct-hub composition helper. For every origin-
     // routes station H that reaches BOTH the custom primary AND the
@@ -2906,7 +3232,7 @@ export default function HikeMap() {
     //
     // Only valuable for custom primaries. Returns the fastest 1-change
     // composition or null. Built inside the useMemo body so it can close
-    // over coordToName / crsToCoord / customHubs / CUSTOM_INTERCHANGE_MIN.
+    // over coordToName / crsToCoord / customHubs.
     function buildViaDirectHubJourney(
       customHubsArg: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string; directReachable?: Record<string, DirectReachable> } }>,
       coordKey: string,
@@ -2919,9 +3245,9 @@ export default function HikeMap() {
       for (const hub of customHubsArg) {
         const hubEntry = hub.routes.directReachable?.[coordKey]
         if (!hubEntry?.minMinutes) continue
-        const mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + hubEntry.minMinutes
-        if (best != null && mins >= best.mins) continue
         const hubName = hub.routes.name ?? ""
+        const mins = hub.pToCustomMins + interchangeBufferFor(hubName) + hubEntry.minMinutes
+        if (best != null && mins >= best.mins) continue
         const hubToDestCoords = (hubEntry.fastestCallingPoints ?? [])
           .map((crs) => crsToCoord[crs])
           .filter((c): c is [number, number] => !!c)
@@ -2949,6 +3275,134 @@ export default function HikeMap() {
         best = { journey, mins, changes: 1 }
       }
       return best
+    }
+    // Extension C: TfL-hop composition for non-terminal primaries. Uses
+    // the pre-fetched primary→terminal hops from data/tfl-hop-matrix.json
+    // (merged into terminalMatrix at module load) to compose:
+    //   2-leg: primary → T (TfL hop) → T.directReachable[D] (rail)
+    //   3-leg: primary → T (TfL hop) → H (rail) → H.directReachable[D] (rail)
+    //
+    // 2-leg unlocks destinations directly reachable from a terminus the
+    // primary doesn't have rail to (CLJ→Wendover via MYB, CLJ→WelwynGC
+    // via KGX, CLJ→Hertford via LST, etc.).
+    // 3-leg unlocks destinations one rail-leg deeper, where T reaches an
+    // intermediate H that reaches D (CLJ→Marlow via PAD→Maidenhead,
+    // CLJ→Henley-on-Thames via PAD→Twyford, etc.).
+    //
+    // Pure RTT — no pre-fetched source journey required, unlike
+    // stitchJourney's via-source-journey path. Only fires when the
+    // primary has tfl-hop-matrix entries (currently CLJ; future ECR,
+    // FPK, RMD, etc. as they're added). Returns the best composition,
+    // preferring fewer changes — a 1-change 2-leg path always beats a
+    // 2-change 3-leg path regardless of duration.
+    function tryComposeViaPrimaryHop(
+      primaryName: string,
+      coordKey: string,
+      customCoord: string,
+    ): { journey: JourneyInfo; mins: number; changes: number } | null {
+      const hopRow = terminalMatrix[primaryName]
+      if (!hopRow) return null
+      let best1: { journey: JourneyInfo; mins: number } | null = null
+      let best2: { journey: JourneyInfo; mins: number } | null = null
+      const { lng: pLng, lat: pLat } = parseCoordKey(customCoord)
+      for (const T of londonTerminals) {
+        const hop = hopRow[T.name]
+        if (!hop?.minutes) continue
+        const tCoord = findOriginRoutesCoord(T.name)
+        if (!tCoord) continue
+        const tRoutes = originRoutes[tCoord]
+        if (!tRoutes) continue
+        // Polyline prefix: TfL hop polyline (primary → T). Falls back to
+        // a straight primary-coord → T-coord segment when the hop entry
+        // has no polyline (rare — only WALK entries with 0min).
+        const hopCoords: [number, number][] = hop.polyline
+          ? decodePolyline(hop.polyline)
+          : [[pLng, pLat]]
+        // --- 2-leg: T direct-reaches D ---
+        const tToD = tRoutes.directReachable?.[coordKey]
+        if (tToD?.minMinutes != null) {
+          // Interchange happens at T (TfL hop arrives at T, rail leg starts there).
+          const mins = hop.minutes + interchangeBufferFor(T.name) + tToD.minMinutes
+          if (best1 == null || mins < best1.mins) {
+            const tToDCoords = (tToD.fastestCallingPoints ?? [])
+              .map((crs) => crsToCoord[crs])
+              .filter((c): c is [number, number] => !!c)
+            const polylineCoords = tToDCoords.length > 1 ? [...hopCoords, ...tToDCoords] : undefined
+            const cp = buildCallingPoints(tCoord, coordKey)
+            const journey = {
+              durationMinutes: mins,
+              changes: 1,
+              legs: [
+                { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
+                {
+                  vehicleType: "HEAVY_RAIL",
+                  departureStation: T.name,
+                  arrivalStation: tToD.name ?? "",
+                  stopCount: Math.max(0, (tToD.fastestCallingPoints?.length ?? 0) - 2),
+                },
+              ],
+              polylineCoords,
+              londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+              londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+              callingPointsLegArrival: tToD.name,
+            } as unknown as JourneyInfo
+            best1 = { journey, mins }
+          }
+        }
+        // --- 3-leg: T → H (rail) → H.directReachable[D] (rail) ---
+        // Skip the inner loop entirely if we already have a 1-change path
+        // — it'll always beat any 2-change candidate.
+        if (best1 != null) continue
+        for (const [hCoord, tToH] of Object.entries(tRoutes.directReachable ?? {})) {
+          if (!tToH?.minMinutes) continue
+          if (hCoord === coordKey) continue  // 2-leg case, handled above
+          const hRoutes = originRoutes[hCoord]
+          if (!hRoutes) continue
+          const hToD = hRoutes.directReachable?.[coordKey]
+          if (!hToD?.minMinutes) continue
+          // Two interchanges: at T (after TfL hop) and at H (between rail legs).
+          const mins =
+            hop.minutes + interchangeBufferFor(T.name) +
+            tToH.minMinutes + interchangeBufferFor(tToH.name) +
+            hToD.minMinutes
+          if (best2 != null && mins >= best2.mins) continue
+          // Polyline: hop coords + T→H calling points + H→D calling points.
+          const tToHCoords = (tToH.fastestCallingPoints ?? [])
+            .map((crs) => crsToCoord[crs])
+            .filter((c): c is [number, number] => !!c)
+          const hToDCoords = (hToD.fastestCallingPoints ?? [])
+            .map((crs) => crsToCoord[crs])
+            .filter((c): c is [number, number] => !!c)
+          const polylineCoords =
+            tToHCoords.length + hToDCoords.length > 1
+              ? [...hopCoords, ...tToHCoords, ...hToDCoords]
+              : undefined
+          const journey = {
+            durationMinutes: mins,
+            changes: 2,
+            legs: [
+              { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
+              {
+                vehicleType: "HEAVY_RAIL",
+                departureStation: T.name,
+                arrivalStation: tToH.name ?? "",
+                stopCount: Math.max(0, (tToH.fastestCallingPoints?.length ?? 0) - 2),
+              },
+              {
+                vehicleType: "HEAVY_RAIL",
+                departureStation: tToH.name ?? "",
+                arrivalStation: hToD.name ?? "",
+                stopCount: Math.max(0, (hToD.fastestCallingPoints?.length ?? 0) - 2),
+              },
+            ],
+            polylineCoords,
+          } as unknown as JourneyInfo
+          best2 = { journey, mins }
+        }
+      }
+      if (best1) return { journey: best1.journey, mins: best1.mins, changes: 1 }
+      if (best2) return { journey: best2.journey, mins: best2.mins, changes: 2 }
+      return null
     }
     // Pre-filter origin-routes entries that direct-reach the custom station,
     // so the inner loop over destinations only iterates the relevant primaries.
@@ -3601,6 +4055,26 @@ export default function HikeMap() {
                 effectiveSourceJourney = viaWalk.journey
               }
             }
+            // Extension C: TfL-hop composition. For destinations that
+            // need a terminal the primary can't reach by direct rail
+            // (CLJ→Wendover via MYB, CLJ→WelwynGC via KGX, etc.),
+            // bridge primary→T using the TfL hop matrix and finish
+            // with T→D rail from origin-routes. 1 change.
+            const viaTflHop = tryComposeViaPrimaryHop(
+              coordToName[primaryOrigin] ?? primaryOrigin,
+              coordKey,
+              primaryOrigin,
+            )
+            if (viaTflHop) {
+              const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
+              const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
+              if (
+                viaTflHop.changes < curChanges ||
+                (viaTflHop.changes === curChanges && viaTflHop.mins < curMins)
+              ) {
+                effectiveSourceJourney = viaTflHop.journey
+              }
+            }
 
             // London calling-points enrichment (same rationale as the
             // isRttPrimary branch above). Custom primaries like Farringdon
@@ -3867,7 +4341,7 @@ export default function HikeMap() {
               const pToD = hub.routes.directReachable?.[coordKey]?.minMinutes
               if (pToD != null) {
                 const candidate: RouteCandidate = {
-                  mins: hub.pToCustomMins + pToD + CUSTOM_INTERCHANGE_MIN,
+                  mins: hub.pToCustomMins + pToD + interchangeBufferFor(hub.routes.name),
                   changes: 1,
                   hub,
                   kind: "rtt-direct",
@@ -3884,7 +4358,7 @@ export default function HikeMap() {
               const srcJourney = featureJourneys?.[hub.pCoord]
               if (srcJourney?.durationMinutes != null) {
                 const candidate: RouteCandidate = {
-                  mins: hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + srcJourney.durationMinutes,
+                  mins: hub.pToCustomMins + interchangeBufferFor(hub.routes.name) + srcJourney.durationMinutes,
                   // Changes through the hub (1) plus whatever the source
                   // journey already had. A Farringdon→Oxford journey with 1
                   // internal change (Farringdon→Paddington→Oxford) becomes
@@ -3926,7 +4400,10 @@ export default function HikeMap() {
                     mins:
                       hub.pToCustomMins +
                       matrixHop.minutes +
-                      CUSTOM_INTERCHANGE_MIN * 2 +
+                      // Two interchanges: at the hub, then at srcCanonical
+                      // (the terminal whose source journey we're piping through).
+                      interchangeBufferFor(hub.routes.name) +
+                      interchangeBufferFor(srcCanonical) +
                       journey.durationMinutes,
                     // Two changes (X→hub, hub→src) on top of the source
                     // journey's own changes. For VXH→Oxford via Waterloo
@@ -3985,6 +4462,30 @@ export default function HikeMap() {
                   hub: customHubs[0],
                   kind: "composed",
                   composedJourney: viaWalk.journey,
+                }
+                if (isBetter(candidate, winner)) winner = candidate
+              }
+            }
+            // Option F: Extension C — TfL-hop primary→T→D composition.
+            // Uses data/tfl-hop-matrix.json to bridge primary→T even
+            // when the primary has no direct rail to T. Unlocks
+            // destinations directly reachable from termini the primary
+            // can't reach via customHubs (CLJ→Wendover via MYB,
+            // CLJ→WelwynGC via KGX, etc.). Same rendering path as
+            // "composed" — the journey ships with pre-assembled legs.
+            {
+              const viaTflHop = tryComposeViaPrimaryHop(
+                coordToName[primaryOrigin] ?? primaryOrigin,
+                coordKey,
+                primaryOrigin,
+              )
+              if (viaTflHop && customHubs[0]) {
+                const candidate: RouteCandidate = {
+                  mins: viaTflHop.mins,
+                  changes: viaTflHop.changes,
+                  hub: customHubs[0],
+                  kind: "composed",
+                  composedJourney: viaTflHop.journey,
                 }
                 if (isBetter(candidate, winner)) winner = candidate
               }
@@ -4290,8 +4791,8 @@ export default function HikeMap() {
             // Indirect-route composition. For any terminus T that does
             // NOT have D direct, try to compose T → hub → D where hub
             // is any origin-routes entry that both T reaches directly
-            // AND that directly reaches D. Uses 5-minute change buffer
-            // (CUSTOM_INTERCHANGE_MIN).
+            // AND that directly reaches D. Uses per-station change
+            // buffers via interchangeBufferFor() at each hand-off.
             //
             // CRITICAL filter: the hub must NOT be a London terminus.
             // If H is a terminus, then "T → H → D" is really just "go
@@ -4347,7 +4848,8 @@ export default function HikeMap() {
                 const tToH = tRoutes.directReachable?.[hCoord]
                 const hToD = hRoutes.directReachable?.[coordKey]
                 if (!tToH?.minMinutes || !hToD?.minMinutes) continue
-                const total = tToH.minMinutes + 5 + hToD.minMinutes
+                // Interchange happens at H (between the two rail legs).
+                const total = tToH.minMinutes + interchangeBufferFor(hRoutes.name) + hToD.minMinutes
                 if (!best || total < best.totalMin) {
                   best = {
                     hubName: hRoutes.name ?? hCoord,
@@ -7006,21 +7508,39 @@ export default function HikeMap() {
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
         primaryOrigin={primaryOrigin}
-        // Admin-only origins (e.g. Charing Cross) are visible in the dropdown
-        // only when devExcludeActive is on.
-        primaryOriginGroups={devExcludeActive ? PRIMARY_ORIGIN_GROUPS_ALL : PRIMARY_ORIGIN_GROUPS_PUBLIC}
+        // Pinned primary coords — always rendered at the top of the
+        // dropdown, never evicted. Currently just Central London.
+        pinnedPrimaries={PINNED_PRIMARIES}
+        // Admin-only primary group, only rendered when adminMode is on.
+        adminOnlyPrimaries={devExcludeActive ? ADMIN_ONLY_PRIMARIES : []}
         onPrimaryOriginChange={setPrimaryOrigin}
         // Both callbacks receive a coord key now. ALL_ORIGINS merges primary+friend
         // so the filter-panel can label either role with one callback.
         originDisplayName={(key) => ALL_ORIGINS[key]?.displayName ?? key}
         originMobileDisplayName={(key) => ALL_ORIGINS[key]?.mobileDisplayName}
         originMenuName={(key) => ALL_ORIGINS[key]?.menuName ?? key}
-        // Phase 2: admin-only search / custom primary support.
         searchableStations={searchableStations}
-        recentPrimaries={recentCustomPrimaries}
+        // Merge user picks (prepended naturally by selectCustomPrimary)
+        // with the curated defaults — picking a default just floats it
+        // to the top, the others stay visible.
+        recentPrimaries={[
+          ...recentCustomPrimaries,
+          ...DEFAULT_RECENT_PRIMARIES.filter((c) => !recentCustomPrimaries.includes(c)),
+        ]}
         onCustomPrimarySelect={selectCustomPrimary}
         coordToName={coordToName}
         friendOrigin={friendOrigin}
+        // Pinned friend coords — currently empty; reserved for future
+        // always-visible picks.
+        pinnedFriends={PINNED_FRIENDS}
+        // Same merge pattern as the primary side.
+        recentFriends={[
+          ...recentCustomFriends,
+          ...DEFAULT_RECENT_FRIENDS.filter((c) => !recentCustomFriends.includes(c)),
+        ]}
+        // Search universe for the friend dropdown — every UK NR station,
+        // with hasData=false rows rendered as disabled 'Coming soon'.
+        searchableFriendStations={searchableFriendStations}
         friendOrigins={FRIEND_ORIGIN_KEYS}
         onFriendOriginChange={setFriendOriginWithTransition}
         friendMaxMinutes={friendMaxMinutes}
@@ -8637,9 +9157,8 @@ export default function HikeMap() {
               displayStation.coordKey === primaryOrigin &&
               !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
                 ? (PRIMARY_ORIGINS[primaryOrigin]?.menuName ?? displayStation.name)
-                // Shared helper handles the Waterloo East special-case
-                // (matchTerminal would otherwise canonicalise it to just
-                // "Waterloo" via the stitching alias list).
+                // Shared helper resolves "London Waterloo East" → "Waterloo
+                // East" and similar canonicalisations via matchTerminal.
                 : cleanTerminusLabel(displayStation.name)
             }
             minutes={displayStation.minutes}
@@ -8831,7 +9350,11 @@ export default function HikeMap() {
           <div
             aria-hidden={!filterPillVisible}
             className={cn(
-              "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
+              // z-[100] keeps the toast above the mobile search sheet
+              // (z-[60]) and any other Radix-portalled overlays. Without
+              // this the pill gets hidden behind the search results when
+              // a primary/friend pick is in flight on mobile.
+              "pointer-events-none absolute inset-0 z-[100] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
               "transition-opacity duration-700",
               filterPillVisible ? "opacity-100" : "opacity-0",
             )}
@@ -8860,7 +9383,11 @@ export default function HikeMap() {
           // Mobile: pin to bottom of viewport with matching pb-4
           // (same visual margin as the horizontal px-4). Desktop
           // (sm+): center vertically, no extra bottom padding.
-          "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0",
+          // z-[100] keeps the toast above the mobile search sheet
+          // (z-[60]) so a friend/primary pick mid-search still
+          // surfaces "Finding meeting points..." rather than getting
+          // hidden behind the results list.
+          "pointer-events-none absolute inset-0 z-[100] flex items-end sm:items-center justify-center pb-4 sm:pb-0",
           // `px-4` keeps the inner pill off the viewport edges on
           // narrow mobile widths when the label is long (e.g.
           // "Looking up trains from Kings Cross, St Pancras, & Euston"
@@ -8923,31 +9450,42 @@ export default function HikeMap() {
                    practice; the outer opacity-0 hides the pill in
                    the idle phase anyway. */}
           <span className="text-sm font-semibold text-muted-foreground">
-            {goodbyeFriendCoord
-              ? `Saying goodbye to ${
-                  FRIEND_ORIGINS[goodbyeFriendCoord]?.displayName
-                  ?? PRIMARY_ORIGINS[goodbyeFriendCoord]?.displayName
-                  ?? coordToName[goodbyeFriendCoord]
-                  ?? "friend"
-                }`
-              : `Looking up trains from ${pendingFriendCoord
-                ? (
-                    FRIEND_ORIGINS[pendingFriendCoord]?.displayName
-                    ?? PRIMARY_ORIGINS[pendingFriendCoord]?.displayName
-                    ?? coordToName[pendingFriendCoord]
-                    ?? "friend"
+            {(() => {
+              // Resolve a coord to a human-readable place name. Tries
+              // PRIMARY_ORIGINS' menuName when the coord is a cluster
+              // anchor (so synthetic Central London reads as "Central
+              // London", not "London"), then displayName, then the
+              // cluster-friend FRIEND_ORIGINS displayName, then OSM
+              // name, then a friendly fallback.
+              const placeNameFor = (c: string | null, fallback: string) => {
+                if (!c) return fallback
+                if (PRIMARY_ORIGIN_CLUSTER[c]) {
+                  return (
+                    PRIMARY_ORIGINS[c]?.menuName
+                    ?? PRIMARY_ORIGINS[c]?.displayName
+                    ?? coordToName[c]
+                    ?? fallback
                   )
-                : (pendingPrimaryCoord
-                  ? (
-                      PRIMARY_ORIGIN_CLUSTER[pendingPrimaryCoord]
-                        ? (PRIMARY_ORIGINS[pendingPrimaryCoord]?.menuName
-                            ?? PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                            ?? pendingPrimaryCoord)
-                        : (PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                            ?? coordToName[pendingPrimaryCoord]
-                            ?? "new home")
-                    )
-                  : "new home")}`}
+                }
+                return (
+                  FRIEND_ORIGINS[c]?.displayName
+                  ?? PRIMARY_ORIGINS[c]?.displayName
+                  ?? coordToName[c]
+                  ?? fallback
+                )
+              }
+              if (goodbyeFriendCoord) {
+                return `Saying goodbye to ${placeNameFor(goodbyeFriendCoord, "friend")}`
+              }
+              if (pendingFriendCoord) {
+                // Friend add/switch — frame it as a meeting between the
+                // two endpoints rather than a one-sided lookup.
+                const primaryPlace = placeNameFor(primaryOrigin, "your home")
+                const friendPlace = placeNameFor(pendingFriendCoord, "your friend")
+                return `Finding meeting points between ${primaryPlace} and ${friendPlace}`
+              }
+              return `Looking up trains from ${placeNameFor(pendingPrimaryCoord, "new home")}`
+            })()}
           </span>
         </div>
       </div>
