@@ -713,8 +713,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             className={cn(
               // flex items-center keeps the label and the X aligned on
               // the same baseline; justify-between pushes the X to the
-              // right edge of the row.
-              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer text-muted-foreground",
+              // right edge of the row. Normal text colour — the X icon
+              // alone signals the remove affordance.
+              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer",
               hiddenOnMobile && "hidden sm:flex",
             )}
             aria-label={`Remove ${label} as friend's station`}
