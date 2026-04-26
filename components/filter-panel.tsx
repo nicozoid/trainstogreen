@@ -328,10 +328,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
 
   // Friend-side equivalent. Filter universe is the merged friend recents
   // (pinned + recents) — typing "edin" reveals Edinburgh even if it's
-  // past the visible cap. UK-wide search with disabled "Coming soon"
-  // rows for friends without journey data is a future extension.
+  // past the visible cap. Threshold matches the primary side (3 chars)
+  // so neither dropdown spams results on a single keystroke.
   const [friendSearch, setFriendSearch] = useState("")
-  const isFriendSearchActive = friendSearch.trim().length >= 2
+  const isFriendSearchActive = friendSearch.trim().length >= 3
 
   // Mobile-only: when the user taps the inline "Other stations" input, the
   // native keyboard pops up and obscures the dropdown's results. To avoid
