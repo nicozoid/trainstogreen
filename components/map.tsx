@@ -404,16 +404,13 @@ const COORD_MIGRATIONS: Record<string, string> = {
 // defaults below — deduped). Picked for major-interchange status,
 // geographic spread, and population catchment.
 const DEFAULT_RECENT_PRIMARIES: string[] = [
-  "-0.1705184,51.4644589",   // Clapham Junction
-  "-0.3004067,51.5149803",   // Ealing Broadway
-  "-0.1064144,51.5648345",   // Finsbury Park
-  "0.0232808,51.549251",     // Forest Gate
-  "-0.0746988,51.3971695",   // Norwood Junction
-  "-0.3004127,51.4632072",   // Richmond
-  "-0.0749325,51.5824738",   // Seven Sisters
-  "-0.0599442,51.588123",    // Tottenham Hale
-  "-0.3206893,51.5135365",   // West Ealing
-  "-0.2435041,51.5321956",   // Willesden Junction
+  "-0.1705184,51.4644589",   // Clapham Junction (CLJ)
+  "-0.0035472,51.541289",    // Stratford (SRA)
+  "-0.2435041,51.5321956",   // Willesden Junction (WIJ)
+  "-0.0746988,51.3971695",   // Norwood Junction (NWD)
+  "-0.1064144,51.5648345",   // Finsbury Park (FPK)
+  "-0.0599442,51.588123",    // Tottenham Hale (TOM)
+  "-0.3004067,51.5149803",   // Ealing Broadway (EAL)
 ]
 // DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
 // just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
@@ -523,7 +520,11 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   "0.1377154,52.1941089":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
   "-0.1407393,50.8288602":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
   "-1.548621,53.794414":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
-  "-2.9775854,53.4076085":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool" },
+  "-2.9775854,53.4076085":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
+  // Reading — single-station anchor. Useful as a friend for the
+  // M4-corridor commuter belt; not part of the central-Bristol/Cardiff
+  // mega-cluster.
+  "-0.9723182,51.4592197":  { canonicalName: "Reading",       displayName: "Reading",        menuName: "Reading" },
   "-1.616046,54.9683364":   { canonicalName: "Newcastle",     displayName: "Newcastle",      menuName: "Newcastle" },
   "-1.4621381,53.3783713":  { canonicalName: "Sheffield",     displayName: "Sheffield",      menuName: "Sheffield" },
   "-1.0937301,53.9577037":  { canonicalName: "York",          displayName: "York",           menuName: "York" },
@@ -586,16 +587,45 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
   "-1.0906787,50.7982014": [
     "-1.1087807,50.7967035",   // Portsmouth Harbour (PMH)
   ],
+  // Liverpool (Lime Street anchor) ← Central + James Street satellites.
+  // All three sit within ~1 km of each other in central Liverpool.
+  "-2.9775854,53.4076085": [
+    "-2.9795092,53.4042207",   // Liverpool Central (LVC)
+    "-2.9922097,53.4050028",   // Liverpool James Street (LVJ)
+  ],
 }
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
 
-// Seeded recents for the friend dropdown — every key in FRIEND_ORIGINS,
-// in declaration order. Merged with user-picked friend recents at render
-// time. Same 'Coming soon' disabled-row treatment can apply when search
-// exposes friend stations without journey-file coverage.
-const DEFAULT_RECENT_FRIENDS: string[] = FRIEND_ORIGIN_KEYS
+// Seeded recents for the friend dropdown. Order is the user's curated
+// priority — picked for population catchment + geographic spread, with
+// the largest cities first. Each coord is the friend's anchor (the
+// synthetic centroid for cluster friends like Birmingham/Manchester,
+// or the single-station coord for everywhere else). Other friends still
+// exist in FRIEND_ORIGINS for searchability — they're just not seeded.
+const DEFAULT_RECENT_FRIENDS: string[] = [
+  "-1.8967682,52.4801267",   // Birmingham (BHM·BMO·BSW cluster)
+  "-0.9723182,51.4592197",   // Reading
+  "-0.1407393,50.8288602",   // Brighton
+  "-1.1236065,52.6321088",   // Leicester
+  "-2.2383003,53.4796574",   // Manchester (MAN·MCV·MCO cluster)
+  "-1.5135474,52.400739",    // Coventry
+  "-2.5804029,51.4490991",   // Bristol (Temple Meads only — not a cluster)
+  "-1.1449555,52.9473037",   // Nottingham
+  "-1.548621,53.794414",     // Leeds
+  "-1.4142289,50.9074977",   // Southampton (Central only — not a cluster)
+  "-3.1797057,51.4755495",   // Cardiff (CDF·CDQ cluster)
+  "-2.9775854,53.4076085",   // Liverpool (LIV·LVC·LVJ cluster)
+  "-1.4621381,53.3783713",   // Sheffield
+  "-1.2699542,51.7534512",   // Oxford
+  "-1.0906787,50.7982014",   // Portsmouth (PMS·PMH cluster)
+  "0.1377154,52.1941089",    // Cambridge
+  "-0.7748261,52.0342006",   // Milton Keynes
+  "-4.2584361,55.8583132",   // Glasgow (GLC·GLQ cluster)
+  "-1.462612,52.9165243",    // Derby
+  "-3.1904199,55.9519018",   // Edinburgh (EDB·HYM cluster)
+]
 
 // Resolve the effective journey from a friend origin to a destination,
 // falling back to cluster members when the friend is a SYNTHETIC anchor
