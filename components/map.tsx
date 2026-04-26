@@ -2472,8 +2472,14 @@ export default function HikeMap() {
     // rather than indexing into originRoutesData inside the loop.
     const dataCoords = new Set(Object.keys(originRoutesData))
     const out: SearchableStation[] = []
+    // Bounding box for the primary-search dropdown. Wide enough to
+    // include every station we have full RTT + TfL hop data for —
+    // outer-belt commuter origins (Reading, Luton, St Albans, Watford
+    // Junction) and airport rail-heads (Gatwick, Stansted) included.
+    // Outliers defining the bounds: Gatwick (south), Stansted (north),
+    // Reading (west), Shenfield (east).
     const isLondonBox = (lat: number, lng: number) =>
-      lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
+      lat > 51.10 && lat < 51.95 && lng > -1.05 && lng < 0.40
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
       if (!crs) continue

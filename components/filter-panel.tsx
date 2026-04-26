@@ -875,29 +875,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       )
                     })}
 
-                    {/* Non-admin users get a small "coming soon" note at
-                        the bottom of the list, where the search input
-                        would normally be. Explains the short list and
-                        signals that we're actively working on expanding
-                        coverage. Not clickable; small muted text so it
-                        reads as a status message, not a selectable
-                        option. */}
-                    {!adminMode && (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                        More stations coming soon
-                      </div>
-                    )}
-
-                    {/* Positions 4 + 5 (search input + match results) are
-                        gated behind adminMode while data coverage is still
-                        filling in. Non-admin users currently only see the
-                        synthetic "Any London terminus" + the Stratford
-                        recents seed. Once every non-terminal primary has
-                        full RTT / stitched coverage, we can drop this gate
-                        and let everyone search — the disabled-row
-                        machinery below is already ready for that. */}
-                    {adminMode && (
-                      <>
+                    {/* Search input + matches. Stations without full
+                        RTT/TfL coverage still appear in matches but render
+                        as disabled rows with a "Coming soon" tooltip — see
+                        the !s.hasData branch below. */}
+                    <>
                         {/* Search input at the bottom of the dropdown.
                             stopPropagation on keydown keeps Radix's built-in
                             typeahead from hijacking our keystrokes. */}
@@ -959,13 +941,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                                       className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
                                     >
                                       <span>{s.name}</span>
-                                      {/* Inline "No data yet" suffix —
+                                      {/* Inline "Coming soon" suffix —
                                           smaller + further muted than the
                                           already-dimmed row text so it reads
                                           as a secondary status label, not a
                                           second line of the station name. */}
                                       <span className="text-xs text-muted-foreground/70">
-                                        No data yet
+                                        Coming soon
                                       </span>
                                     </DropdownMenuItem>
                                   </span>
@@ -1008,8 +990,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                             </div>
                           )
                         )}
-                      </>
-                    )}
+                    </>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -1654,13 +1635,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       className="flex items-baseline gap-2 w-full text-left px-4 py-3 text-sm border-b border-border/30 text-muted-foreground opacity-60 cursor-not-allowed"
                     >
                       <span>{s.name}</span>
-                      {/* Same "No data yet" suffix as the desktop path —
+                      {/* Same "Coming soon" suffix as the desktop path —
                           small + further muted than the row text. Mobile
                           can't show a tooltip on hover, so this inline
                           label is the only signal for why the row is
                           disabled. */}
                       <span className="text-xs text-muted-foreground/70">
-                        No data yet
+                        Coming soon
                       </span>
                     </div>
                   )
