@@ -49,6 +49,7 @@ if (!PRIMARY_CRS) {
 const TERMINALS_PATH = "data/london-terminals.json"
 const HOPS_PATH = "data/tfl-hop-matrix.json"
 const ORIGIN_ROUTES_PATH = "data/origin-routes.json"
+const STATIONS_PATH = "public/stations.json"
 const NAPTAN_CACHE_PATH = "data/crs-to-naptan.json"
 
 const terminals = JSON.parse(readFileSync(TERMINALS_PATH, "utf-8"))
@@ -62,19 +63,35 @@ const naptanCache = JSON.parse(readFileSync(NAPTAN_CACHE_PATH, "utf-8"))
 // Resolve primary CRS → name + NaPTAN
 // ---------------------------------------------------------------------------
 
-// Find the primary station's name from origin-routes (the matrix is keyed
-// by station name, and the runtime resolves coordToName[primaryOrigin]
-// against this same source — names must align).
+// Find the primary station's name from origin-routes first (so the
+// matrix key matches the runtime's name resolution when RTT exists),
+// then fall back to public/stations.json (OSM) so we can fetch hops
+// for stations whose RTT data hasn't landed yet.
+//
+// Pre-fetching hops in advance is intentional: the matrix is keyed by
+// name and only needs the 15 termini, so a station can have hops baked
+// in long before its RTT arrives. The runtime's hasData check still
+// requires RTT to flip a station from 'Coming soon' to selectable, so
+// pre-fetched hops cause no UX harm.
 function resolvePrimaryName(crs) {
   for (const entry of Object.values(originRoutes)) {
     if (entry?.crs === crs) return entry.name
+  }
+  // OSM fallback — only loaded if origin-routes doesn't have it.
+  try {
+    const stations = JSON.parse(readFileSync(STATIONS_PATH, "utf-8"))
+    for (const f of stations.features ?? []) {
+      if (f.properties?.["ref:crs"] === crs) return f.properties.name ?? null
+    }
+  } catch {
+    // stations.json missing — fall through to the error below.
   }
   return null
 }
 
 const PRIMARY_NAME = resolvePrimaryName(PRIMARY_CRS)
 if (!PRIMARY_NAME) {
-  console.error(`Error: ${PRIMARY_CRS} not in data/origin-routes.json — fetch its RTT data first.`)
+  console.error(`Error: ${PRIMARY_CRS} not in data/origin-routes.json or public/stations.json.`)
   process.exit(1)
 }
 
