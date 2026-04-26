@@ -1,0 +1,21 @@
+{
+  "_": "CRS code → NaPTAN rail-station ID (910Gxxxxx). Cache for TfL Journey Planner queries — see scripts/fetch-tfl-hops.mjs and scripts/tfl-build-master-queue.mjs. New entries are written here automatically when a CRS is resolved via TfL's StopPoint Search; manual edits are fine if a particular station resolves wrong.",
+  "naptan": {
+    "PAD": "910GPADTON",
+    "KGX": "910GKNGX",
+    "STP": "910GSTPX",
+    "EUS": "910GEUSTON",
+    "VIC": "910GVICTRIC",
+    "WAT": "910GWATRLMN",
+    "WAE": "910GWLOE",
+    "LST": "910GLIVST",
+    "MYB": "910GMARYLBN",
+    "CHX": "910GCHRX",
+    "LBG": "910GLNDNBDC",
+    "BFR": "910GBLFR",
+    "FST": "910GFENCHRS",
+    "CST": "910GCANONST",
+    "MOG": "910GMRGT",
+    "CLJ": "910GCLPHMJC"
+  }
+}

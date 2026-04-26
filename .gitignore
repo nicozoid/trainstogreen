@@ -44,3 +44,8 @@ storybook-static
 # RTT master-queue runtime artefacts (master-queue.txt, log, status JSON).
 # Regenerated on every run via scripts/rtt-build-master-queue.mjs.
 .rtt-queue/
+
+
+# TfL master-queue runtime artefacts (master-queue.txt, log, status JSON).
+# Regenerated on every run via scripts/tfl-build-master-queue.mjs.
+.tfl-queue/

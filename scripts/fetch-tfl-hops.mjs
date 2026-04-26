@@ -6,12 +6,20 @@
 // primaries by combining the primary's RTT direct-rail data with hops to
 // other London termini. terminal-matrix.json only carries terminal↔terminal
 // hops; this file fills in the parallel primary→terminal layer for
-// primaries CLJ doesn't reach by direct rail (KGX, MYB, EUS, MOG, etc.).
+// primaries that don't reach every terminal by direct rail (most non-
+// central NR stations).
 //
 // Data source: TfL Unified API Journey Planner (free, anonymous). Same
-// pipeline as scripts/fetch-terminal-matrix.mjs — see that file for the
-// rationale on TfL vs Google. Output shape mirrors terminal-matrix so the
-// stitcher can read both files interchangeably.
+// pipeline as scripts/fetch-terminal-matrix.mjs. Output shape mirrors
+// terminal-matrix so the stitcher can read both files interchangeably.
+//
+// CRS → NaPTAN resolution: looks up data/crs-to-naptan.json first, then
+// falls back to TfL StopPoint Search. New entries are persisted back to
+// the cache so future runs are zero-network for known stations.
+//
+// Station name (matrix key) is taken from the primary's entry in
+// data/origin-routes.json — must match what coordToName[primaryOrigin]
+// produces in components/map.tsx so the runtime lookup hits.
 //
 // Usage:
 //   node scripts/fetch-tfl-hops.mjs --primary CLJ
@@ -40,30 +48,33 @@ if (!PRIMARY_CRS) {
 
 const TERMINALS_PATH = "data/london-terminals.json"
 const HOPS_PATH = "data/tfl-hop-matrix.json"
+const ORIGIN_ROUTES_PATH = "data/origin-routes.json"
+const NAPTAN_CACHE_PATH = "data/crs-to-naptan.json"
 
 const terminals = JSON.parse(readFileSync(TERMINALS_PATH, "utf-8"))
 const hopMatrix = existsSync(HOPS_PATH)
   ? JSON.parse(readFileSync(HOPS_PATH, "utf-8"))
   : {}
+const originRoutes = JSON.parse(readFileSync(ORIGIN_ROUTES_PATH, "utf-8"))
+const naptanCache = JSON.parse(readFileSync(NAPTAN_CACHE_PATH, "utf-8"))
 
 // ---------------------------------------------------------------------------
-// Primary station metadata (CRS → name + NaPTAN rail station ID)
+// Resolve primary CRS → name + NaPTAN
 // ---------------------------------------------------------------------------
-//
-// Add an entry here when promoting a new station to a non-terminal primary.
-// The display name must match the station's `name` in data/origin-routes.json
-// so the hop matrix integrates with the existing matrix-lookup paths.
-const PRIMARY_STATIONS = {
-  CLJ: { name: "Clapham Junction", naptan: "910GCLPHMJC" },
-  // Future entries:
-  // ECR: { name: "East Croydon",     naptan: "910GECROYDN" },
-  // FPK: { name: "Finsbury Park",    naptan: "910GFNSBYP"  },
-  // RMD: { name: "Richmond",         naptan: "910GRICHMND" },
+
+// Find the primary station's name from origin-routes (the matrix is keyed
+// by station name, and the runtime resolves coordToName[primaryOrigin]
+// against this same source — names must align).
+function resolvePrimaryName(crs) {
+  for (const entry of Object.values(originRoutes)) {
+    if (entry?.crs === crs) return entry.name
+  }
+  return null
 }
 
-const primary = PRIMARY_STATIONS[PRIMARY_CRS]
-if (!primary) {
-  console.error(`Error: ${PRIMARY_CRS} is not a known primary. Add it to PRIMARY_STATIONS in this script.`)
+const PRIMARY_NAME = resolvePrimaryName(PRIMARY_CRS)
+if (!PRIMARY_NAME) {
+  console.error(`Error: ${PRIMARY_CRS} not in data/origin-routes.json — fetch its RTT data first.`)
   process.exit(1)
 }
 
@@ -89,10 +100,45 @@ const NAME_TO_NAPTAN = {
 }
 
 // ---------------------------------------------------------------------------
-// TfL Journey Planner
+// TfL StopPoint Search → NaPTAN (with caching)
 // ---------------------------------------------------------------------------
 
 const TFL_BASE = "https://api.tfl.gov.uk"
+
+async function resolveNaptanForCrs(crs, name) {
+  if (naptanCache.naptan[crs]) return naptanCache.naptan[crs]
+  // Search by name, filtering to national-rail stops. Returns a HUB id
+  // for stations with multiple modes (HUBxxx) or a 910Gxxx directly for
+  // smaller stations.
+  const url = `${TFL_BASE}/StopPoint/Search/${encodeURIComponent(name)}?modes=national-rail`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`StopPoint search failed for ${name} (${crs}): ${res.status}`)
+  const data = await res.json()
+  const matches = data.matches ?? []
+  if (matches.length === 0) throw new Error(`No StopPoint match for ${name} (${crs})`)
+  const top = matches[0]
+  let naptan = top.id
+  // If top match is a HUB, drill into its children for the 910G rail entry.
+  if (naptan.startsWith("HUB")) {
+    const hubRes = await fetch(`${TFL_BASE}/StopPoint/${naptan}`)
+    if (!hubRes.ok) throw new Error(`Hub fetch failed for ${naptan}`)
+    const hubData = await hubRes.json()
+    const railChild = (hubData.children ?? []).find(
+      (c) => c.id?.startsWith("910G") && c.modes?.includes("national-rail"),
+    )
+    if (!railChild) throw new Error(`Hub ${naptan} has no 910G rail child`)
+    naptan = railChild.id
+  } else if (!naptan.startsWith("910G")) {
+    throw new Error(`Unexpected StopPoint id format: ${naptan} for ${name} (${crs})`)
+  }
+  naptanCache.naptan[crs] = naptan
+  writeFileSync(NAPTAN_CACHE_PATH, JSON.stringify(naptanCache, null, 2) + "\n")
+  return naptan
+}
+
+// ---------------------------------------------------------------------------
+// TfL Journey Planner
+// ---------------------------------------------------------------------------
 
 function nextSaturdayDateString() {
   const d = new Date()
@@ -195,8 +241,8 @@ function dominantVehicleType(journey) {
 // Main loop — fetch primary → each terminal
 // ---------------------------------------------------------------------------
 
-async function fetchHop(toName, toNaptan) {
-  const journey = await fetchJourney(primary.naptan, toNaptan)
+async function fetchHop(fromNaptan, toName, toNaptan) {
+  const journey = await fetchJourney(fromNaptan, toNaptan)
   const coords = concatJourneyCoords(journey)
   return {
     minutes: journey.duration,
@@ -205,13 +251,15 @@ async function fetchHop(toName, toNaptan) {
   }
 }
 
-if (!hopMatrix[primary.name]) hopMatrix[primary.name] = {}
+const primaryNaptan = await resolveNaptanForCrs(PRIMARY_CRS, PRIMARY_NAME)
+
+if (!hopMatrix[PRIMARY_NAME]) hopMatrix[PRIMARY_NAME] = {}
 
 let fetched = 0
 let skipped = 0
 let failed = 0
 
-console.log(`Fetching TfL hops from ${primary.name} (${PRIMARY_CRS}) to 15 termini...\n`)
+console.log(`Fetching TfL hops from ${PRIMARY_NAME} (${PRIMARY_CRS}, NaPTAN ${primaryNaptan}) to 15 termini...\n`)
 
 for (const t of terminals) {
   const naptan = NAME_TO_NAPTAN[t.name]
@@ -220,20 +268,20 @@ for (const t of terminals) {
     failed++
     continue
   }
-  if (!RECOMPUTE && hopMatrix[primary.name][t.name]) {
+  if (!RECOMPUTE && hopMatrix[PRIMARY_NAME][t.name]) {
     skipped++
     continue
   }
   try {
-    const entry = await fetchHop(t.name, naptan)
-    hopMatrix[primary.name][t.name] = entry
+    const entry = await fetchHop(primaryNaptan, t.name, naptan)
+    hopMatrix[PRIMARY_NAME][t.name] = entry
     fetched++
-    console.log(`  ${primary.name} -> ${t.name}: ${entry.minutes}min ${entry.vehicleType}`)
+    console.log(`  ${PRIMARY_NAME} -> ${t.name}: ${entry.minutes}min ${entry.vehicleType}`)
     writeFileSync(HOPS_PATH, JSON.stringify(hopMatrix, null, 2))
     await new Promise(r => setTimeout(r, 100))
   } catch (err) {
     failed++
-    console.warn(`  ! ${primary.name} -> ${t.name}: ${err.message}`)
+    console.warn(`  ! ${PRIMARY_NAME} -> ${t.name}: ${err.message}`)
   }
 }
 
