@@ -105,22 +105,53 @@ const NAME_TO_NAPTAN = {
 
 const TFL_BASE = "https://api.tfl.gov.uk"
 
+// Wrap fetch with retry-on-429 — TfL's anonymous rate limit is rolling-
+// window, so a brief pause after a 429 lets the next call through.
+async function fetchWithRetry(url, attempt = 0) {
+  const res = await fetch(url)
+  if (res.status === 429 && attempt < 4) {
+    const wait = 5000 + attempt * 5000  // 5s, 10s, 15s, 20s
+    console.warn(`  (rate-limited, waiting ${wait / 1000}s before retry…)`)
+    await new Promise((r) => setTimeout(r, wait))
+    return fetchWithRetry(url, attempt + 1)
+  }
+  return res
+}
+
+// Pick the best match from TfL's StopPoint Search results. The API
+// often returns near-name matches first ("Luton Airport Parkway" before
+// "Luton" when searching for "Luton"), so prefer the entry whose
+// normalised name matches the search term exactly. Fallback: shortest
+// name (most likely the principal station, not a longer sub-variant).
+function pickBestNaptanMatch(matches, name) {
+  const norm = (s) =>
+    (s ?? "").toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim()
+  const target = norm(name)
+  for (const m of matches) {
+    const mn = norm(m.name ?? "")
+    if (mn === target) return m
+    if (mn === `${target} rail station`) return m
+    if (mn === `london ${target}` || mn === `london ${target} rail station`) return m
+  }
+  return [...matches].sort((a, b) => (a.name?.length ?? 999) - (b.name?.length ?? 999))[0]
+}
+
 async function resolveNaptanForCrs(crs, name) {
   if (naptanCache.naptan[crs]) return naptanCache.naptan[crs]
   // Search by name, filtering to national-rail stops. Returns a HUB id
   // for stations with multiple modes (HUBxxx) or a 910Gxxx directly for
   // smaller stations.
   const url = `${TFL_BASE}/StopPoint/Search/${encodeURIComponent(name)}?modes=national-rail`
-  const res = await fetch(url)
+  const res = await fetchWithRetry(url)
   if (!res.ok) throw new Error(`StopPoint search failed for ${name} (${crs}): ${res.status}`)
   const data = await res.json()
   const matches = data.matches ?? []
   if (matches.length === 0) throw new Error(`No StopPoint match for ${name} (${crs})`)
-  const top = matches[0]
+  const top = pickBestNaptanMatch(matches, name)
   let naptan = top.id
   // If top match is a HUB, drill into its children for the 910G rail entry.
   if (naptan.startsWith("HUB")) {
-    const hubRes = await fetch(`${TFL_BASE}/StopPoint/${naptan}`)
+    const hubRes = await fetchWithRetry(`${TFL_BASE}/StopPoint/${naptan}`)
     if (!hubRes.ok) throw new Error(`Hub fetch failed for ${naptan}`)
     const hubData = await hubRes.json()
     const railChild = (hubData.children ?? []).find(
@@ -155,7 +186,7 @@ const QUERY_TIME = "0900"
 
 async function fetchJourney(fromNaptan, toNaptan) {
   const url = `${TFL_BASE}/Journey/JourneyResults/${fromNaptan}/to/${toNaptan}?date=${QUERY_DATE}&time=${QUERY_TIME}&timeIs=Departing`
-  const res = await fetch(url)
+  const res = await fetchWithRetry(url)
   if (!res.ok) {
     throw new Error(`TfL ${res.status} ${res.statusText} for ${fromNaptan}->${toNaptan}`)
   }
@@ -278,7 +309,8 @@ for (const t of terminals) {
     fetched++
     console.log(`  ${PRIMARY_NAME} -> ${t.name}: ${entry.minutes}min ${entry.vehicleType}`)
     writeFileSync(HOPS_PATH, JSON.stringify(hopMatrix, null, 2))
-    await new Promise(r => setTimeout(r, 100))
+    // Pace at ~40 calls/min — under TfL's 50-req/min anonymous cap.
+    await new Promise(r => setTimeout(r, 1500))
   } catch (err) {
     failed++
     console.warn(`  ! ${PRIMARY_NAME} -> ${t.name}: ${err.message}`)
