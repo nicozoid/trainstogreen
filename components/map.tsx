@@ -44,7 +44,8 @@ import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
-import { stitchJourney, matchTerminal, MIN_CHANGE_BUFFER_MIN, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import { interchangeBufferFor } from "@/lib/interchange-buffers"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -766,7 +767,9 @@ function tryHybridSplice(journey: JourneyInfo): JourneyInfo | null {
   const nextDepMs = new Date(nextLeg.departureTime).getTime()
   const continuationDepMin = msToUKMinutesOfDay(nextDepMs)
   const originalDepMin = msToUKMinutesOfDay(firstDepMs)
-  const latestArrMin = continuationDepMin - MIN_CHANGE_BUFFER_MIN
+  // Per-station interchange buffer at the change station — bigger
+  // interchanges need more time than the default 3 min.
+  const latestArrMin = continuationDepMin - interchangeBufferFor(interchangeName)
 
   // Pick the latest-arriving service with arr ≤ latestArrMin.
   let bestDepMin = -1
@@ -845,8 +848,9 @@ function tryHybridSplice(journey: JourneyInfo): JourneyInfo | null {
  * set — INCLUDING the current interchange — pair V2 observations from
  * primary→hub and hub→finalDest using service-level scheduling. Pick
  * the combination that minimises journey duration (hub.arr − primary.dep)
- * with at least MIN_CHANGE_BUFFER_MIN between legs. Return the rebuilt
- * journey when it beats the current one by ≥ 5 min.
+ * with at least the hub's interchange buffer between legs (see
+ * interchangeBufferFor). Return the rebuilt journey when it beats the
+ * current one by ≥ 5 min.
  *
  * Uses actual (depMin, durMin) observation pairs so the result is a
  * REAL, CONNECTABLE pair of services, not a theoretical min-time sum.
@@ -880,12 +884,13 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
 
   // Pick the latest service-pair (A→hub, hub→finalDest) that:
   //   - both have valid V2 observations
-  //   - hub.dep ≥ A.arr + MIN_CHANGE_BUFFER_MIN (real connection)
+  //   - hub.dep ≥ A.arr + interchangeBufferFor(hub) (real connection)
   //   - minimises (hub.arr − A.dep) = journey duration
   // Returns null when no valid pair exists.
   function bestPairThroughHub(
     p2h: DirectReachable,
     h2f: DirectReachable,
+    hubName: string,
   ): { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null {
     const aDeps = p2h.serviceDepMinutes
     const aDurs = p2h.serviceDurationsMinutes
@@ -894,11 +899,14 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
     if (!aDeps || !aDurs || !hDeps || !hDurs) return null
     if (aDeps.length === 0 || hDeps.length === 0) return null
     if (aDeps.length !== aDurs.length || hDeps.length !== hDurs.length) return null
+    // Per-station interchange buffer at the hub — bigger interchanges
+    // need more time than the default 3-min floor.
+    const buffer = interchangeBufferFor(hubName)
     let best: { totalMin: number; aDep: number; aDur: number; hDep: number; hDur: number } | null = null
     for (let i = 0; i < hDeps.length; i++) {
       const hDep = hDeps[i]
       const hDur = hDurs[i]
-      const latestAArr = hDep - MIN_CHANGE_BUFFER_MIN
+      const latestAArr = hDep - buffer
       // Latest A-service arriving by latestAArr = maximises A.dep =
       // minimises journey duration for this fixed hub dep.
       let bestA: { dep: number; dur: number; arr: number } | null = null
@@ -931,7 +939,7 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
       if (e.name === finalDestName) { h2fEntry = e; break }
     }
     if (!h2fEntry) continue
-    const pair = bestPairThroughHub(p2hEntry, h2fEntry)
+    const pair = bestPairThroughHub(p2hEntry, h2fEntry, p2hEntry.name)
     if (!pair) continue
     if (!best || pair.totalMin < best.pair.totalMin) {
       best = { hubName: p2hEntry.name, pair }
@@ -1005,11 +1013,11 @@ function tryRerouteViaAlternativeHub(journey: JourneyInfo): JourneyInfo | null {
   }
 }
 
-// Interchange buffer (minutes) used when a custom-primary journey composes
-// X→hub→(matrix hop)→terminal→destination. Duplicates CUSTOM_INTERCHANGE_MIN
-// defined inside the useMemo scope because tryComposeViaTerminal lives at
-// module scope. Keep both in sync.
-const CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE = 5
+// Per-station interchange buffer is now provided by interchangeBufferFor()
+// from lib/interchange-buffers.ts. The previous flat 5-min constant has
+// been replaced inline at each compose site so the buffer reflects the
+// actual interchange station (CLJ, Reading etc. get longer than the
+// 3-min default). See data/station-interchange-buffers.json.
 
 /**
  * Compose a custom-primary journey by hub-hopping to an ALTERNATIVE London
@@ -1074,12 +1082,14 @@ function tryComposeViaTerminal(
       let matrixLeg: JourneyInfo["legs"][number] | null = null
 
       if (T.name === hubCanonical) {
-        mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE + stitchedMins
+        // Interchange happens at the hub (where customer→rail change occurs).
+        mins = hub.pToCustomMins + interchangeBufferFor(hubCanonical) + stitchedMins
         changes = 1 + stitchedChanges
       } else {
         const hop = terminalMatrix[hubCanonical]?.[T.name]
         if (!hop?.minutes) continue
-        mins = hub.pToCustomMins + hop.minutes + CUSTOM_INTERCHANGE_MIN_FOR_COMPOSE * 2 + stitchedMins
+        // Two interchanges: at the hub (X→hub→matrix hop) and at T (hop→rail).
+        mins = hub.pToCustomMins + hop.minutes + interchangeBufferFor(hubCanonical) + interchangeBufferFor(T.name) + stitchedMins
         changes = 2 + stitchedChanges
         matrixLeg = {
           vehicleType: "OTHER",
@@ -1182,17 +1192,20 @@ function tryComposeViaWalkingDoubleHub(
   customCoord: string,
 ): { journey: JourneyInfo; mins: number; changes: number } | null {
   if (customHubs.length === 0) return null
-  const INTERCHANGE = 5
   let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
 
   for (const h1 of customHubs) {
     const walks = WALKING_HOPS[h1.pCoord]
     if (!walks) continue
     const h1Name = h1.routes.name ?? ""
+    // Three interchange buffers, one per hand-off station:
+    //   H1 (walk-pair start) → H2 (walk-pair end) → H3 (rail change) → D
+    const bufH1 = interchangeBufferFor(h1Name)
     for (const [h2Coord, walk] of Object.entries(walks)) {
       const h2Routes = originRoutes[h2Coord]
       if (!h2Routes) continue
       const h2Name = h2Routes.name ?? ""
+      const bufH2 = interchangeBufferFor(h2Name)
       // For every H3 in H2's directReachable that's ALSO a top-level
       // origin-routes entry, see if H3 reaches D directly. H3 being an
       // origin-routes entry is required so we can look up H3→D times.
@@ -1203,11 +1216,12 @@ function tryComposeViaWalkingDoubleHub(
         if (!h3Routes) continue
         const h3ToD = h3Routes.directReachable?.[destCoordKey]
         if (!h3ToD?.minMinutes) continue
+        const bufH3 = interchangeBufferFor(h3Routes.name)
         const total =
           h1.pToCustomMins +
-          INTERCHANGE + walk.minutes +
-          INTERCHANGE + h2ToH3.minMinutes +
-          INTERCHANGE + h3ToD.minMinutes
+          bufH1 + walk.minutes +
+          bufH2 + h2ToH3.minMinutes +
+          bufH3 + h3ToD.minMinutes
         if (best != null && total >= best.mins) continue
         const h3Name = h3Routes.name ?? ""
         const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
@@ -2913,7 +2927,10 @@ export default function HikeMap() {
     // get custom→P is a safe approximation. The interchange buffer covers
     // the walk + wait at P.
     const isCustomPrimary = !PRIMARY_ORIGINS[primaryOrigin]
-    const CUSTOM_INTERCHANGE_MIN = 5
+    // Per-station interchange buffer at the hub the user changes at.
+    // interchangeBufferFor() returns the default 3-min for stations not
+    // listed in data/station-interchange-buffers.json — bigger interchanges
+    // (CLJ, KX, London Bridge, Reading) get more time per the curated list.
 
     // Extension A: via-direct-hub composition helper. For every origin-
     // routes station H that reaches BOTH the custom primary AND the
@@ -2924,7 +2941,7 @@ export default function HikeMap() {
     //
     // Only valuable for custom primaries. Returns the fastest 1-change
     // composition or null. Built inside the useMemo body so it can close
-    // over coordToName / crsToCoord / customHubs / CUSTOM_INTERCHANGE_MIN.
+    // over coordToName / crsToCoord / customHubs.
     function buildViaDirectHubJourney(
       customHubsArg: Array<{ pCoord: string; pToCustomMins: number; routes: { name?: string; directReachable?: Record<string, DirectReachable> } }>,
       coordKey: string,
@@ -2937,9 +2954,9 @@ export default function HikeMap() {
       for (const hub of customHubsArg) {
         const hubEntry = hub.routes.directReachable?.[coordKey]
         if (!hubEntry?.minMinutes) continue
-        const mins = hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + hubEntry.minMinutes
-        if (best != null && mins >= best.mins) continue
         const hubName = hub.routes.name ?? ""
+        const mins = hub.pToCustomMins + interchangeBufferFor(hubName) + hubEntry.minMinutes
+        if (best != null && mins >= best.mins) continue
         const hubToDestCoords = (hubEntry.fastestCallingPoints ?? [])
           .map((crs) => crsToCoord[crs])
           .filter((c): c is [number, number] => !!c)
@@ -3013,7 +3030,8 @@ export default function HikeMap() {
         // --- 2-leg: T direct-reaches D ---
         const tToD = tRoutes.directReachable?.[coordKey]
         if (tToD?.minMinutes != null) {
-          const mins = hop.minutes + CUSTOM_INTERCHANGE_MIN + tToD.minMinutes
+          // Interchange happens at T (TfL hop arrives at T, rail leg starts there).
+          const mins = hop.minutes + interchangeBufferFor(T.name) + tToD.minMinutes
           if (best1 == null || mins < best1.mins) {
             const tToDCoords = (tToD.fastestCallingPoints ?? [])
               .map((crs) => crsToCoord[crs])
@@ -3051,9 +3069,10 @@ export default function HikeMap() {
           if (!hRoutes) continue
           const hToD = hRoutes.directReachable?.[coordKey]
           if (!hToD?.minMinutes) continue
+          // Two interchanges: at T (after TfL hop) and at H (between rail legs).
           const mins =
-            hop.minutes + CUSTOM_INTERCHANGE_MIN +
-            tToH.minMinutes + CUSTOM_INTERCHANGE_MIN +
+            hop.minutes + interchangeBufferFor(T.name) +
+            tToH.minMinutes + interchangeBufferFor(tToH.name) +
             hToD.minMinutes
           if (best2 != null && mins >= best2.mins) continue
           // Polyline: hop coords + T→H calling points + H→D calling points.
@@ -4031,7 +4050,7 @@ export default function HikeMap() {
               const pToD = hub.routes.directReachable?.[coordKey]?.minMinutes
               if (pToD != null) {
                 const candidate: RouteCandidate = {
-                  mins: hub.pToCustomMins + pToD + CUSTOM_INTERCHANGE_MIN,
+                  mins: hub.pToCustomMins + pToD + interchangeBufferFor(hub.routes.name),
                   changes: 1,
                   hub,
                   kind: "rtt-direct",
@@ -4048,7 +4067,7 @@ export default function HikeMap() {
               const srcJourney = featureJourneys?.[hub.pCoord]
               if (srcJourney?.durationMinutes != null) {
                 const candidate: RouteCandidate = {
-                  mins: hub.pToCustomMins + CUSTOM_INTERCHANGE_MIN + srcJourney.durationMinutes,
+                  mins: hub.pToCustomMins + interchangeBufferFor(hub.routes.name) + srcJourney.durationMinutes,
                   // Changes through the hub (1) plus whatever the source
                   // journey already had. A Farringdon→Oxford journey with 1
                   // internal change (Farringdon→Paddington→Oxford) becomes
@@ -4090,7 +4109,10 @@ export default function HikeMap() {
                     mins:
                       hub.pToCustomMins +
                       matrixHop.minutes +
-                      CUSTOM_INTERCHANGE_MIN * 2 +
+                      // Two interchanges: at the hub, then at srcCanonical
+                      // (the terminal whose source journey we're piping through).
+                      interchangeBufferFor(hub.routes.name) +
+                      interchangeBufferFor(srcCanonical) +
                       journey.durationMinutes,
                     // Two changes (X→hub, hub→src) on top of the source
                     // journey's own changes. For VXH→Oxford via Waterloo
@@ -4478,8 +4500,8 @@ export default function HikeMap() {
             // Indirect-route composition. For any terminus T that does
             // NOT have D direct, try to compose T → hub → D where hub
             // is any origin-routes entry that both T reaches directly
-            // AND that directly reaches D. Uses 5-minute change buffer
-            // (CUSTOM_INTERCHANGE_MIN).
+            // AND that directly reaches D. Uses per-station change
+            // buffers via interchangeBufferFor() at each hand-off.
             //
             // CRITICAL filter: the hub must NOT be a London terminus.
             // If H is a terminus, then "T → H → D" is really just "go
@@ -4535,7 +4557,8 @@ export default function HikeMap() {
                 const tToH = tRoutes.directReachable?.[hCoord]
                 const hToD = hRoutes.directReachable?.[coordKey]
                 if (!tToH?.minMinutes || !hToD?.minMinutes) continue
-                const total = tToH.minMinutes + 5 + hToD.minMinutes
+                // Interchange happens at H (between the two rail legs).
+                const total = tToH.minMinutes + interchangeBufferFor(hRoutes.name) + hToD.minMinutes
                 if (!best || total < best.totalMin) {
                   best = {
                     hubName: hRoutes.name ?? hCoord,

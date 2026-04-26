@@ -26,6 +26,7 @@
 // data from the Routes API) before falling back to this stitcher.
 
 import type { JourneyInfo } from "@/components/photo-overlay"
+import { interchangeBufferFor, DEFAULT_INTERCHANGE_BUFFER_MIN } from "@/lib/interchange-buffers"
 
 // ---------------------------------------------------------------------------
 // Types for the static data files
@@ -191,24 +192,10 @@ export type StitchInputs = {
   sourceJourneyKeys?: string[]
 }
 
-// Minutes of platform-transfer buffer added when we prepend a tube hop.
-// Matches what Google Routes tends to add for station transfers.
-const INTERCHANGE_BUFFER_MIN = 3
-
-// Minimum realistic wait time between two consecutive HEAVY_RAIL legs in a
-// mid-journey change (e.g. change at Guildford from a Waterloo train to the
-// Minimum inter-leg transfer time. API-reported gaps below this get
-// padded up; values at or above are trusted verbatim. 3 min matches
-// the floor of what's physically plausible for a same-platform
-// cross-platform change and lets tight real-world connections (Lewes,
-// Guildford cross-platform etc.) come through as the APIs report them.
-//
-// Also used as a fallback when a leg lacks arrival/departure timestamps
-// and we can't compute the real gap from API data.
-// Exported so map.tsx's Option 2 hybrid-splice uses the same floor — keeping
-// stitchJourney and tryHybridSplice consistent means a hybrid can never
-// advertise a tighter connection than a stitched equivalent.
-export const MIN_CHANGE_BUFFER_MIN = 3
+// Per-station interchange buffer is now provided by interchangeBufferFor()
+// from lib/interchange-buffers.ts. The previous flat 3-min default is
+// available as DEFAULT_INTERCHANGE_BUFFER_MIN for places that don't have
+// a specific interchange-station name to look up.
 
 /**
  * Produce a synthesised JourneyInfo for the user starting at `newOrigin`, or
@@ -308,9 +295,9 @@ export function stitchJourney({
     const originLegs = source.legs.slice(startIdx)
     if (originLegs.some((l) => l.vehicleType !== "HEAVY_RAIL")) continue
     // Compute duration from the API-provided timestamps. Inter-leg
-    // gaps are trusted verbatim down to a 4-minute floor — see
-    // MIN_CHANGE_BUFFER_MIN for why. Single-leg journeys skip the
-    // gap logic entirely.
+    // gaps are trusted verbatim down to a per-station floor (see
+    // interchangeBufferFor — default 3 min, more at busy interchanges).
+    // Single-leg journeys skip the gap logic entirely.
     let minutes = 0
     let timestampsOk = true
     for (let i = 0; i < originLegs.length; i++) {
@@ -321,7 +308,10 @@ export function stitchJourney({
         const nextLeg = originLegs[i + 1]
         if (!nextLeg.departureTime) { timestampsOk = false; break }
         const gap = (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        minutes += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+        // Floor the gap at this station's per-station interchange buffer —
+        // big interchanges (CLJ, KX, London Bridge) get more time than the
+        // default 3-min minimum for tight cross-platform changes.
+        minutes += Math.max(gap, interchangeBufferFor(leg.arrivalStation))
       }
     }
     if (!timestampsOk || !Number.isFinite(minutes) || minutes <= 0) continue
@@ -500,10 +490,10 @@ function stitchFromSource(
  *  source.durationMinutes.
  *
  *  Sums per-leg ride times from each leg's own start/end timestamps,
- *  plus the API-reported gap between consecutive legs floored at
- *  MIN_CHANGE_BUFFER_MIN (4 min — roughly the tightest interchange
- *  Trainline ever quotes). Falls back to the source journey's own
- *  start-to-end delta when per-leg timestamps are missing entirely. */
+ *  plus the API-reported gap between consecutive legs floored at the
+ *  per-station interchange buffer (see interchangeBufferFor — default
+ *  3 min, more at busy interchanges). Falls back to the source journey's
+ *  own start-to-end delta when per-leg timestamps are missing entirely. */
 function computeMainlineMinutes(
   source: StitchedJourneyInfo,
   mainlineLegs: StitchedJourneyInfo["legs"],
@@ -544,13 +534,15 @@ function computeMainlineMinutes(
     if (i < mainlineLegs.length - 1) {
       const nextLeg = mainlineLegs[i + 1]
       // Gap = time between this leg's arrival and the next leg's
-      // departure. Trusted from the API down to a 4-min floor (see
-      // MIN_CHANGE_BUFFER_MIN). Falls back to the same 4-min default
-      // if the next leg lacks timestamps entirely.
+      // departure. Trusted from the API down to a per-station floor
+      // (see interchangeBufferFor — bigger interchanges get more time
+      // than the default 3 min). Falls back to that same per-station
+      // value if the next leg lacks timestamps entirely.
+      const buffer = interchangeBufferFor(leg.arrivalStation)
       const gap = nextLeg.departureTime && nextLeg.arrivalTime
         ? (new Date(nextLeg.departureTime).getTime() - new Date(leg.arrivalTime).getTime()) / 60_000
-        : MIN_CHANGE_BUFFER_MIN
-      total += Math.max(gap, MIN_CHANGE_BUFFER_MIN)
+        : buffer
+      total += Math.max(gap, buffer)
     }
   }
   return Math.round(total)
@@ -587,8 +579,11 @@ function buildJourney({
   }
 
   // --- Duration + changes ----------------------------------------------------
+  // Per-station interchange buffer at the mainline terminal — bigger
+  // termini (KX, London Bridge etc.) get more time than the default 3 min.
+  const prependBuffer = interchangeBufferFor(mainlineTerminal)
   const durationMinutes = prepend
-    ? prepend.hop.minutes + INTERCHANGE_BUFFER_MIN + mainlineMinutes
+    ? prepend.hop.minutes + prependBuffer + mainlineMinutes
     : mainlineMinutes
 
   const changes = prepend ? mainlineChanges + 1 : mainlineChanges
@@ -599,7 +594,7 @@ function buildJourney({
     // Back-date synthesised timestamps from the mainline train's departure.
     const mainlineDeparture = mainlineLegs[0]?.departureTime
     const arrivalMs = mainlineDeparture
-      ? new Date(mainlineDeparture).getTime() - INTERCHANGE_BUFFER_MIN * 60_000
+      ? new Date(mainlineDeparture).getTime() - prependBuffer * 60_000
       : NaN
     const departureMs = Number.isFinite(arrivalMs)
       ? arrivalMs - prepend.hop.minutes * 60_000
