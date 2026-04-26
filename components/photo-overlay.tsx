@@ -2203,6 +2203,26 @@ function AdminTabsAndSettings({
   )
 }
 
+// Expand a station name into one or more place-name tags for Flickr search.
+// Compound names like "Goring & Streatley" or "Windsor and Eton Central" map to
+// multiple tags so each town is searchable on its own. Common UK station
+// disambiguators (Central, Riverside, Parkway, etc.) are stripped — they aren't
+// part of the actual place name. The helper is conservative: words like "Hill"
+// or "Spa" stay because they CAN be part of a real name (e.g. Box Hill, Bath Spa).
+function expandStationTags(stationName: string): string[] {
+  // Drop a trailing " Station" / " station" suffix if present.
+  const cleaned = stationName.replace(/\s+station$/i, "").trim()
+  // Split compound names on "&" or the word "and" (with surrounding spaces, so
+  // we don't split inside actual place names that happen to contain "and").
+  const parts = cleaned.split(/\s+&\s+|\s+and\s+/i)
+  // Suffixes that are pure rail-network disambiguators, never part of a town
+  // name. Add carefully — anything ambiguous (Hill, Spa, North/South) stays out.
+  const SUFFIX = /\s+(central|parkway|riverside|international|junction|cross)$/i
+  return parts
+    .map((p) => p.trim().replace(SUFFIX, "").trim().toLowerCase())
+    .filter(Boolean)
+}
+
 // Per-tab settings editor. Identical fields for custom and preset modes —
 // the difference is purely where the save goes (per-station vs global).
 function TabSettingsPanel({
@@ -2249,7 +2269,6 @@ function TabSettingsPanel({
   // in the station's notes — same ordering logic as before.
   const buildInitialCustom = (): CustomSettings => {
     const { trails, terrains, sights, settlements } = categorizePlaceNames(publicNote, adminWalksAll)
-    const stationTag = stationName.toLowerCase().replace(/\s+station$/, "").trim()
     const seen = new Set<string>()
     const includeTags: string[] = []
     const pushUnique = (t: string) => {
@@ -2257,10 +2276,10 @@ function TabSettingsPanel({
       seen.add(t)
       includeTags.push(t)
     }
+    for (const t of expandStationTags(stationName)) pushUnique(t)
     for (const t of trails) pushUnique(t)
     for (const t of terrains) pushUnique(t)
     for (const t of sights) pushUnique(t)
-    pushUnique(stationTag)
     for (const t of settlements) pushUnique(t)
     return {
       includeTags: includeTags.slice(0, 20),
