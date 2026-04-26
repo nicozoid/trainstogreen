@@ -380,6 +380,17 @@ const PRIMARY_ORIGIN_GROUPS_PUBLIC: string[][] = PRIMARY_ORIGIN_GROUPS_ALL
   .map((group) => group.filter((key) => !PRIMARY_ORIGINS[key]?.adminOnly))
   .filter((group) => group.length > 0)
 
+// Coord-key migrations: when a previously-standalone primary moves to a new
+// synthetic anchor coord, redirect stored picks (in primaryOrigin AND recents)
+// so users coming back with stale localStorage don't end up with duplicates
+// or get reset to the default.
+const COORD_MIGRATIONS: Record<string, string> = {
+  // Old Stratford (SRA) standalone primary → new synthetic midpoint
+  "-0.0035472,51.541289": "-0.0061483,51.5430422",
+  // Old Kings Cross cluster primary (now removed) → Central London synthetic
+  "-0.1239491,51.530609": "-0.1269,51.5196",
+}
+
 // Clustered satellite stations — when a primary is active, these extra coord
 // keys are also consulted for direct-reachable lookups AND stitching attempts,
 // and the fastest train from any cluster member wins.
@@ -1508,15 +1519,6 @@ export default function HikeMap() {
   // from localStorage asynchronously via its own effect.
   useEffect(() => {
     if (!primaryOrigin) return
-    // Coord-key migrations: when a previously-standalone primary moves to
-    // a new synthetic anchor coord, redirect stored picks so users don't
-    // get reset to the default.
-    const COORD_MIGRATIONS: Record<string, string> = {
-      // Old Stratford (SRA) standalone primary → new synthetic midpoint
-      "-0.0035472,51.541289": "-0.0061483,51.5430422",
-      // Old Kings Cross cluster primary (now removed) → Central London synthetic
-      "-0.1239491,51.530609": "-0.1269,51.5196",
-    }
     if (COORD_MIGRATIONS[primaryOrigin]) {
       setPrimaryOriginRaw(COORD_MIGRATIONS[primaryOrigin])
       return
@@ -1533,9 +1535,16 @@ export default function HikeMap() {
   // recents list (e.g. Stratford, which used to be seeded as a recent before
   // it was promoted to a synthetic primary in the top group) gets removed,
   // since synthetic primaries already have a permanent slot in the dropdown
-  // and shouldn't appear twice.
+  // and shouldn't appear twice. Also strips legacy coords that would migrate
+  // to a synthetic — without this, users with the old SRA coord in localStorage
+  // see Stratford twice (once as the synthetic, once as the unmigrated recent).
   useEffect(() => {
-    const cleaned = recentCustomPrimaries.filter((c) => !PRIMARY_ORIGINS[c]?.isSynthetic)
+    const cleaned = recentCustomPrimaries.filter((c) => {
+      if (PRIMARY_ORIGINS[c]?.isSynthetic) return false
+      const migrated = COORD_MIGRATIONS[c]
+      if (migrated && PRIMARY_ORIGINS[migrated]?.isSynthetic) return false
+      return true
+    })
     if (cleaned.length !== recentCustomPrimaries.length) {
       setRecentCustomPrimaries(cleaned)
     }
