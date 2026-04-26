@@ -412,6 +412,15 @@ const DEFAULT_RECENT_PRIMARIES: string[] = [
   "-0.0599442,51.588123",    // Tottenham Hale (TOM)
   "-0.3004067,51.5149803",   // Ealing Broadway (EAL)
   "0.0232808,51.549251",     // Forest Gate (FOG)
+  "-0.0927317,51.3758448",   // East Croydon (ECR)
+  "0.2191164,51.4474203",    // Dartford (DFD)
+  "0.0887195,51.3736037",    // Orpington (ORP)
+  "-0.3004127,51.4632072",   // Richmond (RMD)
+  "-0.3961114,51.6639446",   // Watford Junction (WFJ)
+  "-0.3276687,51.7504966",   // St Albans City (SAC)
+  "0.1826107,51.5747271",    // Romford (RMF)
+  "-0.4191564,51.5029246",   // Hayes and Harlington (HAY)
+  "-0.104555,51.519964",     // Farringdon (ZFD)
 ]
 // DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
 // just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
