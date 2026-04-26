@@ -2971,16 +2971,22 @@ export default function HikeMap() {
     // Extension C: TfL-hop composition for non-terminal primaries. Uses
     // the pre-fetched primary→terminal hops from data/tfl-hop-matrix.json
     // (merged into terminalMatrix at module load) to compose:
-    //   primary → T (TfL hop) → T.directReachable[D] (rail)
+    //   2-leg: primary → T (TfL hop) → T.directReachable[D] (rail)
+    //   3-leg: primary → T (TfL hop) → H (rail) → H.directReachable[D] (rail)
     //
-    // Unlocks destinations directly reachable from a terminus the primary
-    // doesn't have rail to (CLJ→Wendover via MYB, CLJ→WelwynGC via KGX,
-    // CLJ→Hertford via LST, etc.). Pure RTT — no source journey required,
-    // unlike stitchJourney's via-source-journey path.
+    // 2-leg unlocks destinations directly reachable from a terminus the
+    // primary doesn't have rail to (CLJ→Wendover via MYB, CLJ→WelwynGC
+    // via KGX, CLJ→Hertford via LST, etc.).
+    // 3-leg unlocks destinations one rail-leg deeper, where T reaches an
+    // intermediate H that reaches D (CLJ→Marlow via PAD→Maidenhead,
+    // CLJ→Henley-on-Thames via PAD→Twyford, etc.).
     //
-    // Only fires when the primary has tfl-hop-matrix entries (currently
-    // CLJ; future ECR, FPK, RMD, etc. as they're added). Returns the
-    // fastest 1-change composition or null.
+    // Pure RTT — no pre-fetched source journey required, unlike
+    // stitchJourney's via-source-journey path. Only fires when the
+    // primary has tfl-hop-matrix entries (currently CLJ; future ECR,
+    // FPK, RMD, etc. as they're added). Returns the best composition,
+    // preferring fewer changes — a 1-change 2-leg path always beats a
+    // 2-change 3-leg path regardless of duration.
     function tryComposeViaPrimaryHop(
       primaryName: string,
       coordKey: string,
@@ -2988,7 +2994,8 @@ export default function HikeMap() {
     ): { journey: JourneyInfo; mins: number; changes: number } | null {
       const hopRow = terminalMatrix[primaryName]
       if (!hopRow) return null
-      let best: { journey: JourneyInfo; mins: number; changes: number } | null = null
+      let best1: { journey: JourneyInfo; mins: number } | null = null
+      let best2: { journey: JourneyInfo; mins: number } | null = null
       const { lng: pLng, lat: pLat } = parseCoordKey(customCoord)
       for (const T of londonTerminals) {
         const hop = hopRow[T.name]
@@ -2996,41 +3003,96 @@ export default function HikeMap() {
         const tCoord = findOriginRoutesCoord(T.name)
         if (!tCoord) continue
         const tRoutes = originRoutes[tCoord]
-        const tToD = tRoutes?.directReachable?.[coordKey]
-        if (!tToD?.minMinutes) continue
-        const mins = hop.minutes + CUSTOM_INTERCHANGE_MIN + tToD.minMinutes
-        if (best != null && mins >= best.mins) continue
-        // Polyline: TfL hop polyline (primary → T) + T→D calling-points.
-        // Falls back to a straight primary-coord → T-coord segment if the
-        // hop entry has no polyline (rare — only WALK entries with 0min).
-        const hopCoords = hop.polyline ? decodePolyline(hop.polyline) : [[pLng, pLat] as [number, number]]
-        const tToDCoords = (tToD.fastestCallingPoints ?? [])
-          .map((crs) => crsToCoord[crs])
-          .filter((c): c is [number, number] => !!c)
-        const polylineCoords = tToDCoords.length > 1
-          ? [...hopCoords, ...tToDCoords]
-          : undefined
-        const cp = buildCallingPoints(tCoord, coordKey)
-        const journey = {
-          durationMinutes: mins,
-          changes: 1,
-          legs: [
-            { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
-            {
-              vehicleType: "HEAVY_RAIL",
-              departureStation: T.name,
-              arrivalStation: tToD.name ?? "",
-              stopCount: Math.max(0, (tToD.fastestCallingPoints?.length ?? 0) - 2),
-            },
-          ],
-          polylineCoords,
-          londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
-          londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
-          callingPointsLegArrival: tToD.name,
-        } as unknown as JourneyInfo
-        best = { journey, mins, changes: 1 }
+        if (!tRoutes) continue
+        // Polyline prefix: TfL hop polyline (primary → T). Falls back to
+        // a straight primary-coord → T-coord segment when the hop entry
+        // has no polyline (rare — only WALK entries with 0min).
+        const hopCoords: [number, number][] = hop.polyline
+          ? decodePolyline(hop.polyline)
+          : [[pLng, pLat]]
+        // --- 2-leg: T direct-reaches D ---
+        const tToD = tRoutes.directReachable?.[coordKey]
+        if (tToD?.minMinutes != null) {
+          const mins = hop.minutes + CUSTOM_INTERCHANGE_MIN + tToD.minMinutes
+          if (best1 == null || mins < best1.mins) {
+            const tToDCoords = (tToD.fastestCallingPoints ?? [])
+              .map((crs) => crsToCoord[crs])
+              .filter((c): c is [number, number] => !!c)
+            const polylineCoords = tToDCoords.length > 1 ? [...hopCoords, ...tToDCoords] : undefined
+            const cp = buildCallingPoints(tCoord, coordKey)
+            const journey = {
+              durationMinutes: mins,
+              changes: 1,
+              legs: [
+                { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
+                {
+                  vehicleType: "HEAVY_RAIL",
+                  departureStation: T.name,
+                  arrivalStation: tToD.name ?? "",
+                  stopCount: Math.max(0, (tToD.fastestCallingPoints?.length ?? 0) - 2),
+                },
+              ],
+              polylineCoords,
+              londonCallingPoints: cp && cp.downstream.length > 0 ? cp.downstream : undefined,
+              londonUpstreamCallingPoints: cp && cp.upstream.length > 0 ? cp.upstream : undefined,
+              callingPointsLegArrival: tToD.name,
+            } as unknown as JourneyInfo
+            best1 = { journey, mins }
+          }
+        }
+        // --- 3-leg: T → H (rail) → H.directReachable[D] (rail) ---
+        // Skip the inner loop entirely if we already have a 1-change path
+        // — it'll always beat any 2-change candidate.
+        if (best1 != null) continue
+        for (const [hCoord, tToH] of Object.entries(tRoutes.directReachable ?? {})) {
+          if (!tToH?.minMinutes) continue
+          if (hCoord === coordKey) continue  // 2-leg case, handled above
+          const hRoutes = originRoutes[hCoord]
+          if (!hRoutes) continue
+          const hToD = hRoutes.directReachable?.[coordKey]
+          if (!hToD?.minMinutes) continue
+          const mins =
+            hop.minutes + CUSTOM_INTERCHANGE_MIN +
+            tToH.minMinutes + CUSTOM_INTERCHANGE_MIN +
+            hToD.minMinutes
+          if (best2 != null && mins >= best2.mins) continue
+          // Polyline: hop coords + T→H calling points + H→D calling points.
+          const tToHCoords = (tToH.fastestCallingPoints ?? [])
+            .map((crs) => crsToCoord[crs])
+            .filter((c): c is [number, number] => !!c)
+          const hToDCoords = (hToD.fastestCallingPoints ?? [])
+            .map((crs) => crsToCoord[crs])
+            .filter((c): c is [number, number] => !!c)
+          const polylineCoords =
+            tToHCoords.length + hToDCoords.length > 1
+              ? [...hopCoords, ...tToHCoords, ...hToDCoords]
+              : undefined
+          const journey = {
+            durationMinutes: mins,
+            changes: 2,
+            legs: [
+              { vehicleType: hop.vehicleType, departureStation: primaryName, arrivalStation: T.name },
+              {
+                vehicleType: "HEAVY_RAIL",
+                departureStation: T.name,
+                arrivalStation: tToH.name ?? "",
+                stopCount: Math.max(0, (tToH.fastestCallingPoints?.length ?? 0) - 2),
+              },
+              {
+                vehicleType: "HEAVY_RAIL",
+                departureStation: tToH.name ?? "",
+                arrivalStation: hToD.name ?? "",
+                stopCount: Math.max(0, (hToD.fastestCallingPoints?.length ?? 0) - 2),
+              },
+            ],
+            polylineCoords,
+          } as unknown as JourneyInfo
+          best2 = { journey, mins }
+        }
       }
-      return best
+      if (best1) return { journey: best1.journey, mins: best1.mins, changes: 1 }
+      if (best2) return { journey: best2.journey, mins: best2.mins, changes: 2 }
+      return null
     }
     // Pre-filter origin-routes entries that direct-reach the custom station,
     // so the inner loop over destinations only iterates the relevant primaries.
