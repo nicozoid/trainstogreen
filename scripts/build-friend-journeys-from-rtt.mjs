@@ -62,9 +62,39 @@ if (!ORIGIN_COORD_FLAG && !ORIGIN_CRS_FLAG) {
 
 const repoRoot = path.resolve(process.cwd())
 const originRoutesPath = path.join(repoRoot, "data", "origin-routes.json")
+const stationsPath = path.join(repoRoot, "public", "stations.json")
 const outputPath = path.join(repoRoot, "public", "journeys", `${SLUG}.json`)
 
 const originRoutes = JSON.parse(readFileSync(originRoutesPath, "utf8"))
+
+// Build a CRS → [lng, lat] lookup from stations.json. Used to turn each
+// leg's fastestCallingPoints (a CRS list) into polylineCoords so the
+// runtime can draw a route line on the map. Without this, friend
+// journeys render with no polyline (the runtime falls through to a
+// straight-line fallback only for primaries that have a routing diff).
+const stations = JSON.parse(readFileSync(stationsPath, "utf8"))
+const crsToCoord = {}
+for (const f of stations.features ?? []) {
+  const crs = f.properties?.["ref:crs"]
+  if (!crs) continue
+  const c = f.geometry?.coordinates
+  if (!Array.isArray(c) || c.length !== 2) continue
+  crsToCoord[crs] = [c[0], c[1]]
+}
+
+// Resolve a CRS list → coord list, dropping any unknown CRSes (a
+// missing intermediate is preferable to an empty polyline). Returns
+// undefined when fewer than 2 points survive — the runtime checks for
+// length>1 before drawing.
+function callingPointsToCoords(crsList) {
+  if (!Array.isArray(crsList) || crsList.length < 2) return undefined
+  const out = []
+  for (const crs of crsList) {
+    const c = crsToCoord[crs]
+    if (c) out.push([c[0], c[1]])
+  }
+  return out.length > 1 ? out : undefined
+}
 
 // Resolve origin coord — either from --origin-coord directly or by scanning
 // origin-routes for a CRS match.
@@ -135,6 +165,7 @@ for (const directCoord of directOriginCoords) {
     const stopCount = Math.max(0, (dr.fastestCallingPoints?.length ?? 2) - 2)
     const existing = journeys[destCoord]
     if (existing && existing.durationMinutes <= dr.minMinutes) continue
+    const polylineCoords = callingPointsToCoords(dr.fastestCallingPoints)
     journeys[destCoord] = {
       durationMinutes: dr.minMinutes,
       changes: 0,
@@ -146,6 +177,7 @@ for (const directCoord of directOriginCoords) {
           stopCount,
         },
       ],
+      ...(polylineCoords ? { polylineCoords } : {}),
     }
   }
 }
@@ -192,6 +224,19 @@ for (const startCoord of directOriginCoords) {
       const leg1Stops = Math.max(0, (junctionLeg.fastestCallingPoints?.length ?? 2) - 2)
       const leg2Stops = Math.max(0, (jd.fastestCallingPoints?.length ?? 2) - 2)
 
+      // Concatenate leg1 + leg2 polylines. The junction coord is the
+      // last point of leg1 and the first of leg2 — drop the duplicate
+      // when stitching so we don't render a redundant point at the
+      // change station.
+      const leg1Coords = callingPointsToCoords(junctionLeg.fastestCallingPoints)
+      const leg2Coords = callingPointsToCoords(jd.fastestCallingPoints)
+      let polylineCoords
+      if (leg1Coords && leg2Coords) {
+        polylineCoords = [...leg1Coords, ...leg2Coords.slice(1)]
+      } else {
+        polylineCoords = leg1Coords ?? leg2Coords
+      }
+
       journeys[destCoord] = {
         durationMinutes: totalMinutes,
         changes: 1,
@@ -209,6 +254,7 @@ for (const startCoord of directOriginCoords) {
             stopCount: leg2Stops,
           },
         ],
+        ...(polylineCoords ? { polylineCoords } : {}),
       }
     }
   }

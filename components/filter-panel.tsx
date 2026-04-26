@@ -736,7 +736,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // there's no separate "Remove" row eating a slot anymore.
   function renderFriendDropdownContent() {
     const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
-    const desktopRoom = Math.max(0, 12 - pinnedFriends.length)
+    // Cap is on recents alone (separate from pinned items above) so the
+    // user always sees 12 picks on sm+, regardless of how many slots
+    // pinning takes up. Mobile still subtracts pinned to keep the menu
+    // compact on small screens.
+    const desktopRoom = 12
     const mobileRoom = Math.max(0, 8 - pinnedFriends.length)
     // Helper that renders a single friend row. Branches on whether it's
     // the active friend: active rows get muted text + an X icon and
@@ -1067,7 +1071,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         mobile slice get `hidden sm:flex`. */}
                     {(() => {
                       const dedup = recentPrimaries.filter((c) => !pinnedPrimaries.includes(c))
-                      const desktopRoom = Math.max(0, 12 - pinnedPrimaries.length)
+                      // Cap is on recents alone (separate from pinned
+                      // items above) so the user always sees 12 picks
+                      // on sm+, regardless of how many slots pinning
+                      // takes up. Mobile still subtracts pinned to
+                      // keep the menu compact on small screens.
+                      const desktopRoom = 12
                       const mobileRoom = Math.max(0, 8 - pinnedPrimaries.length)
                       return dedup.slice(0, desktopRoom).map((coord, idx) => {
                         // Label resolution, in order:
