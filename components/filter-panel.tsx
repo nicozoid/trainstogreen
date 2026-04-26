@@ -754,25 +754,24 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             className={cn(
               // flex items-center keeps the label and the X aligned on
               // the same baseline; justify-between pushes the X to the
-              // right edge of the row. Normal text colour — the X icon
-              // alone signals the remove affordance. bg-accent/50 gives
-              // the row a persistent half-opacity tint so it reads as
-              // 'currently selected' even without hover; hover/focus
-              // bumps to full opacity (matches the standard
-              // DropdownMenuItem hover treatment).
-              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer bg-accent/50 hover:bg-accent focus:bg-accent",
+              // right edge of the row. bg-accent/50 gives the row a
+              // persistent half-opacity tint at rest; hover/focus
+              // switches to the destructive (fire-500) bg + white text
+              // to signal that the action is removal, not selection.
+              // group/friend-row exposes the hover state to the X icon
+              // below so it can scale up.
+              "group/friend-row flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer bg-accent/50 hover:bg-destructive focus:bg-destructive hover:text-white focus:text-white",
               hiddenOnMobile && "hidden sm:flex",
             )}
             aria-label={`Remove ${label} as friend's station`}
           >
             <span>{label}</span>
-            {/* Hover-only emphasis: thicker stroke + slight scale-up so
+            {/* Hover-only emphasis: thicker stroke + 10% scale-up so
                 the remove affordance pops once the user is over the row.
-                stroke-[2.5] is one step heavier than the default; the
-                scale-105 = 5% larger. */}
+                stroke-[2.5] is one step heavier than the default. */}
             <IconX
               size={14}
-              className="shrink-0 transition-transform group-hover/friend-row:scale-105 group-hover/friend-row:stroke-[2.5]"
+              className="shrink-0 transition-transform group-hover/friend-row:scale-110 group-hover/friend-row:stroke-[2.5]"
             />
           </DropdownMenuItem>
         )
