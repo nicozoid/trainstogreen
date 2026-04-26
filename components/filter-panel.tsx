@@ -198,10 +198,12 @@ type FilterPanelProps = {
   bannerVisible: boolean
   /** Currently selected primary origin station name */
   primaryOrigin: string
-  /** All available primary origin options, grouped for display.
-   *  Each sub-array is a group; a horizontal ruler is rendered between groups.
-   *  Pass `[allOrigins]` (one group) for a flat list with no separators. */
-  primaryOriginGroups: string[][]
+  /** Pinned primary coords — always rendered at the top of the dropdown,
+   *  always present, never evicted. Counted against the cap. */
+  pinnedPrimaries: string[]
+  /** Admin-only primary entries — rendered as a separate group below the
+   *  pinned items when adminMode is on. NOT counted against the cap. */
+  adminOnlyPrimaries: string[]
   /** Switch the primary origin */
   onPrimaryOriginChange: (origin: string) => void
   /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
@@ -237,6 +239,11 @@ type FilterPanelProps = {
   coordToName?: Record<string, string>
   /** Friend origin station name, or null if not active */
   friendOrigin: string | null
+  /** Pinned friend coords — same role as pinnedPrimaries on the friend
+   *  side. Currently empty; reserved for future always-visible picks. */
+  pinnedFriends: string[]
+  /** Friend recents — user picks (top) merged with curated defaults. */
+  recentFriends: string[]
   /** All available friend origin options */
   friendOrigins: string[]
   /** Switch the friend origin (without deactivating) */
@@ -286,7 +293,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, primaryOriginGroups, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -318,6 +325,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // stations (Phase 2 custom primary). Only shown when admin mode is active.
   const [primarySearch, setPrimarySearch] = useState("")
   const isPrimarySearchActive = primarySearch.trim().length >= 3
+
+  // Friend-side equivalent. Filter universe is the merged friend recents
+  // (pinned + recents) — typing "edin" reveals Edinburgh even if it's
+  // past the visible cap. UK-wide search with disabled "Coming soon"
+  // rows for friends without journey data is a future extension.
+  const [friendSearch, setFriendSearch] = useState("")
+  const isFriendSearchActive = friendSearch.trim().length >= 2
 
   // Mobile-only: when the user taps the inline "Other stations" input, the
   // native keyboard pops up and obscures the dropdown's results. To avoid
@@ -556,6 +570,21 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return deduped.slice(0, 15)
   }, [primarySearch, isPrimarySearchActive, searchableStations])
 
+  // Friend search matches. Filters across the merged friend list
+  // (pinned + recents) by display name. Returns coord strings rather
+  // than richer station records — friend rendering already does its own
+  // label resolution via originMenuName / coordToName.
+  const matchingFriends = useMemo(() => {
+    if (!isFriendSearchActive) return [] as string[]
+    const q = friendSearch.toLowerCase().trim()
+    const universe = [...pinnedFriends, ...recentFriends.filter((c) => !pinnedFriends.includes(c))]
+    return universe.filter((coord) => {
+      const menu = originMenuName(coord)
+      const label = menu !== coord ? menu : coordToName[coord] ?? coord
+      return label.toLowerCase().includes(q)
+    }).slice(0, 15)
+  }, [friendSearch, isFriendSearchActive, pinnedFriends, recentFriends, originMenuName, coordToName])
+
   // --- Train arrival animation ---
   // Purely visual: after the banner is dismissed, a fake slider overlay
   // animates the train icon smoothly from 0% → the real thumb position.
@@ -656,6 +685,115 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   function formatMax(mins: number) {
     if (adminMode && mins >= ADMIN_MAX) return "Max"
     return formatDuration(mins)
+  }
+
+  // Friend dropdown content — rendered in BOTH the active and inactive
+  // friend states. Mirrors the primary dropdown's pinned + capped-recents
+  // + search shape, with a "Remove friend's station" entry pinned at the
+  // top whenever a friend is currently active. Caps are 1 lower than the
+  // primary side (11/4 vs 12/5) to absorb the visual weight of the Remove
+  // row + separator without making the dropdown taller than the primary's.
+  function renderFriendDropdownContent() {
+    const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
+    const desktopRoom = Math.max(0, 11 - pinnedFriends.length)
+    const mobileRoom = Math.max(0, 4 - pinnedFriends.length)
+    return (
+      <>
+        {/* "Remove friend's station" — top of the menu, only when a
+            friend is active. text-muted-foreground signals secondary
+            intent so it doesn't compete with the actual picks below. */}
+        {friendOrigin && (
+          <>
+            <DropdownMenuItem
+              onSelect={() => onDeactivateFriend()}
+              className="cursor-pointer text-muted-foreground"
+            >
+              Remove friend&apos;s station
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {/* Pinned friends — always shown, always near the top. Currently
+            empty; reserved for future curated picks. */}
+        {pinnedFriends.map((coord) => {
+          const menu = originMenuName(coord)
+          const label = menu !== coord ? menu : coordToName[coord] ?? coord
+          return (
+            <DropdownMenuItem
+              key={coord}
+              onSelect={() => onFriendOriginChange(coord)}
+              className={cn(
+                "whitespace-normal leading-tight cursor-pointer",
+                coord === friendOrigin && "bg-accent/50 focus:bg-accent/50"
+              )}
+            >
+              {label}
+            </DropdownMenuItem>
+          )
+        })}
+        {/* Recents — capped at 11 (≥sm) / 4 (<sm) total when no pinned
+            items are present. Items past the mobile slice get
+            `hidden sm:flex` so the small-viewport list stays scannable. */}
+        {dedup.slice(0, desktopRoom).map((coord, idx) => {
+          const menu = originMenuName(coord)
+          const label = menu !== coord ? menu : coordToName[coord] ?? coord
+          return (
+            <DropdownMenuItem
+              key={coord}
+              onSelect={() => onFriendOriginChange(coord)}
+              className={cn(
+                "whitespace-normal leading-tight cursor-pointer",
+                coord === friendOrigin && "bg-accent/50 focus:bg-accent/50",
+                idx >= mobileRoom && "hidden sm:flex",
+              )}
+            >
+              {label}
+            </DropdownMenuItem>
+          )
+        })}
+        {/* Search input + matches. Same pattern as the primary side —
+            stopPropagation keeps Radix's typeahead from hijacking
+            keystrokes. Universe is currently the merged recents list, so
+            typing the name of a friend buried past the cap reveals it. */}
+        <div className="px-1.5 py-1">
+          <Input
+            type="text"
+            placeholder="Other stations"
+            value={friendSearch}
+            onChange={(e) => setFriendSearch(e.target.value)}
+            onKeyDown={(e) => e.stopPropagation()}
+            className="h-7 text-xs px-2"
+          />
+        </div>
+        {isFriendSearchActive && (
+          matchingFriends.length > 0 ? (
+            matchingFriends.map((coord) => {
+              const menu = originMenuName(coord)
+              const label = menu !== coord ? menu : coordToName[coord] ?? coord
+              return (
+                <DropdownMenuItem
+                  key={coord}
+                  onSelect={() => {
+                    onFriendOriginChange(coord)
+                    setFriendSearch("")
+                  }}
+                  className={cn(
+                    "whitespace-normal leading-tight cursor-pointer",
+                    coord === friendOrigin && "bg-accent/50 focus:bg-accent/50"
+                  )}
+                >
+                  {label}
+                </DropdownMenuItem>
+              )
+            })
+          ) : (
+            <div className="px-2 py-1.5 text-sm text-muted-foreground">
+              No matches
+            </div>
+          )
+        )}
+      </>
+    )
   }
 
   // Fragment wrapper so we can render the mobile-search sheet as a sibling
@@ -825,7 +963,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         et al. used to have permanent dropdown slots. They
                         no longer do — they're found via search, and promoted
                         into the recents list when picked. */}
-                    {primaryOriginGroups.flat().map((origin) => (
+                    {/* Pinned items (always shown, always at top) — the
+                        first slot is reserved for Central London. Counted
+                        against the cap below: pinned.length + visible
+                        recents = 12 (≥sm) / 5 (<sm). */}
+                    {pinnedPrimaries.map((origin) => (
                       <DropdownMenuItem
                         key={origin}
                         onSelect={() => onPrimaryOriginChange(origin)}
@@ -843,37 +985,64 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       </DropdownMenuItem>
                     ))}
 
-                    {/* Recents flow directly into the same section — no
-                        separator between synthetics and recents. Always
-                        rendered (not gated on search state) so the user
-                        never loses them while typing. Matches live BELOW
-                        the search input. */}
-                    {recentPrimaries.length > 0 && recentPrimaries.map((coord) => {
-                      // Label resolution, in order:
-                      //   1. originMenuName(coord) if coord is a known primary
-                      //      — picks up the rich "Kings Cross, St Pancras,
-                      //      & Euston" label instead of just "Kings Cross".
-                      //   2. coordToName[coord] — the station's own name
-                      //      from stations.json (covers Stratford,
-                      //      Farringdon, Kentish Town, etc.).
-                      //   3. raw coord as last-ditch fallback.
-                      const menu = originMenuName(coord)
-                      const label = menu !== coord
-                        ? menu
-                        : coordToName[coord] ?? coord
-                      return (
-                        <DropdownMenuItem
-                          key={coord}
-                          onSelect={() => onCustomPrimarySelect?.(coord)}
-                          className={cn(
-                            "whitespace-normal leading-tight cursor-pointer",
-                            coord === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
-                          )}
-                        >
-                          {label}
-                        </DropdownMenuItem>
-                      )
-                    })}
+                    {/* Recents — user picks (top) merged with curated
+                        defaults (below). Cap on TOTAL items (pinned +
+                        recents) is 12 (≥sm) / 5 (<sm); items past the
+                        mobile slice get `hidden sm:flex`. */}
+                    {(() => {
+                      const dedup = recentPrimaries.filter((c) => !pinnedPrimaries.includes(c))
+                      const desktopRoom = Math.max(0, 12 - pinnedPrimaries.length)
+                      const mobileRoom = Math.max(0, 5 - pinnedPrimaries.length)
+                      return dedup.slice(0, desktopRoom).map((coord, idx) => {
+                        // Label resolution, in order:
+                        //   1. originMenuName(coord) if coord is a known origin
+                        //      — picks up the rich "Kings Cross, St Pancras,
+                        //      & Euston" label instead of just "Kings Cross".
+                        //   2. coordToName[coord] — the station's own name
+                        //      from stations.json (covers Stratford,
+                        //      Farringdon, Kentish Town, etc.).
+                        //   3. raw coord as last-ditch fallback.
+                        const menu = originMenuName(coord)
+                        const label = menu !== coord
+                          ? menu
+                          : coordToName[coord] ?? coord
+                        return (
+                          <DropdownMenuItem
+                            key={coord}
+                            onSelect={() => onCustomPrimarySelect?.(coord)}
+                            className={cn(
+                              "whitespace-normal leading-tight cursor-pointer",
+                              coord === primaryOrigin && "bg-accent/50 focus:bg-accent/50",
+                              idx >= mobileRoom && "hidden sm:flex",
+                            )}
+                          >
+                            {label}
+                          </DropdownMenuItem>
+                        )
+                      })
+                    })()}
+
+                    {/* Admin-only primaries — separate group below
+                        the cap-counted section. Only rendered when
+                        adminMode is on and there's at least one
+                        entry. Not capped (admin tooling). */}
+                    {adminOnlyPrimaries.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {adminOnlyPrimaries.map((origin) => (
+                          <DropdownMenuItem
+                            key={origin}
+                            onSelect={() => onPrimaryOriginChange(origin)}
+                            className={cn(
+                              "whitespace-normal leading-tight cursor-pointer",
+                              origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
+                            )}
+                          >
+                            {originMenuName(origin)}
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
 
                     {/* Search input + matches. Stations without full
                         RTT/TfL coverage still appear in matches but render
@@ -1256,10 +1425,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
           )}
 
           {/* Friend origin: show slider when active, "Add friend" dropdown
-              when not. In the inactive state, clicking the button opens a
-              dropdown of the preloaded friend origins — the user picks
-              which friend, rather than auto-selecting the first. No
-              "Remove" in this state (there's nothing to remove). */}
+              when not. Both states render the SAME unified dropdown
+              content (pinned + recents + search), differing only in the
+              trigger button and the "Remove friend's station" entry that
+              appears at the top when a friend is currently active. */}
           {!friendOrigin && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1271,17 +1440,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               <DropdownMenuContent
                 align="start"
                 collisionPadding={16}
-                className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem]"
+                className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain"
               >
-                {friendOrigins.map((origin) => (
-                  <DropdownMenuItem
-                    key={origin}
-                    onSelect={() => onFriendOriginChange(origin)}
-                    className="whitespace-normal leading-tight cursor-pointer"
-                  >
-                    {originMenuName(origin)}
-                  </DropdownMenuItem>
-                ))}
+                {renderFriendDropdownContent()}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
@@ -1305,33 +1466,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     <DropdownMenuContent
                       align="start"
                       collisionPadding={16}
-                      className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem]"
+                      className="max-sm:w-[calc(100vw-2rem)] sm:max-w-[19rem] max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain"
                     >
-                      {friendOrigins.map((origin) => (
-                        <DropdownMenuItem
-                          key={origin}
-                          onSelect={() => onFriendOriginChange(origin)}
-                          className={cn(
-                            "whitespace-normal leading-tight cursor-pointer",
-                            origin === friendOrigin && "bg-accent/50 focus:bg-accent/50"
-                          )}
-                        >
-                          {/* Menu label (e.g. "Birmingham New St"); trigger uses the shorter "Birmingham". */}
-                          {originMenuName(origin)}
-                        </DropdownMenuItem>
-                      ))}
-                      {/* Separator + "Remove" deactivates friend mode entirely */}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onSelect={() => onDeactivateFriend()}
-                        // text-muted-foreground signals the
-                        // destructive-ish intent is secondary — "Remove"
-                        // sits below the active options at reduced
-                        // visual weight.
-                        className="cursor-pointer text-muted-foreground"
-                      >
-                        Remove
-                      </DropdownMenuItem>
+                      {renderFriendDropdownContent()}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </span>

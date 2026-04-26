@@ -372,23 +372,20 @@ const byDisplayName = (a: string, b: string) => {
   if (b === CENTRAL_LONDON_COORD) return 1
   return (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
 }
-// ONLY the synthetic primary (currently just "Any London terminus") is shown
-// as a permanent curated dropdown item. Individual London termini (Charing
-// Cross, Victoria, Waterloo, …) are treated like any other London NR station
-// — reachable via search + promoted into the "recents" list when picked.
-// Admin mode still gets to see admin-only entries as an extra group below
-// the synthetic so they remain one-click accessible for dev work.
-const PRIMARY_ORIGIN_GROUPS_ALL: string[][] = [
-  Object.keys(PRIMARY_ORIGINS)
-    .filter((k) => !PRIMARY_ORIGINS[k]?.adminOnly && PRIMARY_ORIGINS[k]?.isSynthetic)
-    .sort(byDisplayName),
-  Object.keys(PRIMARY_ORIGINS)
-    .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
-    .sort(byDisplayName),
-].filter((group) => group.length > 0)
-const PRIMARY_ORIGIN_GROUPS_PUBLIC: string[][] = PRIMARY_ORIGIN_GROUPS_ALL
-  .map((group) => group.filter((key) => !PRIMARY_ORIGINS[key]?.adminOnly))
-  .filter((group) => group.length > 0)
+// Pinned primary coords — always shown at the top of the primary dropdown,
+// always present, never evicted. For now just Central London; the rest of
+// the menu is composed of seeded/user recents below.
+const PINNED_PRIMARIES: string[] = [CENTRAL_LONDON_COORD]
+// Pinned friend coords — same idea on the friend side, currently empty.
+// Kept as a const so future "always-visible" picks can be added without
+// touching the dropdown rendering.
+const PINNED_FRIENDS: string[] = []
+// Admin-only primary group — separate from pinned, only rendered when
+// adminMode is on. Hidden from regular users; useful as a one-click pick
+// for dev work on partially-fetched origins.
+const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
+  .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
+  .sort(byDisplayName)
 
 // Coord-key migrations: when a previously-standalone primary moves to a new
 // synthetic anchor coord, redirect stored picks (in primaryOrigin AND recents)
@@ -400,6 +397,27 @@ const COORD_MIGRATIONS: Record<string, string> = {
   // Old Kings Cross cluster primary (now removed) → Central London synthetic
   "-0.1239491,51.530609": "-0.1269,51.5196",
 }
+
+// Seeded recents for the primary dropdown — coords pre-populated as if
+// the user had recently searched for and picked each one. Merged with
+// the actual user recents at render time (user picks float to the top,
+// defaults below — deduped). Picked for major-interchange status,
+// geographic spread, and population catchment.
+const DEFAULT_RECENT_PRIMARIES: string[] = [
+  "-0.1705184,51.4644589",   // Clapham Junction
+  "-0.3004067,51.5149803",   // Ealing Broadway
+  "-0.1064144,51.5648345",   // Finsbury Park
+  "0.0232808,51.549251",     // Forest Gate
+  "-0.0746988,51.3971695",   // Norwood Junction
+  "-0.3004127,51.4632072",   // Richmond
+  "-0.0749325,51.5824738",   // Seven Sisters
+  "-0.0599442,51.588123",    // Tottenham Hale
+  "-0.3206893,51.5135365",   // West Ealing
+  "-0.2435041,51.5321956",   // Willesden Junction
+]
+// DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
+// just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
+// keeps maintenance simple.
 
 // Clustered satellite stations — when a primary is active, these extra coord
 // keys are also consulted for direct-reachable lookups AND stitching attempts,
@@ -572,6 +590,12 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
+
+// Seeded recents for the friend dropdown — every key in FRIEND_ORIGINS,
+// in declaration order. Merged with user-picked friend recents at render
+// time. Same 'Coming soon' disabled-row treatment can apply when search
+// exposes friend stations without journey-file coverage.
+const DEFAULT_RECENT_FRIENDS: string[] = FRIEND_ORIGIN_KEYS
 
 // Resolve the effective journey from a friend origin to a destination,
 // falling back to cluster members when the friend is a SYNTHETIC anchor
@@ -1600,6 +1624,14 @@ export default function HikeMap() {
     "ttg:recentCustomPrimaries",
     [],
   )
+  // Mirror of recentCustomPrimaries on the friend side — coord keys the
+  // user has previously picked as a friend's home. Merged with
+  // DEFAULT_RECENT_FRIENDS at render time so user picks float to the top
+  // of the friend dropdown.
+  const [recentCustomFriends, setRecentCustomFriends] = usePersistedState<string[]>(
+    "ttg:recentCustomFriends",
+    [],
+  )
   // One-shot localStorage migration: name → coord key, and reset if the stored
   // coord isn't a current primary option (e.g. we removed the Liverpool Street
   // standalone primary — users who had LST selected should fall back to default).
@@ -1792,9 +1824,16 @@ export default function HikeMap() {
       // Add / switch: drive the "Looking up trains from <X>" label.
       setPendingFriendCoord(next)
       setGoodbyeFriendCoord(null)
+      // Bump this friend to the top of recents so it floats above the
+      // seeded defaults next time the dropdown is opened. Same shape as
+      // selectCustomPrimary's recents handling.
+      setRecentCustomFriends((prev) => {
+        const filtered = prev.filter((c) => c !== next)
+        return [next, ...filtered].slice(0, 9)
+      })
     }
     startTransition(() => setFriendOrigin(next))
-  }, [])
+  }, [setRecentCustomFriends])
   // Reverse lookup: cluster-member coord → parent primary coord. Lets the
   // search-based picker redirect a tap on (e.g.) Waterloo East to the
   // Waterloo primary, or St Pancras to the Kings Cross primary, instead of
@@ -7281,21 +7320,36 @@ export default function HikeMap() {
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
         primaryOrigin={primaryOrigin}
-        // Admin-only origins (e.g. Charing Cross) are visible in the dropdown
-        // only when devExcludeActive is on.
-        primaryOriginGroups={devExcludeActive ? PRIMARY_ORIGIN_GROUPS_ALL : PRIMARY_ORIGIN_GROUPS_PUBLIC}
+        // Pinned primary coords — always rendered at the top of the
+        // dropdown, never evicted. Currently just Central London.
+        pinnedPrimaries={PINNED_PRIMARIES}
+        // Admin-only primary group, only rendered when adminMode is on.
+        adminOnlyPrimaries={devExcludeActive ? ADMIN_ONLY_PRIMARIES : []}
         onPrimaryOriginChange={setPrimaryOrigin}
         // Both callbacks receive a coord key now. ALL_ORIGINS merges primary+friend
         // so the filter-panel can label either role with one callback.
         originDisplayName={(key) => ALL_ORIGINS[key]?.displayName ?? key}
         originMobileDisplayName={(key) => ALL_ORIGINS[key]?.mobileDisplayName}
         originMenuName={(key) => ALL_ORIGINS[key]?.menuName ?? key}
-        // Phase 2: admin-only search / custom primary support.
         searchableStations={searchableStations}
-        recentPrimaries={recentCustomPrimaries}
+        // Merge user picks (prepended naturally by selectCustomPrimary)
+        // with the curated defaults — picking a default just floats it
+        // to the top, the others stay visible.
+        recentPrimaries={[
+          ...recentCustomPrimaries,
+          ...DEFAULT_RECENT_PRIMARIES.filter((c) => !recentCustomPrimaries.includes(c)),
+        ]}
         onCustomPrimarySelect={selectCustomPrimary}
         coordToName={coordToName}
         friendOrigin={friendOrigin}
+        // Pinned friend coords — currently empty; reserved for future
+        // always-visible picks.
+        pinnedFriends={PINNED_FRIENDS}
+        // Same merge pattern as the primary side.
+        recentFriends={[
+          ...recentCustomFriends,
+          ...DEFAULT_RECENT_FRIENDS.filter((c) => !recentCustomFriends.includes(c)),
+        ]}
         friendOrigins={FRIEND_ORIGIN_KEYS}
         onFriendOriginChange={setFriendOriginWithTransition}
         friendMaxMinutes={friendMaxMinutes}
