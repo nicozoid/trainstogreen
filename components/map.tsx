@@ -2569,10 +2569,12 @@ export default function HikeMap() {
     //       cluster primaries, it's the cluster's menuName ("Kings Cross,
     //       St Pancras, & Euston"). For isolated stations, just the
     //       station name.
-    //   - hasData: true if the station (or its cluster primary, for cluster
-    //       members) has full RTT origin-routes data. Drives the dropdown's
-    //       "Coming soon" disabled state — rows without data are greyed out
-    //       and unselectable, with a tooltip on desktop hover.
+    //   - hasData: true when the station is fully usable as a primary —
+    //       RTT data present AND (terminus OR has TfL hops to all 15
+    //       termini in tfl-hop-matrix). Stations with RTT data alone
+    //       fall back to "Coming soon" disabled rows in search because
+    //       custom-primary composition into central London needs the
+    //       hop coverage to work.
     type SearchableStation = {
       coord: string
       name: string
@@ -2581,9 +2583,30 @@ export default function HikeMap() {
       displayLabel: string
       hasData: boolean
     }
-    // Set of coord keys that have fetched RTT data — check once per station
-    // rather than indexing into originRoutesData inside the loop.
+    // Strict hasData definition: a station counts as "fully usable as a
+    // primary" only when both RTT and TfL-hop data are available.
+    //   - Termini get a free pass (they ARE central London — no TfL
+    //     hops needed to compose journeys).
+    //   - Non-terminus primaries need an entry in tfl-hop-matrix.json,
+    //     keyed by the station's name.
+    // Stations with RTT data only (no TfL hops) would partially work
+    // as primaries (direct destinations from their own lines render)
+    // but custom-primary composition into central London breaks, so
+    // we render them as 'Coming soon' disabled rows in search.
     const dataCoords = new Set(Object.keys(originRoutesData))
+    const TERMINI_CRS = new Set([
+      "KGX","STP","EUS","CHX","VIC","WAT","WAE","MYB","PAD",
+      "MOG","LST","CST","FST","BFR","LBG",
+    ])
+    const tflHopNames = new Set(Object.keys(terminalMatrix))
+    const originRoutesByCoord = originRoutesData as Record<string, { crs?: string; name?: string }>
+    const hasFullDataAtCoord = (c: string): boolean => {
+      if (!dataCoords.has(c)) return false
+      const entry = originRoutesByCoord[c]
+      if (!entry?.crs) return false
+      if (TERMINI_CRS.has(entry.crs)) return true
+      return tflHopNames.has(entry.name ?? "")
+    }
     const out: SearchableStation[] = []
     // Bounding box for the primary-search dropdown. Wide enough to
     // include every station we have full RTT + TfL hop data for —
@@ -2620,7 +2643,7 @@ export default function HikeMap() {
       // Check primaryCoord first so cluster members (St Pancras, Waterloo
       // East, etc.) inherit their parent's data status — picking St Pancras
       // redirects to the KX primary, which has data.
-      const hasData = dataCoords.has(primaryCoord) || dataCoords.has(coord)
+      const hasData = hasFullDataAtCoord(primaryCoord) || hasFullDataAtCoord(coord)
       out.push({
         coord,
         name: stationName,
