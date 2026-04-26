@@ -13,6 +13,11 @@
 # done stations get skipped automatically.
 
 set -u
+# Enable pipefail so `node fetch | tee -a LOG` returns node's exit status,
+# not tee's (which is almost always 0). Without this, a fetch that crashes
+# or aborts mid-run gets counted as a successful station, inflating
+# stations_completed_this_run and hiding rate-limit failures.
+set -o pipefail
 
 # Resolve repo root from the script's own location so this runs in any
 # clone / worktree without hardcoded paths.
@@ -144,6 +149,14 @@ JSON
 
 echo "=== Smart runner start at $(date '+%Y-%m-%d %H:%M:%S') ===" | tee -a "$LOG"
 
+# Warn early if no timeout binary is available — fetches will run unbounded,
+# so a single rate-limit-storm station could lock up the run for hours.
+# Install with `brew install coreutils` (provides `gtimeout`) on macOS.
+if ! command -v gtimeout >/dev/null && ! command -v timeout >/dev/null; then
+  echo "WARNING: no \`gtimeout\` or \`timeout\` on PATH — per-station 15-min cap is disabled." | tee -a "$LOG"
+  echo "  Install with: brew install coreutils" | tee -a "$LOG"
+fi
+
 # One-time done set (refreshed after each station).
 DONE_LIST=$(already_done)
 
@@ -193,12 +206,24 @@ while IFS= read -r line; do
     exit 0
   fi
 
-  # Fetch this station with retries.
+  # Fetch this station with retries. Each attempt is capped at 15 minutes
+  # via `gtimeout` so a single station can never burn the whole session
+  # in rate-limit retry loops (e.g. ZLW / Whitechapel — Liz/Overground
+  # hub with 198 services that wedged the runner for 1.5h on 2026-04-26).
+  # Worst-case bound: 3 × 15 min = 45 min per station before giving up.
+  # `gtimeout` is from coreutils (`brew install coreutils`); on a system
+  # without it, falls back to running the fetch unbounded.
+  TIMEOUT_BIN=$(command -v gtimeout || command -v timeout || true)
   echo "=== $CRS at $(date '+%Y-%m-%d %H:%M:%S') (remaining-week: $REMAINING) ===" | tee -a "$LOG"
   LAST_CRS="$CRS"
   ok=0
   for attempt in 1 2 3; do
-    if RTT_TOKEN="$RTT_TOKEN" node "$FETCH_SCRIPT" "$CRS" --dates="$DATES" --throttle="$THROTTLE" 2>&1 | tee -a "$LOG"; then
+    if [ -n "$TIMEOUT_BIN" ]; then
+      RUN=("$TIMEOUT_BIN" 900 node "$FETCH_SCRIPT" "$CRS" "--dates=$DATES" "--throttle=$THROTTLE")
+    else
+      RUN=(node "$FETCH_SCRIPT" "$CRS" "--dates=$DATES" "--throttle=$THROTTLE")
+    fi
+    if RTT_TOKEN="$RTT_TOKEN" "${RUN[@]}" 2>&1 | tee -a "$LOG"; then
       ok=1
       break
     fi

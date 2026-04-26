@@ -40,6 +40,7 @@ storybook-static
 
 # claude code
 .claude/worktrees/
+.claude/scheduled_tasks*
 
 # RTT master-queue runtime artefacts (master-queue.txt, log, status JSON).
 # Regenerated on every run via scripts/rtt-build-master-queue.mjs.

@@ -88,6 +88,15 @@ function rank(f) {
   return score
 }
 
+// Demoted CRSes — stations whose service density blows the RTT per-minute
+// rate-limit so badly that they spend hours stuck in retry-loops. We push
+// them to the very end of the queue; they'll only get attempted after every
+// less-problematic station is done, by which point the cap may have
+// freed up and/or we'll have a better strategy.
+const DEMOTED = new Set([
+  "ZLW", // Whitechapel — Liz/Overground hub, 198 services, 26+ skips per attempt
+])
+
 // Filter to mainland Britain NR stations not already fetched / queued.
 const candidates = stations.features.filter((f) => {
   const network = f.properties?.network ?? ""
@@ -102,9 +111,14 @@ const candidates = stations.features.filter((f) => {
   return true
 })
 
+// Pull demoted stations out of the main grouping — they get appended at the
+// very end of the queue regardless of region, after Unclassified.
+const demotedFeatures = candidates.filter((f) => DEMOTED.has(f.properties?.["ref:crs"]))
+const mainCandidates = candidates.filter((f) => !DEMOTED.has(f.properties?.["ref:crs"]))
+
 // Group by region, then sort within region by rank then by name.
 const byRegion = new Map()
-for (const f of candidates) {
+for (const f of mainCandidates) {
   const [lng, lat] = f.geometry.coordinates
   const region = regionOf(lng, lat)
   if (!byRegion.has(region)) byRegion.set(region, [])
@@ -147,6 +161,18 @@ const unclassified = byRegion.get("Unclassified")
 if (unclassified?.length) {
   lines.push(`# === Unclassified (${unclassified.length}) — likely offshore / boundary cases ===`)
   for (const f of unclassified) {
+    const crs = f.properties["ref:crs"]
+    const name = f.properties.name
+    lines.push(`${crs}  # ${name}`)
+  }
+  lines.push("")
+}
+
+// Demoted stations go absolutely last — only attempted if everything
+// else is done.
+if (demotedFeatures.length) {
+  lines.push(`# === Demoted (${demotedFeatures.length}) — known rate-limit-storm hubs, attempt last ===`)
+  for (const f of demotedFeatures) {
     const crs = f.properties["ref:crs"]
     const name = f.properties.name
     lines.push(`${crs}  # ${name}`)
