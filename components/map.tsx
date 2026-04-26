@@ -406,11 +406,16 @@ const COORD_MIGRATIONS: Record<string, string> = {
 const DEFAULT_RECENT_PRIMARIES: string[] = [
   "-0.1705184,51.4644589",   // Clapham Junction (CLJ)
   "-0.0035472,51.541289",    // Stratford (SRA)
+  "-0.2052107,51.4220252",   // Wimbledon (WIM) — no RTT data yet
+  "-0.0139562,51.4656437",   // Lewisham (LEW) — no RTT data yet
   "-0.2435041,51.5321956",   // Willesden Junction (WIJ)
   "-0.0746988,51.3971695",   // Norwood Junction (NWD)
   "-0.1064144,51.5648345",   // Finsbury Park (FPK)
   "-0.0599442,51.588123",    // Tottenham Hale (TOM)
+  "-0.1920126,51.5473011",   // West Hampstead (WHD) — no RTT data yet
   "-0.3004067,51.5149803",   // Ealing Broadway (EAL)
+  "-0.1514426,51.4428285",   // Balham (BAL) — no RTT data yet
+  "-0.0712666,51.4176595",   // Crystal Palace (CYP) — no RTT data yet
 ]
 // DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
 // just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
