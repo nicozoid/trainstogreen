@@ -714,8 +714,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               // flex items-center keeps the label and the X aligned on
               // the same baseline; justify-between pushes the X to the
               // right edge of the row. Normal text colour — the X icon
-              // alone signals the remove affordance.
-              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer",
+              // alone signals the remove affordance. bg-accent/50 gives
+              // the row a persistent half-opacity tint so it reads as
+              // 'currently selected' even without hover.
+              "flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer bg-accent/50 focus:bg-accent/50",
               hiddenOnMobile && "hidden sm:flex",
             )}
             aria-label={`Remove ${label} as friend's station`}
