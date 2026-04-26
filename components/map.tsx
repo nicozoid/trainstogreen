@@ -352,19 +352,6 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "-0.0774191,51.5113281": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
   "-0.1032417,51.5104871": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
   "-0.0851473,51.5048764": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
-  // The four termini that ALSO sit inside the Central London synthetic
-  // cluster. Listed here as standalone primaries so picking one
-  // individually via search hits the public-primary routing path
-  // (terminal-matrix coverage) instead of falling through to the custom-
-  // primary path designed for non-terminus stations like CLJ. The
-  // cluster membership in PRIMARY_ORIGIN_CLUSTER below is preserved —
-  // when Central London is active those entries still get cluster-
-  // aggregated; when picked individually each routes as its own
-  // standalone terminus.
-  "-0.1230224,51.5323954": { canonicalName: "Kings Cross",              displayName: "King's Cross",     menuName: "King's Cross", mobileDisplayName: "Kings X" },
-  "-0.1270027,51.5327196": { canonicalName: "St Pancras",               displayName: "St Pancras",       menuName: "St Pancras", mobileDisplayName: "St Pancras" },
-  "-0.1341909,51.5288526": { canonicalName: "Euston",                   displayName: "Euston",           menuName: "Euston" },
-  "-0.1082027,51.5042171": { canonicalName: "Waterloo East",            displayName: "Waterloo East",    menuName: "Waterloo East", mobileDisplayName: "Waterloo E" },
 }
 
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
@@ -1927,7 +1914,13 @@ export default function HikeMap() {
   const clusterMemberToPrimary = useMemo(() => {
     const out: Record<string, string> = {}
     for (const [primary, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
-      if (PRIMARY_ORIGINS[primary]?.isSynthetic) continue
+      // Synthetic clusters (Central London, Stratford) are now ALSO
+      // included so picking a member station via search redirects to
+      // the synthetic. Previously this map excluded synthetic clusters
+      // — a search for "Kings Cross" used to land on KGX as a custom
+      // primary and route via the wrong path (no public-primary
+      // coverage). Redirecting to Central London routes the cluster
+      // properly via terminal-matrix.
       for (const m of members) out[m] = primary
     }
     return out
@@ -1984,9 +1977,12 @@ export default function HikeMap() {
     // callback so they commit together and the spinner covers the
     // entire gap.
     startTransition(() => {
-      // Synthetic primary — no recents entry, just select.
-      if (PRIMARY_ORIGINS[coord]?.isSynthetic) {
-        setPrimaryOriginRaw(coord)
+      // Synthetic primary — no recents entry, just select. Check
+      // `resolved` (not `coord`) so picking a cluster member like Kings
+      // Cross or Charing Cross — which now resolves to its synthetic
+      // anchor — also takes this branch.
+      if (PRIMARY_ORIGINS[resolved]?.isSynthetic) {
+        setPrimaryOriginRaw(resolved)
         return
       }
       setPrimaryOriginRaw(resolved)
@@ -2645,9 +2641,10 @@ export default function HikeMap() {
       if (excludedPrimariesSet.has(coord)) continue
       const stationName = f.properties.name as string
       // Resolve to the parent cluster primary if this coord is a cluster
-      // member. clusterMemberToPrimary deliberately excludes synthetic
-      // clusters (London "Any London terminus") so a search for "kings
-      // cross" maps to the KX primary, not the London-synthetic.
+      // member. clusterMemberToPrimary now INCLUDES synthetic clusters,
+      // so a search for "Kings Cross" lands on the Central London
+      // synthetic — the cluster routing covers it correctly, whereas
+      // KGX as a standalone custom primary had degraded coverage.
       const primaryCoord = clusterMemberToPrimary[coord] ?? coord
       const hasCluster = !!PRIMARY_ORIGIN_CLUSTER[primaryCoord]
       const displayLabel = hasCluster
@@ -2664,6 +2661,27 @@ export default function HikeMap() {
         primaryCoord,
         displayLabel,
         hasData,
+      })
+    }
+    // Synthetic anchors (Central London, Stratford) aren't in OSM but
+    // we still want them findable by typing their name directly. Add
+    // one entry per non-admin synthetic in PRIMARY_ORIGINS — the
+    // dedupe-by-primaryCoord step in matchingStations collapses any
+    // overlap with cluster-member rows.
+    for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
+      if (!def?.isSynthetic) continue
+      if (def.adminOnly) continue
+      const label = def.menuName ?? def.canonicalName ?? coord
+      out.push({
+        coord,
+        name: label,           // searchable via "central london" / "stratford"
+        crs: "",
+        primaryCoord: coord,
+        displayLabel: label,
+        // Synthetics are always usable as primaries — the cluster covers
+        // routing via terminal-matrix even if the synthetic coord
+        // itself isn't in origin-routes.
+        hasData: true,
       })
     }
     return out
