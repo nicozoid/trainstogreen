@@ -136,30 +136,62 @@ function pickBestNaptanMatch(matches, name) {
   return [...matches].sort((a, b) => (a.name?.length ?? 999) - (b.name?.length ?? 999))[0]
 }
 
+// Rail-station NaPTAN ids on TfL: 910G* covers most NR/Overground/Eliz
+// stations; 920G* covers airport-served stations (Gatwick, Stansted).
+// Both are valid inputs to the Journey Planner.
+function isRailNaptan(id) {
+  return !!id && (id.startsWith("910G") || id.startsWith("920G"))
+}
+
+async function searchStopPoint(query) {
+  // No `modes=national-rail` filter — some NR-served stations are tagged
+  // only as elizabeth-line (Brentwood, Forest Gate) or overground
+  // (Willesden Junction) in TfL's catalogue, so the filter would drop
+  // them. We re-filter on id-prefix below instead.
+  const url = `${TFL_BASE}/StopPoint/Search/${encodeURIComponent(query)}`
+  const res = await fetchWithRetry(url)
+  if (!res.ok) throw new Error(`StopPoint search failed for "${query}": ${res.status}`)
+  const data = await res.json()
+  return data.matches ?? []
+}
+
 async function resolveNaptanForCrs(crs, name) {
   if (naptanCache.naptan[crs]) return naptanCache.naptan[crs]
-  // Search by name, filtering to national-rail stops. Returns a HUB id
-  // for stations with multiple modes (HUBxxx) or a 910Gxxx directly for
-  // smaller stations.
-  const url = `${TFL_BASE}/StopPoint/Search/${encodeURIComponent(name)}?modes=national-rail`
-  const res = await fetchWithRetry(url)
-  if (!res.ok) throw new Error(`StopPoint search failed for ${name} (${crs}): ${res.status}`)
-  const data = await res.json()
-  const matches = data.matches ?? []
+  // Try the name as-given, then a stripped variant. TfL's StopPoint
+  // search returns 0 matches for "Hayes and Harlington" (the literal
+  // word "and" trips it up) but works fine for "Hayes Harlington" —
+  // so we retry with conjunctions/ampersands removed.
+  const stripped = name.replace(/\s+(and|&)\s+/gi, " ").replace(/\s+/g, " ").trim()
+  const variants = stripped !== name ? [name, stripped] : [name]
+  let matches = []
+  for (const q of variants) {
+    matches = await searchStopPoint(q)
+    if (matches.length > 0) break
+  }
   if (matches.length === 0) throw new Error(`No StopPoint match for ${name} (${crs})`)
-  const top = pickBestNaptanMatch(matches, name)
+  // Keep only rail-station ids (910G/920G) and HUB entries we can drill
+  // into. Bus stops, taxi ranks etc. would otherwise win pickBestNaptanMatch
+  // when their commonName matches the station name exactly.
+  const railOrHub = matches.filter((m) => isRailNaptan(m.id) || m.id?.startsWith("HUB"))
+  if (railOrHub.length === 0) {
+    throw new Error(`No rail-station match for ${name} (${crs}); got ${matches.slice(0, 3).map((m) => m.id).join(", ")}`)
+  }
+  const top = pickBestNaptanMatch(railOrHub, name)
   let naptan = top.id
-  // If top match is a HUB, drill into its children for the 910G rail entry.
+  // If top match is a HUB, drill into its children for the rail entry.
+  // Accept any rail-mode child — Willesden Junction's HUB has only an
+  // overground 910G child, but its NaPTAN works with Journey Planner.
   if (naptan.startsWith("HUB")) {
     const hubRes = await fetchWithRetry(`${TFL_BASE}/StopPoint/${naptan}`)
     if (!hubRes.ok) throw new Error(`Hub fetch failed for ${naptan}`)
     const hubData = await hubRes.json()
+    const railModes = ["national-rail", "overground", "elizabeth-line"]
     const railChild = (hubData.children ?? []).find(
-      (c) => c.id?.startsWith("910G") && c.modes?.includes("national-rail"),
+      (c) => isRailNaptan(c.id) && (c.modes ?? []).some((m) => railModes.includes(m)),
     )
-    if (!railChild) throw new Error(`Hub ${naptan} has no 910G rail child`)
+    if (!railChild) throw new Error(`Hub ${naptan} has no rail child`)
     naptan = railChild.id
-  } else if (!naptan.startsWith("910G")) {
+  } else if (!isRailNaptan(naptan)) {
     throw new Error(`Unexpected StopPoint id format: ${naptan} for ${name} (${crs})`)
   }
   naptanCache.naptan[crs] = naptan
