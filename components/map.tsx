@@ -9350,7 +9350,11 @@ export default function HikeMap() {
           <div
             aria-hidden={!filterPillVisible}
             className={cn(
-              "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
+              // z-[100] keeps the toast above the mobile search sheet
+              // (z-[60]) and any other Radix-portalled overlays. Without
+              // this the pill gets hidden behind the search results when
+              // a primary/friend pick is in flight on mobile.
+              "pointer-events-none absolute inset-0 z-[100] flex items-end sm:items-center justify-center pb-4 sm:pb-0 px-4",
               "transition-opacity duration-700",
               filterPillVisible ? "opacity-100" : "opacity-0",
             )}
@@ -9379,7 +9383,11 @@ export default function HikeMap() {
           // Mobile: pin to bottom of viewport with matching pb-4
           // (same visual margin as the horizontal px-4). Desktop
           // (sm+): center vertically, no extra bottom padding.
-          "pointer-events-none absolute inset-0 z-[50] flex items-end sm:items-center justify-center pb-4 sm:pb-0",
+          // z-[100] keeps the toast above the mobile search sheet
+          // (z-[60]) so a friend/primary pick mid-search still
+          // surfaces "Finding meeting points..." rather than getting
+          // hidden behind the results list.
+          "pointer-events-none absolute inset-0 z-[100] flex items-end sm:items-center justify-center pb-4 sm:pb-0",
           // `px-4` keeps the inner pill off the viewport edges on
           // narrow mobile widths when the label is long (e.g.
           // "Looking up trains from Kings Cross, St Pancras, & Euston"
@@ -9474,7 +9482,7 @@ export default function HikeMap() {
                 // two endpoints rather than a one-sided lookup.
                 const primaryPlace = placeNameFor(primaryOrigin, "your home")
                 const friendPlace = placeNameFor(pendingFriendCoord, "your friend")
-                return `Meeting points between ${primaryPlace} and ${friendPlace}`
+                return `Finding meeting points between ${primaryPlace} and ${friendPlace}`
               }
               return `Looking up trains from ${placeNameFor(pendingPrimaryCoord, "new home")}`
             })()}
