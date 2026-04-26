@@ -289,20 +289,12 @@ type StationModalProps = {
 // highlighter. Built once at module load from london-terminals.json so
 // the regex below covers every form the journey text might contain —
 // "London Bridge", "St Pancras", "Kings Cross" (canonical) AND "St.
-// Pancras", "London Waterloo", "Waterloo East" (common aliases).
-// Waterloo East is intentionally retained as a distinct alias even
-// though it canonicalises to Waterloo — when the user sees "Waterloo
-// East (+6m)" in a calling-points line, we want THAT exact text
-// highlighted (not "Waterloo East" split into parts).
+// Pancras", "London Waterloo" (common aliases). Waterloo East is its
+// own entry in the terminals file, so it gets highlighted distinctly
+// from Waterloo (matters when a calling-points line shows both).
 const LONDON_TERMINUS_FORMS: string[] = (() => {
   const forms = new Set<string>()
-  // Farringdon is listed in london-terminals.json (it's a recognised
-  // London-area stitching anchor for the stitcher) but it's a
-  // through-station, NOT a true terminus. User's highlight feature
-  // targets true termini only, so skip it here.
-  const NOT_A_TERMINUS = new Set(["Farringdon"])
   for (const t of londonTerminalsData as Array<{ name: string; aliases: string[] }>) {
-    if (NOT_A_TERMINUS.has(t.name)) continue
     forms.add(t.name)
     for (const a of t.aliases) forms.add(a)
   }

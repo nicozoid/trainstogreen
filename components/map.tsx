@@ -159,18 +159,12 @@ function decodePolyline(encoded: string): [number, number][] {
  *   "Mortimer"                               → "Mortimer"
  *
  * Primary path is `matchTerminal`, which resolves aliases via
- * london-terminals.json. BUT there's one trap: Waterloo East is listed as
- * an alias of "Waterloo" (intentional for stitchJourney's leg-matching
- * logic — a Waterloo East leg should resolve to the Waterloo terminal
- * family). That's wrong for display purposes, where Waterloo East is its
- * own station. Explicit regex short-circuit keeps the label distinct.
- *
- * Final fallback strips "London " prefix — catches other cluster-satellite
- * raw names that aren't in the terminals file at all.
+ * london-terminals.json. Final fallback strips "London " prefix —
+ * catches other cluster-satellite raw names that aren't in the
+ * terminals file at all.
  */
 function cleanTerminusLabel(rawName: string | undefined): string {
   if (!rawName) return ""
-  if (/^(London\s+)?Waterloo East$/i.test(rawName.trim())) return "Waterloo East"
   const canonical = matchTerminal(rawName, londonTerminalsData as Terminal[])
   if (canonical) return canonical
   return rawName.replace(/^London\s+/i, "")
@@ -294,7 +288,7 @@ type OriginDef = {
 // animation, and the londonMinutes override.
 //  - Farringdon, Kings Cross, Stratford: full Google Routes journey data per
 //    destination (fetched via scripts/fetch-journeys.mjs).
-//  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT+WAE):
+//  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT, WAE):
 //    hybrid — RTT direct times for destinations on their own lines, stitched
 //    via terminal-matrix + existing KX/Farringdon journeys for everywhere else.
 const PRIMARY_ORIGINS: Record<string, OriginDef> = {
@@ -1118,29 +1112,18 @@ function tryComposeViaTerminal(
   return best
 }
 
-// Station-to-station walking/short-tube hops that aren't in the terminal
-// matrix (because the matrix only contains terminal-to-terminal routes,
-// and one endpoint here — Waterloo East — is aliased to Waterloo in
-// london-terminals.json rather than being its own terminal entry).
+// Station-to-station walking/short-tube hops between non-terminal coords
+// that the standard terminal-matrix path can't express (matrix is keyed
+// by terminal NAME, this is keyed by raw COORD for the customHub
+// composition path in tryComposeViaWalkingDoubleHub).
 //
-// Keyed by coord string on both sides so lookups are direct and no
-// name-normalisation is required. Minutes are realistic walking times
-// through the covered concourse; polylines are intentionally null so
-// the map draws a straight line between the two station coords — good
-// enough for a 150m pedestrian link.
-//
-// Expand this map as more "need to walk between adjacent stations"
-// cases surface. Each entry should appear symmetrically (both
-// directions) so the composition loop doesn't need to care which side
-// is the rail origin.
-const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {
-  // Waterloo ↔ Waterloo East — covered pedestrian link, ~5 min.
-  // Unlocks CLJ→YAL class journeys: CLJ→WAT (rail) → walk → WAE →
-  // Paddock Wood (rail) → Yalding (branch rail). Both sides are in
-  // origin-routes.json already (WAE is an independent fetched primary).
-  "-0.112801,51.5028379":   { "-0.1082027,51.5042171": { minutes: 5 } },  // WAT → WAE
-  "-0.1082027,51.5042171":  { "-0.112801,51.5028379":  { minutes: 5 } },  // WAE → WAT
-}
+// Currently empty: the original WAT↔WAE entry was removed once Waterloo
+// East was promoted to its own terminal in london-terminals.json — that
+// hop is now in terminal-matrix.json and reachable via the standard
+// stitching path. Keep this map (and the function below) as
+// infrastructure for any future "need to walk between adjacent
+// non-terminal stations" cases that surface.
+const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {}
 
 /**
  * Extension B — triple-hop "walking interchange" composition. Handles
@@ -3580,11 +3563,14 @@ export default function HikeMap() {
               }
             }
             // Extension B: triple-hop walking-interchange composition.
-            // Unlocks CLJ→YAL class journeys (CLJ → WAT → walk → WAE →
-            // PKW → YAL). Only wins when the walking-chain path is
-            // STRICTLY faster than what we already have — it's 2 rail
-            // changes, so direct or single-change options beat it by
-            // the change-count tiebreak automatically.
+            // Originally unlocked CLJ→YAL via CLJ → WAT → walk → WAE →
+            // PKW → YAL — that specific path is now reachable through
+            // the standard stitching path because WAE was promoted to
+            // its own terminal in london-terminals.json (so the
+            // WAT↔WAE walking link lives in terminal-matrix.json).
+            // The function below is currently a no-op (WALKING_HOPS is
+            // empty) but kept as infrastructure for any future
+            // non-terminal walking-interchange cases that surface.
             const viaWalk = tryComposeViaWalkingDoubleHub(
               customHubs,
               coordKey,
@@ -8637,9 +8623,8 @@ export default function HikeMap() {
               displayStation.coordKey === primaryOrigin &&
               !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
                 ? (PRIMARY_ORIGINS[primaryOrigin]?.menuName ?? displayStation.name)
-                // Shared helper handles the Waterloo East special-case
-                // (matchTerminal would otherwise canonicalise it to just
-                // "Waterloo" via the stitching alias list).
+                // Shared helper resolves "London Waterloo East" → "Waterloo
+                // East" and similar canonicalisations via matchTerminal.
                 : cleanTerminusLabel(displayStation.name)
             }
             minutes={displayStation.minutes}

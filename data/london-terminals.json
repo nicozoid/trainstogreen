@@ -33,7 +33,13 @@
     "name": "Waterloo",
     "lat": 51.5031,
     "lng": -0.1132,
-    "aliases": ["London Waterloo", "Waterloo Station", "Waterloo East", "London Waterloo East"]
+    "aliases": ["London Waterloo", "Waterloo Station"]
+  },
+  {
+    "name": "Waterloo East",
+    "lat": 51.5042171,
+    "lng": -0.1082027,
+    "aliases": ["London Waterloo East"]
   },
   {
     "name": "Liverpool Street",
@@ -64,12 +70,6 @@
     "lat": 51.5116,
     "lng": -0.1038,
     "aliases": ["London Blackfriars", "Blackfriars Station"]
-  },
-  {
-    "name": "Farringdon",
-    "lat": 51.519964,
-    "lng": -0.104555,
-    "aliases": ["London Farringdon"]
   },
   {
     "name": "Fenchurch Street",
