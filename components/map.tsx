@@ -352,6 +352,19 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "-0.0774191,51.5113281": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
   "-0.1032417,51.5104871": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
   "-0.0851473,51.5048764": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
+  // The four termini that ALSO sit inside the Central London synthetic
+  // cluster. Listed here as standalone primaries so picking one
+  // individually via search hits the public-primary routing path
+  // (terminal-matrix coverage) instead of falling through to the custom-
+  // primary path designed for non-terminus stations like CLJ. The
+  // cluster membership in PRIMARY_ORIGIN_CLUSTER below is preserved —
+  // when Central London is active those entries still get cluster-
+  // aggregated; when picked individually each routes as its own
+  // standalone terminus.
+  "-0.1230224,51.5323954": { canonicalName: "Kings Cross",              displayName: "King's Cross",     menuName: "King's Cross", mobileDisplayName: "Kings X" },
+  "-0.1270027,51.5327196": { canonicalName: "St Pancras",               displayName: "St Pancras",       menuName: "St Pancras", mobileDisplayName: "St Pancras" },
+  "-0.1341909,51.5288526": { canonicalName: "Euston",                   displayName: "Euston",           menuName: "Euston" },
+  "-0.1082027,51.5042171": { canonicalName: "Waterloo East",            displayName: "Waterloo East",    menuName: "Waterloo East", mobileDisplayName: "Waterloo E" },
 }
 
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
