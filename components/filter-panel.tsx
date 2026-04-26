@@ -805,17 +805,17 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     // event leaves focus wherever we put it.
                     onCloseAutoFocus={(e) => e.preventDefault()}
                   >
-                    {/* Desktop layout:
-                          1. Curated synthetic primary ("Any London terminus")
-                          2. HR
-                          3. Recents (default-seeded on first load, max 10)
-                             — ALWAYS visible, even while searching. Recents
-                             are what the user reaches for first.
-                          4. Search input (placeholder "Other London stations")
-                          5. Search matches — rendered BELOW the input so
+                    {/* Desktop layout — single flat section, no separator:
+                          1. Synthetic primaries (Central London pinned first,
+                             then Stratford, then any other synthetics)
+                          2. Recents (default-seeded on first load, max 10) —
+                             ALWAYS visible, even while searching. Same flat
+                             list as the synthetics.
+                          3. Search input (admin only; placeholder
+                             "Other London stations")
+                          4. Search matches — rendered BELOW the input so
                              they flow naturally from where the user is
-                             typing, rather than disrupting the layout
-                             above.
+                             typing.
 
                         On mobile the full-screen sheet takes over on input
                         focus and has its own top-down layout, so this
@@ -825,34 +825,29 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         et al. used to have permanent dropdown slots. They
                         no longer do — they're found via search, and promoted
                         into the recents list when picked. */}
-                    {primaryOriginGroups.map((group, groupIdx) => (
-                      <Fragment key={groupIdx}>
-                        {groupIdx > 0 && <DropdownMenuSeparator />}
-                        {group.map((origin) => (
-                          <DropdownMenuItem
-                            key={origin}
-                            onSelect={() => onPrimaryOriginChange(origin)}
-                            // Selected state shown via a muted background tint
-                            // (accent colour at 50% opacity) rather than a
-                            // left-side checkmark, which ate precious horizontal
-                            // space and made long cluster names even harder to
-                            // read on mobile.
-                            className={cn(
-                              "whitespace-normal leading-tight cursor-pointer",
-                              origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
-                            )}
-                          >
-                            {originMenuName(origin)}
-                          </DropdownMenuItem>
-                        ))}
-                      </Fragment>
+                    {primaryOriginGroups.flat().map((origin) => (
+                      <DropdownMenuItem
+                        key={origin}
+                        onSelect={() => onPrimaryOriginChange(origin)}
+                        // Selected state shown via a muted background tint
+                        // (accent colour at 50% opacity) rather than a
+                        // left-side checkmark, which ate precious horizontal
+                        // space and made long cluster names even harder to
+                        // read on mobile.
+                        className={cn(
+                          "whitespace-normal leading-tight cursor-pointer",
+                          origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
+                        )}
+                      >
+                        {originMenuName(origin)}
+                      </DropdownMenuItem>
                     ))}
 
-                    <DropdownMenuSeparator />
-
-                    {/* Position 3: recents. Always rendered (not gated on
-                        search state) so the user never loses them while
-                        typing. Matches now live BELOW the search input. */}
+                    {/* Recents flow directly into the same section — no
+                        separator between synthetics and recents. Always
+                        rendered (not gated on search state) so the user
+                        never loses them while typing. Matches live BELOW
+                        the search input. */}
                     {recentPrimaries.length > 0 && recentPrimaries.map((coord) => {
                       // Label resolution, in order:
                       //   1. originMenuName(coord) if coord is a known primary

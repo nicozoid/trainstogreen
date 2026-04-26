@@ -362,8 +362,15 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
 //      are visually separated from the single-station options below.
 //   2. Public single-station primaries (Charing Cross, Kings Cross, …).
 //   3. Admin-only primaries (hidden from non-admin users).
-const byDisplayName = (a: string, b: string) =>
-  (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
+// Central London is the canonical default primary and must always sort to
+// the top of any synthetic-primary list it appears in — even if a future
+// synthetic (e.g. "Birmingham") would otherwise alphabetise before it.
+const CENTRAL_LONDON_COORD = "-0.1269,51.5196"
+const byDisplayName = (a: string, b: string) => {
+  if (a === CENTRAL_LONDON_COORD) return -1
+  if (b === CENTRAL_LONDON_COORD) return 1
+  return (PRIMARY_ORIGINS[a]?.displayName ?? a).localeCompare(PRIMARY_ORIGINS[b]?.displayName ?? b)
+}
 // ONLY the synthetic primary (currently just "Any London terminus") is shown
 // as a permanent curated dropdown item. Individual London termini (Charing
 // Cross, Victoria, Waterloo, …) are treated like any other London NR station
