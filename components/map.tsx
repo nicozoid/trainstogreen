@@ -9442,31 +9442,42 @@ export default function HikeMap() {
                    practice; the outer opacity-0 hides the pill in
                    the idle phase anyway. */}
           <span className="text-sm font-semibold text-muted-foreground">
-            {goodbyeFriendCoord
-              ? `Saying goodbye to ${
-                  FRIEND_ORIGINS[goodbyeFriendCoord]?.displayName
-                  ?? PRIMARY_ORIGINS[goodbyeFriendCoord]?.displayName
-                  ?? coordToName[goodbyeFriendCoord]
-                  ?? "friend"
-                }`
-              : `Looking up trains from ${pendingFriendCoord
-                ? (
-                    FRIEND_ORIGINS[pendingFriendCoord]?.displayName
-                    ?? PRIMARY_ORIGINS[pendingFriendCoord]?.displayName
-                    ?? coordToName[pendingFriendCoord]
-                    ?? "friend"
+            {(() => {
+              // Resolve a coord to a human-readable place name. Tries
+              // PRIMARY_ORIGINS' menuName when the coord is a cluster
+              // anchor (so synthetic Central London reads as "Central
+              // London", not "London"), then displayName, then the
+              // cluster-friend FRIEND_ORIGINS displayName, then OSM
+              // name, then a friendly fallback.
+              const placeNameFor = (c: string | null, fallback: string) => {
+                if (!c) return fallback
+                if (PRIMARY_ORIGIN_CLUSTER[c]) {
+                  return (
+                    PRIMARY_ORIGINS[c]?.menuName
+                    ?? PRIMARY_ORIGINS[c]?.displayName
+                    ?? coordToName[c]
+                    ?? fallback
                   )
-                : (pendingPrimaryCoord
-                  ? (
-                      PRIMARY_ORIGIN_CLUSTER[pendingPrimaryCoord]
-                        ? (PRIMARY_ORIGINS[pendingPrimaryCoord]?.menuName
-                            ?? PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                            ?? pendingPrimaryCoord)
-                        : (PRIMARY_ORIGINS[pendingPrimaryCoord]?.displayName
-                            ?? coordToName[pendingPrimaryCoord]
-                            ?? "new home")
-                    )
-                  : "new home")}`}
+                }
+                return (
+                  FRIEND_ORIGINS[c]?.displayName
+                  ?? PRIMARY_ORIGINS[c]?.displayName
+                  ?? coordToName[c]
+                  ?? fallback
+                )
+              }
+              if (goodbyeFriendCoord) {
+                return `Saying goodbye to ${placeNameFor(goodbyeFriendCoord, "friend")}`
+              }
+              if (pendingFriendCoord) {
+                // Friend add/switch — frame it as a meeting between the
+                // two endpoints rather than a one-sided lookup.
+                const primaryPlace = placeNameFor(primaryOrigin, "your home")
+                const friendPlace = placeNameFor(pendingFriendCoord, "your friend")
+                return `Meeting points between ${primaryPlace} and ${friendPlace}`
+              }
+              return `Looking up trains from ${placeNameFor(pendingPrimaryCoord, "new home")}`
+            })()}
           </span>
         </div>
       </div>
