@@ -244,6 +244,17 @@ type FilterPanelProps = {
   pinnedFriends: string[]
   /** Friend recents — user picks (top) merged with curated defaults. */
   recentFriends: string[]
+  /** Searchable universe for friend search — every UK NR station, with
+   *  hasData=false rows rendered as disabled 'Coming soon'. Same shape
+   *  as searchableStations on the primary side. */
+  searchableFriendStations?: {
+    coord: string
+    name: string
+    crs: string
+    primaryCoord: string
+    displayLabel: string
+    hasData: boolean
+  }[]
   /** All available friend origin options */
   friendOrigins: string[]
   /** Switch the friend origin (without deactivating) */
@@ -293,7 +304,7 @@ type FilterPanelProps = {
   onFriendDirectOnlyChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -570,20 +581,50 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     return deduped.slice(0, 15)
   }, [primarySearch, isPrimarySearchActive, searchableStations])
 
-  // Friend search matches. Filters across the merged friend list
-  // (pinned + recents) by display name. Returns coord strings rather
-  // than richer station records — friend rendering already does its own
-  // label resolution via originMenuName / coordToName.
+  // Friend search matches. Filters across every UK NR station so the
+  // user can find any city, not just the seeded recents. Stations
+  // without journey-file data render as disabled 'Coming soon' rows
+  // (same treatment as the primary side). Available rows bubble to the
+  // top so the user's most-likely pick isn't buried under greyed-out
+  // entries.
   const matchingFriends = useMemo(() => {
-    if (!isFriendSearchActive) return [] as string[]
-    const q = friendSearch.toLowerCase().trim()
-    const universe = [...pinnedFriends, ...recentFriends.filter((c) => !pinnedFriends.includes(c))]
-    return universe.filter((coord) => {
-      const menu = originMenuName(coord)
-      const label = menu !== coord ? menu : coordToName[coord] ?? coord
-      return label.toLowerCase().includes(q)
-    }).slice(0, 15)
-  }, [friendSearch, isFriendSearchActive, pinnedFriends, recentFriends, originMenuName, coordToName])
+    if (!isFriendSearchActive) return [] as typeof searchableFriendStations
+    const normalise = (s: string) =>
+      s
+        .toLowerCase()
+        .replace(/['\u2019.\-]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+    const q = normalise(friendSearch)
+    type Match = (typeof searchableFriendStations)[number]
+    const availStarts: Match[] = []
+    const availContains: Match[] = []
+    const disabledStarts: Match[] = []
+    const disabledContains: Match[] = []
+    for (const s of searchableFriendStations) {
+      const n = normalise(s.name)
+      const labelN = normalise(s.displayLabel)
+      const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
+      const startsMatch = crsMatch || n.startsWith(q) || labelN.startsWith(q)
+      const containsMatch = !startsMatch && (n.includes(q) || labelN.includes(q))
+      if (!startsMatch && !containsMatch) continue
+      const bucket = s.hasData
+        ? (startsMatch ? availStarts : availContains)
+        : (startsMatch ? disabledStarts : disabledContains)
+      bucket.push(s)
+      if (availStarts.length + availContains.length + disabledStarts.length + disabledContains.length >= 40) break
+    }
+    // Dedupe by primaryCoord — Birmingham + cluster members all collapse
+    // to one 'Birmingham' row.
+    const seen = new Set<string>()
+    const deduped: Match[] = []
+    for (const s of [...availStarts, ...availContains, ...disabledStarts, ...disabledContains]) {
+      if (seen.has(s.primaryCoord)) continue
+      seen.add(s.primaryCoord)
+      deduped.push(s)
+    }
+    return deduped.slice(0, 15)
+  }, [friendSearch, isFriendSearchActive, searchableFriendStations])
 
   // --- Train arrival animation ---
   // Purely visual: after the banner is dismissed, a fake slider overlay
@@ -691,12 +732,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // friend states. Mirrors the primary dropdown's pinned + capped-recents
   // + search shape. The active friend renders as a ghost-styled row with
   // an X icon on the right; clicking it removes the friend (i.e. clears
-  // friendOrigin). Cap matches the primary side (12/5) — there's no
-  // separate "Remove" row eating a slot anymore.
+  // friendOrigin). Cap matches the primary side (12 ≥sm / 8 <sm) —
+  // there's no separate "Remove" row eating a slot anymore.
   function renderFriendDropdownContent() {
     const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
     const desktopRoom = Math.max(0, 12 - pinnedFriends.length)
-    const mobileRoom = Math.max(0, 5 - pinnedFriends.length)
+    const mobileRoom = Math.max(0, 8 - pinnedFriends.length)
     // Helper that renders a single friend row. Branches on whether it's
     // the active friend: active rows get muted text + an X icon and
     // remove-on-click; inactive rows are normal selectable picks.
@@ -754,7 +795,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         {/* Pinned friends — always shown, always near the top. Currently
             empty; reserved for future curated picks. */}
         {pinnedFriends.map((coord) => renderRow(coord))}
-        {/* Recents — capped at 12 (≥sm) / 5 (<sm) total INCLUDING any
+        {/* Recents — capped at 12 (≥sm) / 8 (<sm) total INCLUDING any
             pinned items above. Items past the mobile slice get
             `hidden sm:flex` so the small-viewport list stays scannable. */}
         {dedup.slice(0, desktopRoom).map((coord, idx) => renderRow(coord, idx))}
@@ -774,22 +815,51 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         </div>
         {isFriendSearchActive && (
           matchingFriends.length > 0 ? (
-            matchingFriends.map((coord) => {
-              const menu = originMenuName(coord)
-              const label = menu !== coord ? menu : coordToName[coord] ?? coord
+            matchingFriends.map((s) => {
+              const isActive =
+                s.coord === friendOrigin || s.primaryCoord === friendOrigin
+              if (!s.hasData) {
+                // Disabled 'Coming soon' row — same treatment as the
+                // primary search dropdown. Tooltip on desktop hover;
+                // inline suffix on mobile (where tooltips don't fire).
+                return (
+                  <Tooltip key={s.primaryCoord}>
+                    <TooltipTrigger asChild>
+                      <span className="block">
+                        <DropdownMenuItem
+                          disabled
+                          onSelect={(e) => e.preventDefault()}
+                          className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
+                        >
+                          <span>{s.name}</span>
+                          <span className="text-xs text-muted-foreground/70">
+                            Coming soon
+                          </span>
+                        </DropdownMenuItem>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                      Coming soon
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              }
               return (
                 <DropdownMenuItem
-                  key={coord}
+                  key={s.primaryCoord}
                   onSelect={() => {
-                    onFriendOriginChange(coord)
+                    // Use the cluster anchor (primaryCoord) — picking a
+                    // member like 'Birmingham Moor Street' should
+                    // activate the Birmingham cluster, not just BMO.
+                    onFriendOriginChange(s.primaryCoord)
                     setFriendSearch("")
                   }}
                   className={cn(
                     "whitespace-normal leading-tight cursor-pointer",
-                    coord === friendOrigin && "bg-accent/50 focus:bg-accent/50"
+                    isActive && "bg-accent/50 focus:bg-accent/50"
                   )}
                 >
-                  {label}
+                  {s.displayLabel}
                 </DropdownMenuItem>
               )
             })
@@ -973,7 +1043,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     {/* Pinned items (always shown, always at top) — the
                         first slot is reserved for Central London. Counted
                         against the cap below: pinned.length + visible
-                        recents = 12 (≥sm) / 5 (<sm). */}
+                        recents = 12 (≥sm) / 8 (<sm). */}
                     {pinnedPrimaries.map((origin) => (
                       <DropdownMenuItem
                         key={origin}
@@ -994,12 +1064,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
 
                     {/* Recents — user picks (top) merged with curated
                         defaults (below). Cap on TOTAL items (pinned +
-                        recents) is 12 (≥sm) / 5 (<sm); items past the
+                        recents) is 12 (≥sm) / 8 (<sm); items past the
                         mobile slice get `hidden sm:flex`. */}
                     {(() => {
                       const dedup = recentPrimaries.filter((c) => !pinnedPrimaries.includes(c))
                       const desktopRoom = Math.max(0, 12 - pinnedPrimaries.length)
-                      const mobileRoom = Math.max(0, 5 - pinnedPrimaries.length)
+                      const mobileRoom = Math.max(0, 8 - pinnedPrimaries.length)
                       return dedup.slice(0, desktopRoom).map((coord, idx) => {
                         // Label resolution, in order:
                         //   1. originMenuName(coord) if coord is a known origin

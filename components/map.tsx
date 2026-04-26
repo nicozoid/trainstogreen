@@ -511,16 +511,20 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   // stations (Edinburgh / Glasgow / Cardiff / Portsmouth) are
   // synthetic anchors with cluster members listed in
   // FRIEND_ORIGIN_CLUSTER below; everywhere else is single-station.
-  "-3.1904199,55.9519018":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
-  "-4.2584361,55.8583132":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
-  "-3.1797057,51.4755495":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
+  // Centroid-anchored synthetics — same pattern as Birmingham / Manchester.
+  // The synthetic coord sits at the geographic mean of the cluster
+  // members so the principal station can render as a normal diamond
+  // alongside its siblings instead of doubling as the synthetic square.
+  "-3.2048968,55.9485428":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
+  "-4.2547767,55.8604359":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
+  "-3.1749991,51.4787758":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
   "-2.5804029,51.4490991":  { canonicalName: "Bristol",       displayName: "Bristol",        menuName: "Bristol" },
   "-2.3567189,51.3776019":  { canonicalName: "Bath",          displayName: "Bath",           menuName: "Bath" },
   "-1.2699542,51.7534512":  { canonicalName: "Oxford",        displayName: "Oxford",         menuName: "Oxford" },
   "0.1377154,52.1941089":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
   "-0.1407393,50.8288602":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
   "-1.548621,53.794414":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
-  "-2.9775854,53.4076085":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
+  "-2.9831014,53.4056107":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
   // Reading — single-station anchor. Useful as a friend for the
   // M4-corridor commuter belt; not part of the central-Bristol/Cardiff
   // mega-cluster.
@@ -536,7 +540,7 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   "-4.1433925,50.3780967":  { canonicalName: "Plymouth",      displayName: "Plymouth",       menuName: "Plymouth" },
   "-3.5435703,50.7292155":  { canonicalName: "Exeter",        displayName: "Exeter",         menuName: "Exeter" },
   "-1.4142289,50.9074977":  { canonicalName: "Southampton",   displayName: "Southampton",    menuName: "Southampton",    mobileDisplayName: "S'hampton" },
-  "-1.0906787,50.7982014":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
+  "-1.0997297,50.7974525":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
   "1.3076876,52.626307":    { canonicalName: "Norwich",       displayName: "Norwich",        menuName: "Norwich" },
   "1.1447878,52.0504188":   { canonicalName: "Ipswich",       displayName: "Ipswich",        menuName: "Ipswich" },
   "-0.2503162,52.5746038":  { canonicalName: "Peterborough",  displayName: "Peterborough",   menuName: "Peterborough",   mobileDisplayName: "P'borough" },
@@ -571,25 +575,30 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
     "-2.2424846,53.4879748",   // Manchester Victoria (MCV)
     "-2.2422762,53.4737777",   // Manchester Oxford Road (MCO)
   ],
-  // Edinburgh (Waverley anchor) ← Haymarket satellite.
-  "-3.1904199,55.9519018": [
+  // Edinburgh (centroid anchor) ← Waverley + Haymarket satellites.
+  "-3.2048968,55.9485428": [
+    "-3.1904199,55.9519018",   // Edinburgh Waverley (EDB)
     "-3.2193738,55.9451838",   // Haymarket (HYM)
   ],
-  // Glasgow (Central anchor) ← Queen Street satellite.
-  "-4.2584361,55.8583132": [
+  // Glasgow (centroid anchor) ← Central + Queen Street satellites.
+  "-4.2547767,55.8604359": [
+    "-4.2584361,55.8583132",   // Glasgow Central (GLC)
     "-4.2511172,55.8625587",   // Glasgow Queen Street (GLQ)
   ],
-  // Cardiff (Central anchor) ← Queen Street satellite.
-  "-3.1797057,51.4755495": [
+  // Cardiff (centroid anchor) ← Central + Queen Street satellites.
+  "-3.1749991,51.4787758": [
+    "-3.1797057,51.4755495",   // Cardiff Central (CDF)
     "-3.1702926,51.4820022",   // Cardiff Queen Street (CDQ)
   ],
-  // Portsmouth (& Southsea anchor) ← Harbour satellite.
-  "-1.0906787,50.7982014": [
+  // Portsmouth (centroid anchor) ← & Southsea + Harbour satellites.
+  "-1.0997297,50.7974525": [
+    "-1.0906787,50.7982014",   // Portsmouth & Southsea (PMS)
     "-1.1087807,50.7967035",   // Portsmouth Harbour (PMH)
   ],
-  // Liverpool (Lime Street anchor) ← Central + James Street satellites.
+  // Liverpool (centroid anchor) ← Lime Street + Central + James Street.
   // All three sit within ~1 km of each other in central Liverpool.
-  "-2.9775854,53.4076085": [
+  "-2.9831014,53.4056107": [
+    "-2.9775854,53.4076085",   // Liverpool Lime Street (LIV)
     "-2.9795092,53.4042207",   // Liverpool Central (LVC)
     "-2.9922097,53.4050028",   // Liverpool James Street (LVJ)
   ],
@@ -633,16 +642,16 @@ const DEFAULT_RECENT_FRIENDS: string[] = [
   "-1.1449555,52.9473037",   // Nottingham
   "-1.548621,53.794414",     // Leeds
   "-1.4142289,50.9074977",   // Southampton (Central only — not a cluster)
-  "-3.1797057,51.4755495",   // Cardiff (CDF·CDQ cluster)
-  "-2.9775854,53.4076085",   // Liverpool (LIV·LVC·LVJ cluster)
+  "-3.1749991,51.4787758",   // Cardiff (CDF·CDQ cluster, centroid anchor)
+  "-2.9831014,53.4056107",   // Liverpool (LIV·LVC·LVJ cluster, centroid anchor)
   "-1.4621381,53.3783713",   // Sheffield
   "-1.2699542,51.7534512",   // Oxford
-  "-1.0906787,50.7982014",   // Portsmouth (PMS·PMH cluster)
+  "-1.0997297,50.7974525",   // Portsmouth (PMS·PMH cluster, centroid anchor)
   "0.1377154,52.1941089",    // Cambridge
   "-0.7748261,52.0342006",   // Milton Keynes
-  "-4.2584361,55.8583132",   // Glasgow (GLC·GLQ cluster)
+  "-4.2547767,55.8604359",   // Glasgow (GLC·GLQ cluster, centroid anchor)
   "-1.462612,52.9165243",    // Derby
-  "-3.1904199,55.9519018",   // Edinburgh (EDB·HYM cluster)
+  "-3.2048968,55.9485428",   // Edinburgh (EDB·HYM cluster, centroid anchor)
 ]
 
 // Resolve the effective journey from a friend origin to a destination,
@@ -2621,6 +2630,66 @@ export default function HikeMap() {
     for (const s of searchableStations) map[s.coord] = s.name
     return map
   }, [searchableStations])
+
+  // Cluster-member → anchor lookup for friend origins. Mirrors
+  // clusterMemberToPrimary on the friend side so picking a cluster
+  // member (e.g. Birmingham Moor Street, Cardiff Queen Street) via
+  // friend search activates the parent cluster rather than the
+  // individual station.
+  const friendClusterMemberToPrimary = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
+      for (const m of members) map[m] = anchor
+    }
+    return map
+  }, [])
+
+  // Searchable universe for the friend dropdown — every UK NR station
+  // (no London-box filter — friends live anywhere). Each entry's
+  // hasData flag tells the dropdown whether to render the row enabled
+  // or as a disabled 'Coming soon' tooltip row. hasData is true for
+  // coords that map to a friend in FRIEND_ORIGINS (either directly or
+  // via a cluster-member redirect).
+  const searchableFriendStations = useMemo(() => {
+    if (!baseStations) return []
+    type SearchableStation = {
+      coord: string
+      name: string
+      crs: string
+      primaryCoord: string
+      displayLabel: string
+      hasData: boolean
+    }
+    const friendAnchors = new Set(Object.keys(FRIEND_ORIGINS))
+    const out: SearchableStation[] = []
+    for (const f of baseStations.features) {
+      const crs = f.properties?.["ref:crs"] as string | undefined
+      if (!crs) continue
+      const network = f.properties?.["network"] as string | undefined
+      if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
+      const [lng, lat] = f.geometry.coordinates
+      const coord = `${lng},${lat}`
+      const stationName = f.properties.name as string
+      // Cluster members redirect to their anchor for selection. The
+      // displayed label still uses the cluster's menuName (e.g.
+      // 'Birmingham') rather than the station's own OSM name (e.g.
+      // 'Birmingham Moor Street') so search results dedupe naturally.
+      const anchorCoord = friendClusterMemberToPrimary[coord] ?? coord
+      const hasData = friendAnchors.has(anchorCoord)
+      const displayLabel = hasData && FRIEND_ORIGINS[anchorCoord]?.menuName
+        ? (FRIEND_ORIGINS[anchorCoord]?.menuName as string)
+        : stationName
+      out.push({
+        coord,
+        name: stationName,
+        crs,
+        primaryCoord: anchorCoord,
+        displayLabel,
+        hasData,
+      })
+    }
+    return out
+  }, [baseStations, friendClusterMemberToPrimary])
 
   // StationModal's internals (getEffectiveJourney + display text) still speak
   // in station NAMES. Our journeys are coord-keyed now, so we re-key them to
@@ -7405,6 +7474,9 @@ export default function HikeMap() {
           ...recentCustomFriends,
           ...DEFAULT_RECENT_FRIENDS.filter((c) => !recentCustomFriends.includes(c)),
         ]}
+        // Search universe for the friend dropdown — every UK NR station,
+        // with hasData=false rows rendered as disabled 'Coming soon'.
+        searchableFriendStations={searchableFriendStations}
         friendOrigins={FRIEND_ORIGIN_KEYS}
         onFriendOriginChange={setFriendOriginWithTransition}
         friendMaxMinutes={friendMaxMinutes}
