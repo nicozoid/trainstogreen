@@ -598,6 +598,24 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
 
+// Coord → journey-file slug for every friend in FRIEND_ORIGINS. Slugs
+// match the filenames under public/journeys/ that
+// scripts/build-friend-journeys-from-rtt.mjs writes. Without this
+// mapping, ensureOriginLoaded can't fetch the right file when the user
+// picks Leicester (et al.) as a friend, so the map appears empty even
+// though the data exists on disk.
+const FRIEND_SLUGS: Record<string, string> = (() => {
+  const out: Record<string, string> = {}
+  // Kebab-case the canonical name to match the on-disk slug —
+  // 'Stoke-on-Trent' → 'stoke-on-trent', 'Milton Keynes' → 'milton-keynes'.
+  const kebab = (s: string) =>
+    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  for (const [coord, def] of Object.entries(FRIEND_ORIGINS)) {
+    if (def?.canonicalName) out[coord] = kebab(def.canonicalName)
+  }
+  return out
+})()
+
 // Seeded recents for the friend dropdown. Order is the user's curated
 // priority — picked for population catchment + geographic spread, with
 // the largest cities first. Each coord is the friend's anchor (the
@@ -2289,18 +2307,25 @@ export default function HikeMap() {
   // origins. Any origin not in this map isn't lazy-loadable and
   // falls through to the RTT-based routing path.
   const ORIGIN_SLUGS: Record<string, string> = {
+    // Primary-side journey files (same shape as friend files, just
+    // generated for primaries we want fully precomputed).
     "-0.104555,51.519964": "farringdon",
     "-0.1239491,51.530609": "kings-cross",
     "-0.0035472,51.541289": "stratford",
     "-1.1449555,52.9473037": "nottingham",
     "-1.898694,52.4776459": "birmingham",
-    // Synthetic anchors map to the same journey file as their first cluster
-    // member. ensureOriginLoaded stamps the loaded journeys under whatever
-    // origin coord we pass in — passing the synthetic coord makes
-    // journeys[syntheticAnchor] resolve directly without any fallback chain.
+    // Cluster-anchor coords for Stratford / Birmingham / Manchester —
+    // ensureOriginLoaded stamps the loaded journeys under whatever
+    // origin coord we pass in, so passing the synthetic coord makes
+    // journeys[syntheticAnchor] resolve directly without any fallback.
     "-0.0061483,51.5430422": "stratford",
     "-1.8967682,52.4801267": "birmingham",
     "-2.2383003,53.4796574": "manchester",
+    // Every other friend in FRIEND_ORIGINS — its anchor coord maps to
+    // the slug derived from its canonicalName. Without this, picking
+    // Leicester (or any of the 35 other tier-2 friends) would leave the
+    // map empty because no journey file ever gets fetched.
+    ...FRIEND_SLUGS,
   }
   // `mapReady` flips true on the style's `load` event — style + icons
   // are wired, but tiles / markers may not yet be painted. For the

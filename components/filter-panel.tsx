@@ -725,7 +725,14 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             aria-label={`Remove ${label} as friend's station`}
           >
             <span>{label}</span>
-            <IconX size={14} className="shrink-0" />
+            {/* Hover-only emphasis: thicker stroke + slight scale-up so
+                the remove affordance pops once the user is over the row.
+                stroke-[2.5] is one step heavier than the default; the
+                scale-105 = 5% larger. */}
+            <IconX
+              size={14}
+              className="shrink-0 transition-transform group-hover/friend-row:scale-105 group-hover/friend-row:stroke-[2.5]"
+            />
           </DropdownMenuItem>
         )
       }
