@@ -98957,15 +98957,15 @@
             "url": "https://bansteadcommons.org.uk"
           }
         ],
-        "warnings": "",
         "id": "o4qb",
-        "rating": 3,
+        "rating": 2,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "shorter"
-        }
+        },
+        "updatedAt": "2026-04-27T22:05:56.463Z"
       },
       {
         "role": "shorter",
