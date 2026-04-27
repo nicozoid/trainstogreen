@@ -46,6 +46,7 @@ import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -2122,10 +2123,14 @@ export default function HikeMap() {
     Record<string, Record<string, Record<string, unknown>>>
   >({})
   // Coord → slug mapping for every primary that has a precomputed
-  // routing file available. Narrow: only the primaries that actually
-  // appear in the public dropdowns by default get precomputed.
-  // Anything else (user searches a non-preloaded London station)
-  // falls through to live compute.
+  // routing file available. Limited to SYNTHETIC primaries (Central
+  // London + Stratford) — they have no per-origin journey file under
+  // public/journeys/, so the routing memo has to synthesise their
+  // journeys on the fly (~10s). The precomputed diff lets first paint
+  // skip that compute. Concrete primaries (Birmingham, Manchester,
+  // Nottingham, …) load their data straight from public/journeys/<slug>.json
+  // and don't benefit from a precomputed routing diff — see the
+  // explanatory note above buildDiff in the regen handler for why.
   const PRIMARY_SLUG: Record<string, string> = {
     "-0.1269,51.5196":       "central-london",
     "-0.0035472,51.541289":  "stratford",
@@ -2133,14 +2138,6 @@ export default function HikeMap() {
     // as the SRA primary above; the diff merge in routedStations mirrors
     // SRA's journey data under this synthetic key so filters resolve.
     "-0.0061483,51.5430422": "stratford",
-    // Preloaded friend-dropdown defaults — also precomputable as
-    // primaries in case admin / a future feature wants to use them
-    // as home origins. Their journey-file counterparts live under
-    // public/journeys/ for friend-side rendering; these are the
-    // home-side precomputed routing diffs.
-    "-1.898694,52.4776459":  "birmingham",
-    "-2.2301402,53.4772197": "manchester",
-    "-1.1449555,52.9473037": "nottingham",
   }
   // Lazy-fetch the precomputed routing diff for the currently active
   // primary. Fires on mount (for the default home) and whenever the
@@ -7773,7 +7770,11 @@ export default function HikeMap() {
           {/* Regenerate — admin-only. A single button that:
                 1. Wipes ttg:* localStorage (formerly the standalone
                    "Clear session" button) so testing starts fresh.
-                2. For each slug in PRIMARY_SLUG:
+                2. For each slug in PRIMARY_SLUG (Central London +
+                   Stratford — the synthetic primaries that have no
+                   per-origin journey file and so genuinely need a
+                   precomputed routing diff to skip the ~10s live
+                   compute):
                    - deletes the existing on-disk snapshot so runtime
                      can't short-circuit to stale data
                    - switches primary to that coord + flags the
@@ -7782,12 +7783,20 @@ export default function HikeMap() {
                    - builds a lean diff from the fresh routedStations
                      (simplified polylines + only fields routing
                      added/changed) + POSTs to /api/dev/save-routing
-                3. Restores the admin's original primary and clears
-                   the bypass flag.
+                3. Reloads as a fresh visitor.
               When to use: after changing routing logic OR upstream
               data (origin-routes.json, excluded stations, …) so the
-              cheat-sheet files reflect the new output. */}
+              cheat-sheet files reflect the new output.
+              Concrete primaries (Birmingham, Manchester, …) used to
+              be in this loop too, but their precomputed diffs ended
+              up byte-identical because the diff filter strips fields
+              that already match baseStations — and ensureOriginLoaded
+              merges /journeys/<slug>.json into baseStations BEFORE
+              the routing memo runs. So those files were always empty
+              of primary-specific data. They've been removed. */}
           {devExcludeActive && (
+            <Tooltip>
+              <TooltipTrigger asChild>
             <button
               onClick={async () => {
                 // Dedupe by slug — multiple coords can map to the same slug
@@ -8000,7 +8009,6 @@ export default function HikeMap() {
               }}
               disabled={regenProgress != null}
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60 disabled:opacity-70 disabled:cursor-default inline-flex items-center gap-2"
-              title="Delete + regenerate all precomputed routing files"
             >
               {regenProgress ? (
                 <>
@@ -8014,6 +8022,20 @@ export default function HikeMap() {
                 <>regenerate</>
               )}
             </button>
+              </TooltipTrigger>
+              {/* Use side="bottom" so the tooltip drops down out of the
+                  admin bar; the button sits at the top of the viewport. */}
+              <TooltipContent side="bottom" className="max-w-sm whitespace-normal text-left leading-snug">
+                Rebuilds the precomputed routing snapshots for the
+                synthetic primaries (Central London, Stratford) so
+                visitors land on instant data instead of paying the
+                ~10s live compute. Click this after changing routing
+                logic or upstream data (origin-routes.json,
+                terminal-matrix.json, excluded stations, …) so the
+                cheat-sheet files reflect the new output. Reloads the
+                page when done.
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       )}
