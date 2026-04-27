@@ -51,5 +51,47 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-52wh": {
+    "slug": "manual-52wh",
+    "title": "Manual NWE to AUD",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "NWE",
+        "endStation": "AUD",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "id": "52wh",
+        "suffix": "",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-27T22:10:18.940Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
