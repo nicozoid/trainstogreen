@@ -7768,15 +7768,27 @@ export default function HikeMap() {
         />
       </div>
 
-      {/* Dev mode toggle + zoom badge — only rendered in local development.
-          process.env.NODE_ENV is inlined at build time by Next.js, so this
-          entire block is stripped from production bundles (dead-code elimination). */}
-      {process.env.NODE_ENV === "development" && (
+      {/* Admin bar — rendered in two situations:
+          1. Local dev (NODE_ENV === "development"), where the visible
+             "admin" toggle button below flips devExcludeActive.
+          2. Cloud production, but only AFTER the cloud doorway has set
+             devExcludeActive = true. The toggle itself stays hidden in
+             production (see the inner gate below) so casual visitors
+             don't see a stray button — they have to find the doorway.
+          process.env.NODE_ENV is inlined at build time, but because the
+          condition is now an OR, dead-code elimination keeps the whole
+          block in the production bundle. */}
+      {(process.env.NODE_ENV === "development" || devExcludeActive) && (
         // z-[60] keeps the admin bar on top of the StationModal dialog
         // (Radix renders its overlay + content at z-50), so the "admin"
         // toggle remains clickable while an overlay is showing — useful
         // for hopping out of admin without closing the current station.
         <div className="absolute bottom-4 left-1/2 z-[60] flex -translate-x-1/2 items-center gap-2">
+          {/* The toggle button itself stays dev-only. Cloud users enter
+              admin via the doorway, not this button, so showing it in
+              production would just be a visible "admin" affordance for
+              random visitors. */}
+          {process.env.NODE_ENV === "development" && (
           <button
             onClick={() => {
               const next = !devExcludeActive
@@ -7822,6 +7834,7 @@ export default function HikeMap() {
           >
             {devExcludeActive ? "admin ✕" : "admin"}
           </button>
+          )}
           {/* Zoom level indicator — only visible when dev mode is active */}
           {devExcludeActive && (
             <div className="pointer-events-none rounded bg-black/60 px-2 py-1 font-mono text-xs text-white">
