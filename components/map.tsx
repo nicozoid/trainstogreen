@@ -11,13 +11,13 @@ import { HelpButton } from "@/components/help-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
-import excludedStationsList from "@/data/excluded-stations.json"
+import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
 // a home station — because they have no RTT-reachable hub in any of our
 // origin-routes.json primaries. Currently: Kensington (Olympia), whose NR
 // service is sparse and event-driven. Coord-keyed, same shape as
-// data/excluded-stations.json.
+// data/buried-stations.json.
 import excludedPrimariesList from "@/data/excluded-primaries.json"
 import originRoutesData from "@/data/origin-routes.json"
 import londonTerminalsData from "@/data/london-terminals.json"
@@ -50,8 +50,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { outbox } from "@/lib/admin-outbox"
 import { AdminEditsDialog } from "@/components/admin-edits-dialog"
 
-// Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
-type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
+// Station rating — purely derived from the ratings of walks attached to
+// the station (see /api/dev/walk-ratings). Numeric so the code can sort
+// and compare directly. UI-side labels (Sublime / Charming / …) live in
+// filter-panel.tsx — code never references them by word.
+type Rating = 1 | 2 | 3 | 4
 
 // Meteorological seasons (Mar/Jun/Sep/Dec boundaries) — used by the
 // "[current season] highlights" checkbox. Matches the month→season mapping
@@ -619,6 +622,18 @@ const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
+
+// Every coord that's a member of a synthetic cluster (primary OR friend),
+// flattened to a Set for cheap membership tests. Drives:
+//   • The "always render as diamond" layer for cluster members
+//     (regardless of whether their cluster is the active primary/friend).
+//   • A matching exclusion filter on the regular station layers, so a
+//     cluster member never double-renders with both a diamond AND a
+//     rating/unrated icon.
+const ALL_CLUSTER_MEMBER_COORDS = new Set<string>([
+  ...Object.values(PRIMARY_ORIGIN_CLUSTER).flat(),
+  ...Object.values(FRIEND_ORIGIN_CLUSTER).flat(),
+])
 
 // Coord → journey-file slug for every friend in FRIEND_ORIGINS. Slugs
 // match the filenames under public/journeys/ that
@@ -1449,10 +1464,13 @@ function ukMinutesOfDayFromIso(iso: string): number {
   return h * 60 + m
 }
 
-// Stations manually excluded — edit data/excluded-stations.json to add/remove entries.
-// Entries are either station names (legacy) or "lng,lat" coord keys (preferred — unambiguous when two stations share a name).
-// INITIAL_EXCLUDED_STATIONS seeds the state; admin toggling mutates the state set.
-const INITIAL_EXCLUDED_STATIONS = new Set(excludedStationsList)
+// Stations manually "buried" by an admin (right-click in admin mode).
+// Entries are "lng,lat" coordKey strings. Buried stations behave normally
+// at zoom 12+ but disappear at lower zooms when they're unrated and not
+// part of the active primary/friend's cluster — useful for hiding inner-
+// suburb stations that would otherwise crowd the map.
+// Seeds state from data/buried-stations.json; admin toggle mutates it.
+const INITIAL_BURIED_STATIONS = new Set<string>(buriedStationsList)
 
 // Describes the shape of a single GeoJSON feature from our stations.json.
 // TypeScript uses this to check we're accessing valid properties later.
@@ -1475,7 +1493,7 @@ type HoveredStation = {
   // Unique key — used to filter the hover label layer to this station only
   coordKey: string
   // Which icon image to render on the pulsing hovered-station-icon overlay
-  // layer. Resolved from the station's rating / isExcluded at
+  // layer. Resolved from the station's rating / isBuried at
   // hover-set time so the overlay matches the base station's visual.
   iconImage: string
 }
@@ -1493,7 +1511,8 @@ function resolveStationIconImage(props: Record<string, unknown> | undefined): st
     const v = props[k]
     return v !== undefined && v !== null && v !== false
   }
-  if (hasProp("isExcluded")) return "icon-excluded"
+  // `isBuried` is admin metadata and doesn't change the icon — buried
+  // stations render with whatever rating icon they'd otherwise have.
   // The London hexagon marker uses icon-london (also a square shape). It's
   // tapped often — the primary-selection hexagon sits on top of the map —
   // so if we resolve it as "icon-unrated" the pulse renders a circle
@@ -1504,10 +1523,10 @@ function resolveStationIconImage(props: Record<string, unknown> | undefined): st
   // than defaulting to the unrated circle.
   if (hasProp("isTerminus")) return "icon-london-terminus"
   switch (props.rating) {
-    case "highlight": return "icon-highlight"
-    case "verified": return "icon-verified"
-    case "unverified": return "icon-unverified"
-    case "not-recommended": return "icon-not-recommended"
+    case 4: return "icon-rating-4"
+    case 3: return "icon-rating-3"
+    case 2: return "icon-rating-2"
+    case 1: return "icon-rating-1"
     default: return "icon-unrated"
   }
 }
@@ -2008,9 +2027,16 @@ export default function HikeMap() {
   // Keep a ref in sync with baseStations for async admin flows that
   // need the latest value without being locked into a render closure.
   useEffect(() => { baseStationsRef.current = baseStations }, [baseStations])
-  // Excluded stations (names + "lng,lat" coord keys — whichever the JSON stores).
-  // Seeded from data/excluded-stations.json, mutated via the admin cross toggle.
-  const [excludedStations, setExcludedStations] = useState<Set<string>>(() => new Set(INITIAL_EXCLUDED_STATIONS))
+  // Buried stations — "lng,lat" coord keys flagged via the admin
+  // right-click. Seeded from data/buried-stations.json. Drives the
+  // zoom-11+ visibility gate for unrated suburban-style stations.
+  const [buriedStations, setBuriedStations] = useState<Set<string>>(() => new Set(INITIAL_BURIED_STATIONS))
+  // Admin-only toggle controlling whether stations with no journey-time
+  // data are hidden. Default = true (matches the public-facing rule
+  // that the public app never sees them). Re-enabled automatically
+  // when the admin leaves admin mode, so a non-admin viewer always
+  // ends up with them hidden regardless of admin's last state.
+  const [hideNoTravelTime, setHideNoTravelTime] = useState(true)
   // Default 150min (2h30m) — the non-admin slider cap. In admin mode the cap
   // extends to 600min ("Max" = no upper limit).
   // Filter state (max time, direct-only, rating checkboxes, trails) intentionally
@@ -2276,7 +2302,7 @@ export default function HikeMap() {
   // handleMouseMove via e.lngLat. Rendered as a small badge next to the zoom
   // indicator. Uses the same coordKey format as the rest of the app
   // ("lng,lat" with 4 decimals) so the value can be copy-pasted into
-  // station-keyed JSON files (excluded-stations.json, station-notes.json,
+  // station-keyed JSON files (buried-stations.json, station-notes.json,
   // etc) without reformatting.
   const [cursorCoord, setCursorCoord] = useState<{ lng: number; lat: number } | null>(null)
   // Brief visual flag — turns the cursor-coord badge green for ~1s after a
@@ -2385,8 +2411,10 @@ export default function HikeMap() {
   const lastStationRef = useRef<SelectedStation | null>(null)
   if (selectedStation) lastStationRef.current = selectedStation
   const displayStation = selectedStation ?? lastStationRef.current
-  // Maps coordKey → rating; loaded from data/station-ratings.json via API.
-  // Universal (not per-user) — ratings are set in dev mode and affect all viewers.
+  // Maps coordKey → derived station rating (1..4). Computed by
+  // /api/dev/walk-ratings from the rating of every walk attached to
+  // the station. Read-only on the client — the route handler does the
+  // aggregation per the rules in walk-ratings/route.ts.
   const [ratings, setRatings] = useState<Record<string, Rating>>({})
   // Admin-only: set of "homeCoord|destCoord" pairs the admin has tested
   // and approved. Controls the red-tint overlay on the map in admin
@@ -2404,8 +2432,12 @@ export default function HikeMap() {
   // Default: start with the three positive ratings ticked so new visitors
   // see a focused map (curated picks only), not every rated station plus
   // every "Okay" and every "Unknown". Admins can click extras on manually.
+  // Keys are stringified numeric ratings ("4","3","2","1") plus
+  // "unrated" for the no-walks pseudo-category. Strings (not numbers)
+  // because Set membership for the filter UI is keyed by string —
+  // matches the `key` field in RATING_FILTERS in filter-panel.tsx.
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
-    () => new Set(["highlight", "verified", "unverified"]),
+    () => new Set(["4", "3", "2"]),
   )
 
   // Photo curations — per-station approved photo list + pinned-ids subset.
@@ -2482,7 +2514,7 @@ export default function HikeMap() {
 
   // Fetch universal ratings and photo curations on mount
   useEffect(() => {
-    fetch("/api/dev/rate-station")
+    fetch("/api/dev/walk-ratings")
       .then((res) => res.json())
       .then((data) => setRatings(data))
     fetch("/api/dev/curate-photo")
@@ -2561,9 +2593,9 @@ export default function HikeMap() {
   //   4. Stations NOT listed in data/excluded-primaries.json — a separate
   //      curated list of London NR stations that technically qualify but
   //      have no RTT-reachable hub (e.g. Kensington Olympia's sparse
-  //      event-day-only service). Distinct from data/excluded-stations.json,
-  //      which excludes stations as DESTINATIONS; this list excludes them
-  //      as HOME stations.
+  //      event-day-only service). Distinct from data/buried-stations.json,
+  //      which buries stations as DESTINATIONS at low zoom; this list
+  //      excludes them as HOME stations.
   // Memoized on baseStations so it's rebuilt once per data load.
   const excludedPrimariesSet = useMemo(
     () => new Set(excludedPrimariesList as string[]),
@@ -2785,7 +2817,7 @@ export default function HikeMap() {
   // Recomputes when the user switches origin via the dropdown, without re-fetching.
   // Heavy routing pass — computes journeys, alt routes, effective
   // minutes, etc. for every feature against the active primary.
-  // Deliberately NOT dependent on excludedStations: the flag is applied
+  // Deliberately NOT dependent on buriedStations: the flag is applied
   // in a cheap downstream useMemo so admin toggles don't re-trigger
   // this expensive pass (~10s stall).
   const routedStations = useMemo(() => {
@@ -4717,11 +4749,10 @@ export default function HikeMap() {
         }
 
         // Build next properties — optionally override londonMinutes,
-        // then stash routing results. The isExcluded flag is
+        // then stash routing results. The isBuried flag is
         // intentionally NOT applied here — it gets applied in a
-        // separate thin useMemo downstream (see
-        // `allStationsWithRatings` below) so toggling it doesn't
-        // force this heavy routing pass to re-run.
+        // separate thin useMemo downstream (see `stations` above)
+        // so toggling it doesn't force this heavy routing pass to re-run.
         const next: Record<string, unknown> = { ...f.properties }
         if (originMins != null) next.londonMinutes = originMins
         else if (rttClearLondonMinutes) next.londonMinutes = null
@@ -5042,26 +5073,34 @@ export default function HikeMap() {
   // compute result after awaited state transitions.
   useEffect(() => { routedStationsRef.current = routedStations }, [routedStations])
 
-  // Thin wrapper that applies the isExcluded flag per feature. Cheap
-  // (a single Set.has + object spread per feature, no routing work),
-  // so toggling via admin actions is instant.
+  // Thin wrapper that applies the isBuried flag + isClusterMember flag
+  // per feature. Cheap (Set.has lookups + object spread, no routing
+  // work), so toggling via admin actions is instant.
+  //
+  // isClusterMember is static (membership doesn't change at runtime), so
+  // its derivation lives here even though it'd be valid to compute it
+  // once at module load. Stamping per-render keeps everything that
+  // consumes feature.properties uniform — Mapbox layer expressions read
+  // it as if it were any other property.
   const stations = useMemo(() => {
     if (!routedStations) return null
     return {
       ...routedStations,
       features: routedStations.features.map((f) => {
         const coordKey = f.properties.coordKey as string
-        const isExcluded = excludedStations.has(coordKey)
-        // Skip allocation if nothing's changing — most features stay
-        // plain on every toggle.
-        const hadExcluded = !!f.properties.isExcluded
-        if (isExcluded === hadExcluded) return f
+        const isBuried = buriedStations.has(coordKey)
+        const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+        const hadBuried = !!f.properties.isBuried
+        const hadClusterMember = !!f.properties.isClusterMember
+        // Skip allocation if nothing's changing.
+        if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
         const next: Record<string, unknown> = { ...f.properties }
-        if (isExcluded) next.isExcluded = true; else delete next.isExcluded
+        if (isBuried) next.isBuried = true; else delete next.isBuried
+        if (isClusterMember) next.isClusterMember = true; else delete next.isClusterMember
         return { ...f, properties: next as typeof f.properties }
       }),
     }
-  }, [routedStations, excludedStations])
+  }, [routedStations, buriedStations])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -5193,47 +5232,20 @@ export default function HikeMap() {
           return true
         }
 
-        // Excluded stations: admin-only, and now respect the time sliders so
-        // admins can narrow the view to excluded stations in a specific band.
-        // The direct-only checkbox applies here too — an excluded station with
-        // no direct-train data from the primary origin shouldn't appear even
-        // in admin mode when "Direct trains only" is ticked.
-        if (f.properties.isExcluded) {
-          // Active friend origin always shows even if excluded — the user
-          // just picked it as their origin, so it must be visible on the map.
-          if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
-          if (!devExcludeActive) return false
-          if (!passesTimeFilter()) return false
-          if (primaryDirectOnly) {
-            const primaryChanges = f.properties.effectiveChanges as number | undefined
-            if (primaryChanges == null || primaryChanges > 0) return false
-          }
-          // Apply the admin Feature filter to excluded stations too —
-          // narrowing filters like "Komoot" or "Undiscovered" should
-          // respect their criterion regardless of exclusion status.
-          if (!passesFeatureFilter()) return false
-          return true
-        }
-
-        // Regular destination stations — must have time data in range,
-        // EXCEPT in admin mode where stations with no journey data
-        // (Sheringham etc. — too far for the Google Routes fetch
-        // budget) can still appear. They show ONLY when both time
-        // sliders are unconstrained, so moving either slider actually
-        // filters these stations out the way an admin expects.
-        // Non-admin users stay filtered — no time info = no action.
-        //
-        // PREVIOUSLY this early-returned true and silently skipped the
-        // Feature / Season filters below. That meant the admin's
-        // "Oyster" / "Issues" / etc. selections had no effect on
-        // null-time stations (e.g. Claverdon CLV would show under any
-        // Feature filter). Now we just gate the time check and fall
-        // through to the rest of the filter chain.
+        // No-travel-time stations (`mins == null`) — destinations with
+        // no journey-time data from the active primary. Visibility is
+        // gated by the `hideNoTravelTime` toggle (admin-only checkbox;
+        // default true; re-enabled on admin exit). When hidden, none
+        // of the rest of the chain matters for these stations. When
+        // shown, fall through to the remaining filters (feature,
+        // season, rating). The time sliders + direct-only + interchange
+        // filters can't act on them so skipping past those is correct.
+        // The Feature dropdown's "No travel times" option lives in
+        // passesFeatureFilter() below — that gates this branch on a
+        // null mins AND gates the regular branch on a non-null mins,
+        // collapsing the visible set to just no-travel-time stations.
         if (mins == null) {
-          if (!devExcludeActive) return false
-          if (maxMinutes < 600 || minMinutes > 0) return false
-          // fall through to the remaining filters (direct, interchange,
-          // feature, season) so Feature/Season selections still apply.
+          if (hideNoTravelTime) return false
         } else {
           if (maxMinutes < 600 && mins > maxMinutes) return false
           if (minMinutes > 0 && mins < minMinutes) return false
@@ -5323,7 +5335,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, devExcludeActive, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -5346,15 +5358,28 @@ export default function HikeMap() {
     }
   }, [filteredStations, isSearching, searchQuery])
 
-  // Stamps each feature with its rating but does NOT filter by visibleRatings.
-  // Filtering happens in stationsForMap so we can keep leaving features during their animation.
+  // Stamps each feature with its derived rating, friend-journey
+  // metadata, and the `isBuriedHidden` flag that drives the zoom-12+
+  // visibility gate for buried unrated stations.
   //
-  // Also stamps `isCuratedExcluded` on excluded stations that nonetheless
-  // carry meaning: those with any rating (Probably/Okay/Good/Heavenly)
-  // or that sit in PRIMARY_ORIGINS / PRIMARY_ORIGIN_CLUSTER. Admin-only
-  // visual cue — drives a diamond marker instead of the cross.
+  // `isBuriedHidden` = true when the feature is buried AND unrated AND
+  // NOT the active primary/friend or any of their cluster members. The
+  // Mapbox layer config below uses this flag (combined with `minzoom`
+  // on a dedicated layer) so the gating happens entirely on the GPU
+  // without re-uploading GeoJSON on every zoom change.
   const allStationsWithRatings = useMemo(() => {
     if (!displayedStations) return null
+    // Build the "active origin set" once per memo run — primary origin,
+    // friend origin, and every cluster member of either. Buried stations
+    // INSIDE this set are never zoom-gated (they're part of the user's
+    // journey context).
+    const activeOrigins = new Set<string>()
+    activeOrigins.add(primaryOrigin)
+    for (const c of PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []) activeOrigins.add(c)
+    if (friendOrigin) {
+      activeOrigins.add(friendOrigin)
+      for (const c of FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []) activeOrigins.add(c)
+    }
     return {
       ...displayedStations,
       features: displayedStations.features.map(f => {
@@ -5373,20 +5398,17 @@ export default function HikeMap() {
           // it stands out from its surrounding rating icons.
           if (coordKey === friendOrigin) extra.isFriendOrigin = 1
         }
-        // Curated-excluded marker — only applies to already-excluded
-        // stations. A rated excluded station, or one that's a primary
-        // origin / cluster sibling, gets the curated marker.
-        if (f.properties.isExcluded) {
-          const isPrimaryOrCluster =
-            coordKey in PRIMARY_ORIGINS ||
-            Object.values(PRIMARY_ORIGIN_CLUSTER).some((arr) => arr.includes(coordKey))
-          if (r || isPrimaryOrCluster) extra.isCuratedExcluded = true
+        // Buried + unrated + not in active-origin set → only renders
+        // at zoom 12+. Stamp the flag so Mapbox's per-layer minzoom
+        // can do the zoom gating without re-running this memo.
+        if (f.properties.isBuried && !r && !activeOrigins.has(coordKey)) {
+          extra.isBuriedHidden = 1
         }
         if (Object.keys(extra).length === 0) return f
         return { ...f, properties: { ...f.properties, ...extra } }
       }),
     }
-  }, [displayedStations, ratings, friendOrigin])
+  }, [displayedStations, ratings, friendOrigin, primaryOrigin])
 
   // Categories just toggled on — their icons get isNew=1 and grow in.
   const newlyAddedRatings = useMemo(() => {
@@ -5556,6 +5578,84 @@ export default function HikeMap() {
     }
   }, [baseStations, friendOrigin])
 
+  // Universal cluster-diamond features — every member of every synthetic
+  // cluster (primary OR friend), regardless of which is active. Drives
+  // the always-on diamond layer below; cluster members render as diamonds
+  // at zoom 9+ with labels at zoom 12+, overriding the regular rating /
+  // unrated / buried treatment they'd otherwise get from the station-*
+  // layers. The matching `isClusterMember` flag stamped on baseStations
+  // (in the `stations` memo above) excludes them from those layers.
+  //
+  // Same name resolution + proximity-dedupe rules as the per-cluster
+  // versions above — keeps Stratford Station / St Pancras dual-platform
+  // collisions tidy.
+  const allClusterDiamondFeatures = useMemo(() => {
+    if (!baseStations) return null
+    type PointFeature = {
+      type: "Feature"
+      geometry: { type: "Point"; coordinates: [number, number] }
+      properties: Record<string, unknown>
+    }
+    const iconFeatures: PointFeature[] = []
+    // Combined synthetic cluster source — every member of every synthetic
+    // PRIMARY_ORIGIN_CLUSTER + FRIEND_ORIGIN_CLUSTER. Anchor coord and
+    // displayName tag along so satellite labels can disambiguate against
+    // their cluster's own display label (e.g. SRA cleans to "Stratford"
+    // which collides with the Stratford anchor's label).
+    const clusters: { anchor: string; displayName: string; members: string[] }[] = []
+    for (const [anchor, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
+      const def = PRIMARY_ORIGINS[anchor]
+      if (!def) continue
+      clusters.push({ anchor, displayName: def.displayName, members })
+    }
+    for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
+      const def = FRIEND_ORIGINS[anchor]
+      if (!def?.isSynthetic) continue
+      clusters.push({ anchor, displayName: def.displayName, members })
+    }
+    for (const { displayName, members } of clusters) {
+      for (const coord of members) {
+        const [lngStr, latStr] = coord.split(",")
+        const lng = parseFloat(lngStr)
+        const lat = parseFloat(latStr)
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
+        const bf = baseStations.features.find((f) => {
+          const [l, a] = f.geometry.coordinates as [number, number]
+          return `${l},${a}` === coord
+        })
+        // Skip tube-only entries (matches the existing London-cluster
+        // rule — Underground entrances for Kings Cross / Euston aren't
+        // wanted as visible diamonds, just as cluster-routing aliases).
+        const network = (bf?.properties?.network as string | undefined) ?? ""
+        const isNR = /National Rail|Elizabeth line/.test(network)
+        if (!isNR) continue
+        // Proximity dedupe within the SAME cluster — collapses St Pancras
+        // main / HS1 concourses (~80m apart) into a single diamond.
+        const nearPrevious = iconFeatures.some((f) => {
+          const [l, a] = f.geometry.coordinates as [number, number]
+          return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
+        })
+        if (nearPrevious) continue
+        const rawName = bf?.properties?.name as string | undefined
+        let cleanName = cleanTerminusLabel(rawName)
+        if (cleanName === displayName) cleanName = `${cleanName} Station`
+        iconFeatures.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [lng, lat] },
+          properties: {
+            coord: coord,
+            coordKey: coord,
+            name: cleanName,
+            isTerminus: true,
+          },
+        })
+      }
+    }
+    return {
+      icons: { type: "FeatureCollection" as const, features: iconFeatures },
+    }
+  }, [baseStations])
+
   // Stamps boolean flags (isNew / isLeaving) — NOT the scale values themselves.
   // Scale values live in the Layer expressions so stationsForMap doesn't recompute
   // on every animation frame, and avoids stale-value flashes on the first render.
@@ -5572,15 +5672,18 @@ export default function HikeMap() {
           // visibleRatings + newlyRemovedRatings are both empty. Animations
           // still work because newlyRemovedRatings keeps a category visible
           // for the shrink-out frames after the user unchecks it.
-          // Excluded stations (admin-only) — gated on the "excluded" checkbox.
-          if (f.properties.isExcluded) {
-            return visibleRatings.has('excluded') || newlyRemovedRatings.has('excluded')
-          }
-          const category = (f.properties.rating as string | undefined) ?? 'unrated'
+          //
+          // `category` is the stringified numeric rating ("4","3","2","1")
+          // or the special "unrated" pseudo-category. Buried stations are
+          // categorised by their underlying rating — being buried just
+          // gates *visibility at low zoom*, it's not a separate filter.
+          const ratingNum = f.properties.rating as number | undefined
+          const category = ratingNum != null ? String(ratingNum) : 'unrated'
           return visibleRatings.has(category) || newlyRemovedRatings.has(category)
         })
         .map(f => {
-          const category = (f.properties.rating as string | undefined) ?? 'unrated'
+          const ratingNum = f.properties.rating as number | undefined
+          const category = ratingNum != null ? String(ratingNum) : 'unrated'
           // Admin-only "hasIssue" flag — true when the station has been
           // explicitly flagged via the issue button. Station-global, so
           // the halo follows the station across primary switches. Computed
@@ -5662,12 +5765,9 @@ export default function HikeMap() {
       if (exclude.has(coordKey)) continue
       // Friend overrides everything — counted in `exclude` above, so
       // this branch never sees the active friend origin coord.
-      if (f.properties.isExcluded) {
-        if (!visibleRatings.has("excluded")) continue
-      } else {
-        const category = (f.properties.rating as string | undefined) ?? "unrated"
-        if (!visibleRatings.has(category)) continue
-      }
+      const ratingNum = f.properties.rating as number | undefined
+      const category = ratingNum != null ? String(ratingNum) : "unrated"
+      if (!visibleRatings.has(category)) continue
       count += 1
     }
     setFilterNotif({ count, visible: true })
@@ -5733,55 +5833,27 @@ export default function HikeMap() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapReady, visibleRatings])
 
-  // Dev action: toggle a station's excluded status. Excluded stations are hidden
-  // from normal users; in admin mode they appear as crosses when the "Excluded"
-  // rating checkbox is on.
-  // Admin-only "pending" toggles for exclude. We DELIBERATELY
-  // do NOT update excludedStations state at runtime before — the
-  // Set is the input to a big useMemo chain (stations →
-  // filteredStations → displayedStations → allStationsWithRatings →
-  // stationsForMap) and eventually Mapbox's setData which re-uploads
-  // ~3700 features to the map source. That cycle takes 5-10s of UI
-  // freeze on every toggle.
+  // Dev action: toggle a station's "buried" flag. Buried unrated
+  // stations only render at zoom 12+ (unless they're the active
+  // primary/friend or a cluster member of either) — useful for hiding
+  // inner-suburb noise that crowds the map at city scale.
   //
   // Direct synchronous toggle: updates local state immediately so the
-  // modal button + map icon flip on the same render. This cascades
-  // through the heavy useMemo chain (routing → stations → filtered →
-  // map features → Mapbox re-upload), which causes a multi-second
-  // freeze on every toggle. Admin explicitly preferred the freeze-
-  // plus-instant-feedback trade-off over the previous fire-and-
-  // forget approach where the map only updated on next reload.
-  const handleToggleExclusion = useCallback((name: string, coordKey: string) => {
-    let nowExcluded = false
-    setExcludedStations((prev) => {
+  // map icon flips on the same render. The cascade through the useMemo
+  // chain (stations → filtered → displayed → allStationsWithRatings →
+  // stationsForMap → Mapbox re-upload) means a brief freeze, but the
+  // instant feedback is preferred over fire-and-forget.
+  const handleToggleBuried = useCallback((name: string, coordKey: string) => {
+    setBuriedStations((prev) => {
       const next = new Set(prev)
       if (next.has(coordKey)) next.delete(coordKey); else next.add(coordKey)
-      nowExcluded = next.has(coordKey)
       return next
     })
-    const endpoint = nowExcluded ? "/api/dev/exclude-station" : "/api/dev/include-station"
-    fetch(endpoint, {
+    fetch("/api/dev/toggle-buried", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, coordKey }),
-    }).catch((err) => console.error("toggle-exclusion POST failed:", err))
-  }, [])
-
-  // Dev action: set or clear a station's universal rating via the API
-  const handleRate = useCallback(async (coordKey: string, name: string, rating: Rating | null) => {
-    // Optimistic update — apply locally before the API call completes
-    setRatings((prev) => {
-      const next = { ...prev }
-      if (rating) { next[coordKey] = rating } else { delete next[coordKey] }
-      return next
-    })
-    outbox.enqueue({
-      endpoint: "/api/dev/rate-station",
-      method: "POST",
-      body: { coordKey, name, rating },
-      key: `rating:${coordKey}`,
-      label: `Rate ${name} as ${rating ?? "unrated"}`,
-    })
+    }).catch((err) => console.error("toggle-buried POST failed:", err))
   }, [])
 
   // Admin-only: toggle "approved for this home" for a (home, dest) pair.
@@ -6914,12 +6986,12 @@ export default function HikeMap() {
     ): number => {
       if (layerId === "hovered-station-hit") return 10
       if (!p) return 0
-      if (p.isExcluded) return 1
+      if (p.isBuriedHidden) return 1
       switch (p.rating) {
-        case "highlight":
-        case "verified":
-        case "unverified":
-        case "not-recommended":
+        case 4:
+        case 3:
+        case 2:
+        case 1:
           return 2
         default:
           return 0
@@ -6980,7 +7052,7 @@ export default function HikeMap() {
   }, [])
 
   // Dev only. Right-click behaviour depends on what's under the cursor:
-  //   - On a regular station → toggle its exclusion (hide / re-show).
+  //   - On a regular station → toggle its buried flag.
   //   - On the London hexagon → no-op (it has its own click behaviour).
   //   - On empty map → copy the cursor coord-key ("lng,lat", 2 decimals)
   //     to the clipboard so the admin can paste it into a data file
@@ -6993,7 +7065,7 @@ export default function HikeMap() {
       if (feature.properties?.isLondon) return
       const name = feature.properties?.name as string
       const coordKey = feature.properties?.coordKey as string
-      handleToggleExclusion(name, coordKey)
+      handleToggleBuried(name, coordKey)
       return
     }
     // Empty space — copy coord to clipboard.
@@ -7002,7 +7074,7 @@ export default function HikeMap() {
       setCoordCopied(true)
       setTimeout(() => setCoordCopied(false), 1000)
     }).catch(() => {/* clipboard blocked — silent fail */})
-  }, [devExcludeActive, handleToggleExclusion])
+  }, [devExcludeActive, handleToggleBuried])
 
   // Handles station clicks — always opens the detail modal (with dev tools when dev mode is on).
   // Clicking empty map space closes the modal.
@@ -7480,35 +7552,22 @@ export default function HikeMap() {
       if (map.hasImage(name)) map.removeImage(name)
       map.addImage(name, img, { pixelRatio: dpr })
     }
-    add('icon-highlight',       createRatingIcon('star',          colors.primary,   stroke))
-    add('icon-verified',        createRatingIcon('triangle-up',   colors.primary,   stroke))
-    add('icon-unrated',         createRatingIcon('circle',        colors.secondary, stroke))
-    // Probably/unverified — primary colour (matches Heavenly/Good) so it
-    // reads as a positive-curation tier. Previously secondary, which blurred
-    // the visual line against the Unknown dot.
-    add('icon-unverified',      createRatingIcon('hexagon',        colors.primary,   stroke))
-    add('icon-not-recommended', createRatingIcon('triangle-down', colors.secondary, stroke))
-    add('icon-origin',          createRatingIcon('square',        colors.primary,   stroke))
-    add('icon-london',          createRatingIcon('square',        colors.primary,   stroke))
+    // Rating sprites — keys mirror the numeric Rating type.
+    //   4 (Sublime)   → star, --primary
+    //   3 (Charming)  → triangle-up, --primary
+    //   2 (Pleasant)  → hexagon, --primary
+    //   1 (Flawed)    → triangle-down, --secondary
+    add('icon-rating-4', createRatingIcon('star',          colors.primary,   stroke))
+    add('icon-rating-3', createRatingIcon('triangle-up',   colors.primary,   stroke))
+    add('icon-rating-2', createRatingIcon('hexagon',       colors.primary,   stroke))
+    add('icon-rating-1', createRatingIcon('triangle-down', colors.secondary, stroke))
+    add('icon-unrated',  createRatingIcon('circle',        colors.secondary, stroke))
+    add('icon-origin',   createRatingIcon('square',        colors.primary,   stroke))
+    add('icon-london',   createRatingIcon('square',        colors.primary,   stroke))
     // Small diamond used for the 18 London-terminus reference markers when
     // the Central London synthetic is the active primary. Rendered at ~0.6×
     // icon-size in the layer below so it reads as a compact waypoint.
-    // Uses the SAME hardcoded #2f6544 (--tree-800) as the journey polyline
-    // layers so the diamonds visually match the route lines drawn on top
-    // — a visual "here's a terminus" anchor consistent with the polyline
-    // that threads between them.
-    add('icon-london-terminus', createRatingIcon('diamond',       "#2f6544",        stroke))
-    // Excluded stations — only shown in admin mode. Uses --primary so the cross
-    // reads with the same visual weight as Heavenly/Good/Origin markers.
-    add('icon-excluded',        createRatingIcon('cross',         colors.primary,   stroke))
-    // Curated-excluded: an admin-only variant of the excluded marker that
-    // renders for excluded stations we nevertheless care about — ones
-    // that carry a rating, or that act as a primary origin / cluster
-    // sibling. Same Latin cross as `icon-excluded`, but drawn with a
-    // thicker stroke; combined with the 2× icon-size (set on the layer),
-    // it reads as a louder version of the cross — "excluded, yes, but
-    // don't forget about this one".
-    add('icon-curated-excluded', createRatingIcon('cross',        colors.primary,   stroke, { crossLineWidth: 6 }))
+    add('icon-london-terminus', createRatingIcon('diamond', "#2f6544", stroke))
   }
 
   // No configureBasemap needed — the flat styles (Outdoors v12-based) have road
@@ -7557,7 +7616,8 @@ export default function HikeMap() {
           // slider to admin ceiling (600 = unlimited), min-time slider
           // to "off" (0), friend origin cleared, station-search field
           // cleared, both direct-only checkboxes cleared.
-          setVisibleRatings(new Set(["highlight", "verified", "unverified", "not-recommended", "unrated", "excluded"]))
+          setVisibleRatings(new Set(["4", "3", "2", "1", "unrated"]))
+          setHideNoTravelTime(false)
           setPrimaryInterchangeFilter("off")
           setPrimaryFeatureFilter("off")
           setSeasonFilter("off")
@@ -7646,6 +7706,8 @@ export default function HikeMap() {
         onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
+        hideNoTravelTime={hideNoTravelTime}
+        onHideNoTravelTimeChange={setHideNoTravelTime}
       />
 
       <WelcomeBanner
@@ -7725,21 +7787,25 @@ export default function HikeMap() {
               //
               // Leaving admin mode: reset only the filters that either
               //   (a) set an admin-only value the non-admin UI can't undo
-              //       — "excluded" rating, min-time-from-London beyond
+              //       — "no RTT data" toggle, min-time-from-London beyond
               //       what the non-admin slider exposes — or
               //   (b) are admin-only dropdowns (Feature, Interchange)
               //       whose current selection wouldn't make sense to a
               //       returning non-admin.
-              // Everything else (visible ratings except excluded,
-              // direct-only toggles, friend filters) stays put so the
-              // admin's working state carries over.
+              // Everything else (rating checkboxes, direct-only toggles,
+              // friend filters) stays put so the admin's working state
+              // carries over.
               if (!next) {
-                setVisibleRatings((prev) => {
-                  if (!prev.has("excluded")) return prev
-                  const copy = new Set(prev)
-                  copy.delete("excluded")
-                  return copy
-                })
+                // Search bar is admin-only — clear it on the way out
+                // so a returning non-admin doesn't see a filtered map
+                // with no visible search input.
+                setSearchQuery("")
+                // Re-hide no-travel-time stations on admin exit. The
+                // checkbox is admin-only and defaults true, but the
+                // admin may have unticked it during their session;
+                // a non-admin viewer should always start with them
+                // hidden again.
+                setHideNoTravelTime(true)
                 setMinMinutes(0)
                 setPrimaryInterchangeFilter("off")
                 setPrimaryFeatureFilter("off")
@@ -7765,7 +7831,7 @@ export default function HikeMap() {
           {/* Cursor coord-key readout — admin-only, sibling of the zoom
               indicator. Shows "lng,lat" rounded to 4 decimals (≈11 m
               precision) — same shape as coordKey strings stored in
-              excluded-stations.json, station-notes.json etc, so the value
+              buried-stations.json, station-notes.json etc, so the value
               can be copy-pasted directly into those files. */}
           {devExcludeActive && cursorCoord && (
             <div className={`pointer-events-none rounded px-2 py-1 font-mono text-xs text-white transition-colors ${
@@ -8119,7 +8185,7 @@ export default function HikeMap() {
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
         interactiveLayerIds={[
-          "hovered-station-hit", "station-hit-area", "london-hit-area", "secret-admin-hit",
+          "hovered-station-hit", "station-hit-area", "station-hit-area-buried-zoomed", "station-hit-area-cluster", "london-hit-area", "secret-admin-hit",
           // Terminus diamonds open the same stripped-down station modal
           // that other active-primary cluster members get (title + photos
           // only, no journey info, no Hike button). Both main (zoom 9+)
@@ -8410,6 +8476,51 @@ export default function HikeMap() {
           />
         </Source>
 
+        {/* Universal cluster-diamond layer — every member of every
+            synthetic cluster (London / Stratford / Birmingham /
+            Manchester / Edinburgh / Glasgow / Cardiff / Portsmouth /
+            Liverpool), regardless of which primary or friend is
+            currently active. Cluster members ALWAYS render as diamonds
+            with this layer's zoom rules, overriding the rating /
+            unrated / buried treatment they'd otherwise pick up from
+            the regular station-* layers. Placed BEFORE the stations
+            Source so the diamonds render BENEATH any other icon/label
+            in case of overlap. Not in interactiveLayerIds — clicks
+            pass through to the station hit-area below. */}
+        {allClusterDiamondFeatures && (
+          <Source id="all-cluster-diamonds" type="geojson" data={allClusterDiamondFeatures.icons}>
+            <Layer
+              id="cluster-diamond-icon"
+              type="symbol"
+              minzoom={9}
+              layout={{
+                "icon-image": "icon-london-terminus",
+                "icon-size": 0.6,
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+              }}
+            />
+            <Layer
+              id="cluster-diamond-label"
+              type="symbol"
+              minzoom={12}
+              layout={{
+                "text-field": ["get", "name"],
+                "text-size": 11,
+                "text-offset": [0, 1.2],
+                "text-anchor": "top",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+              }}
+              paint={{
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
+                "text-halo-width": 1.5,
+              }}
+            />
+          </Source>
+        )}
+
         {/* London-terminus reference markers — only when Central London is
             the active primary. Placed BEFORE the stations Source so they
             render beneath every station icon / label (bottom-most z-index —
@@ -8634,12 +8745,13 @@ export default function HikeMap() {
                 }}
               />
             )}
-            {/* Unrated stations — canvas-drawn circle icon, same approach as rated icons */}
+            {/* Unrated stations — canvas-drawn circle icon. Excludes rated
+                stations (they have their own layer) and buried-hidden stations
+                (those render via the dedicated zoom-11+ layer below). */}
             <Layer
               id="station-dots"
               type="symbol"
-              // Exclude both rated stations AND excluded stations (the latter get their own cross layer)
-              filter={["all", ["!", ["has", "rating"]], ["!", ["has", "isExcluded"]]]}
+              filter={["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]]]}
               layout={{
                 "icon-image": "icon-unrated",
                 "icon-allow-overlap": true,
@@ -8660,73 +8772,63 @@ export default function HikeMap() {
                 "icon-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
               }}
             />
-            {/* Rated stations — shown as heart/circle icons instead of grey-green dots */}
+            {/* Buried unrated stations gated to zoom 12+. Renders the
+                same circle icon as the regular unrated layer — buried
+                just controls *visibility at low zoom*, not the icon
+                itself. */}
+            <Layer
+              id="station-dots-buried-zoomed"
+              type="symbol"
+              minzoom={12}
+              filter={["all", ["has", "isBuriedHidden"], ["!", ["has", "isClusterMember"]]]}
+              layout={{
+                "icon-image": "icon-unrated",
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+                "icon-size": 0.7,
+              }}
+              paint={{
+                "icon-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+              }}
+            />
+            {/* Rated stations — heart/circle icons indexed by numeric rating. */}
             {mapReady && (
               <Layer
                 id="station-rating-icons"
                 type="symbol"
-                filter={["any", ["has", "rating"], ["has", "isExcluded"], ["has", "isFriendOrigin"]]}
+                filter={["all", ["any", ["has", "rating"], ["has", "isFriendOrigin"]], ["!", ["has", "isClusterMember"]]]}
                 layout={{
-                  // Friend origin wins over everything else — the active
-                  // friend station renders as a primary-colour square,
-                  // matching the primary-origin convention so the two
-                  // "origins" on the map (yours + your friend's) look
-                  // consistent. Checked FIRST so it beats isExcluded
-                  // (friend origins can be excluded — Birmingham is).
-                  // Curated-excluded (admin-only): thick cross in the
-                  // same primary colour as the regular cross; signals
-                  // "excluded but meaningful". Regular excluded
-                  // (admin-only): cross. Others: rating-based.
+                  // Friend origin wins over rating — the active friend
+                  // renders as a primary-colour square (same shape as
+                  // the primary origin) for consistency.
                   "icon-image": ["case",
-                    ["has", "isFriendOrigin"],     "icon-origin",
-                    ["has", "isCuratedExcluded"], "icon-curated-excluded",
-                    ["has", "isExcluded"],         "icon-excluded",
+                    ["has", "isFriendOrigin"], "icon-origin",
                     ["match", ["get", "rating"],
-                      "highlight",       "icon-highlight",
-                      "verified",        "icon-verified",
-                      "unverified",      "icon-unverified",
-                      "not-recommended", "icon-not-recommended",
+                      4, "icon-rating-4",
+                      3, "icon-rating-3",
+                      2, "icon-rating-2",
+                      1, "icon-rating-1",
                       "" // fallback
                     ],
                   ],
                   "icon-allow-overlap": true,    // don't hide icons when they overlap labels
                   "icon-ignore-placement": true, // don't let icons block other symbols
-                  // Higher value = drawn on top — rating first, excluded at the back
-                  "symbol-sort-key": ["case",
-                    ["has", "isExcluded"], -1,
-                    ["match", ["get", "rating"],
-                      "highlight",       4,
-                      "verified",        3,
-                      "unverified",      2,
-                      "not-recommended", 1,
-                      0
-                    ],
+                  // Higher value = drawn on top — best ratings render last.
+                  "symbol-sort-key": ["match", ["get", "rating"],
+                    4, 4,
+                    3, 3,
+                    2, 2,
+                    1, 1,
+                    0
                   ],
-                  // Slightly larger icon when hovered
-                  // ["has", "isNew"/"isLeaving"] picks the right scale; stable icons get base size.
-                  // Regular excluded (cross) renders at half the normal size.
-                  // Curated-excluded (diamond, admin-only) renders at full size
-                  // so it reads 2× as big as the cross — the admin cue the
-                  // user asked for ("diamond icons twice as big in admin mode").
-                  "icon-size": ["*",
-                    ["case",
-                      // Friend origin gets full base scale (square icon) —
-                      // even if it's also excluded (Birmingham is), so
-                      // the friend shouldn't shrink to the 0.5× cross
-                      // scaling that excluded stations normally get.
-                      ["has", "isFriendOrigin"], 1,
-                      ["has", "isCuratedExcluded"], 1,
-                      ["has", "isExcluded"], 0.5,
-                      1,
-                    ],
-                    hovered
-                      ? ["case",
-                          ["==", ["get", "coordKey"], hovered.coordKey],
-                            ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
-                            ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
-                        ]
-                      : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
-                  ],
+                  // Slightly larger icon when hovered.
+                  "icon-size": hovered
+                    ? ["case",
+                        ["==", ["get", "coordKey"], hovered.coordKey],
+                          ["case", ["has", "isNew"], 1.3 * iconScale, ["has", "isLeaving"], 1.3 * leaveScale, 1.3],
+                          ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                      ]
+                    : ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
                 }}
                 paint={{
                   // Fade opacity in sync with scale so the icon's drop shadow
@@ -8740,45 +8842,68 @@ export default function HikeMap() {
                 than the visual icons, making them easier to hover/click.
                 circle-sort-key ensures higher-rated stations render on top, so when
                 hit areas overlap, Mapbox returns the best-rated station first. */}
+            {/* Hit-area layers — split so that hit-testing matches the icon
+                visibility rules. Hovering over a feature whose icon ISN'T
+                rendered (because of zoom gating or cluster-member rules)
+                should never trigger the hover preview, so each visible-icon
+                layer gets its own hit-area sibling with the same minzoom +
+                filter. Sort-key + radius + opacity rules are kept in sync
+                so the rated-station hit-test still wins ties. */}
+            {/* Base hit area — covers stations rendered by station-dots
+                and station-rating-icons (i.e. NOT cluster members,
+                NOT buried-hidden). Always visible. */}
             <Layer
               id="station-hit-area"
               type="circle"
+              filter={["all", ["!", ["has", "isClusterMember"]], ["!", ["has", "isBuriedHidden"]]]}
               layout={{
-                // Sort key: higher value = drawn on top = returned first by queryRenderedFeatures.
-                // Rating wins over excluded, which is explicitly ranked below even
-                // unrated stations.
-                "circle-sort-key": ["case",
-                  ["has", "isExcluded"], -1,
-                  ["match", ["get", "rating"],
-                    "highlight",       4,
-                    "verified",        3,
-                    "unverified",      2,
-                    "not-recommended", 1,
-                    0, // unrated stations get lowest priority
-                  ],
+                "circle-sort-key": ["match", ["get", "rating"],
+                  4, 4, 3, 3, 2, 2, 1, 1, 0,
                 ],
               }}
               paint={{
-                // Per-station hit-area size.
-                // - Excluded: shrunk (10px) so it loses hit-tests near any non-excluded station.
-                // - Others: 12px on desktop (matches the visible pulsing icon —
-                //   cursor precision makes a forgiving target unnecessary) and
-                //   16px on mobile (the finger-friendly default we've always had).
-                // Radius depends only on feature properties (not hover state), so Mapbox
-                // doesn't repaint the layer on hover — that would cause hover flicker.
-                "circle-radius": ["case",
-                  ["has", "isExcluded"], 10,
-                  isMobile ? 16 : 12,
-                ],
+                "circle-radius": isMobile ? 16 : 12,
                 "circle-color": "#000000",
-                // Near-invisible but still detected by Mapbox hit testing.
-                // Fades with the leave/enter animation so the faint circle
-                // doesn't pop away abruptly when features are removed.
                 "circle-opacity": ["case",
                   ["has", "isLeaving"], 0.005 * leaveScale,
                   ["has", "isNew"],     0.005 * iconScale,
                   0.005,
                 ],
+              }}
+            />
+            {/* Buried-hidden hit area — only at zoom 12+, mirroring
+                station-dots-buried-zoomed. Below z=12 these features have
+                no visible icon, so no hit area either. */}
+            <Layer
+              id="station-hit-area-buried-zoomed"
+              type="circle"
+              minzoom={12}
+              filter={["all", ["has", "isBuriedHidden"], ["!", ["has", "isClusterMember"]]]}
+              layout={{
+                "circle-sort-key": -1,
+              }}
+              paint={{
+                "circle-radius": 10,
+                "circle-color": "#000000",
+                "circle-opacity": ["case",
+                  ["has", "isLeaving"], 0.005 * leaveScale,
+                  ["has", "isNew"],     0.005 * iconScale,
+                  0.005,
+                ],
+              }}
+            />
+            {/* Cluster-member hit area — mirrors cluster-diamond-icon's
+                minzoom 9. Below z=9 the diamond doesn't render, so the
+                hit area has to disappear too. */}
+            <Layer
+              id="station-hit-area-cluster"
+              type="circle"
+              minzoom={9}
+              filter={["has", "isClusterMember"]}
+              paint={{
+                "circle-radius": isMobile ? 14 : 10,
+                "circle-color": "#000000",
+                "circle-opacity": 0.005,
               }}
             />
             {/* Name-only labels — each rating tier appears at a different zoom.
@@ -8789,15 +8914,15 @@ export default function HikeMap() {
                 searching) takes over, and having both active at once causes overlapping text. */}
             {!isSearching && ([
               // [layerId, minzoom, filter]
-              ["station-labels-highlight", isMobile ? 6 : 7, ["==", ["get", "rating"], "highlight"]],
-              ["station-labels-rated", 8, ["==", ["get", "rating"], "verified"]],
-              // Pleasant tier surfaces one zoom level later than Sublime/Charming
-              // so the map stays calmer at city-wide zooms.
-              ["station-labels-unverified", 9, ["==", ["get", "rating"], "unverified"]],
-              ["station-labels-not-recommended", 8, ["==", ["get", "rating"], "not-recommended"]],
-              // Unrated label tier — excludes "isExcluded" stations so their labels only
-              // start showing at zoom 11+ (via station-labels-full).
-              ["station-labels-unrated", 10, ["all", ["!", ["has", "rating"]], ["!", ["has", "isExcluded"]]]],
+              // Cluster members are excluded from EVERY rating-tier label
+              // layer so the diamond layer's own label (zoom 12+) is the
+              // only label they get — overrides whatever rating they
+              // carry from their underlying walks.
+              ["station-labels-highlight", isMobile ? 6 : 7, ["all", ["==", ["get", "rating"], 4], ["!", ["has", "isClusterMember"]]]],
+              ["station-labels-rated", 8, ["all", ["==", ["get", "rating"], 3], ["!", ["has", "isClusterMember"]]]],
+              ["station-labels-unverified", 9, ["all", ["==", ["get", "rating"], 2], ["!", ["has", "isClusterMember"]]]],
+              ["station-labels-not-recommended", 8, ["all", ["==", ["get", "rating"], 1], ["!", ["has", "isClusterMember"]]]],
+              ["station-labels-unrated", 10, ["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]]]],
             ] as const).map(([id, minZ, filter]) => (
               <Layer
                 key={id}
@@ -8827,29 +8952,79 @@ export default function HikeMap() {
                 }}
               />
             ))}
-            {/* Full labels (name + travel time) — shown for ALL stations at zoom 11+.
-                Uses "format" to render the name and time on separate lines with
-                different font scales. */}
+            {/* Full labels (name + travel time) — shown for ALL stations at zoom 11+,
+                EXCEPT buried-hidden ones (those get their own layer below, gated to
+                zoom 12 so icon + label appear together). When the user is searching
+                the buried-hidden exclusion is dropped — finding a buried station via
+                search should still surface its label even at low zoom. */}
+            {(() => {
+              // Always exclude cluster members — they get their own
+              // diamond label layer (zoom 12+). Buried-hidden are also
+              // excluded outside of search mode (their dedicated layer
+              // below covers them at zoom 12+).
+              const clusterExclude = ["!", ["has", "isClusterMember"]] as const
+              const buriedExclude = ["!", ["has", "isBuriedHidden"]] as const
+              const baseFilter = isSearching
+                ? clusterExclude
+                : ["all", buriedExclude, clusterExclude]
+              const fullFilter = hovered
+                ? ["all", baseFilter, ["!=", ["get", "coordKey"], hovered.coordKey]]
+                : baseFilter
+              return (
+                <Layer
+                  id="station-labels-full"
+                  type="symbol"
+                  minzoom={isSearching ? 0 : 11}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filter={fullFilter as any}
+                  layout={{
+                    "text-field": [
+                      "format",
+                      ["get", "name"], { "font-scale": 1 },
+                      "\n", {},
+                      // Friend-mode separator: "&" with two spaces on either
+                      // side. The double-space visually breathes the two
+                      // times apart so the label doesn't read as one run-on
+                      // figure.
+                      ...(friendOrigin
+                        ? [["concat", timeExpression("londonMinutes"), "  &  ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
+                        : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
+                      ),
+                    ],
+                    "text-size": 11,
+                    "text-offset": [0, 1.4],
+                    "text-anchor": "top",
+                    "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                    "text-allow-overlap": true,
+                  }}
+                  paint={{
+                    "text-color": labelColor,
+                    "text-halo-color": haloColor,
+                    "text-halo-width": 1.5,
+                    // Fade in/out with the icon grow/shrink animation
+                    "text-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
+                  }}
+                />
+              )
+            })()}
+            {/* Sister layer for buried-hidden labels — kicks in at zoom 12 so
+                the label appears in lockstep with the buried icon (which has
+                its own minzoom: 12 layer). Outside the search-mode override
+                because labels for buried-hidden stations are part of the
+                regular zoom-12 reveal, not the low-zoom search behaviour. */}
             <Layer
-              id="station-labels-full"
+              id="station-labels-buried-zoomed"
               type="symbol"
-              minzoom={isSearching ? 0 : 11}
-              // Exclude the hovered station — it gets its own layer below
-              // so the full label shows at any zoom, not just 11+
-              /* eslint-disable @typescript-eslint/no-explicit-any */
+              minzoom={12}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               filter={(hovered
-                ? ["!=", ["get", "coordKey"], hovered.coordKey]
-                : true) as any}
-              /* eslint-enable @typescript-eslint/no-explicit-any */
+                ? ["all", ["has", "isBuriedHidden"], ["!", ["has", "isClusterMember"]], ["!=", ["get", "coordKey"], hovered.coordKey]]
+                : ["all", ["has", "isBuriedHidden"], ["!", ["has", "isClusterMember"]]]) as any}
               layout={{
                 "text-field": [
                   "format",
                   ["get", "name"], { "font-scale": 1 },
                   "\n", {},
-                  // Friend-mode separator: "&" with two spaces on either
-                  // side. The double-space visually breathes the two
-                  // times apart so the label doesn't read as one run-on
-                  // figure.
                   ...(friendOrigin
                     ? [["concat", timeExpression("londonMinutes"), "  &  ", timeExpression("friendMinutes")], { "font-scale": 0.8 }]
                     : [timeExpression("londonMinutes"), { "font-scale": 0.8 }]
@@ -8865,7 +9040,6 @@ export default function HikeMap() {
                 "text-color": labelColor,
                 "text-halo-color": haloColor,
                 "text-halo-width": 1.5,
-                // Fade in/out with the icon grow/shrink animation
                 "text-opacity": ["case", ["has", "isNew"], iconScale, ["has", "isLeaving"], leaveScale, 1],
               }}
             />
@@ -9301,9 +9475,8 @@ export default function HikeMap() {
               hasIssue,
             )}
             currentRating={ratings[displayStation.coordKey] ?? null}
-            onRate={(rating: Rating | null) => handleRate(displayStation.coordKey, displayStation.name, rating)}
-            onExclude={() => handleToggleExclusion(displayStation.name, displayStation.coordKey)}
-            isExcluded={excludedStations.has(displayStation.coordKey)}
+            onBury={() => handleToggleBuried(displayStation.name, displayStation.coordKey)}
+            isBuried={buriedStations.has(displayStation.coordKey)}
             approvedPhotos={curations[displayStation.coordKey]?.approved ?? []}
             pinnedIds={new Set(curations[displayStation.coordKey]?.pinnedIds ?? [])}
             onApprovePhoto={(photo) => handleApprovePhoto(displayStation.coordKey, displayStation.name, photo)}
@@ -9323,9 +9496,9 @@ export default function HikeMap() {
             onSaveRamblerExtras={(lines) => handleSaveRamblerExtras(displayStation.coordKey, lines)}
             onWalkSaved={refreshStationDerivedData}
             defaultAlgo={
-              // Central London terminals (18 + synthetic) and excluded stations
+              // Central London terminals (18 + synthetic) and buried stations
               // default to "station"; everything else defaults to "landscapes".
-              londonClusterCoords.has(displayStation.coordKey) || excludedStations.has(displayStation.coordKey)
+              londonClusterCoords.has(displayStation.coordKey) || buriedStations.has(displayStation.coordKey)
                 ? "station"
                 : "landscapes"
             }

@@ -72,7 +72,8 @@ import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
 
 export type { FlickrPhoto }
 
-type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
+// Numeric rating shared with map.tsx — derived from the station's walks.
+type Rating = 1 | 2 | 3 | 4
 
 /** Journey info for a single origin, as stored in the GeoJSON.
  * `legs[]` fields are populated by scripts/fetch-journeys.mjs from Google's
@@ -166,14 +167,13 @@ type StationModalProps = {
   originY?: number
   /** When true, the dev tools section is shown in the modal */
   devMode?: boolean
-  /** The station's current universal rating, or null if unrated */
+  /** The station's derived rating (1..4), or null if no walks. Display-
+   *  only — there is no admin UI for setting it any more. */
   currentRating?: Rating | null
-  /** Sets or clears the station's rating — null means "unrated" */
-  onRate?: (rating: Rating | null) => void
-  /** Excludes (deletes) the station */
-  onExclude?: () => void
-  /** True when this station is currently excluded (admin-only) */
-  isExcluded?: boolean
+  /** Toggles the station's "buried" flag (right-click equivalent). */
+  onBury?: () => void
+  /** True when this station is currently buried (admin-only). */
+  isBuried?: boolean
   /** Photos the admin has approved for this station (always displayed) */
   approvedPhotos?: FlickrPhoto[]
   /** Ids of approved photos that are also pinned (show the pin badge) */
@@ -620,9 +620,8 @@ export default function StationModal({
   originY,
   devMode = false,
   currentRating = null,
-  onRate,
-  onExclude,
-  isExcluded = false,
+  onBury,
+  isBuried = false,
   approvedPhotos = [],
   pinnedIds = new Set(),
   onApprovePhoto,
@@ -1210,11 +1209,17 @@ export default function StationModal({
                     //   - Ghost stations (FIN, PSW): dedicated "minimal
                     //     service on weekends" message; quoting a time would
                     //     mislead.
+                    //   - Otherwise no-travel-time NR stations (admin-only):
+                    //     real stations whose journey data hasn't been
+                    //     fetched yet — usually because they're beyond our
+                    //     Saturday-morning RTT coverage from this origin.
                     : (adminMode && isNonNrStation(stationCrs))
                       ? "Not a National Rail Station: no RTT data."
                       : (stationCrs && GHOST_STATIONS.has(stationCrs))
                         ? GHOST_STATION_MESSAGE
-                        : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                        : adminMode
+                          ? "No travel times — destination outside our journey-data coverage from this origin."
+                          : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
                   isLondonHome,
                   // extraBold home origin when friend mode is on, so
                   // the home/friend sentences visually distinguish.
@@ -1740,16 +1745,18 @@ export default function StationModal({
         {devMode && (
           <div className="shrink-0 border-t px-6 py-3">
             <div className="flex items-center gap-1.5">
-              {/* Exclude toggle — active (primary-green plus) when the station is currently excluded.
-                  St George-style "+" cross matches the map marker for excluded stations. */}
+              {/* Bury toggle — primary-green when the station is currently
+                  buried. Buried unrated stations are zoom-gated (see map.tsx
+                  for the rules). Cross icon matches the buried map marker. */}
               <DevActionButton
-                label={isExcluded ? "Un-exclude" : "Exclude"}
-                active={isExcluded}
-                onClick={() => onExclude?.()}
+                label={isBuried ? "Unbury" : "Bury"}
+                active={isBuried}
+                onClick={() => onBury?.()}
                 icon={
-                  /* Latin/grave cross — horizontal raised to read as a headstone */
+                  /* Latin cross — horizontal raised to the upper third, matching
+                     the buried map marker. */
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke={isExcluded ? 'var(--primary)' : 'currentColor'}
+                    stroke={isBuried ? 'var(--primary)' : 'currentColor'}
                     strokeWidth="3" strokeLinecap="butt">
                     <line x1="4" y1="9" x2="20" y2="9" />
                     <line x1="12" y1="4" x2="12" y2="20" />
@@ -1757,29 +1764,15 @@ export default function StationModal({
                 }
               />
 
-              {/* Approve home→destination pair — admin-only journey
-                  testing flag. Hidden for excluded stations (they keep
-                  their normal colour in admin mode and don't participate
-                  in the approval workflow). Only rendered when a toggle
-                  handler is wired (map.tsx passes one whenever the
-                  station is a normal destination). Active = approved
-                  (green check). */}
-              {/* Issue flag — admin-only. Visible for every station (including
-                  excluded ones) so admins can triage without needing to
-                  un-exclude first. Active (highlighted) = "has issue".
-                  Station-global: toggling affects this station under every
-                  primary, not just the current home. */}
+              {/* Issue flag — admin-only. Station-global: toggling affects
+                  this station under every primary, not just the current home. */}
               {onToggleIssue && (
                 <DevActionButton
                   label={hasIssue ? "Clear issue" : "Flag issue"}
                   active={hasIssue}
                   onClick={() => onToggleIssue(!hasIssue)}
                   icon={
-                    /* Exclamation mark — highlighted primary when flagged,
-                       grey outline when clear. Built from two rounded-cap
-                       line segments so the dot below the stem reads as a
-                       small disc (strokeLinecap="round" + a 0.01-long
-                       line = a disc of radius strokeWidth/2). */
+                    /* Exclamation mark — highlighted primary when flagged. */
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                       stroke={hasIssue ? 'var(--primary)' : 'currentColor'}
                       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -1790,87 +1783,12 @@ export default function StationModal({
                 />
               )}
 
-              {/* Thin vertical separator between delete and rating buttons */}
+              {/* Read-only rating display — derived from the station's walks.
+                  No setter; admins set ratings on individual walks instead. */}
               <div className="mx-1 h-6 w-px bg-border" />
-
-              {/* Highlight — star, full green */}
-              <DevActionButton
-                label="Highlight"
-                active={currentRating === 'highlight'}
-                onClick={() => onRate?.(currentRating === 'highlight' ? null : 'highlight')}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill={currentRating === 'highlight' ? 'var(--primary)' : 'none'}
-                    stroke={currentRating === 'highlight' ? 'var(--primary)' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                }
-              />
-
-              {/* Verified recommendation — triangle-up, full green */}
-              <DevActionButton
-                label="Verified"
-                active={currentRating === 'verified'}
-                onClick={() => onRate?.(currentRating === 'verified' ? null : 'verified')}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill={currentRating === 'verified' ? 'var(--primary)' : 'none'}
-                    stroke={currentRating === 'verified' ? 'var(--primary)' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Equilateral triangle pointing up */}
-                    <polygon points="12 3, 22.39 21, 1.61 21" />
-                  </svg>
-                }
-              />
-
-              {/* Probably (unverified) — hexagon, grey-green. Shape matches the
-                  filter panel's "Probably" icon for design-system consistency. */}
-              <DevActionButton
-                label="Probably"
-                active={currentRating === 'unverified'}
-                onClick={() => onRate?.(currentRating === 'unverified' ? null : 'unverified')}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="1 2 22 20"
-                    fill={currentRating === 'unverified' ? '#aed0b8' : 'none'}
-                    stroke={currentRating === 'unverified' ? '#aed0b8' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Hexagon — same 6 vertices as filter-panel.tsx */}
-                    <polygon points="22,12 17,20.66 7,20.66 2,12 7,3.34 17,3.34" />
-                  </svg>
-                }
-              />
-
-              {/* Not recommended — triangle-down, grey-green */}
-              <DevActionButton
-                label="Not recommended"
-                active={currentRating === 'not-recommended'}
-                onClick={() => onRate?.(currentRating === 'not-recommended' ? null : 'not-recommended')}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill={currentRating === 'not-recommended' ? '#aed0b8' : 'none'}
-                    stroke={currentRating === 'not-recommended' ? '#aed0b8' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    {/* Equilateral triangle pointing down */}
-                    <polygon points="12 21, 22.39 3, 1.61 3" />
-                  </svg>
-                }
-              />
-
-              {/* Unrated — circle, grey-green (clears any existing rating) */}
-              <DevActionButton
-                label="Unrated"
-                active={currentRating === null}
-                onClick={() => onRate?.(null)}
-                icon={
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                    fill={currentRating === null ? '#aed0b8' : 'none'}
-                    stroke={currentRating === null ? '#aed0b8' : 'currentColor'}
-                    strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                  </svg>
-                }
-              />
+              <span className="px-2 text-xs text-muted-foreground">
+                Rating: {currentRating ?? "—"} <span className="opacity-50">(from walks)</span>
+              </span>
             </div>
           </div>
         )}

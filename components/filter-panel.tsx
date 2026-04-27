@@ -104,11 +104,12 @@ function LabelTip({ text, icon, children }: { text: string; icon?: React.ReactNo
 }
 
 // Each rating category with its display label, colour, and inline SVG icon
-// matching the map markers exactly: star, triangle-up, triangle-down, circle.
-// `adminOnly` entries only render when admin mode is active.
-const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean; adminOnly?: boolean }[] = [
+// matching the map markers exactly: star, triangle-up, hexagon, triangle-down, circle.
+// `key` is the stringified numeric rating ("4","3","2","1") plus "unrated"
+// for the no-walks pseudo-category. The label is what the user sees.
+const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; tooltip: string; secondary?: boolean }[] = [
   {
-    key: "highlight", label: "Sublime", tooltip: "Among the very best stations for walking — an area you could visit forever",
+    key: "4", label: "Sublime", tooltip: "Among the very best stations for walking — an area you could visit forever",
     icon: (
       /* w-[0.75rem] h-[0.75rem] uses rem so the icon scales with the root font-size; scale-125 makes the star a bit bigger than the rest */
       <svg viewBox="1 1 22 22" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
@@ -117,7 +118,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "verified", label: "Charming", tooltip: "A station with real character and lovely walks nearby — well worth the journey",
+    key: "3", label: "Charming", tooltip: "A station with real character and lovely walks nearby — well worth the journey",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--primary)" stroke="var(--primary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 3, 22.39 21, 1.61 21" />
@@ -130,7 +131,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     // positive-curation tier alongside Heavenly and Good — distinct from
     // the duller Unknown dot beneath it. `secondary: true` would still
     // drive a secondary-tinted checkbox, so drop that flag too.
-    key: "unverified", label: "Pleasant", tooltip: "Some good walks in the area — enjoyable without being unmissable",
+    key: "2", label: "Pleasant", tooltip: "Some good walks in the area — enjoyable without being unmissable",
     icon: (
       // Filter-menu only — same hexagon points as before, rotated 90°
       // for visual variety and scaled to 90% (w-[0.9rem]) to feel less
@@ -144,7 +145,7 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     ),
   },
   {
-    key: "not-recommended", label: "Flawed", secondary: true, tooltip: "Some worthwhile walks here, but the area has drawbacks — check the notes before making the trip",
+    key: "1", label: "Flawed", secondary: true, tooltip: "Some worthwhile walks here, but the area has drawbacks — check the notes before making the trip",
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <polygon points="12 21, 22.39 3, 1.61 3" />
@@ -156,19 +157,6 @@ const RATING_FILTERS: { key: string; label: string; icon: React.ReactNode; toolt
     icon: (
       <svg viewBox="0 0 24 24" fill="var(--secondary)" stroke="var(--secondary)" strokeWidth="1.5" className="w-[1rem] h-[1rem]">
         <circle cx="12" cy="12" r="9" />
-      </svg>
-    ),
-  },
-  {
-    // Admin-only: shows stations that have been hidden from the destination list.
-    key: "excluded", label: "Excluded", adminOnly: true,
-    tooltip: "Visible only in admin mode",
-    icon: (
-      /* Latin/grave cross — horizontal raised to the upper third so it reads as a
-         headstone (appropriate for "excluded") rather than a generic "+" add icon. */
-      <svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="3" className="w-[1rem] h-[1rem]">
-        <line x1="4" y1="9" x2="20" y2="9" />
-        <line x1="12" y1="4" x2="12" y2="20" />
       </svg>
     ),
   },
@@ -302,9 +290,15 @@ type FilterPanelProps = {
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
+  /** Admin-only "Hide no-travel-time stations" checkbox. Default true.
+   *  When unticked, destinations with no journey-time data appear
+   *  (Sheringham, Norfolk coast, etc.). Re-enabled on admin exit so
+   *  non-admin viewers always have them hidden. */
+  hideNoTravelTime: boolean
+  onHideNoTravelTimeChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1419,7 +1413,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     both time sliders (max → admin ceiling, min → 0)
                     because passesTimeFilter() hides null-time stations
                     under any explicit constraint. */}
-                <option value="no-travel-data">No travel data</option>
+                <option value="no-travel-data">No travel times</option>
                 {/* "Oyster" — keeps only stations within the TfL Oyster /
                     contactless PAYG fare zone. Includes Underground / DLR
                     / Elizabeth (Z-prefix CRS) plus the curated NR list
@@ -1590,13 +1584,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </>
           )}
 
-          {/* Rating visibility toggles — one checkbox per rating category */}
+          {/* Rating visibility toggles — one checkbox per rating category. */}
           <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
-            {/* <span className="mb-2 block text-sm font-medium">Ratings</span> */}
-            {RATING_FILTERS
-              // adminOnly rows (e.g. "Excluded") only render when the secret admin toggle is on
-              .filter(({ adminOnly }) => !adminOnly || adminMode)
-              .map(({ key, label, icon, tooltip, secondary }) => (
+            {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
               <div key={key} className="mt-1.5 flex items-center justify-between">
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
                 <LabelTip text={tooltip} icon={icon}>
@@ -1658,6 +1648,22 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 <Checkbox
                   checked={showRegions}
                   onCheckedChange={(checked) => onToggleRegions(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
+
+              {/* Admin-only mirror of the public-facing rule that
+                 stations with no travel-time data are hidden. Default
+                 ticked; the admin can untick to inspect them. The
+                 outer admin button re-ticks this on exit so a non-
+                 admin viewer never sees them. */}
+              <div className="mt-1.5 flex items-center justify-between">
+                <LabelTip text="Hide destinations with no journey-time data from this origin (the public-facing default).">
+                  <span className="text-sm font-medium">Hide no-travel-time stations</span>
+                </LabelTip>
+                <Checkbox
+                  checked={hideNoTravelTime}
+                  onCheckedChange={(checked) => onHideNoTravelTimeChange(checked === true)}
                   className="cursor-pointer"
                 />
               </div>

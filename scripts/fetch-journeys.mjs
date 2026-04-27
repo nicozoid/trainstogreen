@@ -2,15 +2,17 @@
 // Routes API (successor to the Directions API).
 //
 // Usage:
-//   GOOGLE_MAPS_API_KEY=your_key node scripts/fetch-journeys.mjs --origin "Farringdon" --filter highlight
+//   GOOGLE_MAPS_API_KEY=your_key node scripts/fetch-journeys.mjs --origin "Farringdon" --filter 4
 //
 // Flags:
 //   --origin "Station Name"  Origin station (looked up by name in stations.json). Required.
 //   --station "Station Name" Process a single destination station only (by name).
 //   --coordKey "lng,lat"     Process only the destination at this exact coordinate —
 //                            use this instead of --station when two stations share a name.
-//   --filter highlight       Only process stations with this rating (from station-ratings.json).
-//                            Omit to process all non-excluded stations.
+//   --filter 4               Only process stations with this derived rating (1..4).
+//                            Ratings are derived from each station's walks (see
+//                            app/api/dev/walk-ratings/route.ts for the rules).
+//                            Omit to process every station.
 //   --recompute              Re-fetch even if journey data already exists for this origin.
 //
 // Safe to interrupt and re-run — already-computed stations are skipped.
@@ -57,8 +59,14 @@ const STATION_FILTER = getFlag("--station")
 // Use this (instead of --station) when two stations share a name.
 const COORD_KEY_FILTER = getFlag("--coordKey")
 
-// Optional rating filter (e.g. "highlight", "verified")
-const RATING_FILTER = getFlag("--filter")
+// Optional rating filter — numeric 1..4 matching the derived rating
+// produced by app/api/dev/walk-ratings/route.ts.
+const RATING_FILTER_RAW = getFlag("--filter")
+const RATING_FILTER = RATING_FILTER_RAW == null ? null : Number(RATING_FILTER_RAW)
+if (RATING_FILTER != null && ![1, 2, 3, 4].includes(RATING_FILTER)) {
+  console.error(`Error: --filter must be 1, 2, 3, or 4 (got "${RATING_FILTER_RAW}")`)
+  process.exit(1)
+}
 
 // ---------------------------------------------------------------------------
 // Load data and resolve origin
@@ -86,11 +94,59 @@ console.log(
   `Origin: ${originFeature.properties.name} (${originLat}, ${originLng})`
 )
 
-// Load ratings so we can filter by rating if --filter is set
-const ratings = JSON.parse(readFileSync("data/station-ratings.json", "utf-8"))
+// Derive station ratings from walks — same rules as
+// app/api/dev/walk-ratings/route.ts. Builds a Map<coordKey, 1..4>.
+function deriveRatings() {
+  const WALK_FILES = [
+    "data/rambler-walks.json",
+    "data/leicester-ramblers-walks.json",
+    "data/heart-rail-trails-walks.json",
+    "data/abbey-line-walks.json",
+    "data/manual-walks.json",
+  ]
+  // Build CRS → coordKey index from stations.json.
+  const crsToCoord = new Map()
+  for (const f of stationData.features) {
+    const crs = f.properties?.["ref:crs"]
+    if (!crs) continue
+    const [lng, lat] = f.geometry?.coordinates ?? []
+    if (lng != null && lat != null) crsToCoord.set(crs, `${lng},${lat}`)
+  }
+  // Aggregate per CRS: max rating + sawAnyWalk flag (for the
+  // "all unrated → 2" rule).
+  const tally = new Map()
+  for (const file of WALK_FILES) {
+    let entries
+    try { entries = JSON.parse(readFileSync(file, "utf-8")) } catch { continue }
+    for (const entry of Object.values(entries)) {
+      if (!Array.isArray(entry?.walks)) continue
+      for (const v of entry.walks) {
+        const crs = v.startStation
+        if (!crs) continue
+        const t = tally.get(crs) ?? { max: null, sawAnyWalk: false }
+        t.sawAnyWalk = true
+        if (typeof v.rating === "number") {
+          const r = Math.round(v.rating)
+          if (r >= 1 && r <= 4) t.max = t.max == null ? r : Math.max(t.max, r)
+        }
+        tally.set(crs, t)
+      }
+    }
+  }
+  const out = new Map()
+  for (const [crs, t] of tally) {
+    const ck = crsToCoord.get(crs)
+    if (!ck) continue
+    if (t.max != null) out.set(ck, t.max)
+    else if (t.sawAnyWalk) out.set(ck, 2)
+  }
+  return out
+}
 
-if (RATING_FILTER) {
-  console.log(`Filter: only "${RATING_FILTER}" stations`)
+const ratings = RATING_FILTER == null ? null : deriveRatings()
+
+if (RATING_FILTER != null) {
+  console.log(`Filter: only stations with derived rating ${RATING_FILTER}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -293,19 +349,15 @@ function askYesNo(question) {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const excluded = new Set(
-    JSON.parse(readFileSync("data/excluded-stations.json", "utf-8"))
-  )
+  // (Buried stations are NOT skipped here — burying just hides a
+  // station at low zoom on the map, it doesn't disqualify it as a
+  // destination for journey fetching.)
 
   // Build the list of stations to process
   const candidates = stationData.features.filter((feature) => {
     const name = feature.properties.name ?? "Unknown"
     const [lng, lat] = feature.geometry.coordinates
     const coordKey = `${lng},${lat}`
-
-    // Skip excluded stations (deliberately hidden from the map).
-    // excluded-stations.json is now coordKey-only — unambiguous for stations with shared names.
-    if (excluded.has(coordKey)) return false
 
     // If --station is set, only include that specific station
     if (STATION_FILTER && name.toLowerCase() !== STATION_FILTER.toLowerCase()) {
@@ -317,9 +369,8 @@ async function main() {
     if (COORD_KEY_FILTER && coordKey !== COORD_KEY_FILTER) return false
 
     // If --filter is set, only include stations that match the rating
-    if (RATING_FILTER) {
-      const stationRating = ratings[coordKey]?.rating
-      if (stationRating !== RATING_FILTER) return false
+    if (RATING_FILTER != null) {
+      if (ratings.get(coordKey) !== RATING_FILTER) return false
     }
 
     return true
