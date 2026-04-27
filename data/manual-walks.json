@@ -111,7 +111,7 @@
         "stationToStation": true,
         "lunchStops": [],
         "sights": [],
-        "warnings": "Just doesn't feel like you've left London",
+        "warnings": "It's too apparent that you haven't left London",
         "id": "76xj",
         "source": {
           "orgSlug": "trains-to-green",
@@ -119,7 +119,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-27T22:14:04.104Z",
+        "updatedAt": "2026-04-27T22:14:38.086Z",
         "rating": 1
       }
     ],
