@@ -20820,7 +20820,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Battle",
         "endPlace": "Battle",
         "startStation": "BAT",
@@ -20844,18 +20843,18 @@
         "terrain": "Rolling Wealden countryside, fields, woods, the historic town of Battle",
         "sights": [
           {
-            "name": "Battle Abbey",
-            "url": null
+            "name": "Battle Abbey"
           }
         ],
-        "warnings": "",
         "id": "4yxc",
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Battle Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/battle-circular/",
           "type": "main"
-        }
+        },
+        "rating": 4,
+        "updatedAt": "2026-04-27T19:15:55.715Z"
       }
     ]
   },
@@ -28353,6 +28352,7 @@
     "walks": [
       {
         "role": "main",
+        "name": "",
         "startPlace": "Seaford",
         "endPlace": "Eastbourne",
         "startStation": "SEF",
@@ -28360,18 +28360,22 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 21.9,
+        "hours": null,
         "lunchStops": [
           {
             "name": "Cuckmere Inn",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           },
           {
             "name": "Saltmarsh Kitchen",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           },
           {
             "name": "Grab and Go",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           }
         ],
         "terrain": "Dramatic clifftop chalk downs, undulating Seven Sisters cliffs, shingle beaches, river haven, elegant seafront promenade",
@@ -28392,14 +28396,13 @@
         ],
         "warnings": "Crumbly cliff edges",
         "id": "g3wm",
-        "rating": 4,
+        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
           "type": "main"
-        },
-        "updatedAt": "2026-04-27T19:15:38.845Z"
+        }
       },
       {
         "role": "shorter",
