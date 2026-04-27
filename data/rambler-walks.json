@@ -105111,7 +105111,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Amberley",
         "endPlace": "Arundel",
         "startStation": "AMY",
@@ -105123,26 +105122,21 @@
         "lunchStops": [
           {
             "name": "George and Dragon",
-            "location": "Burpham",
-            "url": null
+            "location": "Burpham"
           }
         ],
         "terrain": "South Downs, wild flower meadows, gradual climbs, riverside path along River Arun, historic market town",
         "sights": [
           {
-            "name": "Amberley Museum",
-            "url": null
+            "name": "Amberley Museum"
           },
           {
-            "name": "Arundel Castle",
-            "url": null
+            "name": "Arundel Castle"
           },
           {
-            "name": "Arundel Cathedral",
-            "url": null
+            "name": "Arundel Cathedral"
           }
         ],
-        "warnings": "",
         "id": "xbo2",
         "bestSeasons": [
           "jun",
@@ -105155,7 +105149,8 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/amberley-to-arundel/",
           "type": "main"
         },
-        "suffix": "via Amberley Museum"
+        "rating": 4,
+        "updatedAt": "2026-04-27T19:23:29.570Z"
       }
     ]
   },
