@@ -104,27 +104,23 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "",
         "endPlace": "",
         "startStation": "CDS",
         "endStation": "RDH",
         "stationToStation": true,
-        "distanceKm": null,
-        "hours": null,
         "lunchStops": [],
-        "terrain": "",
         "sights": [],
-        "warnings": "",
+        "warnings": "Just doesn't feel like you've left London",
         "id": "76xj",
-        "suffix": "",
         "source": {
           "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-27T22:13:32.584Z"
+        "updatedAt": "2026-04-27T22:14:04.104Z",
+        "rating": 1
       }
     ],
     "extracted": true,
