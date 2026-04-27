@@ -25586,7 +25586,6 @@
       },
       {
         "role": "shorter",
-        "name": "",
         "startPlace": "Lewes",
         "endPlace": "Southease",
         "startStation": "LWS",
@@ -25594,36 +25593,32 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 11.1,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Abergavenny Arms",
-            "location": "Rodmell",
-            "url": null
+            "location": "Rodmell"
           },
           {
             "name": "YHA Courtyard Cafe",
-            "location": "Southease",
-            "url": null
+            "location": "Southease"
           }
         ],
         "terrain": "Downland ridge, long gradual descent to Rodmell, chalk paths, open views",
         "sights": [
           {
-            "name": "Mount Caburn",
-            "url": null
+            "name": "Mount Caburn"
           }
         ],
-        "warnings": "",
         "id": "c5dx",
-        "rating": 3,
+        "rating": 4,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes Circular via Glynde and Southease",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-circular-via-glynde-and-southease/",
           "type": "shorter"
         },
-        "suffix": "via Glynde and Southease"
+        "suffix": "via Glynde",
+        "updatedAt": "2026-04-27T17:57:48.459Z"
       },
       {
         "role": "shorter",
