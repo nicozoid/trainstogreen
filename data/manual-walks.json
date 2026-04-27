@@ -90,5 +90,47 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-76xj": {
+    "slug": "manual-76xj",
+    "title": "Manual CDS to RDH",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "CDS",
+        "endStation": "RDH",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "warnings": "",
+        "id": "76xj",
+        "suffix": "",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-27T22:13:32.584Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
