@@ -7165,11 +7165,11 @@ export default function HikeMap() {
       }
     }
     // Cloud admin doorway — invisible marker at a fixed map coord.
-    // Dev-only: on production deployments the admin API is disabled at the
-    // middleware layer, so we also refuse to flip the client-side state.
-    // process.env.NODE_ENV is inlined at build time — this branch is dead-
-    // code-eliminated from production bundles entirely.
-    if (process.env.NODE_ENV === "development" && feature.properties?.isSecretAdmin) {
+    // Works in production too: the admin API allows writes for the
+    // non-bundled data files (photos, notes, ratings, etc.) and the
+    // outbox handles offline tolerance. Bundled-file routes are still
+    // blocked at the middleware layer — those need a redeploy anyway.
+    if (feature.properties?.isSecretAdmin) {
       // The doorway toggles admin mode WITHOUT
       // touching any filter UI state. This entry point is meant for
       // quick peeking — I'm already looking at a particular slice of
