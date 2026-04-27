@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 
 const FILE_PATH = "data/station-ratings.json"
 
@@ -10,18 +11,20 @@ export async function POST(req: NextRequest) {
   const { coordKey, name, rating } = await req.json()
   if (!coordKey) return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
 
-  const { data: ratings, sha } = await readDataFile<Record<string, RatingEntry>>(FILE_PATH)
+  return handleAdminWrite(async () => {
+    const { data: ratings, sha } = await readDataFile<Record<string, RatingEntry>>(FILE_PATH)
 
-  if (rating) {
-    // Set or update — store name alongside rating for human readability
-    ratings[coordKey] = { name: name ?? coordKey, rating }
-  } else {
-    // No rating means "unrated" — remove the entry
-    delete ratings[coordKey]
-  }
+    if (rating) {
+      // Set or update — store name alongside rating for human readability
+      ratings[coordKey] = { name: name ?? coordKey, rating }
+    } else {
+      // No rating means "unrated" — remove the entry
+      delete ratings[coordKey]
+    }
 
-  await writeDataFile(FILE_PATH, ratings, `Rate ${name ?? coordKey} as ${rating ?? "unrated"}`, sha)
-  return NextResponse.json({ message: "ok" })
+    await writeDataFile(FILE_PATH, ratings, `Rate ${name ?? coordKey} as ${rating ?? "unrated"}`, sha)
+    return NextResponse.json({ message: "ok" })
+  })
 }
 
 // GET returns all ratings so the map can load them on startup.

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
 
 const FILE_PATH = "data/station-rambler-extras.json"
@@ -42,28 +43,30 @@ export async function POST(req: NextRequest) {
     .map((s) => (typeof s === "string" ? s.trim() : ""))
     .filter(Boolean)
 
-  const { data, sha } = await readDataFile<ExtrasFile>(FILE_PATH)
+  return handleAdminWrite(async () => {
+    const { data, sha } = await readDataFile<ExtrasFile>(FILE_PATH)
 
-  if (cleaned.length === 0) {
-    delete data[coordKey]
-  } else {
-    data[coordKey] = cleaned
-  }
+    if (cleaned.length === 0) {
+      delete data[coordKey]
+    } else {
+      data[coordKey] = cleaned
+    }
 
-  await writeDataFile(FILE_PATH, data, `Update station-rambler-extras for ${coordKey}`, sha)
+    await writeDataFile(FILE_PATH, data, `Update station-rambler-extras for ${coordKey}`, sha)
 
-  // Rebuild station-notes.json so the public prose reflects the edit
-  // immediately — mirrors the per-walk PATCH flow.
-  try {
-    await buildRamblerNotes({ dryRun: false, flipOnMap: false })
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error("rebuild after rambler-extras write failed:", err)
-    return NextResponse.json(
-      { message: "saved but rebuild failed" },
-      { status: 500 },
-    )
-  }
+    // Rebuild station-notes.json so the public prose reflects the edit
+    // immediately — mirrors the per-walk PATCH flow.
+    try {
+      await buildRamblerNotes({ dryRun: false, flipOnMap: false })
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("rebuild after rambler-extras write failed:", err)
+      return NextResponse.json(
+        { message: "saved but rebuild failed" },
+        { status: 500 },
+      )
+    }
 
-  return NextResponse.json({ message: "ok" })
+    return NextResponse.json({ message: "ok" })
+  })
 }

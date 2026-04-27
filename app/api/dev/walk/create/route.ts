@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
 
 // All walk files — we read them all to ensure the generated id is
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid endStation (expected 3-letter CRS)" }, { status: 400 })
   }
 
+  return handleAdminWrite(async () => {
   // Generate a non-colliding id. Retry a handful of times in the
   // vanishingly unlikely event of a collision; the id space is ~1.6M
   // so even with 10k walks the miss rate is ~0.6%.
@@ -146,4 +148,5 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ message: "ok", id })
+  })
 }

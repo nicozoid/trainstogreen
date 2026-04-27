@@ -5,6 +5,9 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { AdminProvider } from "@/lib/admin-context"
+import { AdminToastPill } from "@/components/admin-toast-pill"
+import { AdminOfflineBanner } from "@/components/admin-offline-banner"
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -45,7 +48,18 @@ export default function RootLayout({
       className={cn("antialiased", fontMono.variable, "font-sans", generalSans.variable)}
     >
       <body suppressHydrationWarning>
-        <ThemeProvider><TooltipProvider>{children}</TooltipProvider></ThemeProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <AdminProvider>
+              {/* Mounted at the root so the toast and offline banner sit
+                  above every page. Both render fixed-position elements
+                  with their own z-index. */}
+              <AdminOfflineBanner />
+              <AdminToastPill />
+              {children}
+            </AdminProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -9,6 +9,7 @@
 // Flat array keeps the file small and lookups cheap (Set.has on the client).
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 
 const FILE_PATH = "data/has-issue-stations.json"
 
@@ -18,21 +19,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing or invalid coordKey" }, { status: 400 })
   }
 
-  const { data: list, sha } = await readDataFile<string[]>(FILE_PATH)
-  const set = new Set(list)
-  const had = set.has(coordKey)
+  return handleAdminWrite(async () => {
+    const { data: list, sha } = await readDataFile<string[]>(FILE_PATH)
+    const set = new Set(list)
+    const had = set.has(coordKey)
 
-  if (hasIssue) set.add(coordKey)
-  else set.delete(coordKey)
+    if (hasIssue) set.add(coordKey)
+    else set.delete(coordKey)
 
-  if (set.has(coordKey) === had) {
-    return NextResponse.json({ message: "no change" })
-  }
+    if (set.has(coordKey) === had) {
+      return NextResponse.json({ message: "no change" })
+    }
 
-  const next = Array.from(set).sort()
-  const verb = hasIssue ? "Flag issue on" : "Clear issue on"
-  await writeDataFile(FILE_PATH, next, `${verb} ${name ?? coordKey}`, sha)
-  return NextResponse.json({ message: "ok" })
+    const next = Array.from(set).sort()
+    const verb = hasIssue ? "Flag issue on" : "Clear issue on"
+    await writeDataFile(FILE_PATH, next, `${verb} ${name ?? coordKey}`, sha)
+    return NextResponse.json({ message: "ok" })
+  })
 }
 
 // GET returns the flat array — the client wraps it in a Set for O(1) lookups.

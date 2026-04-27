@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 
 const FILE_PATH = "data/photo-flickr-settings.json"
 
@@ -37,33 +38,40 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing coordKey" }, { status: 400 })
   }
 
-  const { data: settings, sha } = await readDataFile<Record<string, FlickrCustomSettings>>(FILE_PATH)
-
-  // null/missing custom means "clear this station's custom config"
-  if (!custom) {
-    delete settings[coordKey]
-    await writeDataFile(FILE_PATH, settings, `clear flickr custom config for ${name ?? coordKey}`, sha)
-    return NextResponse.json({ message: "cleared" })
+  // Validate the custom config OUTSIDE the retry loop so a malformed input
+  // returns 400 immediately without burning conflict-retry budget.
+  if (custom) {
+    if (!Array.isArray(custom.includeTags) || !Array.isArray(custom.excludeTags) || typeof custom.radius !== "number") {
+      return NextResponse.json({ error: "custom requires { includeTags, excludeTags, radius }" }, { status: 400 })
+    }
   }
 
-  if (!Array.isArray(custom.includeTags) || !Array.isArray(custom.excludeTags) || typeof custom.radius !== "number") {
-    return NextResponse.json({ error: "custom requires { includeTags, excludeTags, radius }" }, { status: 400 })
-  }
-  const sort: FlickrSort | undefined =
-    custom.sort === "interestingness-desc" || custom.sort === "relevance" ? custom.sort : undefined
+  return handleAdminWrite(async () => {
+    const { data: settings, sha } = await readDataFile<Record<string, FlickrCustomSettings>>(FILE_PATH)
 
-  settings[coordKey] = {
-    name,
-    custom: {
-      includeTags: custom.includeTags.map((t) => t.trim()).filter(Boolean),
-      excludeTags: custom.excludeTags.map((t) => t.trim()).filter(Boolean),
-      radius: Math.max(0.1, Math.min(30, custom.radius)),
-      ...(sort ? { sort } : {}),
-    },
-  }
+    // null/missing custom means "clear this station's custom config"
+    if (!custom) {
+      delete settings[coordKey]
+      await writeDataFile(FILE_PATH, settings, `clear flickr custom config for ${name ?? coordKey}`, sha)
+      return NextResponse.json({ message: "cleared" })
+    }
 
-  await writeDataFile(FILE_PATH, settings, `set flickr custom config for ${name ?? coordKey}`, sha)
-  return NextResponse.json({ message: "ok" })
+    const sort: FlickrSort | undefined =
+      custom.sort === "interestingness-desc" || custom.sort === "relevance" ? custom.sort : undefined
+
+    settings[coordKey] = {
+      name,
+      custom: {
+        includeTags: custom.includeTags.map((t) => t.trim()).filter(Boolean),
+        excludeTags: custom.excludeTags.map((t) => t.trim()).filter(Boolean),
+        radius: Math.max(0.1, Math.min(30, custom.radius)),
+        ...(sort ? { sort } : {}),
+      },
+    }
+
+    await writeDataFile(FILE_PATH, settings, `set flickr custom config for ${name ?? coordKey}`, sha)
+    return NextResponse.json({ message: "ok" })
+  })
 }
 
 // GET — returns all custom configs so the map can hydrate state on mount.

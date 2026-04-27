@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
 
 // Files that hold walk entries — mirrors scripts/build-rambler-notes.mjs.
@@ -254,6 +255,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "invalid body" }, { status: 400 })
   }
 
+  return handleAdminWrite(async () => {
   const located = await locateWalk(id)
   if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
 
@@ -341,6 +343,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   return NextResponse.json({ message: "ok", id })
+  })
 }
 
 // DELETE — remove a single walk variant from its source file. If that
@@ -354,6 +357,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "invalid id" }, { status: 400 })
   }
 
+  return handleAdminWrite(async () => {
   const located = await locateWalk(id)
   if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
 
@@ -380,4 +384,5 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   }
 
   return NextResponse.json({ message: "ok", id })
+  })
 }

@@ -1,24 +1,48 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Lock all `/api/dev/*` mutations to local development. The dev API is
-// what the admin UI uses to write back to data/ via GitHub — every
-// write triggers a Vercel rebuild, so leaving it open in production
-// both burns the deploy rate-limit and lets anyone mutate data by
-// calling these routes directly (admin activation is client-only
-// gated; the routes themselves have no auth of their own).
+// Cloud-admin write policy.
 //
-// GETs remain open because public features depend on them (e.g. the
-// station-notes fetch that powers the public ramblerNote prose in
-// every station overlay). Only state-changing verbs are blocked.
+// Most admin actions write to `data/*.json` files that the app reads FRESH
+// from GitHub on every request — so a write commits to main, doesn't
+// trigger a Vercel rebuild (vercel.json's ignoreCommand skips data-only
+// commits), and is immediately live for everyone. That makes them safe to
+// run on the deployed cloud site.
+//
+// A small number of admin endpoints write to data files that ARE imported
+// directly into the React bundle (e.g. excluded-stations.json,
+// origin-routes.json). Those need a fresh build to take effect — they
+// would silently appear "not to work" on the cloud admin until the next
+// deploy. To keep cloud admin honest we block those endpoints in
+// production; do them from local dev where they take effect immediately.
+//
+// GETs are always open — public reads (station-notes, ratings, etc.)
+// power the public site. Only mutating verbs are gated.
 const MUTATING_METHODS = new Set(["POST", "PATCH", "PUT", "DELETE"])
+
+// Endpoints whose writes touch BUNDLED files. Path matching uses
+// `startsWith` so `/api/dev/walk/anything` would still pass — only exact
+// equality with one of these shuts the door. Keep this list short and
+// audit it whenever a route's underlying data file is added to/removed
+// from imports in the React bundle.
+const BUNDLED_FILE_ENDPOINTS = new Set([
+  "/api/dev/exclude-station",
+  "/api/dev/include-station",
+  "/api/dev/save-routing",
+  "/api/dev/delete-routing",
+])
 
 export function middleware(req: NextRequest) {
   if (process.env.NODE_ENV === "development") return
   if (!MUTATING_METHODS.has(req.method.toUpperCase())) return
+  if (!BUNDLED_FILE_ENDPOINTS.has(req.nextUrl.pathname)) return
   return NextResponse.json(
-    { error: "admin mutations only available in local development" },
-    { status: 404 },
+    {
+      error:
+        "this admin action edits a file that's bundled into the deployed build, " +
+        "so it can only be run from local dev — please make this change locally and push.",
+    },
+    { status: 403 },
   )
 }
 
