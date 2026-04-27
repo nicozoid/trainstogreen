@@ -30,6 +30,18 @@ function getToken(): string | undefined {
 }
 
 /**
+ * Thrown when a GitHub PUT returns 409/422 — i.e. the file's SHA has changed
+ * since we read it. The retry helper (`writeWithRetry`) catches this and
+ * re-runs the read/mutate/write cycle. Caller code shouldn't normally see it.
+ */
+export class ConflictError extends Error {
+  constructor(message = "GitHub SHA conflict") {
+    super(message)
+    this.name = "ConflictError"
+  }
+}
+
+/**
  * Read a JSON data file. Returns the parsed data and (in production) the
  * file's current SHA, which is needed to update it without conflicts.
  */
@@ -85,7 +97,8 @@ export async function readDataFile<T>(relativePath: string): Promise<{ data: T; 
  *
  * The `sha` parameter (from readDataFile) is required in production — GitHub
  * uses it to prevent conflicts. If another commit changed the file since you
- * read it, the write fails with a 409 instead of silently overwriting.
+ * read it, the write throws ConflictError instead of silently overwriting.
+ * Callers that want automatic retry should use `writeWithRetry` instead.
  */
 export async function writeDataFile<T>(
   relativePath: string,
@@ -120,6 +133,47 @@ export async function writeDataFile<T>(
 
   if (!res.ok) {
     const body = await res.text()
+    // GitHub returns 409 for SHA mismatch and 422 for "does not match" — both
+    // mean someone else committed in between. Convert to typed error so the
+    // retry helper can catch it specifically.
+    if (res.status === 409 || res.status === 422) {
+      throw new ConflictError(`GitHub PUT ${res.status}: ${body}`)
+    }
     throw new Error(`GitHub API write failed (${res.status}): ${body}`)
   }
+}
+
+/**
+ * Read → mutate → write cycle with automatic conflict retry. Pass a `mutate`
+ * function that receives the current parsed data and returns the new value
+ * plus a commit message. If the write 409s (someone else committed in the
+ * meantime), we re-read the file and re-run `mutate` against the latest
+ * state, up to 3 times. After that we give up and re-throw ConflictError.
+ *
+ * This makes the vast majority of admin actions conflict-free without any
+ * client-side logic — the few times two writes race, the second one just
+ * sees the latest state and reapplies its mutation cleanly.
+ */
+export async function writeWithRetry<T>(
+  relativePath: string,
+  mutate: (current: T) => { next: T; message: string },
+): Promise<void> {
+  const MAX_ATTEMPTS = 3
+  let lastErr: unknown
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    const { data, sha } = await readDataFile<T>(relativePath)
+    const { next, message } = mutate(data)
+    try {
+      await writeDataFile(relativePath, next, message, sha)
+      return
+    } catch (e) {
+      lastErr = e
+      if (e instanceof ConflictError) {
+        // SHA changed between our read and write — try again with fresh data.
+        continue
+      }
+      throw e
+    }
+  }
+  throw lastErr instanceof Error ? lastErr : new ConflictError("retry exhausted")
 }

@@ -47,6 +47,8 @@ import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { outbox } from "@/lib/admin-outbox"
+import { AdminEditsDialog } from "@/components/admin-edits-dialog"
 
 // Universal rating applied by a dev — stored in data/station-ratings.json, not per-user
 type Rating = 'highlight' | 'verified' | 'unverified' | 'not-recommended'
@@ -2264,6 +2266,9 @@ export default function HikeMap() {
   // RTT status panel visibility — admin-only. Opened via the "RTT"
   // button next to the admin close (bottom-centre) when admin is active.
   const [rttStatusOpen, setRttStatusOpen] = useState(false)
+  // Edits dialog (audit log + outbox queue) visibility — admin-only.
+  // Opened via the "edits" button next to the RTT one.
+  const [editsDialogOpen, setEditsDialogOpen] = useState(false)
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
@@ -5770,10 +5775,12 @@ export default function HikeMap() {
       if (rating) { next[coordKey] = rating } else { delete next[coordKey] }
       return next
     })
-    await fetch("/api/dev/rate-station", {
+    outbox.enqueue({
+      endpoint: "/api/dev/rate-station",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, rating }),
+      body: { coordKey, name, rating },
+      key: `rating:${coordKey}`,
+      label: `Rate ${name} as ${rating ?? "unrated"}`,
     })
   }, [])
 
@@ -5790,10 +5797,12 @@ export default function HikeMap() {
       if (hasIssue) next.add(coordKey); else next.delete(coordKey)
       return next
     })
-    await fetch("/api/dev/has-issue-station", {
+    outbox.enqueue({
+      endpoint: "/api/dev/has-issue-station",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, hasIssue }),
+      body: { coordKey, name, hasIssue },
+      key: `has-issue:${coordKey}`,
+      label: `${hasIssue ? "Flag" : "Clear"} issue on ${name}`,
     })
   }, [])
 
@@ -5809,10 +5818,12 @@ export default function HikeMap() {
         [coordKey]: { ...entry, name, approved: [...entry.approved, photo] },
       }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "approve", photo }),
+      body: { coordKey, name, photoId: photo.id, action: "approve", photo },
+      key: `photo:${coordKey}:${photo.id}`,
+      label: `Approve photo for ${name}`,
     })
   }, [])
 
@@ -5869,10 +5880,12 @@ export default function HikeMap() {
       }
       return { ...prev, [coordKey]: { ...entry, approved } }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId, action: "move", direction }),
+      body: { coordKey, name, photoId, action: "move", direction },
+      key: `photo:${coordKey}:${photoId}`,
+      label: `Move photo ${direction} for ${name}`,
     })
   }, [])
 
@@ -5895,10 +5908,12 @@ export default function HikeMap() {
       }
       return { ...prev, [coordKey]: updated }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId, action: "unapprove" }),
+      body: { coordKey, name, photoId, action: "unapprove" },
+      key: `photo:${coordKey}:${photoId}`,
+      label: `Unapprove photo for ${name}`,
     })
   }, [])
 
@@ -5917,10 +5932,12 @@ export default function HikeMap() {
       nextApproved.splice(insertAt, 0, photo)
       return { ...prev, [coordKey]: { ...entry, name, approved: nextApproved } }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "approveAtTop", photo }),
+      body: { coordKey, name, photoId: photo.id, action: "approveAtTop", photo },
+      key: `photo:${coordKey}:${photo.id}`,
+      label: `Approve photo (top) for ${name}`,
     })
   }, [])
 
@@ -5947,10 +5964,12 @@ export default function HikeMap() {
         },
       }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId: photo.id, action: "pin", photo }),
+      body: { coordKey, name, photoId: photo.id, action: "pin", photo },
+      key: `photo:${coordKey}:${photo.id}`,
+      label: `Pin photo for ${name}`,
     })
   }, [])
 
@@ -5965,10 +5984,12 @@ export default function HikeMap() {
       if (updated.pinnedIds?.length === 0) delete updated.pinnedIds
       return { ...prev, [coordKey]: updated }
     })
-    await fetch("/api/dev/curate-photo", {
+    outbox.enqueue({
+      endpoint: "/api/dev/curate-photo",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, photoId, action: "unpin" }),
+      body: { coordKey, name, photoId, action: "unpin" },
+      key: `photo:${coordKey}:${photoId}`,
+      label: `Unpin photo for ${name}`,
     })
   }, [])
 
@@ -6006,10 +6027,12 @@ export default function HikeMap() {
         },
       }
     })
-    await fetch("/api/dev/station-notes", {
+    outbox.enqueue({
+      endpoint: "/api/dev/station-notes",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, name, publicNote, privateNote }),
+      body: { coordKey, name, publicNote, privateNote },
+      key: `notes:${coordKey}`,
+      label: `Update notes for ${name}`,
     })
   }, [])
 
@@ -6028,15 +6051,19 @@ export default function HikeMap() {
       else next[coordKey] = cleaned
       return next
     })
-    await fetch("/api/dev/station-rambler-extras", {
+    outbox.enqueue({
+      endpoint: "/api/dev/station-rambler-extras",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coordKey, lines: cleaned }),
+      body: { coordKey, lines: cleaned },
+      key: `rambler-extras:${coordKey}`,
+      label: `Update rambler extras for ${coordKey}`,
     })
-    // The server rebuilt station-notes.json as part of the write —
-    // refetch so the overlay's ramblerNote prose reflects the change.
-    const notes = await fetch("/api/dev/station-notes").then((r) => r.json())
-    setStationNotes(notes)
+    // The server-side rebuild that derives station-notes.json runs as
+    // part of the queued POST. We don't refetch here — the optimistic
+    // update of `ramblerExtras` already shows the user's change, and
+    // the next page load (or a manual refresh) will pick up the rebuilt
+    // ramblerNote prose. The trade-off is a small lag in seeing the
+    // build-derived prose vs. losing the queued tolerance for offline.
   }, [])
 
   // Refresh stationNotes + stationSeasons after a structured walk edit.
@@ -6065,10 +6092,12 @@ export default function HikeMap() {
         else next[coordKey] = { name, custom }
         return next
       })
-      await fetch("/api/dev/flickr-settings", {
+      outbox.enqueue({
+        endpoint: "/api/dev/flickr-settings",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ coordKey, name, custom }),
+        body: { coordKey, name, custom },
+        key: `flickr-settings:${coordKey}`,
+        label: custom ? `Save Flickr settings for ${name}` : `Clear Flickr settings for ${name}`,
       })
     },
     [],
@@ -6079,16 +6108,23 @@ export default function HikeMap() {
   const handleSavePreset = useCallback(
     async (name: "landscapes" | "hikes" | "station", preset: CustomSettings) => {
       setPresets((prev) => (prev ? { ...prev, [name]: preset } : prev))
-      await fetch("/api/dev/flickr-presets", {
+      outbox.enqueue({
+        endpoint: "/api/dev/flickr-presets",
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, preset }),
+        body: { name, preset },
+        key: `flickr-preset:${name}`,
+        label: `Save Flickr preset: ${name}`,
       })
     },
     [],
   )
 
-  // Reset a global Flickr preset to its hardcoded default.
+  // Reset a global Flickr preset to its hardcoded default. Unlike the
+  // other admin actions we KEEP this as a direct fetch — the response
+  // body carries the server's notion of the defaults, which we then
+  // splash into local state. Reset is a rare, deliberate admin action
+  // (not something you'd queue from a train) so the offline-tolerance
+  // we get from the outbox doesn't really matter here.
   const handleResetPreset = useCallback(
     async (name: "landscapes" | "hikes" | "station") => {
       const res = await fetch("/api/dev/flickr-presets", {
@@ -7128,13 +7164,13 @@ export default function HikeMap() {
         if (real) feature = real as unknown as typeof feature
       }
     }
-    // Secret admin toggle — invisible marker at Boulogne-Tintelleries (France).
+    // Cloud admin doorway — invisible marker at a fixed map coord.
     // Dev-only: on production deployments the admin API is disabled at the
     // middleware layer, so we also refuse to flip the client-side state.
     // process.env.NODE_ENV is inlined at build time — this branch is dead-
     // code-eliminated from production bundles entirely.
     if (process.env.NODE_ENV === "development" && feature.properties?.isSecretAdmin) {
-      // Boulogne (hidden secret-admin marker) toggles admin mode WITHOUT
+      // The doorway toggles admin mode WITHOUT
       // touching any filter UI state. This entry point is meant for
       // quick peeking — I'm already looking at a particular slice of
       // the map and just want admin overlays (red halos, admin-only
@@ -7750,6 +7786,17 @@ export default function HikeMap() {
               rtt
             </button>
           )}
+          {/* Edits button — opens the audit dialog showing the local
+              outbox (pending/sending/failed admin saves) + the most
+              recent admin commits to main. Admin-only. */}
+          {devExcludeActive && (
+            <button
+              onClick={() => setEditsDialogOpen(true)}
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+            >
+              edits
+            </button>
+          )}
           {/* Rambler walks admin page trigger — admin-only. Opens a
               standalone page showing extraction status for every walk
               on walkingclub.org.uk (extracted / onMap / issues). */}
@@ -8044,6 +8091,10 @@ export default function HikeMap() {
           ready, but `open` is driven by the admin-only button above. */}
       <RTTStatusPanel open={rttStatusOpen} onOpenChange={setRttStatusOpen} />
 
+      {/* Admin edits dialog — same pattern: mounted always, gated by
+          state. Surfaces the outbox queue and recent commits. */}
+      <AdminEditsDialog open={editsDialogOpen} onOpenChange={setEditsDialogOpen} />
+
       <Map
         mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_TOKEN}
         initialViewState={INITIAL_VIEW}
@@ -8332,9 +8383,9 @@ export default function HikeMap() {
             hid it. Moved below the stations Source so it always
             renders on top of station icons. */}
 
-        {/* Secret admin toggle — invisible tap target at Boulogne-Tintelleries
-            (France, across the Channel). Same pattern as the London hit area but
-            with zero visual presence. Always mounted so it works in production. */}
+        {/* Cloud admin doorway — invisible tap target at a fixed off-canvas coord.
+            Same pattern as the London hit area but with zero visual presence.
+            Always mounted so it works in production. */}
         <Source
           id="secret-admin"
           type="geojson"

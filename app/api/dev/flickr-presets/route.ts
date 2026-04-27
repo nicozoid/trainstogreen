@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 
 const FILE_PATH = "data/photo-flickr-presets.json"
 
@@ -114,8 +115,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `name must be one of ${PRESET_NAMES.join(", ")}` }, { status: 400 })
   }
 
-  const { data: current, sha } = await readDataFile<Partial<Presets>>(FILE_PATH)
-
+  // Validate ahead of the retry loop — a 400 here doesn't depend on stored state.
   let nextPreset: Preset
   if (reset) {
     nextPreset = PRESET_DEFAULTS[name]
@@ -127,13 +127,17 @@ export async function POST(req: NextRequest) {
     nextPreset = validated
   }
 
-  const next: Presets = {
-    landscapes: current.landscapes ?? PRESET_DEFAULTS.landscapes,
-    hikes: current.hikes ?? PRESET_DEFAULTS.hikes,
-    station: current.station ?? PRESET_DEFAULTS.station,
-    [name]: nextPreset,
-  }
+  return handleAdminWrite(async () => {
+    const { data: current, sha } = await readDataFile<Partial<Presets>>(FILE_PATH)
 
-  await writeDataFile(FILE_PATH, next, `${reset ? "reset" : "update"} flickr preset: ${name}`, sha)
-  return NextResponse.json({ message: "ok", preset: nextPreset })
+    const next: Presets = {
+      landscapes: current.landscapes ?? PRESET_DEFAULTS.landscapes,
+      hikes: current.hikes ?? PRESET_DEFAULTS.hikes,
+      station: current.station ?? PRESET_DEFAULTS.station,
+      [name]: nextPreset,
+    }
+
+    await writeDataFile(FILE_PATH, next, `${reset ? "reset" : "update"} flickr preset: ${name}`, sha)
+    return NextResponse.json({ message: "ok", preset: nextPreset })
+  })
 }

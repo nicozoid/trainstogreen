@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 
 // Admin endpoint for the walkingclub.org.uk extraction dataset.
 //
@@ -97,32 +98,34 @@ export async function POST(req: NextRequest) {
   const { slug, ...patch } = body as { slug?: string } & Record<string, unknown>
   if (!slug) return NextResponse.json({ error: "missing slug" }, { status: 400 })
 
-  // Walks now live across several source files, so find the one holding
-  // this slug and write only there. We read sequentially rather than in
-  // parallel because once we find the match we need that specific sha for
-  // the writeDataFile optimistic-concurrency check.
-  for (const path of SOURCE_FILES) {
-    const { data: walks, sha } = await readDataFile<Record<string, RamblerWalk>>(path)
-    if (!walks[slug]) continue
+  return handleAdminWrite(async () => {
+    // Walks now live across several source files, so find the one holding
+    // this slug and write only there. We read sequentially rather than in
+    // parallel because once we find the match we need that specific sha for
+    // the writeDataFile optimistic-concurrency check.
+    for (const path of SOURCE_FILES) {
+      const { data: walks, sha } = await readDataFile<Record<string, RamblerWalk>>(path)
+      if (!walks[slug]) continue
 
-    // Shallow merge: top-level keys in `patch` overwrite existing values.
-    // Nested objects (places, walks[]) are replaced wholesale if included —
-    // consumers should send whole objects for those when updating them.
-    walks[slug] = { ...walks[slug], ...patch, slug }
-    await writeDataFile(path, walks, `Update rambler walk: ${slug}`, sha)
+      // Shallow merge: top-level keys in `patch` overwrite existing values.
+      // Nested objects (places, walks[]) are replaced wholesale if included —
+      // consumers should send whole objects for those when updating them.
+      walks[slug] = { ...walks[slug], ...patch, slug }
+      await writeDataFile(path, walks, `Update rambler walk: ${slug}`, sha)
 
-    // Side effect: a walk being marked resolved triggers cleanup of the
-    // auto-generated issue lines in every affected station's privateNote,
-    // and removes the station from has-issue-stations if that was the
-    // last rambler-walk issue on it.
-    if (patch.resolved === true) {
-      await cleanupOnResolve(slug)
+      // Side effect: a walk being marked resolved triggers cleanup of the
+      // auto-generated issue lines in every affected station's privateNote,
+      // and removes the station from has-issue-stations if that was the
+      // last rambler-walk issue on it.
+      if (patch.resolved === true) {
+        await cleanupOnResolve(slug)
+      }
+
+      return NextResponse.json({ message: "ok" })
     }
 
-    return NextResponse.json({ message: "ok" })
-  }
-
-  return NextResponse.json({ error: `unknown slug: ${slug}` }, { status: 404 })
+    return NextResponse.json({ error: `unknown slug: ${slug}` }, { status: 404 })
+  })
 }
 
 // Remove the walk's auto-generated issue block from every station's

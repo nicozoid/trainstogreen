@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
+import { handleAdminWrite } from "@/app/api/dev/_helpers"
 import { type FlickrPhoto } from "@/lib/flickr"
 
 const FILE_PATH = "data/photo-curations.json"
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing coordKey, photoId, or action" }, { status: 400 })
   }
 
+  return handleAdminWrite(async () => {
   const { data: curations, sha } = await readDataFile<Record<string, CurationEntry>>(FILE_PATH)
   const entry = curations[coordKey] ?? { name: name ?? coordKey, approved: [] }
   entry.name = name ?? entry.name
@@ -142,6 +144,7 @@ export async function POST(req: NextRequest) {
 
   await writeDataFile(FILE_PATH, curations, `${action} photo for ${name ?? coordKey}`, sha)
   return NextResponse.json({ message: "ok" })
+  })
 }
 
 // GET — returns all curations so the modal can use them
