@@ -28353,6 +28353,7 @@
     "walks": [
       {
         "role": "main",
+        "name": "",
         "startPlace": "Seaford",
         "endPlace": "Eastbourne",
         "startStation": "SEF",
@@ -28360,18 +28361,22 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 21.9,
+        "hours": null,
         "lunchStops": [
           {
             "name": "Cuckmere Inn",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           },
           {
             "name": "Saltmarsh Kitchen",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           },
           {
             "name": "Grab and Go",
-            "location": "Exceat"
+            "location": "Exceat",
+            "url": null
           }
         ],
         "terrain": "Dramatic clifftop chalk downs, undulating Seven Sisters cliffs, shingle beaches, river haven, elegant seafront promenade",
@@ -28392,14 +28397,13 @@
         ],
         "warnings": "Crumbly cliff edges",
         "id": "g3wm",
-        "rating": 4,
+        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
           "type": "main"
-        },
-        "updatedAt": "2026-04-27T19:00:18.128Z"
+        }
       },
       {
         "role": "shorter",
@@ -116216,7 +116220,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Salisbury",
         "endPlace": "Salisbury",
         "startStation": "SAL",
@@ -116255,20 +116258,17 @@
         "terrain": "Historic city, open fields, river valley, pretty villages, chalk downs, ancient drove tracks, steep hillside nature reserve, water meadows",
         "sights": [
           {
-            "name": "Salisbury Cathedral",
-            "url": null
+            "name": "Salisbury Cathedral"
           },
           {
             "name": "Old Mill at Harnham",
             "url": "http://oldmillhotelsalisbury.co.uk/"
           },
           {
-            "name": "Harnham Slope Nature Reserve",
-            "url": null
+            "name": "Harnham Slope Nature Reserve"
           },
           {
-            "name": "Cranborne Chase Area of Outstanding Natural Beauty",
-            "url": null
+            "name": "Cranborne Chase Area of Outstanding Natural Beauty"
           }
         ],
         "warnings": "Strenuous afternoon climbs",
@@ -116279,7 +116279,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/salisbury-circular/",
           "type": "main"
         },
-        "suffix": "via Cranborne Chase Area of Outstanding Natural Beauty"
+        "suffix": "via Cranborne Chase Area of Outstanding Natural Beauty",
+        "rating": 4,
+        "updatedAt": "2026-04-27T19:02:55.370Z"
       }
     ]
   },
