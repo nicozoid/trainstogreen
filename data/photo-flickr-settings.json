@@ -922,5 +922,16 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.2052107,51.4220252": {
+    "name": "Wimbledon",
+    "custom": {
+      "includeTags": [
+        "wimbledon common"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
