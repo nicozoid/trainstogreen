@@ -282,9 +282,9 @@ type FilterPanelProps = {
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
   /** The calendar-derived current season — labels the public checkbox
-   *  ("Spring highlights", etc) and is what that checkbox filters against. */
+   *  ("Best in Spring", etc) and is what that checkbox filters against. */
   currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
-  /** Public "[current-season] highlights" checkbox (visible to all users). */
+  /** Public "Best in [current-season]" checkbox (visible to all users). */
   currentSeasonHighlight: boolean
   onCurrentSeasonHighlightChange: (value: boolean) => void
   /** "Direct trains only" toggle for the friend origin */
@@ -1605,24 +1605,28 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             ))}
           </div>
 
-          {/* Map-layer toggles — admin-only. The whole block (including
-             the border-t divider above it) hides for non-admin users so
-             the public filter panel ends at the ratings section. */}
-          {adminMode && (
-            <div className="mt-4 border-t pt-3">
-              {/* Current-season highlights toggle. Label updates
-                 dynamically based on `currentSeason` from map.tsx. */}
-              <div className="flex items-center justify-between">
-                <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
-                  <span className="text-sm font-medium">{currentSeason} highlights</span>
-                </LabelTip>
-                <Checkbox
-                  checked={currentSeasonHighlight}
-                  onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
-                  className="cursor-pointer"
-                />
-              </div>
+          {/* Section divider + the additional filters block. The
+             divider and the season filter inside it are PUBLIC; the
+             trails / counties / hide-no-travel toggles are admin-only.
+             Wrapping all four in one container keeps them visually
+             grouped on the panel — when adminMode is off, only the
+             season toggle remains visible under the divider. */}
+          <div className="mt-4 border-t pt-3">
+            {/* Best-in-{season} toggle — public. Label updates
+                dynamically based on `currentSeason` from map.tsx. */}
+            <div className="flex items-center justify-between">
+              <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
+                <span className="text-sm font-medium">Best in {currentSeason}</span>
+              </LabelTip>
+              <Checkbox
+                checked={currentSeasonHighlight}
+                onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
+                className="cursor-pointer"
+              />
+            </div>
 
+            {adminMode && (
+              <>
               {/* Trails toggle — <div> instead of <label> so tapping the
                  gap on touchscreens doesn't toggle the checkbox.
                  mt-1.5 matches the rating-checkbox row spacing above so
@@ -1667,8 +1671,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                   className="cursor-pointer"
                 />
               </div>
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

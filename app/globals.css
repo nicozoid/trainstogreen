@@ -36,20 +36,6 @@
     /* Custom color alias */
     --color-grey-green: var(--accent); /* exposes as Tailwind utility, e.g. bg-grey-green */
 
-    /* Brand spectrum — registers each step so you can use e.g. bg-brand-500, text-brand-200 */
-
-    --color-brand-50:  var(--brand-50);
-    --color-brand-100: var(--brand-100);
-    --color-brand-200: var(--brand-200);
-    --color-brand-300: var(--brand-300);
-    --color-brand-400: var(--brand-400);
-    --color-brand-500: var(--brand-500);
-    --color-brand-600: var(--brand-600);
-    --color-brand-700: var(--brand-700);
-    --color-brand-800: var(--brand-800);
-    --color-brand-900: var(--brand-900);
-    --color-brand-950: var(--brand-950);
-
     /* Fonts */
     --font-heading: var(--font-sans);
     --font-sans: var(--font-sans);
@@ -146,14 +132,14 @@
     --border: var(--beach-600);             /* light grey */
     --input: var(--tree-400);
     --ring: var(--tree-300);
-    --chart-1: var(--brand-300);          /* greens, light to dark */
-    --chart-2: var(--brand-400);
-    --chart-3: var(--brand-500);
-    --chart-4: var(--brand-600);
-    --chart-5: var(--brand-700);
+    --chart-1: var(--tree-300);          /* greens, light to dark */
+    --chart-2: var(--tree-400);
+    --chart-3: var(--tree-500);
+    --chart-4: var(--tree-600);
+    --chart-5: var(--tree-700);
     --radius: 0.625rem;       /* base radius (10px) — all rounded-* classes derive from this. Original value 0.625rem */
     --sidebar: var(--beach-500);
-    --sidebar-foreground: var(--brand-950);
+    --sidebar-foreground: var(--abyss-900);
     --sidebar-primary: var(--tree-800);
     --sidebar-primary-foreground: var(--beach-500);
     --sidebar-accent: var(--seawater-500);

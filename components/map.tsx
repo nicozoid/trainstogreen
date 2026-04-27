@@ -7876,6 +7876,19 @@ export default function HikeMap() {
               walks
             </a>
           )}
+          {/* Design-system mini-app entry — admin-only. Opens the
+              isolated /design-system route tree (sibling of the main
+              app, not nested under /admin). */}
+          {devExcludeActive && (
+            <a
+              href="/design-system"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+            >
+              ds
+            </a>
+          )}
           {/* Clear-session step is now part of the combined
               "Regenerate" button below — it wipes ttg:* localStorage
               before kicking off the per-primary regen loop. No

@@ -96,6 +96,12 @@ console.log(
 
 // Derive station ratings from walks — same rules as
 // app/api/dev/walk-ratings/route.ts. Builds a Map<coordKey, 1..4>.
+//
+// Rules (kept in sync with the API route):
+//   1. No walks → unrated (absent from map)
+//   2. max walk rating >= 3 → max wins (upward deviation has top priority)
+//   3. otherwise, any walk rated 1 → 1 (downward deviation overrides default)
+//   4. otherwise → 2 (default for any station-with-walks)
 function deriveRatings() {
   const WALK_FILES = [
     "data/rambler-walks.json",
@@ -112,8 +118,8 @@ function deriveRatings() {
     const [lng, lat] = f.geometry?.coordinates ?? []
     if (lng != null && lat != null) crsToCoord.set(crs, `${lng},${lat}`)
   }
-  // Aggregate per CRS: max rating + sawAnyWalk flag (for the
-  // "all unrated → 2" rule).
+  // Aggregate per CRS: max rating + sawAnyWalk flag (default-2 rule)
+  // + sawRated1 flag (downward-deviation rule).
   const tally = new Map()
   for (const file of WALK_FILES) {
     let entries
@@ -123,11 +129,14 @@ function deriveRatings() {
       for (const v of entry.walks) {
         const crs = v.startStation
         if (!crs) continue
-        const t = tally.get(crs) ?? { max: null, sawAnyWalk: false }
+        const t = tally.get(crs) ?? { max: null, sawAnyWalk: false, sawRated1: false }
         t.sawAnyWalk = true
         if (typeof v.rating === "number") {
           const r = Math.round(v.rating)
-          if (r >= 1 && r <= 4) t.max = t.max == null ? r : Math.max(t.max, r)
+          if (r >= 1 && r <= 4) {
+            t.max = t.max == null ? r : Math.max(t.max, r)
+            if (r === 1) t.sawRated1 = true
+          }
         }
         tally.set(crs, t)
       }
@@ -137,8 +146,10 @@ function deriveRatings() {
   for (const [crs, t] of tally) {
     const ck = crsToCoord.get(crs)
     if (!ck) continue
-    if (t.max != null) out.set(ck, t.max)
-    else if (t.sawAnyWalk) out.set(ck, 2)
+    if (!t.sawAnyWalk) continue
+    if (t.max != null && t.max >= 3) out.set(ck, t.max)
+    else if (t.sawRated1) out.set(ck, 1)
+    else out.set(ck, 2)
   }
   return out
 }

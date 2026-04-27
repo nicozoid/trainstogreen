@@ -16,11 +16,29 @@ type WalkEntry = { walks?: WalkVariant[] }
 // Returns a map of coordKey → derived station rating (1..4). Stations
 // without an entry in the response are unrated.
 //
-// Derivation rules (per spec — see CLAUDE conversation for context):
-//   • max(walk ratings) when at least one walk has a numeric rating
-//   • 2 when the station has walks but every walk is unrated
-//     (deliberately idiosyncratic — "we know there's something here")
-//   • absent (treated as null) when the station has no walks at all
+// Derivation rules (per spec):
+//   1. A station with NO walks at all is absent from the response
+//      (treated as null / unrated by the client).
+//   2. A station-with-walks is rated 2 by DEFAULT. Any walk that
+//      deviates from 2 — up or down — takes priority over the default.
+//   3. Upward deviation wins over downward deviation: when the
+//      maximum walk rating is 3 or 4, that wins outright.
+//   4. Below that, a single rated-1 walk overrides the default 2 —
+//      "this station has at least one bad walk and no great walk".
+//   5. Anything else (only rated-2 walks, or only unrated walks) lands
+//      on the default 2.
+//
+// Concrete table:
+//   walks       │ rating
+//   ───────────────────
+//   [2, 4]      │ 4   (upward deviation wins)
+//   [1, 4]      │ 4   (upward beats downward)
+//   [2, 3]      │ 3   (upward deviation)
+//   [1, 2]      │ 1   (downward deviation, no upward)
+//   [1]         │ 1
+//   [2, 2, 2]   │ 2   (no deviation)
+//   [unrated]   │ 2   (default for "we know there's something here")
+//   (no walks)  │ unrated
 //
 // The response is keyed by coordKey so the client can drop it straight
 // into the existing per-feature lookup. CRS → coordKey is resolved via
@@ -45,9 +63,12 @@ export async function GET() {
     if (ck) crsToCoord.set(crs, ck)
   }
 
-  // Two passes per CRS: track the max numeric rating seen, AND whether
-  // we ever saw any walk at all (for the "all unrated → 2" rule).
-  type Tally = { max: number | null; sawAnyWalk: boolean }
+  // Per CRS we track three signals:
+  //   max          — highest numeric rating seen across this station's walks
+  //   sawAnyWalk   — at least one walk record exists (drives the default-2 rule)
+  //   sawRated1    — at least one walk has rating === 1 (drives the
+  //                  downward-deviation rule)
+  type Tally = { max: number | null; sawAnyWalk: boolean; sawRated1: boolean }
   const byCrs = new Map<string, Tally>()
 
   for (const file of WALKS_FILES) {
@@ -63,12 +84,13 @@ export async function GET() {
       for (const v of entry.walks) {
         const crs = v.startStation
         if (!crs) continue
-        const tally = byCrs.get(crs) ?? { max: null, sawAnyWalk: false }
+        const tally = byCrs.get(crs) ?? { max: null, sawAnyWalk: false, sawRated1: false }
         tally.sawAnyWalk = true
         if (typeof v.rating === "number") {
           const r = Math.round(v.rating)
           if (r >= 1 && r <= 4) {
             tally.max = tally.max == null ? r : Math.max(tally.max, r)
+            if (r === 1) tally.sawRated1 = true
           }
         }
         byCrs.set(crs, tally)
@@ -76,15 +98,18 @@ export async function GET() {
     }
   }
 
-  // Project to coordKey and apply the "all unrated → 2" fallback.
+  // Apply the derivation rules described above. Order matters: upward
+  // deviation (max >= 3) wins outright; otherwise a rated-1 walk
+  // overrides the default 2; otherwise default 2.
   const out: Record<string, 1 | 2 | 3 | 4> = {}
   for (const [crs, tally] of byCrs) {
     const ck = crsToCoord.get(crs)
     if (!ck) continue
+    if (!tally.sawAnyWalk) continue
     let rating: 1 | 2 | 3 | 4
-    if (tally.max != null) rating = tally.max as 1 | 2 | 3 | 4
-    else if (tally.sawAnyWalk) rating = 2
-    else continue
+    if (tally.max != null && tally.max >= 3) rating = tally.max as 3 | 4
+    else if (tally.sawRated1) rating = 1
+    else rating = 2
     out[ck] = rating
   }
 
