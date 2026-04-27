@@ -40665,7 +40665,6 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 18.2,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Gun Inn",
@@ -40679,15 +40678,13 @@
           },
           {
             "name": "Needles Eye Café",
-            "location": "Milford-on-Sea",
-            "url": null
+            "location": "Milford-on-Sea"
           }
         ],
         "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, then inland road walking to station",
         "sights": [
           {
-            "name": "Hurst Castle",
-            "url": null
+            "name": "Hurst Castle"
           },
           {
             "name": "Hordle Cliff",
@@ -40700,13 +40697,14 @@
         ],
         "warnings": "Eroding cliff edges",
         "id": "a7lk",
-        "rating": 3,
+        "rating": 2,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lymington to Barton-on-Sea",
           "pageURL": "https://www.walkingclub.org.uk/walk/lymington-to-barton-on-sea/",
           "type": "variant"
-        }
+        },
+        "updatedAt": "2026-04-27T22:12:16.215Z"
       }
     ]
   },
