@@ -79,8 +79,10 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-27T22:10:28.009Z",
-        "rating": 1
+        "updatedAt": "2026-04-27T22:11:27.419Z",
+        "rating": 1,
+        "warnings": "Too much road at the beginning",
+        "suffix": "via Saffron Walden"
       }
     ],
     "extracted": true,
