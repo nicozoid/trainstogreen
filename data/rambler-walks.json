@@ -9771,7 +9771,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Amersham",
         "endPlace": "Amersham",
         "startStation": "AMR",
@@ -9779,7 +9778,6 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 14.25,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Merlin's Cave",
@@ -9792,23 +9790,19 @@
             "url": "https://www.featherspub.com/"
           }
         ],
-        "terrain": "Gentle hills, large open fields, belts of trees, golf course, residential paths, river valley, attractive Chilterns village",
+        "terrain": "Gentle hills, belts of trees, golf course, residential paths, river valley, attractive Chilterns village, but almost entirely just large open fields",
         "sights": [
           {
-            "name": "Amersham Martyrs Memorial",
-            "url": null
+            "name": "Amersham Martyrs Memorial"
           },
           {
-            "name": "St Mary's Church",
-            "url": null
+            "name": "St Mary's Church"
           },
           {
-            "name": "Chalfont Mill",
-            "url": null
+            "name": "Chalfont Mill"
           },
           {
-            "name": "River Misbourne",
-            "url": null
+            "name": "River Misbourne"
           }
         ],
         "warnings": "Can be muddy",
@@ -9820,7 +9814,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/amersham-circular-via-chalfont-st-giles/",
           "type": "main"
         },
-        "suffix": "via Chalfont St Giles"
+        "suffix": "via Chalfont St Giles",
+        "rating": 1,
+        "updatedAt": "2026-04-27T22:19:52.966Z"
       }
     ]
   },
