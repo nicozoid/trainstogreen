@@ -2249,6 +2249,10 @@ export default function HikeMap() {
   // FilterPanel sitting under "Waymarked trails". Off by default. Visible
   // to all users (not admin-only) once toggled on.
   const [showRegions, setShowRegions] = useState(false)
+  // Region-label opacity is driven imperatively by an effect (further down)
+  // that calls map.setPaintProperty when visibleRatings or showRegions
+  // change. No React state needed — Mapbox owns the animated value, and
+  // we just push target+transition into it.
   // Banner shows on EVERY page load. We deliberately DON'T persist a
   // "has seen welcome" flag — reloading brings the banner back. The
   // previous behaviour stored ttg:hasSeenWelcome in localStorage so
@@ -6557,12 +6561,49 @@ export default function HikeMap() {
   // `category` properties so the symbol layer can render the label and (if
   // we ever want per-category styling) branch on category. Computed only
   // when admin mode is active — non-admin viewers never pay the cost.
-  const regionLabelsCollection = useMemo(() => {
-    // Empty collection when the Regions toggle is off — keeps the Source
-    // mounted in a stable position in the layer stack but renders nothing.
-    if (!showRegions) {
-      return { type: "FeatureCollection" as const, features: [] }
+  // Drive region-label opacity from the rating-checkbox state. When all
+  // five checkboxes are unchecked (visibleRatings.size === 0) the labels
+  // fade in after a short pause; when any checkbox is checked again they
+  // fade out. The admin toggle (showRegions) overrides this and snaps to
+  // fully visible.
+  //
+  // Why imperative setPaintProperty instead of the layer's `paint` prop:
+  // Mapbox transition specs (text-opacity-transition) need to be set
+  // BEFORE the value they govern, otherwise the value change uses the
+  // previous transition spec — which is what made the fade-out look
+  // instant after the fade-in had already happened. Calling
+  // setPaintProperty in order guarantees the transition is in place when
+  // the opacity update lands. react-map-gl's <Layer paint={...}> diff
+  // doesn't guarantee this ordering across re-renders.
+  useEffect(() => {
+    if (!mapReady) return
+    const map = mapRef.current?.getMap()
+    if (!map) return
+    if (!map.getLayer("region-labels")) return
+    let transition: { duration: number; delay: number }
+    let opacity: number
+    if (showRegions) {
+      transition = { duration: 0, delay: 0 }
+      opacity = 1
+    } else if (visibleRatings.size === 0) {
+      transition = { duration: 2000, delay: 5000 }
+      opacity = 1
+    } else {
+      transition = { duration: 2000, delay: 0 }
+      opacity = 0
     }
+    // Order matters — transition spec first, then the value change so
+    // the new transition governs the interpolation.
+    map.setPaintProperty("region-labels", "text-opacity-transition", transition)
+    map.setPaintProperty("region-labels", "text-opacity", opacity)
+  }, [mapReady, visibleRatings, showRegions])
+  // Always populate the source — visibility is driven entirely by the
+  // text-opacity paint property, which Mapbox interpolates smoothly.
+  // (Earlier version returned empty features when "off", but that
+  // unmounted the labels synchronously the moment opacity flipped to 0,
+  // which killed the fade-out animation. ~150 small Point features cost
+  // is negligible.)
+  const regionLabelsCollection = useMemo(() => {
     return {
       type: "FeatureCollection" as const,
       features: (regionLabelsData as Array<{ name: string; category: string; coord: [number, number] }>).map((r) => ({
@@ -6571,7 +6612,7 @@ export default function HikeMap() {
         geometry: { type: "Point" as const, coordinates: r.coord },
       })),
     }
-  }, [showRegions])
+  }, [])
   const [interTerminalOpacity, setInterTerminalOpacity] = useState(0)
   const interFadeRef = useRef<number | null>(null)
   const interAnimRef = useRef<number | null>(null)
@@ -7992,13 +8033,15 @@ export default function HikeMap() {
         pitchWithRotate={false} // disables 3D tilt on desktop
         dragRotate={false}      // disables rotation (locks north-up)
         touchPitch={false}      // disables 3D tilt on touch devices
-        // Bounding box that covers England — prevents panning to Europe, open sea, etc.
+        // Bounding box that covers all of mainland Britain (incl. the
+        // Highlands and a margin around the Outer Hebrides). Prevents
+        // panning into open sea or onto continental Europe.
         // Format: [[west, south], [east, north]] in longitude/latitude
         // west: higher numbers cut more off
         // south: higher numbers cut more off
         // east: lower numbers cut more off
         // north: lower numbers cut more off
-        maxBounds={[[-6.5, 49.5], [2.5, 56.0]]}
+        maxBounds={[[-8.0, 49.5], [2.5, 59.0]]}
         // interactiveLayerIds tells Mapbox which layers fire mouse events.
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
@@ -8104,6 +8147,11 @@ export default function HikeMap() {
                 theme === "dark" ? "#14532d" : "#dcfce7",
               ],
               "text-halo-width": 1.5,
+              // Initial text-opacity is 0 — the imperative setPaintProperty
+              // effect above takes over from there to fade in/out based on
+              // visibleRatings. Setting it here just avoids a one-frame
+              // flash of fully-opaque labels at mount.
+              "text-opacity": 0,
             }}
           />
         </Source>

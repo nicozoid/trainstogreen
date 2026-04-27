@@ -597,7 +597,7 @@
   },
   "-0.8857875,52.7610228": {
     "name": "Melton Mowbray",
-    "rating": "verified"
+    "rating": "unverified"
   },
   "-0.899422,51.5338451": {
     "name": "Henley-on-Thames",
@@ -649,7 +649,7 @@
   },
   "-1.0356438,51.3720595": {
     "name": "Mortimer",
-    "rating": "highlight"
+    "rating": "verified"
   },
   "-1.0412134,52.9832944": {
     "name": "Burton Joyce",
@@ -681,7 +681,7 @@
   },
   "-1.1454909,52.7494311": {
     "name": "Barrow-upon-Soar",
-    "rating": "verified"
+    "rating": "unverified"
   },
   "-1.1965133,52.7795757": {
     "name": "Loughborough",
@@ -721,7 +721,7 @@
   },
   "-1.262883,52.862275": {
     "name": "East Midlands Parkway",
-    "rating": "verified"
+    "rating": "unverified"
   },
   "-1.2699542,51.7534512": {
     "name": "Oxford",
@@ -729,7 +729,7 @@
   },
   "-1.2872821,52.8849696": {
     "name": "Long Eaton",
-    "rating": "verified"
+    "rating": "unverified"
   },
   "-1.306971,51.398654": {
     "name": "Newbury Racecourse",
