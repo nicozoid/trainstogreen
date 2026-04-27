@@ -28352,7 +28352,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Seaford",
         "endPlace": "Eastbourne",
         "startStation": "SEF",
@@ -28360,22 +28359,18 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 21.9,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Cuckmere Inn",
-            "location": "Exceat",
-            "url": null
+            "location": "Exceat"
           },
           {
             "name": "Saltmarsh Kitchen",
-            "location": "Exceat",
-            "url": null
+            "location": "Exceat"
           },
           {
             "name": "Grab and Go",
-            "location": "Exceat",
-            "url": null
+            "location": "Exceat"
           }
         ],
         "terrain": "Dramatic clifftop chalk downs, undulating Seven Sisters cliffs, shingle beaches, river haven, elegant seafront promenade",
@@ -28396,13 +28391,14 @@
         ],
         "warnings": "Crumbly cliff edges",
         "id": "g3wm",
-        "rating": 3,
+        "rating": 4,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
           "type": "main"
-        }
+        },
+        "updatedAt": "2026-04-27T19:23:58.426Z"
       },
       {
         "role": "shorter",
@@ -105111,6 +105107,7 @@
     "walks": [
       {
         "role": "main",
+        "name": "",
         "startPlace": "Amberley",
         "endPlace": "Arundel",
         "startStation": "AMY",
@@ -105122,21 +105119,26 @@
         "lunchStops": [
           {
             "name": "George and Dragon",
-            "location": "Burpham"
+            "location": "Burpham",
+            "url": null
           }
         ],
         "terrain": "South Downs, wild flower meadows, gradual climbs, riverside path along River Arun, historic market town",
         "sights": [
           {
-            "name": "Amberley Museum"
+            "name": "Amberley Museum",
+            "url": null
           },
           {
-            "name": "Arundel Castle"
+            "name": "Arundel Castle",
+            "url": null
           },
           {
-            "name": "Arundel Cathedral"
+            "name": "Arundel Cathedral",
+            "url": null
           }
         ],
+        "warnings": "",
         "id": "xbo2",
         "bestSeasons": [
           "jun",
@@ -105149,8 +105151,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/amberley-to-arundel/",
           "type": "main"
         },
-        "rating": 4,
-        "updatedAt": "2026-04-27T19:23:29.570Z"
+        "suffix": "via Amberley Museum"
       }
     ]
   },
