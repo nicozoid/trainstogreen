@@ -96797,23 +96797,22 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 9,
-        "hours": null,
         "lunchStops": [],
         "terrain": "Circular downland walk from valley village, wooded and open sections",
         "sights": [
           {
-            "name": "St Martha-on-the-Hill Church",
-            "url": null
+            "name": "St Martha-on-the-Hill Church"
           }
         ],
-        "warnings": "",
         "id": "tjgv",
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
           "type": "variant"
-        }
+        },
+        "rating": 4,
+        "updatedAt": "2026-04-27T17:54:34.310Z"
       },
       {
         "role": "variant",
