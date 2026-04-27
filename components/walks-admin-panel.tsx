@@ -680,6 +680,12 @@ function WalkCard({
   const [expanded, setExpanded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  // Informational banner shown alongside the Save button — distinct
+  // from `saveError` because the save itself succeeded. Used in
+  // production when the in-process rebuild of station-notes.json
+  // can't run (Vercel's read-only fs) and the new value will only
+  // appear publicly after the next deploy.
+  const [saveNotice, setSaveNotice] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   // Brief flash state for the "click id to copy" affordance — flips
   // true for ~1.2s after a successful copy so the chip can render
@@ -802,6 +808,7 @@ function WalkCard({
   const onSave = useCallback(async () => {
     setSaving(true)
     setSaveError(null)
+    setSaveNotice(null)
     try {
       // Send null for cleared numeric fields so the server can delete
       // the key. The whitelist in the PATCH route treats undefined
@@ -835,6 +842,15 @@ function WalkCard({
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
+      // Server may flag `rebuildPending: true` when the save itself
+      // succeeded but the in-process rebuild of derived files (notably
+      // station-notes.json) couldn't run — the typical production case
+      // on Vercel. Surface that as an info notice so the admin knows
+      // the value IS saved and roughly when it'll go live publicly.
+      const json = await r.json().catch(() => ({}))
+      if (json && json.rebuildPending) {
+        setSaveNotice("Saved. Public view updates after next deploy (~3-5 min).")
+      }
       await onSaved()
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e))
@@ -1581,6 +1597,10 @@ function WalkCard({
               {saving ? "Saving…" : "Save"}
             </Button>
             {saveError && <span className="text-xs text-destructive">{saveError}</span>}
+            {/* Info banner — muted, NOT destructive. Only shown when
+                rebuildPending came back from the server (production
+                save with deferred rebuild). */}
+            {saveNotice && <span className="text-xs text-muted-foreground">{saveNotice}</span>}
             {onDelete && (
               <Button
                 size="sm"

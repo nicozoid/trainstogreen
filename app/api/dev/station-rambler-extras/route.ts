@@ -59,12 +59,11 @@ export async function POST(req: NextRequest) {
     try {
       await buildRamblerNotes({ dryRun: false, flipOnMap: false })
     } catch (err) {
+      // Same pattern as the per-walk PATCH: write succeeded; only the
+      // derived-file rebuild failed (expected on Vercel's read-only fs).
       // eslint-disable-next-line no-console
       console.error("rebuild after rambler-extras write failed:", err)
-      return NextResponse.json(
-        { message: "saved but rebuild failed" },
-        { status: 500 },
-      )
+      return NextResponse.json({ message: "ok", rebuildPending: true })
     }
 
     return NextResponse.json({ message: "ok" })

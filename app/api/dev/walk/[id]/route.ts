@@ -332,14 +332,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     await buildRamblerNotes({ dryRun: false, flipOnMap: false })
   } catch (err) {
-    // Report but don't undo the write — the data is saved, the derived
-    // files just need another rebuild.
+    // The save itself succeeded — only the in-process rebuild of the
+    // derived station-notes.json failed. This is expected on Vercel
+    // (read-only filesystem); the next deploy will regenerate it. Return
+    // 200 with `rebuildPending` so the client can show a "visible after
+    // next deploy" notice instead of treating this as a save failure.
     // eslint-disable-next-line no-console
     console.error("rebuild after walk patch failed:", err)
-    return NextResponse.json(
-      { message: "saved but rebuild failed", id },
-      { status: 500 },
-    )
+    return NextResponse.json({ message: "ok", id, rebuildPending: true })
   }
 
   return NextResponse.json({ message: "ok", id })
@@ -375,12 +375,11 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   try {
     await buildRamblerNotes({ dryRun: false, flipOnMap: false })
   } catch (err) {
+    // Same pattern as PATCH: the delete write succeeded; only the
+    // derived-file rebuild failed (expected on Vercel's read-only fs).
     // eslint-disable-next-line no-console
     console.error("rebuild after walk delete failed:", err)
-    return NextResponse.json(
-      { message: "deleted but rebuild failed", id },
-      { status: 500 },
-    )
+    return NextResponse.json({ message: "ok", id, rebuildPending: true })
   }
 
   return NextResponse.json({ message: "ok", id })
