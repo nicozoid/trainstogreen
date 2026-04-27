@@ -40613,6 +40613,7 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": 15.7,
+        "hours": null,
         "lunchStops": [
           {
             "name": "Gun Inn",
@@ -40626,13 +40627,15 @@
           },
           {
             "name": "Needles Eye Café",
-            "location": "Milford-on-Sea"
+            "location": "Milford-on-Sea",
+            "url": null
           }
         ],
         "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, sea views towards the Isle of Wight and the Needles",
         "sights": [
           {
-            "name": "Hurst Castle"
+            "name": "Hurst Castle",
+            "url": null
           },
           {
             "name": "Hordle Cliff",
@@ -40645,14 +40648,13 @@
         ],
         "warnings": "Eroding cliff edges",
         "id": "gpfm",
-        "rating": 2,
+        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lymington to Barton-on-Sea",
           "pageURL": "https://www.walkingclub.org.uk/walk/lymington-to-barton-on-sea/",
           "type": "main"
-        },
-        "updatedAt": "2026-04-27T22:12:25.713Z"
+        }
       },
       {
         "role": "variant",
@@ -98890,7 +98892,6 @@
         "stationToStation": true,
         "distanceKm": 17.75,
         "distanceMiles": null,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Sportsman",
@@ -98915,13 +98916,13 @@
         ],
         "warnings": "Race days restrict access",
         "id": "40yn",
-        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "variant"
-        }
+        },
+        "updatedAt": "2026-04-27T22:15:28.712Z"
       },
       {
         "role": "shorter",
