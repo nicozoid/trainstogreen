@@ -40613,6 +40613,56 @@
         "requiresBus": true,
         "stationToStation": false,
         "distanceKm": 15.7,
+        "lunchStops": [
+          {
+            "name": "Gun Inn",
+            "location": "Keyhaven",
+            "url": "http://www.theguninn.com/"
+          },
+          {
+            "name": "The Marine",
+            "location": "Milford-on-Sea",
+            "url": "http://www.themarinemos.co.uk/"
+          },
+          {
+            "name": "Needles Eye Café",
+            "location": "Milford-on-Sea"
+          }
+        ],
+        "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, sea views towards the Isle of Wight and the Needles",
+        "sights": [
+          {
+            "name": "Hurst Castle"
+          },
+          {
+            "name": "Hordle Cliff",
+            "url": "https://wessexcoastgeology.soton.ac.uk/hordle.htm"
+          },
+          {
+            "name": "Beachcomber Café",
+            "url": "http://www.beachcomber-cafe.co.uk/"
+          }
+        ],
+        "warnings": "Eroding cliff edges",
+        "id": "gpfm",
+        "rating": 2,
+        "source": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Lymington to Barton-on-Sea",
+          "pageURL": "https://www.walkingclub.org.uk/walk/lymington-to-barton-on-sea/",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-27T22:12:25.713Z"
+      },
+      {
+        "role": "variant",
+        "startPlace": "Lymington Town",
+        "endPlace": "New Milton",
+        "startStation": "LYT",
+        "endStation": "NWM",
+        "requiresBus": false,
+        "stationToStation": true,
+        "distanceKm": 18.2,
         "hours": null,
         "lunchStops": [
           {
@@ -40631,7 +40681,7 @@
             "url": null
           }
         ],
-        "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, sea views towards the Isle of Wight and the Needles",
+        "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, then inland road walking to station",
         "sights": [
           {
             "name": "Hurst Castle",
@@ -40647,64 +40697,14 @@
           }
         ],
         "warnings": "Eroding cliff edges",
-        "id": "gpfm",
+        "id": "a7lk",
         "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lymington to Barton-on-Sea",
           "pageURL": "https://www.walkingclub.org.uk/walk/lymington-to-barton-on-sea/",
-          "type": "main"
-        }
-      },
-      {
-        "role": "variant",
-        "startPlace": "Lymington Town",
-        "endPlace": "New Milton",
-        "startStation": "LYT",
-        "endStation": "NWM",
-        "requiresBus": false,
-        "stationToStation": true,
-        "distanceKm": 18.2,
-        "lunchStops": [
-          {
-            "name": "Gun Inn",
-            "location": "Keyhaven",
-            "url": "http://www.theguninn.com/"
-          },
-          {
-            "name": "The Marine",
-            "location": "Milford-on-Sea",
-            "url": "http://www.themarinemos.co.uk/"
-          },
-          {
-            "name": "Needles Eye Café",
-            "location": "Milford-on-Sea"
-          }
-        ],
-        "terrain": "Coastal path, salt marshes, nature reserve, esplanade, low eroding cliffs, then inland road walking to station",
-        "sights": [
-          {
-            "name": "Hurst Castle"
-          },
-          {
-            "name": "Hordle Cliff",
-            "url": "https://wessexcoastgeology.soton.ac.uk/hordle.htm"
-          },
-          {
-            "name": "Beachcomber Café",
-            "url": "http://www.beachcomber-cafe.co.uk/"
-          }
-        ],
-        "warnings": "Eroding cliff edges",
-        "id": "a7lk",
-        "rating": 2,
-        "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Lymington to Barton-on-Sea",
-          "pageURL": "https://www.walkingclub.org.uk/walk/lymington-to-barton-on-sea/",
           "type": "variant"
-        },
-        "updatedAt": "2026-04-27T22:12:16.215Z"
+        }
       }
     ]
   },
