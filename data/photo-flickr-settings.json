@@ -962,5 +962,24 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.5504987,51.1715258": {
+    "name": "Staplehurst",
+    "custom": {
+      "includeTags": [
+        "staplehurst",
+        "sissinghurst castle gardens",
+        "headcorn",
+        "fields",
+        "kentish weald",
+        "apr",
+        "bell",
+        "jorrocks",
+        "frittenden"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
