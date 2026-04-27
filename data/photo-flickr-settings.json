@@ -933,5 +933,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.8545851,51.0681986": {
+    "name": "Ham Street",
+    "custom": {
+      "includeTags": [
+        "ham street",
+        "saxon shore way",
+        "ham street circular",
+        "romney marsh",
+        "park wood",
+        "heron wood",
+        "st matthew's church",
+        "st mary's church",
+        "paul church",
+        "appledore",
+        "ham street woods national nature reserve",
+        "woodland national nature reserve",
+        "royal military canal",
+        "gusbourne vineyard",
+        "ss peter",
+        "miss mollett's high class tea room",
+        "mar",
+        "warehorne",
+        "black lion",
+        "horne's place chapel"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
