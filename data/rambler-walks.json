@@ -78875,7 +78875,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Hanborough",
         "endPlace": "Charlbury",
         "startStation": "HND",
@@ -78887,40 +78886,32 @@
         "lunchStops": [
           {
             "name": "White Horse",
-            "location": "Stonesfield",
-            "url": null
+            "location": "Stonesfield"
           },
           {
             "name": "Plough Inn",
-            "location": "Finstock",
-            "url": null
+            "location": "Finstock"
           }
         ],
         "terrain": "Rolling Oxfordshire farmland, landscaped parkland, lakeside paths, open fields, ancient hedgerows, Roman road, Cotswold stone villages, deer park",
         "sights": [
           {
-            "name": "Blenheim Palace",
-            "url": null
+            "name": "Blenheim Palace"
           },
           {
-            "name": "Column of Victory",
-            "url": null
+            "name": "Column of Victory"
           },
           {
-            "name": "Great Bridge",
-            "url": null
+            "name": "Great Bridge"
           },
           {
-            "name": "Cornbury Park",
-            "url": null
+            "name": "Cornbury Park"
           },
           {
-            "name": "St Mary the Virgin Church",
-            "url": null
+            "name": "St Mary the Virgin Church"
           },
           {
-            "name": "Charlbury Railway Station",
-            "url": null
+            "name": "Charlbury Railway Station"
           }
         ],
         "warnings": "Can be muddy",
@@ -78934,7 +78925,9 @@
           "pageName": "Hanborough to Charlbury",
           "pageURL": "https://www.walkingclub.org.uk/walk/hanborough-to-charlbury/",
           "type": "main"
-        }
+        },
+        "rating": 4,
+        "updatedAt": "2026-04-27T17:41:11.779Z"
       },
       {
         "role": "alternative",
