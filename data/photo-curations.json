@@ -7595,5 +7595,19 @@
       "40256498640",
       "38141293466"
     ]
+  },
+  "0.8545851,51.0681986": {
+    "name": "Ham Street",
+    "approved": [
+      {
+        "id": "54602299565",
+        "title": "Fairfield church, Romney Marsh, Kent",
+        "ownerName": "surreydock",
+        "thumbnailUrl": "https://live.staticflickr.com/65535/54602299565_875d541812.jpg",
+        "largeUrl": "https://live.staticflickr.com/65535/54602299565_875d541812_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/8440017@N08/54602299565",
+        "dateTaken": "2010-08-28 14:57:05"
+      }
+    ]
   }
 }
