@@ -244,9 +244,16 @@ function cleanLunchStop(raw: unknown): {
   return out
 }
 
+// Walk ids are now in the format `[startCRS][endCRS][word]`, all
+// lowercase letters — e.g. "hunhunfox" (HUN circular + "fox") or
+// "saldenwren" (SAL → DEN + "wren"). 9 chars minimum (3 + 3 + a
+// 3-letter word like "fox"); upper bound is generous to allow for
+// long words ("fritillary") plus rare numeric collision suffixes.
+const WALK_ID_RE = /^[a-z]{6}[a-z0-9]{3,15}$/
+
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  if (!id || !/^[0-9a-z]{4}$/.test(id)) {
+  if (!id || !WALK_ID_RE.test(id)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 })
   }
 
@@ -353,7 +360,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // middleware already blocks DELETE on non-dev environments.
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  if (!id || !/^[0-9a-z]{4}$/.test(id)) {
+  if (!id || !WALK_ID_RE.test(id)) {
     return NextResponse.json({ error: "invalid id" }, { status: 400 })
   }
 
