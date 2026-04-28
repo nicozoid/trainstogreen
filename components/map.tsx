@@ -11,6 +11,20 @@ import { HelpButton } from "@/components/help-button"
 import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
+// Synthetic-cluster topology — declared in a shared module so build
+// scripts and API routes can use the same definitions. The synthetic
+// "displayName / canonicalName" fields stay in PRIMARY_ORIGINS /
+// FRIEND_ORIGINS below (they're UI strings only the map cares about).
+import {
+  PRIMARY_ORIGIN_CLUSTER,
+  FRIEND_ORIGIN_CLUSTER,
+  ALL_CLUSTER_MEMBER_COORDS,
+  MEMBER_TO_SYNTHETIC,
+  ALL_SYNTHETIC_COORDS,
+  SYNTHETIC_DISPLAY_NAMES,
+  pickTopRankedIndex,
+  type RankableJourney,
+} from "@/lib/clusters"
 import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -432,48 +446,10 @@ const DEFAULT_RECENT_PRIMARIES: string[] = [
 // just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
 // keeps maintenance simple.
 
-// Clustered satellite stations — when a primary is active, these extra coord
-// keys are also consulted for direct-reachable lookups AND stitching attempts,
-// and the fastest train from any cluster member wins.
-//  - Liverpool Street ← Moorgate: short walk, MOG has distinct GN suburban pattern.
-//  - City cluster ← six City-area stations (synthetic primary coord at Bank).
-//    Admin-only while we validate whether aggregating 6 origins into one is
-//    useful UX.
-const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = {
-  // Stratford synthetic ← SRA + SFA. Both render as satellite diamonds
-  // around the midpoint anchor; first member's journey data drives the
-  // routing alias on the synthetic coord (see diff merge below).
-  "-0.0061483,51.5430422": [
-    "-0.0035472,51.541289",   // Stratford (SRA)
-    "-0.0087494,51.5447954",  // Stratford International (SFA)
-  ],
-  // London — the 18 true termini. Primary coord is the Charles I statue
-  // (synthetic, no station there). Every cluster member is a real terminus;
-  // Farringdon is intentionally EXCLUDED (it's a through-station, not a
-  // terminus). When London is the active primary, direct-reachable and
-  // stitched journeys are computed across all 18 termini and the quickest
-  // route wins (with the 15-min direct-preference + 2h30m cutoff rules).
-  "-0.1269,51.5196": [
-    "-0.1239491,51.530609",   // Kings Cross (Underground)
-    "-0.1230224,51.5323954",  // Kings Cross (National Rail / KGX)
-    "-0.1270027,51.5327196",  // St Pancras International (STP, main concourse)
-    "-0.1276185,51.5322106",  // St Pancras International (SPL, HS1/domestic concourse)
-    "-0.1341909,51.5288526",  // Euston (National Rail / EUS)
-    "-0.1338745,51.5282865",  // Euston (Underground)
-    "-0.1236888,51.5074975",  // Charing Cross
-    "-0.1445802,51.4947328",  // Victoria
-    "-0.112801,51.5028379",   // Waterloo
-    "-0.1082027,51.5042171",  // Waterloo East
-    "-0.163592,51.5243712",   // Marylebone
-    "-0.177317,51.5170952",   // Paddington
-    "-0.0890625,51.5182516",  // Moorgate
-    "-0.0814269,51.5182105",  // Liverpool Street
-    "-0.0906046,51.5106685",  // Cannon Street
-    "-0.0774191,51.5113281",  // Fenchurch Street
-    "-0.1032417,51.5104871",  // Blackfriars
-    "-0.0851473,51.5048764",  // London Bridge
-  ],
-}
+// Cluster-member topology lives in lib/clusters.ts so build scripts and
+// API routes can use it too. Display names (canonicalName / menuName /
+// etc.) stay in PRIMARY_ORIGINS / FRIEND_ORIGINS in this file because
+// they're UI-only strings.
 
 // Farringdon coord / CRS — used by the City cluster's Thameslink-Farringdon
 // preference: when any other cluster member would have been the RTT winner
@@ -573,67 +549,11 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   "-2.9330473,54.8902575":  { canonicalName: "Carlisle",      displayName: "Carlisle",       menuName: "Carlisle" },
 }
 
-// Friend cluster members — same shape as PRIMARY_ORIGIN_CLUSTER. Listed
-// coords appear as satellite diamonds when the parent friend is active,
-// and tap-to-resolve back to the parent. Anchors live at the FIRST listed
-// real station for each friend, so the anchor itself isn't included as a
-// member.
-const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = {
-  // Birmingham (synthetic centroid anchor) ← BHM + BMO + BSW.
-  "-1.8967682,52.4801267": [
-    "-1.898694,52.4776459",    // Birmingham New Street (BHM)
-    "-1.8919518,52.4789357",   // Birmingham Moor Street (BMO)
-    "-1.8996588,52.4837984",   // Birmingham Snow Hill (BSW)
-  ],
-  // Manchester (synthetic centroid anchor) ← MAN + MCV + MCO.
-  "-2.2383003,53.4796574": [
-    "-2.2301402,53.4772197",   // Manchester Piccadilly (MAN)
-    "-2.2424846,53.4879748",   // Manchester Victoria (MCV)
-    "-2.2422762,53.4737777",   // Manchester Oxford Road (MCO)
-  ],
-  // Edinburgh (centroid anchor) ← Waverley + Haymarket satellites.
-  "-3.2048968,55.9485428": [
-    "-3.1904199,55.9519018",   // Edinburgh Waverley (EDB)
-    "-3.2193738,55.9451838",   // Haymarket (HYM)
-  ],
-  // Glasgow (centroid anchor) ← Central + Queen Street satellites.
-  "-4.2547767,55.8604359": [
-    "-4.2584361,55.8583132",   // Glasgow Central (GLC)
-    "-4.2511172,55.8625587",   // Glasgow Queen Street (GLQ)
-  ],
-  // Cardiff (centroid anchor) ← Central + Queen Street satellites.
-  "-3.1749991,51.4787758": [
-    "-3.1797057,51.4755495",   // Cardiff Central (CDF)
-    "-3.1702926,51.4820022",   // Cardiff Queen Street (CDQ)
-  ],
-  // Portsmouth (centroid anchor) ← & Southsea + Harbour satellites.
-  "-1.0997297,50.7974525": [
-    "-1.0906787,50.7982014",   // Portsmouth & Southsea (PMS)
-    "-1.1087807,50.7967035",   // Portsmouth Harbour (PMH)
-  ],
-  // Liverpool (centroid anchor) ← Lime Street + Central + James Street.
-  // All three sit within ~1 km of each other in central Liverpool.
-  "-2.9831014,53.4056107": [
-    "-2.9775854,53.4076085",   // Liverpool Lime Street (LIV)
-    "-2.9795092,53.4042207",   // Liverpool Central (LVC)
-    "-2.9922097,53.4050028",   // Liverpool James Street (LVJ)
-  ],
-}
+// FRIEND_ORIGIN_CLUSTER + ALL_CLUSTER_MEMBER_COORDS now live in
+// lib/clusters.ts (see import at the top of this file).
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
 const FRIEND_ORIGIN_KEYS = Object.keys(FRIEND_ORIGINS)
-
-// Every coord that's a member of a synthetic cluster (primary OR friend),
-// flattened to a Set for cheap membership tests. Drives:
-//   • The "always render as diamond" layer for cluster members
-//     (regardless of whether their cluster is the active primary/friend).
-//   • A matching exclusion filter on the regular station layers, so a
-//     cluster member never double-renders with both a diamond AND a
-//     rating/unrated icon.
-const ALL_CLUSTER_MEMBER_COORDS = new Set<string>([
-  ...Object.values(PRIMARY_ORIGIN_CLUSTER).flat(),
-  ...Object.values(FRIEND_ORIGIN_CLUSTER).flat(),
-])
 
 // Coord → journey-file slug for every friend in FRIEND_ORIGINS. Slugs
 // match the filenames under public/journeys/ that
@@ -2276,6 +2196,20 @@ export default function HikeMap() {
   // (both filters applied independently, AND semantics).
   const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
+  // Cluster-diamond hover — when the user mouses over a cluster member
+  // diamond, the SYNTHETIC's pulsing icon is shown via the regular
+  // `hovered` state (centred at the synthetic's anchor), and this
+  // separate state drives a dedicated pulse on the diamond itself.
+  // Two simultaneous pulses: the synthetic informs the user "this
+  // belongs to that cluster", the diamond confirms "this is the
+  // specific member you're pointing at". Cleared in lockstep with
+  // `hovered` so the two animations always start/stop together.
+  const [hoveredDiamond, setHoveredDiamond] = useState<{
+    coordKey: string
+    lng: number
+    lat: number
+    name: string
+  } | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Region labels (counties, parks, AONBs) — controlled by a checkbox in
   // FilterPanel sitting under "Waymarked trails". Off by default. Visible
@@ -5077,23 +5011,145 @@ export default function HikeMap() {
   // it as if it were any other property.
   const stations = useMemo(() => {
     if (!routedStations) return null
+    // ── Virtual synthetic features ────────────────────────────────
+    // Every non-active synthetic (Birmingham, Manchester, Stratford,
+    // Central London when a different primary is active) gets a
+    // virtual Point feature at its centroid so it flows through the
+    // same filter/icon/click pipeline as a real station. Active
+    // primary/friend synthetics are NOT in this list — their
+    // hexagon/square legacy layers handle them. Each synthetic's
+    // londonMinutes / effectiveChanges / journeys come from the
+    // top-ranked cluster member (changes-first, duration-tiebreak,
+    // matching lib/stitch-journey.ts) so the time slider and direct-
+    // only filter behave intuitively. The journey paragraph in the
+    // overlay reads from these too.
+    const synthFeatures: typeof routedStations.features = []
+    const allClusters: Record<string, string[]> = {
+      ...PRIMARY_ORIGIN_CLUSTER,
+      ...FRIEND_ORIGIN_CLUSTER,
+    }
+    for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+      // Skip the active primary/friend — their hexagon/square is
+      // already rendered, and we don't want a duplicate icon on top.
+      if (synthCoord === primaryOrigin) continue
+      if (synthCoord === friendOrigin) continue
+
+      // Collect each member's feature from routedStations.
+      type Feat = (typeof routedStations.features)[number]
+      const memberFeats: Feat[] = []
+      for (const mc of memberCoords) {
+        const f = routedStations.features.find((g) => (g.properties as { coordKey?: string }).coordKey === mc)
+        if (f) memberFeats.push(f)
+      }
+      if (memberFeats.length === 0) continue
+
+      // Pick the top-ranked cluster member by primary journey.
+      // primaryOrigin is a coord, journeys on each member are
+      // coord-keyed too, so a direct lookup works.
+      const memberPrimaryJourneys = memberFeats.map((f) =>
+        ((f.properties as { journeys?: Record<string, JourneyInfo> }).journeys ?? {})[primaryOrigin],
+      )
+      const candPrimary: RankableJourney[] = memberPrimaryJourneys.map((j) => ({
+        durationMinutes: j?.durationMinutes,
+        changes: j?.changes,
+      }))
+      const bestPrimaryIdx = pickTopRankedIndex(candPrimary)
+      // No primary journey to any member → synthetic isn't reachable
+      // from this primary; skip it. The map won't render an unreachable
+      // synthetic just like it doesn't render unreachable real stations.
+      if (bestPrimaryIdx === -1) continue
+      const bestPrimaryJourney = memberPrimaryJourneys[bestPrimaryIdx]
+      if (!bestPrimaryJourney) continue
+      const bestPrimaryMemberFeat = memberFeats[bestPrimaryIdx]
+      const bestPrimaryMemberName = (bestPrimaryMemberFeat.properties as { name?: string }).name ?? ""
+
+      // Compose the synthetic's coord-keyed journeys map. We start
+      // from the top primary member's journeys so per-friend lookups
+      // (including getFriendJourney's cluster-member fallback) have
+      // data to fall through to.
+      const baseJourneys = ((bestPrimaryMemberFeat.properties as { journeys?: Record<string, JourneyInfo> }).journeys ?? {}) as Record<string, JourneyInfo>
+      const journeys: Record<string, JourneyInfo> = { ...baseJourneys }
+      // Always set the primary entry to the top-from-primary journey
+      // (in case the base member's primary entry differed).
+      journeys[primaryOrigin] = bestPrimaryJourney
+
+      // Pick top-ranked cluster member for the friend journey too —
+      // can be a different member than the one chosen for the primary,
+      // because "best from London" and "best from Manchester" don't
+      // always agree. Falls through getFriendJourney's logic for
+      // synthetic friends (per-member fallback inside the destination
+      // feature's journeys map).
+      let bestFriendMemberName: string | undefined
+      if (friendOrigin) {
+        const friendCandidates: { feat: Feat; journey: { durationMinutes?: number; changes?: number } | undefined }[] =
+          memberFeats.map((f) => ({
+            feat: f,
+            journey: getFriendJourney(
+              ((f.properties as { journeys?: Record<string, JourneyInfo> }).journeys ?? {}) as Record<string, { durationMinutes?: number; changes?: number }>,
+              friendOrigin,
+            ),
+          }))
+        const bestFriendIdx = pickTopRankedIndex(
+          friendCandidates.map((c) => ({
+            durationMinutes: c.journey?.durationMinutes,
+            changes: c.journey?.changes,
+          })),
+        )
+        if (bestFriendIdx >= 0 && friendCandidates[bestFriendIdx].journey) {
+          bestFriendMemberName = (friendCandidates[bestFriendIdx].feat.properties as { name?: string }).name
+          // Stamp the friend journey under the friend coord so the
+          // friend description renders without going through cluster
+          // fallback (cleaner data path for the modal).
+          journeys[friendOrigin] = friendCandidates[bestFriendIdx].journey as JourneyInfo
+        }
+      }
+
+      const [lng, lat] = synthCoord.split(",").map(Number)
+      const synthName = SYNTHETIC_DISPLAY_NAMES[synthCoord] ?? synthCoord
+      const isBuried = buriedStations.has(synthCoord)
+      const props: Record<string, unknown> = {
+        coordKey: synthCoord,
+        name: synthName,
+        londonMinutes: bestPrimaryJourney.durationMinutes ?? null,
+        effectiveChanges: bestPrimaryJourney.changes ?? 0,
+        journeys,
+        isSynthetic: true,
+      }
+      if (isBuried) props.isBuried = true
+      // Member names for the journey paragraph prefix in the overlay.
+      // Stamped here so the modal-render site can read them off the
+      // SelectedStation without needing to recompute the top-ranked
+      // member.
+      if (bestPrimaryMemberName) props.syntheticPrimaryMemberName = bestPrimaryMemberName
+      if (bestFriendMemberName) props.syntheticFriendMemberName = bestFriendMemberName
+
+      synthFeatures.push({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [lng, lat] },
+        properties: props,
+      } as unknown as Feat)
+    }
+
     return {
       ...routedStations,
-      features: routedStations.features.map((f) => {
-        const coordKey = f.properties.coordKey as string
-        const isBuried = buriedStations.has(coordKey)
-        const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
-        const hadBuried = !!f.properties.isBuried
-        const hadClusterMember = !!f.properties.isClusterMember
-        // Skip allocation if nothing's changing.
-        if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
-        const next: Record<string, unknown> = { ...f.properties }
-        if (isBuried) next.isBuried = true; else delete next.isBuried
-        if (isClusterMember) next.isClusterMember = true; else delete next.isClusterMember
-        return { ...f, properties: next as typeof f.properties }
-      }),
+      features: [
+        ...routedStations.features.map((f) => {
+          const coordKey = f.properties.coordKey as string
+          const isBuried = buriedStations.has(coordKey)
+          const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+          const hadBuried = !!f.properties.isBuried
+          const hadClusterMember = !!f.properties.isClusterMember
+          // Skip allocation if nothing's changing.
+          if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
+          const next: Record<string, unknown> = { ...f.properties }
+          if (isBuried) next.isBuried = true; else delete next.isBuried
+          if (isClusterMember) next.isClusterMember = true; else delete next.isClusterMember
+          return { ...f, properties: next as typeof f.properties }
+        }),
+        ...synthFeatures,
+      ],
     }
-  }, [routedStations, buriedStations])
+  }, [routedStations, buriedStations, primaryOrigin, friendOrigin])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -5606,7 +5662,7 @@ export default function HikeMap() {
       if (!def?.isSynthetic) continue
       clusters.push({ anchor, displayName: def.displayName, members })
     }
-    for (const { displayName, members } of clusters) {
+    for (const { anchor, displayName, members } of clusters) {
       for (const coord of members) {
         const [lngStr, latStr] = coord.split(",")
         const lng = parseFloat(lngStr)
@@ -5640,6 +5696,10 @@ export default function HikeMap() {
             coordKey: coord,
             name: cleanName,
             isTerminus: true,
+            // Parent synthetic's anchor coord — drives the visibility
+            // filter downstream (a diamond only renders when its
+            // parent synthetic survives the filter pipeline).
+            synthAnchor: anchor,
           },
         })
       }
@@ -5698,6 +5758,48 @@ export default function HikeMap() {
         }),
     }
   }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
+
+  // Set of synthetic-anchor coordKeys that survived the filter pipeline
+  // — i.e. the synthetic features that ARE rendered as rating icons in
+  // stationsForMap, plus the active primary/friend synthetics (which
+  // don't enter stationsForMap because their hexagon/square renders them
+  // separately, but their cluster diamonds should still show).
+  // Drives the visibleClusterDiamondFeatures filter below — a diamond
+  // only renders when its parent synthetic is on the map. If the user
+  // filters their synthetic out (e.g. unchecks rating-3 and the
+  // synthetic was rated 3), the diamonds vanish in lockstep.
+  const visibleSynthAnchors = useMemo(() => {
+    const out = new Set<string>()
+    // Active primary/friend synthetics always count as visible — their
+    // hexagon/square IS on the map regardless of filter checkboxes.
+    if (PRIMARY_ORIGIN_CLUSTER[primaryOrigin]) out.add(primaryOrigin)
+    if (friendOrigin && FRIEND_ORIGIN_CLUSTER[friendOrigin]) out.add(friendOrigin)
+    // Non-active synthetics that survived the filter chain.
+    if (stationsForMap) {
+      for (const f of stationsForMap.features) {
+        if ((f.properties as { isSynthetic?: boolean }).isSynthetic) {
+          out.add(f.properties.coordKey as string)
+        }
+      }
+    }
+    return out
+  }, [stationsForMap, primaryOrigin, friendOrigin])
+
+  // Pre-filter the always-on cluster diamonds by visibleSynthAnchors.
+  // The all-cluster-diamonds layer reads from this filtered version —
+  // diamonds whose parent synthetic is filtered out simply aren't in
+  // the source data and don't render.
+  const visibleClusterDiamondFeatures = useMemo(() => {
+    if (!allClusterDiamondFeatures) return null
+    return {
+      icons: {
+        type: "FeatureCollection" as const,
+        features: allClusterDiamondFeatures.icons.features.filter((f) =>
+          visibleSynthAnchors.has(f.properties.synthAnchor as string),
+        ),
+      },
+    }
+  }, [allClusterDiamondFeatures, visibleSynthAnchors])
 
   // Filter-change pill: flash "{N} stations" at viewport-centre when
   // the user toggles a filter input. Trigger is signature-based —
@@ -6830,6 +6932,14 @@ export default function HikeMap() {
       if (map.getLayer("hovered-station-icon")) {
         map.setLayoutProperty("hovered-station-icon", "icon-size", 1.3 + s * 0.2)
       }
+      // Cluster-diamond pulse — only mounted while a diamond is hovered.
+      // Static diamonds render at 0.6×; the hovered one breathes between
+      // 0.6× (static size) at trough and 0.72× (+20%) at peak, so it
+      // never shrinks below the resting size and the growth is just
+      // enough to register as a hover indicator.
+      if (map.getLayer("hovered-diamond-icon")) {
+        map.setLayoutProperty("hovered-diamond-icon", "icon-size", 0.6 + s * 0.12)
+      }
       frame = requestAnimationFrame(loop)
     }
     frame = requestAnimationFrame(loop)
@@ -6851,6 +6961,7 @@ export default function HikeMap() {
       if (hoveredRef.current !== null) {
         hoveredRef.current = null
         setHovered(null)
+        setHoveredDiamond(null)
       }
       return
     }
@@ -6859,15 +6970,57 @@ export default function HikeMap() {
     if (hoveredRef.current === coordKey) return
     hoveredRef.current = coordKey
     const [lng, lat] = (feature.geometry as unknown as { coordinates: [number, number] }).coordinates
+
+    // Cluster-diamond hover special case. A diamond carries a
+    // `synthAnchor` property pointing at its parent synthetic's
+    // centroid coord. We don't want a pulsing rating-icon stacked on
+    // top of the diamond (the "Stratford 7m" overlap shown in the bug
+    // report) — instead, redirect the main `hovered` state to the
+    // SYNTHETIC's coord (so its icon pulses at the centroid) and stamp
+    // the diamond on a dedicated `hoveredDiamond` state so the diamond
+    // itself can grow + pulse via its own dedicated layer.
+    const synthAnchor = feature.properties?.synthAnchor as string | undefined
+    if (feature.properties?.isTerminus && synthAnchor) {
+      const [synthLngStr, synthLatStr] = synthAnchor.split(",")
+      const synthLng = parseFloat(synthLngStr)
+      const synthLat = parseFloat(synthLatStr)
+      // Look up the synthetic's underlying station feature for icon
+      // resolution: a non-active synthetic appears as a regular rating
+      // icon (rating icon / unrated circle), the active primary
+      // synthetic appears as icon-london (square), the active friend
+      // synthetic appears as icon-origin (also a square). Falling
+      // through to the synthetic anchor's feature in `stations` lets
+      // resolveStationIconImage do that resolution naturally.
+      const synthFeat = stations?.features.find(
+        (f) => (f.properties as { coordKey?: string }).coordKey === synthAnchor
+      )
+      const synthIconImage = synthAnchor === primaryOrigin
+        ? "icon-london"
+        : synthAnchor === friendOrigin
+        ? "icon-origin"
+        : resolveStationIconImage(synthFeat?.properties ?? undefined)
+      setHovered({ lng: synthLng, lat: synthLat, coordKey: synthAnchor, iconImage: synthIconImage })
+      setHoveredDiamond({
+        coordKey,
+        lng,
+        lat,
+        name: (feature.properties?.name as string | undefined) ?? "",
+      })
+      setRadiusPos(null)
+      return
+    }
+
     // `feature.properties` on a GeoJSON Feature is `Record<string, unknown> | null`,
     // but resolveStationIconImage takes `Record<string, unknown> | undefined`. Coerce
     // a null properties bag to undefined so the call type-checks — the helper treats
     // both the same way (no properties → "icon-unrated" default).
     setHovered({ lng, lat, coordKey, iconImage: resolveStationIconImage(feature.properties ?? undefined) })
+    setHoveredDiamond(null)
     // Secret admin marker — ignore hover entirely (no cursor, no radius)
     if (feature.properties?.isSecretAdmin) {
       hoveredRef.current = null
       setHovered(null)
+      setHoveredDiamond(null)
       setRadiusPos(null)
       return
     }
@@ -6877,11 +7030,12 @@ export default function HikeMap() {
     // the journey polyline, neither are hiking destinations.
     if (feature.properties?.isLondon || feature.properties?.isTerminus) setRadiusPos(null)
     else setRadiusPos({ lng, lat })
-  }, [])
+  }, [stations, primaryOrigin, friendOrigin])
 
   const handleMouseLeave = useCallback(() => {
     hoveredRef.current = null
     setHovered(null)
+    setHoveredDiamond(null)
   }, [])
 
   // Mobile two-tap behaviour (replaces old long-press):
@@ -7105,47 +7259,51 @@ export default function HikeMap() {
     // diamond reads as "open the cluster", since the diamond is the
     // visual representation of cluster membership. The synthetic anchor
     // owns the cluster-header copy and shared photos.
+    //
+    // Resolution uses the global MEMBER_TO_SYNTHETIC lookup so it works
+    // for ANY visible synthetic — not just the active primary/friend.
+    // After the visibility-rules change (cluster diamonds appear
+    // whenever their parent synthetic is on the map), a click on, say,
+    // a Birmingham diamond while London is the primary should still
+    // open the Birmingham overlay.
+    //
+    // Also covers `cluster-diamond-icon` from the always-on
+    // all-cluster-diamonds layer (added to interactiveLayerIds below).
     if (
       feature.layer?.id === "london-terminus-icon" ||
       feature.layer?.id === "london-terminus-origin-icon" ||
-      feature.layer?.id === "friend-cluster-icon"
+      feature.layer?.id === "friend-cluster-icon" ||
+      feature.layer?.id === "cluster-diamond-icon"
     ) {
       const diamondCoord = feature.properties?.coordKey as string | undefined
-      // Determine which synthetic owns this diamond — the active primary or
-      // the active friend. Members exclusively belong to one of the two
-      // because diamonds are only mounted when their owning synthetic is
-      // active, so a single owning-anchor lookup is unambiguous.
-      const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
-      const primaryMembers = primaryDef?.isSynthetic
-        ? (PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])
-        : []
-      const friendDef = friendOrigin ? FRIEND_ORIGINS[friendOrigin] : undefined
-      const friendMembers = friendOrigin && friendDef?.isSynthetic
-        ? (FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? [])
-        : []
-      let anchorCoord: string | null = null
-      let anchorName: string | null = null
-      if (diamondCoord && primaryMembers.includes(diamondCoord)) {
-        anchorCoord = primaryOrigin
-        anchorName = primaryDef?.displayName ?? null
-      } else if (diamondCoord && friendOrigin && friendMembers.includes(diamondCoord)) {
-        anchorCoord = friendOrigin
-        anchorName = friendDef?.displayName ?? null
-      }
+      const anchorCoord = diamondCoord ? MEMBER_TO_SYNTHETIC[diamondCoord] : undefined
+      const anchorName = anchorCoord
+        ? (PRIMARY_ORIGINS[anchorCoord]?.displayName
+          ?? FRIEND_ORIGINS[anchorCoord]?.displayName
+          ?? null)
+        : null
       if (anchorCoord && anchorName) {
         const [aLngStr, aLatStr] = anchorCoord.split(",")
         const aLng = parseFloat(aLngStr)
         const aLat = parseFloat(aLatStr)
         const pt = mapRef.current?.project([aLng, aLat])
+        // Look up the synthetic's virtual feature (built in the
+        // `stations` memo) so the modal gets the synthetic's
+        // top-ranked-member journey + cluster member labels.
+        const synthFeat = stations?.features.find(
+          (g) => (g.properties as { coordKey?: string }).coordKey === anchorCoord
+        )
+        const synthProps = (synthFeat?.properties ?? {}) as Record<string, unknown>
         setSelectedStation({
           name: anchorName,
           lng: aLng,
           lat: aLat,
-          minutes: 0,
+          minutes: (synthProps.londonMinutes as number | null | undefined) ?? 0,
           coordKey: anchorCoord,
           flickrCount: null,
           screenX: pt?.x ?? window.innerWidth / 2,
           screenY: pt?.y ?? window.innerHeight / 2,
+          journeys: synthProps.journeys as Record<string, JourneyInfo> | undefined,
         })
         hoveredRef.current = null
         touchFirstTapCoord.current = null
@@ -8180,6 +8338,10 @@ export default function HikeMap() {
           // works at every zoom level where it's visible.
           "london-terminus-icon", "london-terminus-origin-icon", "friend-cluster-icon",
           "friend-anchor-icon", "friend-anchor-hit",
+          // Always-on cluster diamonds (renders for every visible
+          // synthetic, active or not). Click resolves to the parent
+          // synthetic's overlay via MEMBER_TO_SYNTHETIC.
+          "cluster-diamond-icon",
         ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
@@ -8474,12 +8636,23 @@ export default function HikeMap() {
             Source so the diamonds render BENEATH any other icon/label
             in case of overlap. Not in interactiveLayerIds — clicks
             pass through to the station hit-area below. */}
-        {allClusterDiamondFeatures && (
-          <Source id="all-cluster-diamonds" type="geojson" data={allClusterDiamondFeatures.icons}>
+        {visibleClusterDiamondFeatures && (
+          <Source id="all-cluster-diamonds" type="geojson" data={visibleClusterDiamondFeatures.icons}>
+            {/* Static diamonds. The hovered diamond is filtered OUT
+                here so it doesn't render at the static 0.6× size
+                while the dedicated hovered-diamond-icon below
+                animates its own pulsing copy. */}
             <Layer
               id="cluster-diamond-icon"
               type="symbol"
               minzoom={9}
+              filter={
+                hoveredDiamond
+                  /* eslint-disable @typescript-eslint/no-explicit-any */
+                  ? (["!=", ["get", "coordKey"], hoveredDiamond.coordKey] as any)
+                  /* eslint-enable @typescript-eslint/no-explicit-any */
+                  : true
+              }
               layout={{
                 "icon-image": "icon-london-terminus",
                 "icon-size": 0.6,
@@ -8503,6 +8676,37 @@ export default function HikeMap() {
                 "text-color": labelColor,
                 "text-halo-color": haloColor,
                 "text-halo-width": 1.5,
+              }}
+            />
+          </Source>
+        )}
+
+        {/* Pulsing single-feature overlay for the hovered cluster
+            diamond. Mounted only while a diamond is hovered; the rAF
+            loop above animates its icon-size every frame so the diamond
+            visibly breathes while the parent synthetic's icon pulses
+            simultaneously at the centroid. The label is shared with
+            the static cluster-diamond-label layer above (the diamond's
+            own name doesn't need a duplicate). */}
+        {hoveredDiamond && (
+          <Source
+            id="hovered-diamond"
+            type="geojson"
+            data={{
+              type: "Feature",
+              geometry: { type: "Point", coordinates: [hoveredDiamond.lng, hoveredDiamond.lat] },
+              properties: { coordKey: hoveredDiamond.coordKey, name: hoveredDiamond.name },
+            }}
+          >
+            <Layer
+              id="hovered-diamond-icon"
+              type="symbol"
+              minzoom={9}
+              layout={{
+                "icon-image": "icon-london-terminus",
+                "icon-size": 0.66,       // overwritten by the rAF loop (0.6 → 0.72)
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
               }}
             />
           </Source>
@@ -9510,27 +9714,19 @@ export default function HikeMap() {
             // Station", and so on. Earlier we suppressed for any cluster
             // primary, which produced "Kings Cross, St Pancras, & Euston"
             // as the title — too verbose for a single-station click.
-            isSynthetic={
-              !!PRIMARY_ORIGINS[displayStation.coordKey]?.isSynthetic ||
-              !!FRIEND_ORIGINS[displayStation.coordKey]?.isSynthetic ||
-              (displayStation.coordKey === primaryOrigin && !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic) ||
-              (!!friendOrigin && displayStation.coordKey === friendOrigin && !!FRIEND_ORIGINS[friendOrigin]?.isSynthetic)
-            }
-            // Cluster header — populated when the open modal's coord is a
-            // synthetic anchor. Resolves member coords → station names via
-            // baseStations (origin-routes also has names but baseStations is
-            // already in scope for this render). Falls back gracefully when
-            // a member isn't found in baseStations.
+            isSynthetic={ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)}
+            // Cluster header — populated for ANY synthetic anchor (active
+            // primary, active friend, OR a non-active synthetic that the
+            // user clicked on). Resolves member coords → station names
+            // via baseStations. Tube-only entries are skipped (Underground
+            // entrances for Kings X / Euston are routing aliases, not
+            // user-facing cluster members).
             clusterMemberNames={(() => {
-              const isPrimarySynthetic = displayStation.coordKey === primaryOrigin
-                && !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
-              const isFriendSynthetic = !!friendOrigin
-                && displayStation.coordKey === friendOrigin
-                && !!FRIEND_ORIGINS[friendOrigin]?.isSynthetic
-              if (!isPrimarySynthetic && !isFriendSynthetic) return undefined
-              const memberCoords = isPrimarySynthetic
-                ? (PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? [])
-                : (FRIEND_ORIGIN_CLUSTER[friendOrigin!] ?? [])
+              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
+              const memberCoords =
+                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? []
               const names: string[] = []
               const seen = new Set<string>()
               for (const c of memberCoords) {
@@ -9547,6 +9743,76 @@ export default function HikeMap() {
                 names.push(cleaned)
               }
               return names.length > 0 ? names : undefined
+            })()}
+            // Cluster members with coords + names — drives the
+            // "Hikes from stations ▾" dropdown. Same rules as
+            // clusterMemberNames (NR-only, dedup) but kept as
+            // {name, lat, lng} so the dropdown items can build
+            // per-member Komoot URLs.
+            clusterMembers={(() => {
+              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
+              const memberCoords =
+                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? []
+              const out: { name: string; lat: number; lng: number }[] = []
+              const seen = new Set<string>()
+              for (const c of memberCoords) {
+                const f = baseStations?.features.find(
+                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                )
+                const network = (f?.properties?.network as string | undefined) ?? ""
+                const isNR = /National Rail|Elizabeth line/.test(network)
+                if (!isNR) continue
+                const raw = f?.properties?.name as string | undefined
+                const cleaned = cleanTerminusLabel(raw)
+                if (!cleaned || seen.has(cleaned)) continue
+                seen.add(cleaned)
+                const [lng, lat] = f!.geometry.coordinates as [number, number]
+                out.push({ name: cleaned, lat, lng })
+              }
+              return out.length > 0 ? out : undefined
+            })()}
+            // Synthetic cluster member CRS codes — drives WalksAdminPanel
+            // multi-station fetch. Each CRS contributes its walks to the
+            // panel; the synthetic itself has no CRS.
+            clusterMemberCrsCodes={(() => {
+              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
+              const memberCoords =
+                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
+                ?? []
+              const out: string[] = []
+              for (const c of memberCoords) {
+                const f = baseStations?.features.find(
+                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                )
+                const crs = f?.properties?.["ref:crs"] as string | undefined
+                if (crs) out.push(crs)
+              }
+              return out.length > 0 ? out : undefined
+            })()}
+            // Top-ranked cluster member name per origin — when the
+            // destination is a synthetic, the journey paragraph reads
+            // "Birmingham New Street is 1h19 from Euston" so the user
+            // knows which member station the time is to. Sourced from
+            // the syntheticPrimaryMemberName / syntheticFriendMemberName
+            // properties stamped on the virtual synthetic feature in
+            // the `stations` memo.
+            syntheticJourneyMember={(() => {
+              const f = stations?.features.find(
+                (g) => (g.properties as { coordKey?: string }).coordKey === displayStation.coordKey
+              )
+              if (!f) return undefined
+              const props = f.properties as {
+                syntheticPrimaryMemberName?: string
+                syntheticFriendMemberName?: string
+              }
+              if (!props.syntheticPrimaryMemberName && !props.syntheticFriendMemberName) return undefined
+              return {
+                primary: props.syntheticPrimaryMemberName,
+                friend: props.syntheticFriendMemberName,
+              }
             })()}
             // Friend cluster-member full station names — used by the
             // friend journey paragraph to extra-bold the WHOLE station

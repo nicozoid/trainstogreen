@@ -68,7 +68,13 @@ import { LogoSpinner } from "@/components/logo-spinner"
 import WalksAdminPanel from "@/components/walks-admin-panel"
 import { ConfirmDialog } from "@/components/confirm-dialog"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
+import { ArrowDown01Icon, Cancel01Icon, MapingIcon } from "@hugeicons/core-free-icons"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export type { FlickrPhoto }
 
@@ -243,6 +249,24 @@ type StationModalProps = {
    *  friend) we render a one-line header below the title:
    *  "A cluster of N stations: A, B, and C". */
   clusterMemberNames?: string[]
+  /** Cluster members with full coords + names — used to render the
+   *  "Hikes from stations" dropdown (one menu item per member, sorted
+   *  alphabetically by full name). Each item links to the same
+   *  Komoot URL the single-station Hike button would, just for that
+   *  member's coords. Undefined for non-synthetic stations; in that
+   *  case the single-station Hike button is rendered instead. */
+  clusterMembers?: { name: string; lat: number; lng: number }[]
+  /** When the destination is a synthetic, the journey description is
+   *  ambiguous ("1h19 from Euston" doesn't say which Birmingham
+   *  station). This prop gives the top-ranked cluster member name
+   *  per origin so we can prepend "{member} is " to each side's
+   *  description: "Birmingham New Street is 1h19 from Euston."
+   *  Different origins can pick different members because "best
+   *  from London" and "best from Manchester" aren't always the same. */
+  syntheticJourneyMember?: {
+    primary?: string
+    friend?: string
+  }
   /** Cluster-member full station names of the ACTIVE FRIEND, when the
    *  friend is synthetic. Used to extra-bold the full station name in
    *  the friend journey paragraph: e.g. "Birmingham New Street" rather
@@ -253,6 +277,11 @@ type StationModalProps = {
    *  adminMode is true, the title is prefixed with the code — helps
    *  cross-reference the admin RTT status panel and origin-routes.json. */
   stationCrs?: string
+  /** Admin-only: extra CRS codes for cluster members. Synthetic
+   *  overlays pass their members' CRS codes here so the
+   *  WalksAdminPanel fetches and displays every member's walks in
+   *  one place. Undefined for non-synthetic stations. */
+  clusterMemberCrsCodes?: string[]
   /** True when the user is currently in admin mode. Gates the CRS prefix. */
   adminMode?: boolean
   /** True when the active primary is the synthetic Central London
@@ -481,6 +510,10 @@ function journeyDescription(
 // Builds a Komoot discover URL for hiking near a station.
 // The station name goes in the path, and lat/lng are used for the
 // startLocation + @ parameters so Komoot centres the map correctly.
+//
+// SHARED between the regular single-station Hike button and the
+// synthetic-overlay dropdown — change the URL shape here and both
+// surfaces follow.
 function komootUrl(name: string, lat: number, lng: number): string {
   const slug = encodeURIComponent(name)
   return (
@@ -489,6 +522,90 @@ function komootUrl(name: string, lat: number, lng: number): string {
     `&startLocation=${lat}%2C${lng}` +
     // min_length is in metres — 10000 = 10 km minimum hike length
     `&max_distance=5000&min_length=10000&pageNumber=1`
+  )
+}
+
+// Hike control — three render modes:
+//   • clusterMembers set → "Hikes from stations ▾" dropdown
+//     (one menu item per member, alphabetically sorted by name).
+//   • non-synthetic, non-origin station → single "Hikes from station"
+//     button linking to komootUrl(stationName, lat, lng).
+//   • non-synthetic primary or friend origin → renders nothing (these
+//     overlays don't get a Hike action).
+//
+// Used twice in the modal: pinned to the title row on desktop, and as
+// a full-width button below the notes/walks block on mobile.
+function HikesControl({
+  className,
+  stationName,
+  lat,
+  lng,
+  clusterMembers,
+  isFriendOrigin,
+  isPrimaryOrigin,
+}: {
+  className?: string
+  stationName: string
+  lat: number
+  lng: number
+  clusterMembers?: { name: string; lat: number; lng: number }[]
+  isFriendOrigin?: boolean
+  isPrimaryOrigin?: boolean
+}) {
+  // Synthetic dropdown — preferred when cluster members are present,
+  // even for the active primary/friend (those overlays still expose
+  // hikes from each member station).
+  if (clusterMembers && clusterMembers.length > 0) {
+    // Alphabetical by full name — matches signage. e.g. "Birmingham
+    // New Street", "Birmingham Snow Hill", "Charing Cross".
+    const sorted = [...clusterMembers].sort((a, b) => a.name.localeCompare(b.name))
+    return (
+      <DropdownMenu>
+        {/* DropdownMenuTrigger asChild lets us style the trigger as a
+            normal Button while still wiring up Radix's keyboard /
+            ARIA / open-on-click behaviour. */}
+        <DropdownMenuTrigger asChild>
+          <Button className={className}>
+            <HugeiconsIcon icon={MapingIcon} />
+            Hikes from stations
+            {/* Down-chevron sits at the right of the label, matching
+                shadcn's typical Select / Combobox affordance. */}
+            <HugeiconsIcon icon={ArrowDown01Icon} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="z-[60]">
+          {sorted.map((m) => (
+            <DropdownMenuItem key={`${m.lng},${m.lat}`} asChild>
+              {/* Each item opens Komoot in a new tab using the SHARED
+                  komootUrl helper — keeps the per-station URL shape
+                  identical to the single-station button. */}
+              <a
+                href={komootUrl(m.name, m.lat, m.lng)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {m.name}
+              </a>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )
+  }
+  // Non-synthetic primary/friend overlays: no Hike action.
+  if (isFriendOrigin || isPrimaryOrigin) return null
+  // Regular single-station Hike button.
+  return (
+    <Button asChild className={className}>
+      <a
+        href={komootUrl(stationName, lat, lng)}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <HugeiconsIcon icon={MapingIcon} />
+        Hikes from station
+      </a>
+    </Button>
   )
 }
 
@@ -637,8 +754,11 @@ export default function StationModal({
   isPrimaryOrigin = false,
   isSynthetic = false,
   clusterMemberNames,
+  clusterMembers,
+  syntheticJourneyMember,
   friendClusterMemberNames,
   stationCrs,
+  clusterMemberCrsCodes,
   adminMode = false,
   isLondonHome = false,
   hasIssue = false,
@@ -1130,21 +1250,23 @@ export default function StationModal({
               </p>
             )}
           </div>
-          {/* Desktop-only Hike button. Hidden for friend/primary origins
-              (they don't get a Hike action). min-w-0 isn't needed on the
-              title because the button has shrink-0 and the row has gap. */}
-          {!isFriendOrigin && !isPrimaryOrigin && (
-            <Button asChild className="hidden sm:inline-flex shrink-0">
-              <a
-                href={komootUrl(stationName, lat, lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <HugeiconsIcon icon={MapingIcon} />
-                Hikes from station
-              </a>
-            </Button>
-          )}
+          {/* Desktop-only Hike control — either a single-station button
+              (regular stations) or a "Hikes from stations ▾" dropdown
+              (synthetics). The dropdown is shown for synthetics even
+              when they're the active primary or friend, since each
+              cluster member is still a real, hikeable station; the
+              single button stays hidden for non-synthetic primary/
+              friend overlays. min-w-0 isn't needed on the title
+              because the control has shrink-0 and the row has gap. */}
+          <HikesControl
+            className="hidden sm:inline-flex shrink-0"
+            stationName={stationName}
+            lat={lat}
+            lng={lng}
+            clusterMembers={clusterMembers}
+            isFriendOrigin={isFriendOrigin}
+            isPrimaryOrigin={isPrimaryOrigin}
+          />
         </div>
 
         {/* ── Scroll region (desktop) ──
@@ -1163,8 +1285,18 @@ export default function StationModal({
             at the intended 4px. Killing the gap here means every
             child's mt-[var(--para-gap)] (or mt-[calc…]) alone
             controls its spacing, so alts and notes match. */}
+        {/* Synthetic-with-active-side gate: when the destination is a
+            synthetic AND it's also the active primary/friend, we still
+            want the journey block visible IF the OTHER origin is set,
+            so we can show the cross-journey ("Euston is 1h19 from
+            Birmingham New Street" when London is the primary synthetic
+            and Birmingham is the friend). For non-synthetic primary/
+            friend overlays we keep the prior behaviour: no journey
+            block. */}
         <DialogHeader className="shrink-0 px-6 pt-0 pb-0 gap-0">
-          {!isFriendOrigin && !isPrimaryOrigin && (
+          {(!isFriendOrigin && !isPrimaryOrigin) ||
+           (isSynthetic && isPrimaryOrigin && friendOrigin && journeys?.[friendOrigin]) ||
+           (isSynthetic && isFriendOrigin && journeys?.[primaryOrigin]) ? (
             <>
               {/* Primary journey info — ALWAYS full width now (both desktop
                   and mobile). The Hike button has moved up into the title
@@ -1174,11 +1306,19 @@ export default function StationModal({
                   within the dialog's content-box — the span-nested hint line
                   has its own [overflow-wrap:anywhere], but the main line's text lives
                   directly inside DialogDescription so it needs the class
-                  here too. */}
+                  here too.
+                  Skipped when this overlay IS the active primary (a
+                  station can't have a journey from itself); for synthetic
+                  primaries we still want the friend journey below to
+                  render, so we just hide the primary description rather
+                  than the whole block. */}
+              {!isPrimaryOrigin && (
               <DialogDescription className="text-sm [overflow-wrap:anywhere]">
                 {highlightTermini(
                   journeys?.[primaryOrigin]
-                    ? singleOriginDescription(primaryOrigin, journeys[primaryOrigin])
+                    ? (syntheticJourneyMember?.primary
+                        ? `${syntheticJourneyMember.primary} is ${singleOriginDescription(primaryOrigin, journeys[primaryOrigin])}`
+                        : singleOriginDescription(primaryOrigin, journeys[primaryOrigin]))
                     // No pre-stored journey for this primary → happens for
                     // custom primaries (any NR station picked via the search
                     // bar — e.g. Kentish Town). Fall back to the primary's
@@ -1367,6 +1507,7 @@ export default function StationModal({
                   )
                 })()}
               </DialogDescription>
+              )}
 
               {/* Friend journey info — full width, separate row below
                   the home journey. Rendered ABOVE the Alternative
@@ -1374,11 +1515,15 @@ export default function StationModal({
                   friend journey → alts-from-home (with "from London"
                   disambiguation suffix on the subheader when friend
                   is visible). mt uses --para-gap for consistent
-                  rhythm with everything else. */}
-              {friendOrigin && journeys?.[friendOrigin] && (
+                  rhythm with everything else. Mirror gate to the
+                  primary block above: skipped when this overlay IS
+                  the active friend (no journey from-itself). */}
+              {!isFriendOrigin && friendOrigin && journeys?.[friendOrigin] && (
                 <p className="mt-[var(--para-gap)] text-sm">
                   {highlightTermini(
-                    singleOriginDescription(friendOrigin, journeys[friendOrigin]),
+                    syntheticJourneyMember?.friend
+                      ? `${syntheticJourneyMember.friend} is ${singleOriginDescription(friendOrigin, journeys[friendOrigin])}`
+                      : singleOriginDescription(friendOrigin, journeys[friendOrigin]),
                     isLondonHome,
                     // Friend origin always extraBold so it stands out
                     // from the home journey paragraph above. Termini
@@ -1513,26 +1658,29 @@ export default function StationModal({
               )}
 
             </>
-          )}
+          ) : null}
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
-          {/* "Notes" subheader — admin-only. Public visitors don't
-              see the notes block; it's an admin-editing surface for
-              now. The note is a single free-form text field, so the
-              header label is always "Notes" (no singular variant). */}
-          {devMode && (
+          {/* "Notes" subheader — visible whenever the public note has
+              content, OR in admin mode (so admins always see the block
+              even when empty, to edit it). The note is a single free-
+              form text field, so the header label is always "Notes"
+              (no singular variant). */}
+          {(devMode || localPublicNote) && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
               Notes
             </p>
           )}
 
-          {/* Public note — admin-only. Three render paths inside the
-              devMode gate:
-               (a) editing → textarea with autoFocus, exits on blur.
-               (b) note has content → rendered markdown view (click-to-edit).
-               (c) empty + not editing → "Click to add" placeholder.
-               Non-admin visitors skip this block entirely.
+          {/* Public note — visible to everyone when content exists.
+              Admin mode unlocks the editor (click-to-edit + textarea
+              + "Click to add" placeholder). Three render paths:
+               (a) admin editing → textarea with autoFocus, exits on blur.
+               (b) note has content → rendered markdown view; admins get
+                   click-to-edit affordance, public visitors get plain text.
+               (c) admin + empty + not editing → "Click to add" placeholder.
+                   Public visitors with no content see nothing.
 
                Split on any run of newlines into separate paragraphs. Users
                author notes with a single Enter keypress (one \n), so we
@@ -1552,13 +1700,23 @@ export default function StationModal({
               className="mt-[var(--para-gap)] w-full resize-none overflow-hidden rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
               rows={2}
             />
-          ) : devMode && localPublicNote ? (
+          ) : localPublicNote ? (
+            // Public-readable rendered view. Click-to-edit is a no-op for
+            // non-admins (the onClick fires but state is admin-gated, so
+            // it just silently doesn't enter edit mode). Cleaner than
+            // wrapping the whole block in a devMode ternary because the
+            // markdown rendering / paragraph splitting is identical for
+            // both audiences — only the interaction differs.
             <div
-              className="mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3"
-              onClick={() => setIsEditingPublic(true)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } }}
+              className={`mt-[var(--para-gap)] text-sm text-foreground [&>p+p]:mt-[var(--para-gap)] ${
+                devMode ? "cursor-text rounded-md hover:bg-muted/40 px-3 py-2 -mx-3" : ""
+              }`}
+              onClick={devMode ? () => setIsEditingPublic(true) : undefined}
+              role={devMode ? "button" : undefined}
+              tabIndex={devMode ? 0 : undefined}
+              onKeyDown={devMode
+                ? (e) => { if (e.key === "Enter") { e.preventDefault(); setIsEditingPublic(true) } }
+                : undefined}
             >
               {localPublicNote.split(/\n+/).filter(Boolean).map((para, i) => (
                 <p key={i}>{renderWithLinks(para)}</p>
@@ -1644,7 +1802,11 @@ export default function StationModal({
               rewrites the source JSON and re-runs the build, so the
               prose above refreshes on the next station-notes fetch. */}
           {devMode && stationCrs && (
-            <WalksAdminPanel stationCrs={stationCrs} onSaved={onWalkSaved} />
+            <WalksAdminPanel
+              stationCrs={stationCrs}
+              extraCrsCodes={clusterMemberCrsCodes}
+              onSaved={onWalkSaved}
+            />
           )}
 
           {/* Private note — admin-only. Same click-to-edit pattern, with
@@ -1697,18 +1859,18 @@ export default function StationModal({
               action button. Without this (the prior `mt-1`), the
               button sat too close to the notes after the DialogHeader
               gap-0 override removed the flex-gap buffer. */}
-          {!isFriendOrigin && !isPrimaryOrigin && (
-            <Button asChild className="mt-[calc(var(--para-gap)*4)] w-full sm:hidden">
-              <a
-                href={komootUrl(stationName, lat, lng)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <HugeiconsIcon icon={MapingIcon} />
-                Hikes from station
-              </a>
-            </Button>
-          )}
+          {/* Mobile-only Hike control — same single-button-or-dropdown
+              behaviour as the desktop one above, just full-width and
+              positioned after the notes/walks section. */}
+          <HikesControl
+            className="mt-[calc(var(--para-gap)*4)] w-full sm:hidden"
+            stationName={stationName}
+            lat={lat}
+            lng={lng}
+            clusterMembers={clusterMembers}
+            isFriendOrigin={isFriendOrigin}
+            isPrimaryOrigin={isPrimaryOrigin}
+          />
         </DialogHeader>
 
         {/* ── Dev tools: rating buttons + delete ── */}

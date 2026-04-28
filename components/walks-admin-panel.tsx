@@ -415,13 +415,26 @@ function StationPicker({
 
 export default function WalksAdminPanel({
   stationCrs,
+  extraCrsCodes,
   onSaved,
 }: {
   stationCrs: string
+  /** Synthetic overlays pass their cluster members' CRS codes here.
+   *  Walks attached to ANY listed CRS are fetched and merged into the
+   *  panel, so the synthetic admin view shows every member's walks
+   *  in one place. New walks created here still attach to
+   *  stationCrs by default (the first member's CRS), but admins can
+   *  override start/end via the inline picker. */
+  extraCrsCodes?: string[]
   /** Called after a successful save so the parent can refresh its
    *  station-notes state and surface the regenerated ramblerNote. */
   onSaved?: () => void | Promise<void>
 }) {
+  // Merge stationCrs + extraCrsCodes, dropping duplicates and falsy
+  // entries. Wrapped in JSON.stringify(extraCrsCodes) for the deps so
+  // a parent passing a fresh array each render doesn't trigger a
+  // refetch storm — the values matter, not array identity.
+  const allCrsKey = JSON.stringify([stationCrs, ...(extraCrsCodes ?? [])])
   const [walks, setWalks] = useState<WalkPayload[] | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -472,20 +485,46 @@ export default function WalksAdminPanel({
     return () => { cancelled = true }
   }, [createOpen, allStations])
 
-  // Fetch walks whenever the station CRS changes. The endpoint returns
-  // [] for stations with no attached walks — still a valid response, so
-  // we distinguish "loading" from "no walks here" in the render.
+  // Fetch walks for every CRS in the merged list. The endpoint
+  // returns [] for stations with no attached walks — still a valid
+  // response, so we distinguish "loading" from "no walks here" in
+  // the render. For synthetics we fire one request per member CRS in
+  // parallel and concat the results — a walk that touches multiple
+  // members ends up de-duped by walk id since each walk only attaches
+  // to one start station per variant.
+  const fetchAllWalks = useCallback(async (): Promise<WalkPayload[]> => {
+    const allCrs: string[] = JSON.parse(allCrsKey)
+    const responses = await Promise.all(
+      allCrs.map((c) =>
+        fetch(`/api/dev/walks-for-station?crs=${encodeURIComponent(c)}`)
+          .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() as Promise<WalkPayload[]> })
+      ),
+    )
+    // Dedupe by walk variant id — same walk can in theory be attached
+    // to multiple cluster members (start vs end station of the same
+    // S2S walk), and we don't want to render it twice.
+    const seen = new Set<string>()
+    const merged: WalkPayload[] = []
+    for (const arr of responses) {
+      for (const w of arr) {
+        if (seen.has(w.id)) continue
+        seen.add(w.id)
+        merged.push(w)
+      }
+    }
+    return merged
+  }, [allCrsKey])
+
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setError(null)
-    fetch(`/api/dev/walks-for-station?crs=${encodeURIComponent(stationCrs)}`)
-      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json() })
-      .then((data: WalkPayload[]) => { if (!cancelled) setWalks(data) })
-      .catch((e) => { if (!cancelled) setError(e.message) })
+    fetchAllWalks()
+      .then((data) => { if (!cancelled) setWalks(data) })
+      .catch((e: Error) => { if (!cancelled) setError(e.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [stationCrs])
+  }, [fetchAllWalks])
 
   // Per-card save path. We refetch the full walks list on success so
   // the displayed fields reflect the server's canonical shape (e.g.
@@ -494,11 +533,11 @@ export default function WalksAdminPanel({
     // Refetch walks for this station — server-side cleanups might have
     // modified what we sent (e.g. dedupe, sort bestSeasons).
     try {
-      const r = await fetch(`/api/dev/walks-for-station?crs=${encodeURIComponent(stationCrs)}`)
-      if (r.ok) setWalks(await r.json())
+      const data = await fetchAllWalks()
+      setWalks(data)
     } catch { /* best-effort */ }
     if (onSaved) await onSaved()
-  }, [stationCrs, onSaved])
+  }, [fetchAllWalks, onSaved])
 
   // Create a new manual walk. Start/end CRS come from the inline
   // form pickers (which default to the current station). If the

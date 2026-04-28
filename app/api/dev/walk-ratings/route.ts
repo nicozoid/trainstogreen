@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
+import {
+  PRIMARY_ORIGIN_CLUSTER,
+  FRIEND_ORIGIN_CLUSTER,
+} from "@/lib/clusters"
 
 // Sources of walk records. Mirrors WALKS_FILES in walks-for-station/route.ts.
 const WALKS_FILES = [
@@ -111,6 +115,45 @@ export async function GET() {
     else if (tally.sawRated1) rating = 1
     else rating = 2
     out[ck] = rating
+  }
+
+  // ── Synthetic ratings ──────────────────────────────────────────────
+  // Each synthetic (Central London, Birmingham, …) "possesses" its
+  // cluster members' walks. We aggregate every member's tallies into
+  // a single per-synthetic tally, then apply the same derivation
+  // rules. The synthetic's own coordKey isn't in stations.json (it's
+  // the cluster's centroid, not a real station), so we look up its
+  // members' coordKeys and recompute the synthetic's tally directly
+  // from the member tallies — using the per-CRS Tally we already
+  // computed, joined back via crsToCoord.
+  const coordToCrs = new Map<string, string>()
+  for (const [crs, ck] of crsToCoord) coordToCrs.set(ck, crs)
+
+  const allClusters: Record<string, string[]> = {
+    ...PRIMARY_ORIGIN_CLUSTER,
+    ...FRIEND_ORIGIN_CLUSTER,
+  }
+  for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+    let max: number | null = null
+    let sawAnyWalk = false
+    let sawRated1 = false
+    for (const memberCoord of memberCoords) {
+      const memberCrs = coordToCrs.get(memberCoord)
+      if (!memberCrs) continue
+      const memberTally = byCrs.get(memberCrs)
+      if (!memberTally) continue
+      if (memberTally.sawAnyWalk) sawAnyWalk = true
+      if (memberTally.sawRated1) sawRated1 = true
+      if (memberTally.max != null) {
+        max = max == null ? memberTally.max : Math.max(max, memberTally.max)
+      }
+    }
+    if (!sawAnyWalk) continue
+    let rating: 1 | 2 | 3 | 4
+    if (max != null && max >= 3) rating = max as 3 | 4
+    else if (sawRated1) rating = 1
+    else rating = 2
+    out[synthCoord] = rating
   }
 
   return NextResponse.json(out)
