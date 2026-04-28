@@ -1522,6 +1522,13 @@ function resolveStationIconImage(props: Record<string, unknown> | undefined): st
   // icon so the hover pulse animates as a primary-colour diamond rather
   // than defaulting to the unrated circle.
   if (hasProp("isTerminus")) return "icon-london-terminus"
+  // Active-friend features carry isFriendOrigin — mirror the static
+  // station-rating-icons / friend-anchor-icon layers, both of which
+  // draw the friend's square via icon-origin. Without this, the pulse
+  // resolves to the underlying rating icon (hexagon, circle, …) and
+  // the user sees the smaller pulse-shape sitting inside the static
+  // square frame.
+  if (hasProp("isFriendOrigin")) return "icon-origin"
   switch (props.rating) {
     case 4: return "icon-rating-4"
     case 3: return "icon-rating-3"
@@ -8546,6 +8553,17 @@ export default function HikeMap() {
                 id="london-terminus-icon-label"
                 type="symbol"
                 minzoom={12}
+                // Suppress the diamond's plain label for the currently-
+                // hovered terminus — `station-label-hover` (further down,
+                // inside the stations Source) renders the full
+                // "name + minutes" version at a slightly different
+                // text-offset, so without this filter both labels stack
+                // and the name visibly doubles.
+                /* eslint-disable @typescript-eslint/no-explicit-any */
+                filter={(hovered?.coordKey
+                  ? ["!=", ["get", "coordKey"], hovered.coordKey]
+                  : true) as any}
+                /* eslint-enable @typescript-eslint/no-explicit-any */
                 layout={{
                   "text-field": ["get", "name"],
                   "text-size": 11,
@@ -8560,35 +8578,6 @@ export default function HikeMap() {
                   "text-halo-width": 1.5,
                 }}
               />
-              {/* Hover label — shows the terminus name for the currently-
-                  hovered diamond at ANY zoom (below the minzoom of the
-                  base label layer above). Filter matches by coordKey,
-                  which comes either from this source's 18 diamond
-                  features (zoom 9+) or from the origin-overlay source
-                  below (at any zoom — that source mirrors coordKey on
-                  its feature for exactly this reason). */}
-              {hovered?.coordKey && (
-                <Layer
-                  id="london-terminus-icon-hover-label"
-                  type="symbol"
-                  /* eslint-disable @typescript-eslint/no-explicit-any */
-                  filter={["==", ["get", "coordKey"], hovered.coordKey] as any}
-                  /* eslint-enable @typescript-eslint/no-explicit-any */
-                  layout={{
-                    "text-field": ["get", "name"],
-                    "text-size": 11,
-                    "text-offset": [0, 1.2],
-                    "text-anchor": "top",
-                    "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
-                    "text-allow-overlap": true,
-                  }}
-                  paint={{
-                    "text-color": labelColor,
-                    "text-halo-color": haloColor,
-                    "text-halo-width": 1.5,
-                  }}
-                />
-              )}
             </Source>
 
             {/* Journey-origin overlay — the single diamond matching the
@@ -8731,7 +8720,12 @@ export default function HikeMap() {
             <Layer
               id="station-dots"
               type="symbol"
-              filter={["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]]]}
+              // Also exclude isFriendOrigin so an unrated friend (e.g.
+              // Nottingham — single-station friend, no rating) doesn't
+              // get its unrated-circle drawn UNDER the square that the
+              // rating-icons layer is drawing for it. Without this the
+              // user sees a green circle inside a green square frame.
+              filter={["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]], ["!", ["has", "isFriendOrigin"]]]}
               layout={{
                 "icon-image": "icon-unrated",
                 "icon-allow-overlap": true,
