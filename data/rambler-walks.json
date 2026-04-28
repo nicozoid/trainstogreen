@@ -98854,23 +98854,21 @@
             "url": "https://www.thejockeyclub.co.uk/epsom/events-tickets"
           },
           {
-            "name": "The Durdans",
-            "url": null
+            "name": "The Durdans"
           },
           {
-            "name": "Rosebery Park",
-            "url": null
+            "name": "Rosebery Park"
           }
         ],
         "warnings": "Race days restrict access",
         "id": "mhmepsfritillary",
-        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "variant"
-        }
+        },
+        "updatedAt": "2026-04-28T13:23:30.909Z"
       },
       {
         "role": "variant",
