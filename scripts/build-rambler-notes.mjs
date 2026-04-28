@@ -82,11 +82,12 @@ const MONTH_TO_SEASON = {
 const SEASON_ORDER = ["Spring", "Summer", "Autumn", "Winter"]
 
 // Rating tier mapping used to sort walks at a station. Lower value =
-// higher in the rendered list. Rating=1 (Flawed) is explicitly
-// demoted below unrated walks because it's an active down-vote, not
-// an absence of signal. Mirror of the constant in
-// app/api/dev/walks-for-station/route.ts — keep in sync.
-const RATING_TIER = { 4: 0, 3: 1, 2: 2, unrated: 3, 1: 4 }
+// higher in the rendered list. Any explicit rating — including 1
+// (Flawed) — beats unrated, on the principle that a reviewed walk
+// carries more signal than one we haven't looked at yet. Mirror of
+// the constant in app/api/dev/walks-for-station/route.ts — keep in
+// sync.
+const RATING_TIER = { 4: 0, 3: 1, 2: 2, 1: 3, unrated: 4 }
 function ratingTierOf(rating) {
   if (typeof rating !== "number") return RATING_TIER.unrated
   const key = Math.round(rating)
@@ -114,7 +115,7 @@ function distanceScore(distanceKm) {
 //   1. hasKomoot DESC (walks with a Komoot route come first)
 //   3. isMain DESC (main walks first; non-mains don't get a
 //                   further subtype ordering among themselves)
-//   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
+//   4. ratingTier ASC (4 on top, then 3, 2, 1, unrated)
 //   5. distanceScore ASC (closest to IDEAL_LENGTH_KM first; missing
 //                         sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak

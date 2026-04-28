@@ -1613,7 +1613,10 @@ export default function StationModal({
             // in the modal even before walks are added; public users
             // see nothing.
             if (!hasS2S && !hasCircular) {
-              return devMode ? sectionHeader("Featured walks") : null
+              // No public-facing walk paragraphs. Admins still get the
+              // walks editor below (which has its own header), so we
+              // skip rendering anything here in either mode.
+              return null
             }
             return (
               <>

@@ -541,7 +541,7 @@ export default function WalksAdminPanel({
           baseline-aligned with the label. */}
       <div className="flex items-center gap-2">
         <p className="text-xs font-medium text-muted-foreground">
-          Featured walks{walks ? ` (${walks.length})` : ""}
+          Walks{walks ? ` (${walks.length})` : ""}
         </p>
         <button
           type="button"
@@ -632,12 +632,12 @@ export default function WalksAdminPanel({
           </DialogHeader>
           <div className="space-y-4 text-sm text-foreground">
             <div>
-              <p className="mb-1 font-medium">CMS order (admin-only, this panel)</p>
+              <p className="mb-1 font-medium">How walks are ordered</p>
               <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
                 <li>Komoot-linked walks come first</li>
                 <li>Main walks first (no further subtype ordering)</li>
-                <li>Higher rating first (4 → 3 → 2 → unrated → 1)</li>
+                <li>Higher rating first (4 → 3 → 2 → 1 → unrated)</li>
                 <li>Distance closest to 10 km first</li>
                 <li>Alphabetic tiebreak</li>
               </ol>
@@ -645,13 +645,13 @@ export default function WalksAdminPanel({
             <div>
               <p className="mb-1 font-medium">What the public sees</p>
               <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
-                <li><strong>Always shown:</strong> every main walk + every Note.</li>
+                <li><strong>Always shown:</strong> every main walk.</li>
                 <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
                 <li>
-                  <strong>Variants fill the list up to 5 walks total:</strong>
+                  <strong>Walks split into two sections</strong> — Circular and Station-to-station — each filtered independently:
                   <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-                    <li>If the station has <strong>5+ main walks</strong>, no variants are shown.</li>
-                    <li>Otherwise we add top-ranked variants until there are 5 walks shown, or until there are no more variants.</li>
+                    <li>If a section has <strong>3+ main walks</strong>, no variants are shown in it.</li>
+                    <li>Otherwise we add top-ranked variants until the section has 3 walks, or until there are no more variants.</li>
                   </ul>
                 </li>
               </ul>
