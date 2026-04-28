@@ -98784,7 +98784,6 @@
         "stationToStation": true,
         "distanceKm": 16.25,
         "distanceMiles": null,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Sportsman",
@@ -98813,14 +98812,14 @@
         ],
         "warnings": "Race days restrict access",
         "id": "64h4",
-        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "variant"
         },
-        "suffix": "via Gatton Park"
+        "suffix": "via Gatton Park",
+        "updatedAt": "2026-04-28T07:55:34.613Z"
       },
       {
         "role": "variant",
@@ -98886,6 +98885,7 @@
         "stationToStation": true,
         "distanceKm": 17.75,
         "distanceMiles": null,
+        "hours": null,
         "lunchStops": [
           {
             "name": "Sportsman",
@@ -98910,13 +98910,13 @@
         ],
         "warnings": "Race days restrict access",
         "id": "40yn",
+        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "variant"
-        },
-        "updatedAt": "2026-04-28T07:55:28.723Z"
+        }
       },
       {
         "role": "shorter",
