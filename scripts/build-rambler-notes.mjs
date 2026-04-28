@@ -38,6 +38,14 @@ const EXTRA_WALKS_PATHS = [
 ]
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
+// Synthetic-cluster topology — read from lib/clusters-data.json so this
+// .mjs script and the .ts client both share one definition.
+const CLUSTERS_PATH = join(PROJECT_ROOT, "lib", "clusters-data.json")
+const {
+  PRIMARY_ORIGIN_CLUSTER,
+  FRIEND_ORIGIN_CLUSTER,
+  SYNTHETIC_DISPLAY_NAMES,
+} = JSON.parse(readFileSync(CLUSTERS_PATH, "utf-8"))
 // Organisation registry — slug → { name, url }. Used to render the
 // human-readable "<Org> walk" link text in the relatedSource clause.
 const SOURCES_PATH = join(PROJECT_ROOT, "data", "sources.json")
@@ -782,6 +790,53 @@ function buildRamblerNotes(args) {
       variantsAdded++
       return true
     })
+  }
+
+  // ── Synthetic aggregation ────────────────────────────────────────
+  // Synthetics (Central London, Birmingham, Stratford, …) "possess"
+  // their cluster members' walks. We pool every member's ramblerParts
+  // into a single bucket keyed by the synthetic anchor coord, then
+  // pass that bucket through the same compareRamblerParts sort and
+  // quotaFilterPerSection 3-per-section limit as a regular station.
+  // Result: a synthetic with 15 members each having 5 walks still
+  // shows the top 3 circular + top 3 station-to-station walks
+  // overall, picked using identical curation rules. Synthetics are
+  // looped through alongside real stations so they get the same
+  // perStation treatment downstream.
+  const allClusters = { ...PRIMARY_ORIGIN_CLUSTER, ...FRIEND_ORIGIN_CLUSTER }
+  for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+    const aggregatedParts = []
+    let aggregatedHiked = false
+    let aggregatedKomoot = false
+    const aggregatedSeasons = new Set()
+    for (const memberCoord of memberCoords) {
+      const memberBucket = perStation.get(memberCoord)
+      if (memberBucket) {
+        for (const p of memberBucket.ramblerParts) aggregatedParts.push(p)
+      }
+      if (perStationHiked.has(memberCoord)) aggregatedHiked = true
+      if (perStationKomoot.has(memberCoord)) aggregatedKomoot = true
+      const memberSeasons = perStationSeasons.get(memberCoord)
+      if (memberSeasons) {
+        for (const s of memberSeasons.seasons) aggregatedSeasons.add(s)
+      }
+    }
+    // Always set a perStation entry for the synthetic, even when
+    // empty — keeps the cleanup pass below from removing the
+    // synthetic's user-authored notes if no member walks exist yet.
+    const synthName = SYNTHETIC_DISPLAY_NAMES[synthCoord] ?? synthCoord
+    if (!perStation.has(synthCoord)) {
+      perStation.set(synthCoord, { name: synthName, ramblerParts: [] })
+    }
+    const synthBucket = perStation.get(synthCoord)
+    synthBucket.name = synthName
+    synthBucket.ramblerParts = aggregatedParts
+
+    if (aggregatedHiked) perStationHiked.add(synthCoord)
+    if (aggregatedKomoot) perStationKomoot.add(synthCoord)
+    if (aggregatedSeasons.size > 0) {
+      perStationSeasons.set(synthCoord, { name: synthName, seasons: aggregatedSeasons })
+    }
   }
 
   for (const [coordKey, { name, ramblerParts }] of perStation) {
