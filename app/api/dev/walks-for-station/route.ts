@@ -57,7 +57,7 @@ type WalkPayload = {
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
   // editable
-  warnings: string
+  miscellany: string
   trainTips: string
   // Admin-only scratchpad on the walk. Never exposed to the public
   // (build script ignores it entirely). Useful for curation TODOs
@@ -181,7 +181,7 @@ export async function GET(req: NextRequest) {
           terrain: v.terrain ?? "",
           sights: v.sights ?? [],
           lunchStops: v.lunchStops ?? [],
-          warnings: v.warnings ?? "",
+          miscellany: v.miscellany ?? "",
           trainTips: v.trainTips ?? "",
           privateNote: v.privateNote ?? "",
           mudWarning: !!v.mudWarning,

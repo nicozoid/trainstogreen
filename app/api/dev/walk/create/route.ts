@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
     lunchStops: [],
     terrain: "",
     sights: [],
-    warnings: "",
+    miscellany: "",
     id,
     suffix: "",
     // Manual walks are Trains-to-Green-owned by default with no

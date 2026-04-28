@@ -111,7 +111,7 @@
         "stationToStation": true,
         "lunchStops": [],
         "sights": [],
-        "warnings": "It's too apparent that you haven't left London",
+        "miscellany": "It's too apparent that you haven't left London",
         "id": "cdsrdhdune",
         "source": {
           "orgSlug": "trains-to-green",

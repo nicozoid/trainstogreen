@@ -1640,7 +1640,7 @@ export default function StationModal({
           {/* Structured walk editor — admin only. Fetches every walk
               variant attached to this station's CRS and surfaces the
               Phase 5 editable fields (Komoot URL, mud warning, best
-              seasons, free-text warnings, train tips). Saving a card
+              seasons, free-text miscellany, train tips). Saving a card
               rewrites the source JSON and re-runs the build, so the
               prose above refreshes on the next station-notes fetch. */}
           {devMode && stationCrs && (
