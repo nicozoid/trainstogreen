@@ -1253,18 +1253,48 @@ function WalkCard({
 
           {/* ── Structured editors ─────────────────────────────────── */}
 
-          {/* Rating — five clickable star buttons. Tapping the current
-              rating again clears it back to "unrated" (null). Backfill
-              seeded every variant of a favourite page with 3, so most
-              walks start at 0 or 3 until the admin curates further. */}
-          {/* Rating — four tier icons (Okay / Probably / Rambler
-              favourite / Heavenly). Unlike a star scale, these are
-              distinct symbols for distinct tiers, so only the selected
-              tier lights up rather than all icons ≤ N. Clicking the
-              active icon clears the rating. */}
+          {/* Rating — an explicit Unrated button followed by four
+              tier icons (Okay / Probably / Rambler favourite /
+              Heavenly). Each tier is a distinct symbol rather than a
+              scale, so only the selected one lights up. The Unrated
+              button (a hollow circle) is always available and always
+              clears the rating — separating "set to nothing" from
+              "click the active tier to clear" eliminates the toggle
+              ambiguity that previously caused unrate clicks to
+              sometimes appear to do nothing. */}
           <div className="mb-3">
             <Label className="mb-1 block text-xs text-muted-foreground">Rating</Label>
             <div className="flex items-center gap-1.5">
+              {/* Unrated — first in the row, distinct from the tier
+                  icons. Clicking always sets rating to null; the
+                  circle is hollow when not active so it visually reads
+                  as "no rating". */}
+              {(() => {
+                const active = draft.rating == null
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setDraft((d) => ({ ...d, rating: null }))}
+                    title="Unrated"
+                    aria-label="Unrated"
+                    aria-pressed={active}
+                    className={
+                      "flex h-7 w-7 items-center justify-center rounded transition-colors " +
+                      (active
+                        ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
+                        : "text-muted-foreground hover:bg-muted/50")
+                    }
+                  >
+                    {/* Hollow circle — primary-coloured stroke when
+                        active, muted outline otherwise. Mirrors the
+                        fill/stroke pattern in RatingIcon. */}
+                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"
+                      stroke={active ? "var(--primary)" : "currentColor"} strokeWidth={1.5}>
+                      <circle cx="12" cy="12" r="9" />
+                    </svg>
+                  </button>
+                )
+              })()}
               {([1, 2, 3, 4] as const).map((n) => {
                 const active = draft.rating === n
                 return (

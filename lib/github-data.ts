@@ -55,8 +55,46 @@ export async function readDataFile<T>(relativePath: string): Promise<{ data: T; 
     return { data: JSON.parse(raw) as T, sha: null }
   }
 
-  // Production — fetch from GitHub Contents API
-  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${relativePath}?ref=${BRANCH}`, {
+  // Production — fetch from GitHub Contents API.
+  //
+  // We resolve the branch's HEAD commit SHA via the Git Data API
+  // FIRST, then pin the contents read to that SHA via `?ref={sha}`
+  // instead of `?ref={branch}`.
+  //
+  // Why: the branch-name read path is served through GitHub's CDN
+  // cache, which can return a stale snapshot for several seconds
+  // after a write. Within that staleness window, a fresh PATCH
+  // would read pre-write content + the pre-write blob SHA, modify
+  // its target field on that stale state, and then commit the whole
+  // file back — silently reverting any concurrent edit that landed
+  // moments earlier in another commit. The SHA-mismatch retry
+  // doesn't fire because the cache returned a self-consistent
+  // (stale content, stale SHA) pair that GitHub's PUT accepts.
+  //
+  // Pinning to an immutable commit SHA bypasses the branch-name
+  // cache entirely, so the read always reflects the latest
+  // committed state. Costs one extra round-trip per read; admin-
+  // only path so the latency is fine.
+  const refRes = await fetch(
+    `https://api.github.com/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+      cache: "no-store",
+    },
+  )
+  if (!refRes.ok) {
+    throw new Error(`GitHub refs read failed (${refRes.status}): ${await refRes.text()}`)
+  }
+  const refJson = await refRes.json()
+  const headSha = refJson?.object?.sha
+  if (typeof headSha !== "string" || !headSha) {
+    throw new Error(`GitHub refs read returned no SHA for ${BRANCH}`)
+  }
+
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${relativePath}?ref=${headSha}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github.v3+json",
