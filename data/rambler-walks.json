@@ -98880,7 +98880,6 @@
         "stationToStation": true,
         "distanceKm": 17.75,
         "distanceMiles": null,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Sportsman",
@@ -98905,13 +98904,13 @@
         ],
         "warnings": "Race days restrict access",
         "id": "mhmepdcentipede",
-        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Merstham to Tattenham Corner",
           "pageURL": "https://www.walkingclub.org.uk/walk/merstham-to-tattenham-corner/",
           "type": "variant"
-        }
+        },
+        "updatedAt": "2026-04-28T13:23:41.100Z"
       },
       {
         "role": "shorter",
