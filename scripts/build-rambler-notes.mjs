@@ -36,12 +36,6 @@ const EXTRA_WALKS_PATHS = [
   // keyed `manual-{id}`.
   join(PROJECT_ROOT, "data", "manual-walks.json"),
 ]
-// Free-form one-liner extras appended to each station's ramblerNote
-// AFTER the walk paragraphs. Keyed by coordKey ("lng,lat"). Each value
-// is an array of markdown strings — each becomes its own paragraph.
-// Great for short externally-sourced callouts ("Featured by Scenic
-// Rail", "RSPB Reserve", etc.) that don't fit the walk-summary shape.
-const EXTRAS_PATH = join(PROJECT_ROOT, "data", "station-rambler-extras.json")
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // Organisation registry — slug → { name, url }. Used to render the
@@ -117,8 +111,7 @@ function distanceScore(distanceKm) {
 
 
 // Order ramblerParts at a station:
-//   1. walks before extras (kind ASC)
-//   2. hasKomoot DESC (walks with a Komoot route come first)
+//   1. hasKomoot DESC (walks with a Komoot route come first)
 //   3. isMain DESC (main walks first; non-mains don't get a
 //                   further subtype ordering among themselves)
 //   4. ratingTier ASC (4 on top, then 3, 2, unrated, 1)
@@ -128,7 +121,6 @@ function distanceScore(distanceKm) {
 // Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
 // keep both in step.
 function compareRamblerParts(a, b) {
-  if (a.kind !== b.kind) return a.kind - b.kind
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
@@ -710,11 +702,9 @@ function buildRamblerNotes(args) {
         if (!perStation.has(station.coordKey)) {
           perStation.set(station.coordKey, { name: station.name, ramblerParts: [] })
         }
-        // kind: 0 = walk paragraph, 1 = free-form extra. Walks always
-        // render before extras. Within walks, the sort order is defined
-        // by compareRamblerParts — admins don't override it; all keys
-        // come from the walk data itself (main/variant, komoot, rating,
-        // distance).
+        // The sort order within walks is defined by compareRamblerParts —
+        // admins don't override it; all keys come from the walk data
+        // itself (main/variant, komoot, rating, distance).
         const sourceType = variant.source?.type ?? variant.role ?? "main"
         // Circular walks: same start and end station. The public view
         // splits walks into "Station-to-station" vs "Circular" sections;
@@ -722,7 +712,6 @@ function buildRamblerNotes(args) {
         const isCircular = !!variant.startStation && variant.startStation === variant.endStation
         perStation.get(station.coordKey).ramblerParts.push({
           summary,
-          kind: 0,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
           isMain: sourceType === "main",
@@ -771,50 +760,6 @@ function buildRamblerNotes(args) {
     }
   }
 
-  // Merge free-form extras AFTER the walk paragraphs. Each entry in the
-  // extras file is a list of markdown strings keyed by coordKey; each
-  // string becomes its own paragraph. A station with ONLY extras (no
-  // walk summary) still lands in perStation so the cleanup loop below
-  // doesn't wipe its ramblerNote.
-  let extras = {}
-  try {
-    const raw = JSON.parse(readFileSync(EXTRAS_PATH, "utf-8"))
-    // Strip the _readme key — it's documentation for humans, not data.
-    for (const [k, v] of Object.entries(raw)) if (k !== "_readme") extras[k] = v
-  } catch (err) {
-    if (!(err instanceof Error) || !/ENOENT/.test(err.message)) throw err
-  }
-  for (const [coordKey, lines] of Object.entries(extras)) {
-    if (!Array.isArray(lines) || lines.length === 0) continue
-    const station = [...crsIndex.values()].find((s) => s.coordKey === coordKey)
-    // Station not in our data → skip silently (coord might be a typo
-    // or a retired stop we no longer show).
-    if (!station && !perStation.has(coordKey)) continue
-    if (!perStation.has(coordKey)) {
-      perStation.set(coordKey, {
-        name: station?.name ?? notes[coordKey]?.name ?? "(unknown)",
-        ramblerParts: [],
-      })
-    }
-    for (const line of lines) {
-      perStation.get(coordKey).ramblerParts.push({
-        summary: line,
-        kind: 1, // extras sort below walks
-        ratingTier: Number.POSITIVE_INFINITY,
-        hasKomoot: false,
-        isMain: false,
-        isCircular: false,
-        // Extras aren't walks — these fields are unused at kind=1 but
-        // kept on the struct so all parts share the same shape.
-        sourceType: "",
-        distanceScore: Number.POSITIVE_INFINITY,
-        pageTitle: "",
-        displayName: "",
-        baseDisplayName: "",
-      })
-    }
-  }
-
   // Apply to station-notes.json:
   // - Stations in perStation get their ramblerNote set to joined paragraphs.
   // - Existing stations not in perStation get their ramblerNote cleared
@@ -847,23 +792,19 @@ function buildRamblerNotes(args) {
     const adminWalksAll = ordered.map((p) => p.summary).join("\n\n")
     // Public sectioning. Each walk routes into one of two sections
     // by `isCircular` (set per-variant from startStation === endStation).
-    // Free-form extras (kind=1) skip sectioning and live in their own
-    // un-headered block.
-    const s2sParts = ordered.filter((p) => p.kind === 0 && !p.isCircular)
-    const circularParts = ordered.filter((p) => p.kind === 0 && p.isCircular)
-    const extraParts = ordered.filter((p) => p.kind === 1)
+    const s2sParts = ordered.filter((p) => !p.isCircular)
+    const circularParts = ordered.filter((p) => p.isCircular)
     const publicWalksS2S = quotaFilterPerSection(s2sParts)
       .map((p) => p.summary).join("\n\n")
     const publicWalksCircular = quotaFilterPerSection(circularParts)
       .map((p) => p.summary).join("\n\n")
-    const publicWalksExtras = extraParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const beforeAdmin = notes[coordKey].adminWalksAll
       notes[coordKey].adminWalksAll = adminWalksAll
       notes[coordKey].publicWalksS2S = publicWalksS2S
       notes[coordKey].publicWalksCircular = publicWalksCircular
-      notes[coordKey].publicWalksExtras = publicWalksExtras
-      // Tidy legacy fields — replaced by the four above.
+      delete notes[coordKey].publicWalksExtras
+      // Tidy legacy fields — replaced by the three above.
       delete notes[coordKey].ramblerNote
       delete notes[coordKey].publicRamblerNote
       if ("ramblerMainCount" in notes[coordKey]) delete notes[coordKey].ramblerMainCount
@@ -876,7 +817,6 @@ function buildRamblerNotes(args) {
         adminWalksAll,
         publicWalksS2S,
         publicWalksCircular,
-        publicWalksExtras,
       }
       changes.added++
     }
@@ -884,13 +824,13 @@ function buildRamblerNotes(args) {
 
   for (const [coordKey, entry] of Object.entries(notes)) {
     if (perStation.has(coordKey)) continue
-    if (entry.adminWalksAll || entry.publicWalksS2S || entry.publicWalksCircular || entry.publicWalksExtras) {
+    if (entry.adminWalksAll || entry.publicWalksS2S || entry.publicWalksCircular) {
       entry.adminWalksAll = ""
       entry.publicWalksS2S = ""
       entry.publicWalksCircular = ""
-      entry.publicWalksExtras = ""
       changes.cleared++
     }
+    delete entry.publicWalksExtras
     // Drop legacy fields from any leftover entries too.
     delete entry.ramblerNote
     delete entry.publicRamblerNote

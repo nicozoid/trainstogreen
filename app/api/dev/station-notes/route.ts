@@ -16,7 +16,6 @@ type NotesEntry = {
   adminWalksAll?: string
   publicWalksS2S?: string
   publicWalksCircular?: string
-  publicWalksExtras?: string
 }
 
 // POST accepts publicNote and privateNote only. The build-output walk
@@ -33,9 +32,8 @@ export async function POST(req: NextRequest) {
     const existingAdminAll = existing?.adminWalksAll ?? ""
     const existingPublicS2S = existing?.publicWalksS2S ?? ""
     const existingPublicCircular = existing?.publicWalksCircular ?? ""
-    const existingPublicExtras = existing?.publicWalksExtras ?? ""
     const hasAnyExistingWalkProse =
-      existingAdminAll || existingPublicS2S || existingPublicCircular || existingPublicExtras
+      existingAdminAll || existingPublicS2S || existingPublicCircular
 
     if (publicNote || privateNote || hasAnyExistingWalkProse) {
       notes[coordKey] = {
@@ -45,7 +43,6 @@ export async function POST(req: NextRequest) {
         adminWalksAll: existingAdminAll,
         publicWalksS2S: existingPublicS2S,
         publicWalksCircular: existingPublicCircular,
-        publicWalksExtras: existingPublicExtras,
       }
     } else {
       // Everything empty — remove the entry entirely

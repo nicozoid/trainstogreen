@@ -203,20 +203,9 @@ type StationModalProps = {
   publicWalksS2S?: string
   /** Public sectioned walk prose — circular walks (start === end). */
   publicWalksCircular?: string
-  /** Public free-form notes about the station (no quota, no header). */
-  publicWalksExtras?: string
   /** Saves the user-editable notes when the overlay closes. The walk
    *  prose fields are build-only and not edited here. */
   onSaveNotes?: (publicNote: string, privateNote: string) => void
-  /** Free-form markdown paragraphs that render AFTER the walk
-   *  summaries in this station's ramblerNote prose. Admin-editable
-   *  via the Notes section below the walks admin panel; persisted
-   *  in data/station-rambler-extras.json. */
-  ramblerExtras?: string[]
-  /** Replace this station's ramblerExtras with `lines` (empty array
-   *  clears the entry). Server trims + drops blanks and rebuilds
-   *  the derived station-notes.json. */
-  onSaveRamblerExtras?: (lines: string[]) => Promise<void> | void
   /** The default Flickr algo for this station. Decided by the parent based on
    *  cluster/excluded membership — Central London terminals + excluded
    *  stations default to "station"; everything else defaults to "landscapes". */
@@ -635,10 +624,7 @@ export default function StationModal({
   adminWalksAll = "",
   publicWalksS2S = "",
   publicWalksCircular = "",
-  publicWalksExtras = "",
   onSaveNotes,
-  ramblerExtras = [],
-  onSaveRamblerExtras,
   defaultAlgo = "landscapes",
   customSettings,
   onSaveCustom,
@@ -1531,15 +1517,13 @@ export default function StationModal({
 
           {/* ── Notes: full-width, below the title/button row ── */}
 
-          {/* "Notes" subheader — admin-only now. Public visitors
-              never see the Trains to Green recommendations block;
-              it's an admin-editing surface until we figure out a
-              better public presentation. */}
+          {/* "Notes" subheader — admin-only. Public visitors don't
+              see the notes block; it's an admin-editing surface for
+              now. The note is a single free-form text field, so the
+              header label is always "Notes" (no singular variant). */}
           {devMode && (
             <p className="mt-[calc(var(--para-gap)*3)] text-xs font-medium text-muted-foreground">
-              {/* Singular when exactly one paragraph of content,
-                  plural otherwise (including the admin empty state). */}
-              Trains to Green recommendation{localPublicNote.split(/\n+/).filter(Boolean).length === 1 ? "" : "s"}
+              Notes
             </p>
           )}
 
@@ -1617,19 +1601,18 @@ export default function StationModal({
             const countParas = (text: string) =>
               text ? text.split(/\n+/).filter(Boolean).length : 0
 
-            // Up to two walk sections + an unheadered extras block.
-            // Each section only renders when it has content; the section
-            // header is singular when its block contains exactly one walk.
+            // Up to two walk sections. Each section only renders when
+            // it has content; the section header is singular when its
+            // block contains exactly one walk.
             const s2sCount = countParas(publicWalksS2S)
             const circularCount = countParas(publicWalksCircular)
             const hasS2S = s2sCount > 0
             const hasCircular = circularCount > 0
-            const hasExtras = !!publicWalksExtras
             // Empty state when nothing's there yet. Admins see a
             // placeholder header so the section's location is visible
             // in the modal even before walks are added; public users
             // see nothing.
-            if (!hasS2S && !hasCircular && !hasExtras) {
+            if (!hasS2S && !hasCircular) {
               return devMode ? sectionHeader("Featured walks") : null
             }
             return (
@@ -1650,7 +1633,6 @@ export default function StationModal({
                     {renderParas(publicWalksS2S)}
                   </>
                 )}
-                {hasExtras && renderParas(publicWalksExtras)}
               </>
             )
           })()}
@@ -1663,18 +1645,6 @@ export default function StationModal({
               prose above refreshes on the next station-notes fetch. */}
           {devMode && stationCrs && (
             <WalksAdminPanel stationCrs={stationCrs} onSaved={onWalkSaved} />
-          )}
-
-          {/* Admin-only Notes editor — free-form markdown paragraphs
-              that render AFTER the walk summaries in the ramblerNote
-              prose. Each row is one paragraph. Persisted to
-              data/station-rambler-extras.json; saving rebuilds the
-              derived prose in station-notes.json. */}
-          {devMode && onSaveRamblerExtras && (
-            <RamblerExtrasEditor
-              extras={ramblerExtras}
-              onSave={onSaveRamblerExtras}
-            />
           )}
 
           {/* Private note — admin-only. Same click-to-edit pattern, with
@@ -2612,130 +2582,6 @@ function PhotoCard({ photo, devMode, isApproved, isPinned, showPin = false, show
         </p>
         <p className="truncate text-[10px] text-white/70">{photo.ownerName}</p>
       </div>
-    </div>
-  )
-}
-
-/**
- * Admin-only editor for a station's free-form "rambler extras" —
- * markdown paragraphs that render after the walk summaries in the
- * public ramblerNote prose.
- *
- * One row per paragraph, with × to delete and a "+ Add note" button
- * below. Save is explicit (not auto-on-blur) because edits across
- * several rows are usually meant as a single batch. Clicking save
- * commits the entire array; the server trims + drops blanks and
- * rebuilds the derived station-notes.json.
- */
-function RamblerExtrasEditor({
-  extras,
-  onSave,
-}: {
-  extras: string[]
-  onSave: (lines: string[]) => Promise<void> | void
-}) {
-  const [draft, setDraft] = useState<string[]>(extras)
-  const [saving, setSaving] = useState(false)
-  // When non-null, the ConfirmDialog renders asking whether to drop
-  // the note at this index. Deleting a note is local-only until Save
-  // is pressed, but the admin may have typed a long note they'd
-  // regret losing to a misclick — so it still gets a confirm.
-  const [confirmDeleteIndex, setConfirmDeleteIndex] = useState<number | null>(null)
-  // Re-seed the draft if the server state updates from elsewhere
-  // (e.g. a sibling edit, or an external edit flushed back via refetch).
-  // Uses a JSON compare so identical-but-new-reference arrays don't
-  // force the local edit state to reset.
-  useEffect(() => {
-    setDraft(extras)
-    // Intentionally only syncing on `extras` identity — we WANT local
-    // edits to persist until the admin clicks save.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(extras)])
-
-  const dirty =
-    draft.length !== extras.length ||
-    draft.some((line, i) => line !== extras[i])
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await onSave(draft)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="mt-[var(--para-gap)] rounded-md border border-dashed border-border p-3">
-      <div className="mb-2 text-xs font-medium text-muted-foreground">Notes</div>
-      {draft.length === 0 && (
-        <p className="mb-2 text-xs italic text-muted-foreground/70">
-          No notes yet. Notes render as extra paragraphs after the walks in the public prose.
-        </p>
-      )}
-      <div className="flex flex-col gap-2">
-        {draft.map((line, i) => (
-          <div key={i} className="flex items-start gap-2">
-            {/* One textarea per note — multiline so markdown line breaks
-                read naturally while editing. Fixed 2-row starting size,
-                vertical resize handle for longer notes. */}
-            <textarea
-              value={line}
-              onChange={(e) => {
-                const next = [...draft]
-                next[i] = e.target.value
-                setDraft(next)
-              }}
-              rows={2}
-              placeholder="Markdown supported, e.g. [Featured by Scenic Rail](https://…)"
-              className="flex-1 resize-y rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-            />
-            <button
-              type="button"
-              onClick={() => setConfirmDeleteIndex(i)}
-              className="rounded px-1 text-muted-foreground hover:text-destructive"
-              title="Delete note"
-              aria-label={`Delete note ${i + 1}`}
-            >
-              ×
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="mt-2 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setDraft([...draft, ""])}
-          className="rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
-        >
-          + Add note
-        </button>
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={!dirty || saving}
-          className="ml-auto rounded bg-primary px-3 py-1 text-xs text-primary-foreground disabled:opacity-40"
-        >
-          {saving ? "Saving…" : "Save"}
-        </button>
-      </div>
-      <ConfirmDialog
-        open={confirmDeleteIndex !== null}
-        onOpenChange={(open) => { if (!open) setConfirmDeleteIndex(null) }}
-        title="Delete this note?"
-        description={
-          confirmDeleteIndex !== null ? (
-            <>This removes the note from the local draft. Changes persist to the site after you click <strong>Save</strong>.</>
-          ) : null
-        }
-        confirmLabel="Delete note"
-        onConfirm={() => {
-          if (confirmDeleteIndex !== null) {
-            setDraft((d) => d.filter((_, j) => j !== confirmDeleteIndex))
-          }
-          setConfirmDeleteIndex(null)
-        }}
-      />
     </div>
   )
 }

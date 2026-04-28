@@ -233,7 +233,7 @@ export const molecules: ComponentEntry[] = [
     id: "confirm-dialog",
     name: "ConfirmDialog",
     description:
-      "Modal that asks the user to confirm an irreversible action. Generic — takes a title, body, and confirm/cancel labels. Currently only used by admin-only flows (RamblerExtrasEditor in photo-overlay; walks-admin-panel) so it's hidden from the DS until a public flow needs it.",
+      "Modal that asks the user to confirm an irreversible action. Generic — takes a title, body, and confirm/cancel labels. Currently only used by admin-only flows (walks-admin-panel) so it's hidden from the DS until a public flow needs it.",
     filePath: "components/confirm-dialog.tsx",
     // Only used in admin-only callsites today. Keep the entry so the
     // pattern is documented but exclude it from the public DS surface.
