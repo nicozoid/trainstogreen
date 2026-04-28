@@ -108,7 +108,7 @@ function entryFor(w) {
         lunchStops: (w.lunch ?? []).map((l) => ({ name: l.name, location: l.location ?? "", url: l.url ?? null })),
         terrain: w.terrain ?? "",
         sights: (w.sights ?? []).map((name) => (typeof name === "string" ? { name, url: null } : name)),
-        warnings: w.warnings ?? "",
+        miscellany: w.warnings ?? "",
       },
     ],
     extracted: true,

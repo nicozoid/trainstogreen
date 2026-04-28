@@ -20,7 +20,7 @@ const EDITABLE_FIELDS = [
   "komootUrl",
   "bestSeasons",
   "mudWarning",
-  "warnings",
+  "miscellany",
   "trainTips",
   "privateNote",
   "rating",
@@ -91,7 +91,7 @@ function cleanField(key: string, value: unknown): unknown | undefined {
     // The public renderer (scripts/build-rambler-notes.mjs) adds the
     // terminal period itself via `withPeriod()`, so storing the
     // content without it keeps the source clean.
-    case "warnings":
+    case "miscellany":
     case "trainTips":
     case "privateNote":
     case "ratingExplanation":

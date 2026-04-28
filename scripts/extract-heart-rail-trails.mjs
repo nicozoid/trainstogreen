@@ -122,7 +122,7 @@ const EXTRACT_TOOL = {
     type: "object",
     required: [
       "walkTitle", "distanceMiles", "hours", "difficulty", "tagline",
-      "terrain", "sights", "lunchStops", "warnings",
+      "terrain", "sights", "lunchStops", "miscellany",
     ],
     properties: {
       walkTitle: {
@@ -149,7 +149,7 @@ const EXTRACT_TOOL = {
       terrain: {
         type: "string",
         description:
-          "ONE short clipped sentence listing terrain types and atmosphere. Commas, not prose. Example: 'Historic market town, river, canal towpath, open fields, golf course.' Do NOT mention hazards — those go in warnings.",
+          "ONE short clipped sentence listing terrain types and atmosphere. Commas, not prose. Example: 'Historic market town, river, canal towpath, open fields, golf course.' Do NOT mention hazards — those go in miscellany.",
       },
       sights: {
         type: "array",
@@ -178,11 +178,11 @@ const EXTRACT_TOOL = {
         description:
           "Pubs, cafes, bakeries, restaurants, tea rooms recommended on pages 1-2. Include the URL if printed next to the name.",
       },
-      warnings: {
+      miscellany: {
         type: "string",
         maxLength: 35,
         description:
-          "ONE ultra-short hazard warning — 2-4 words. 'Can be muddy.' or 'Cliff edges crumbly.' Empty string if no warning.",
+          "ONE ultra-short hazard warning or other miscellaneous note — 2-4 words. 'Can be muddy.' or 'Cliff edges crumbly.' Empty string if none.",
       },
     },
   },
@@ -198,7 +198,7 @@ Rules:
 - For lunchStops, include every recommended pub/cafe/eatery on page 1 or 2 — include their URL when printed.
 - For sights, include every named castle/church/museum/garden/ruin/etc. mentioned — with URLs when printed. Skip pubs/cafes (those are lunch stops).
 - terrain must be ONE short clipped sentence (commas, no prose, no hazard mentions).
-- warnings: 2-4 words or empty string.
+- miscellany: 2-4 words or empty string.
 - If the walk is not a circular (e.g. point-to-point), note that in terrain and still emit the schema.
 - Output only via the tool call. No prose.`
 
@@ -309,7 +309,7 @@ function buildEntry(station, url, x) {
         })),
         terrain: x.tagline && !x.terrain ? x.tagline : (x.terrain ?? ""),
         sights: (x.sights ?? []).map((s) => ({ name: s.name, url: s.url ?? null })),
-        warnings: x.warnings ?? "",
+        miscellany: x.miscellany ?? "",
       },
     ],
     extracted: true,

@@ -384,7 +384,7 @@ function withPeriod(s) {
 // Compose the markdown string for one walk variant attached to a station.
 // Structure (each clause omitted if the source field is empty):
 //
-//   <opener><fav><terrain> <sights sentence><warnings><trainTips><bestSeasons><lunch><km><hours>
+//   <opener><fav><terrain> <sights sentence><miscellany><trainTips><bestSeasons><lunch><km><hours>
 //
 // Separators between clauses are single spaces; every clause ends with a
 // period. Every walk renders identically — no "main vs variant"
@@ -545,26 +545,27 @@ function buildSummary(variant, entry, crsIndex, sources) {
   if (sightsStr) parts.push(`Sights: ${sightsStr}.`)
 
   // Structured mud warning — short canonical clause. Only emit if the
-  // free-text `warnings` doesn't mention mud anywhere (avoid duplicates
+  // free-text `miscellany` doesn't mention mud anywhere (avoid duplicates
   // like "Can be muddy. Can be muddy." when both the structured flag
   // and a legacy mud sentence are present). Once the free-text mud
   // sentences are pruned in a follow-up pass, this check becomes moot.
-  const warningsText = variant.warnings?.trim() ?? ""
-  const warningsMentionsMud = /\bmud/i.test(warningsText)
-  if (variant.mudWarning && !warningsMentionsMud) parts.push("Can be muddy.")
+  const miscellanyText = variant.miscellany?.trim() ?? ""
+  const miscellanyMentionsMud = /\bmud/i.test(miscellanyText)
+  if (variant.mudWarning && !miscellanyMentionsMud) parts.push("Can be muddy.")
 
-  // Free-text warnings — one ultra-short clause (for anything not
-  // captured by the structured mudWarning flag, e.g. MOD closures).
-  if (warningsText) parts.push(withPeriod(warningsText))
+  // Free-text miscellany — one ultra-short clause (for anything not
+  // captured by the structured mudWarning flag, e.g. MOD closures, or
+  // other miscellaneous notes about the walk).
+  if (miscellanyText) parts.push(withPeriod(miscellanyText))
 
   // Train tips — booking advice (singles vs returns, off-peak windows
-  // etc). Sits immediately after warnings so practical "before you go"
+  // etc). Sits immediately after miscellany so practical "before you go"
   // info is grouped together in the prose.
   const trainTipsText = variant.trainTips?.trim() ?? ""
   if (trainTipsText) parts.push(withPeriod(trainTipsText))
 
   // Best seasons — the structured month-code array. Legacy free-text
-  // bestTime has been migrated into warnings and the field removed.
+  // bestTime has been migrated into miscellany and the field removed.
   const structuredSeasons = formatBestSeasons(variant.bestSeasons)
   if (structuredSeasons) parts.push(structuredSeasons)
 

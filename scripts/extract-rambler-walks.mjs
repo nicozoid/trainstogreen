@@ -259,7 +259,7 @@ const EXTRACT_TOOL = {
           required: [
             "role", "name", "startPlace", "endPlace", "requiresBus",
             "distanceKm", "distanceMiles", "hours", "lunchStops",
-            "terrain", "sights", "warnings",
+            "terrain", "sights", "miscellany",
           ],
           properties: {
             role: {
@@ -328,11 +328,11 @@ const EXTRACT_TOOL = {
               description:
                 "Notable sights along THIS variant. RULES: (1) EVERY sight the SWC page links to externally MUST be included, with its URL — these are the page's authoritative sights. (2) Include all additional non-linked sights that genuinely reward a visit: museums, castles, stately homes, historic houses, ruins, notable churches, large gardens, cathedrals, famous landmarks. No fixed cap — include what's actually worth seeing on the route. (3) Skip trivia: plaques, small markers, street furniture, minor signposts, or generic 'pretty village' features that aren't named attractions. Monuments/crosses/obelisks are fine if the page treats them as a landmark. (4) Just the names — no descriptions, no location suffixes.",
             },
-            warnings: {
+            miscellany: {
               type: "string",
               maxLength: 35,
               description:
-                "ONE ultra-short warning — 2 to 4 words max. Examples: 'Can be muddy.' / 'Crumbly cliff edges.' / 'Check tide timings.' / 'MOD closures apply.' / 'Steep descents.' Do NOT name specific sections, seasons, or weather conditions. Empty string if nothing warrants flagging.",
+                "ONE ultra-short warning or other miscellaneous note — 2 to 4 words max. Examples: 'Can be muddy.' / 'Crumbly cliff edges.' / 'Check tide timings.' / 'MOD closures apply.' / 'Steep descents.' Do NOT name specific sections, seasons, or weather conditions. Empty string if nothing warrants flagging.",
             },
           },
         },
@@ -374,9 +374,9 @@ Key rules:
 4. distanceKm / distanceMiles / hours: look in BOTH the "Length" section AND "Walk Options". Variants often only appear in Walk Options. For hours, use pure walking time only — ignore "for the whole outing including trains, sights and meals".
 
 5. Per-walk description is NOT one paragraph — it's FOUR tightly-separated fields. Fill each independently:
-   a. terrain: one clipped sentence listing terrain types and atmosphere (commas, not prose). Example: "Hills, sloping fields, beech woods, hamlets, upmarket farms, and cottages." Do NOT mention hazards (mud, cliffs, etc.) — those belong in the warnings field.
+   a. terrain: one clipped sentence listing terrain types and atmosphere (commas, not prose). Example: "Hills, sloping fields, beech woods, hamlets, upmarket farms, and cottages." Do NOT mention hazards (mud, cliffs, etc.) — those belong in the miscellany field.
    b. sights: EVERY linked sight (with URL). PLUS all additional non-linked sights that reward a visit — museums, castles, stately homes, churches, gardens, ruins, famous landmarks. No fixed cap. Skip trivia (plaques, small markers, generic "pretty village"). Just the name — NO location suffix (NOT "Holy Trinity Church, Bledlow" — just "Holy Trinity Church").
-   c. warnings: 2-4 words MAX. Just the hazard type. "Can be muddy." — NOT "Path through Dunsmore Woods can be very muddy in winter." Empty string if none.
+   c. miscellany: 2-4 words MAX. Just the hazard type or other essential note. "Can be muddy." — NOT "Path through Dunsmore Woods can be very muddy in winter." Empty string if none.
    CRITICAL: Do NOT describe route flow (A to B to C to D). Do NOT mention lunch timing. Do NOT reference "the book" or "Book 2". Do NOT include distances or walking times in these fields. Do NOT include the "Rambler favourite!" flourish. Terser is always better.
 
 6. places: include every named place mentioned (villages passed through, landmarks seen, historic sites visited, nature reserves crossed). Be generous — don't filter to "notable" only. Group by type per the schema.
@@ -488,7 +488,7 @@ function mergeExtraction(entry, extracted, lookup) {
       lunchStops: w.lunchStops,
       terrain: w.terrain ?? "",
       sights: Array.isArray(w.sights) ? w.sights : [],
-      warnings: w.warnings ?? "",
+      miscellany: w.miscellany ?? "",
     }
   })
 

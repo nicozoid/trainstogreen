@@ -1,10 +1,10 @@
 // One-shot migration: populate the new structured fields on every walk
-// variant from the existing free-text `bestTime` / `warnings` prose.
+// variant from the existing free-text `bestTime` / `miscellany` prose.
 //
-//   bestTime  → bestSeasons: 3-letter month codes
-//   warnings  → mudWarning: true if prose mentions "mud" / "muddy"
+//   bestTime    → bestSeasons: 3-letter month codes
+//   miscellany  → mudWarning: true if prose mentions "mud" / "muddy"
 //
-// The original `bestTime` and `warnings` fields are intentionally left
+// The original `bestTime` and `miscellany` fields are intentionally left
 // in place — they hold details not captured by the structured flags
 // (e.g. "MOD closures apply", "Can be very cold in winter") and are
 // still the fallback in the build script when bestSeasons is absent.
@@ -205,12 +205,12 @@ function main() {
         if (variant.mudWarning !== undefined) {
           mudSkippedExisting++
         } else {
-          const w = (variant.warnings ?? "").trim()
+          const w = (variant.miscellany ?? "").trim()
           if (/\bmud/i.test(w)) {
             variant.mudWarning = true
             mudAssigned++
           }
-          // No warnings or no mud → leave the field absent. Writing
+          // No miscellany or no mud → leave the field absent. Writing
           // `false` would add noise to the file without carrying info;
           // absence reads the same.
         }

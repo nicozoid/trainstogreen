@@ -20,7 +20,7 @@
 //   - komootUrl (text)
 //   - bestSeasons (12 month chips)
 //   - mudWarning (checkbox)
-//   - warnings (free-text, for non-mud warnings)
+//   - miscellany (free-text, for non-mud warnings and other notes)
 // Everything else (sights, lunchStops, terrain, distance, etc.) is
 // view-only for now — list editors are a bigger lift and haven't been
 // scoped into Phase 5 v1.
@@ -59,7 +59,7 @@ export type WalkPayload = {
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
-  warnings: string
+  miscellany: string
   trainTips: string
   /** Admin-only free-text scratchpad, never rendered to the public. */
   privateNote: string
@@ -121,7 +121,7 @@ type EditableFields = {
   komootUrl: string
   bestSeasons: string[]
   mudWarning: boolean
-  warnings: string
+  miscellany: string
   trainTips: string
   privateNote: string
   rating: number | null
@@ -718,7 +718,7 @@ function WalkCard({
       komootUrl: walk.komootUrl,
       bestSeasons: walk.bestSeasons,
       mudWarning: walk.mudWarning,
-      warnings: walk.warnings,
+      miscellany: walk.miscellany,
       trainTips: walk.trainTips,
       privateNote: walk.privateNote ?? "",
       rating: walk.rating,
@@ -747,7 +747,7 @@ function WalkCard({
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
-      walk.warnings, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
+      walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
       walk.distanceKm, walk.hours,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
@@ -767,7 +767,7 @@ function WalkCard({
       draft.suffix.trim() !== serverState.suffix.trim() ||
       draft.komootUrl.trim() !== serverState.komootUrl.trim() ||
       draft.mudWarning !== serverState.mudWarning ||
-      draft.warnings.trim() !== serverState.warnings.trim() ||
+      draft.miscellany.trim() !== serverState.miscellany.trim() ||
       draft.trainTips.trim() !== serverState.trainTips.trim() ||
       draft.privateNote.trim() !== serverState.privateNote.trim() ||
       draft.rating !== serverState.rating ||
@@ -823,7 +823,7 @@ function WalkCard({
           komootUrl: draft.komootUrl,
           bestSeasons: draft.bestSeasons,
           mudWarning: draft.mudWarning,
-          warnings: draft.warnings,
+          miscellany: draft.miscellany,
           trainTips: draft.trainTips,
           privateNote: draft.privateNote,
           rating: draft.rating,
@@ -1558,26 +1558,26 @@ function WalkCard({
             )}
           </div>
 
-          {/* Free-text warnings — still useful for non-mud stuff like
-              "MOD closures apply" or "Chalk paths can be slippery". */}
+          {/* Free-text miscellany — non-mud warnings plus other notes
+              ("MOD closures apply", "Chalk paths can be slippery", etc). */}
           <div className="mb-3">
-            <Label htmlFor={`warn-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Warnings
+            <Label htmlFor={`misc-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+              Miscellany
               <span className="ml-1 font-normal italic text-muted-foreground/70">
                 free text
               </span>
             </Label>
             <Input
-              id={`warn-${walk.id}`}
-              value={draft.warnings}
-              onChange={(e) => setDraft((d) => ({ ...d, warnings: e.target.value }))}
+              id={`misc-${walk.id}`}
+              value={draft.miscellany}
+              onChange={(e) => setDraft((d) => ({ ...d, miscellany: e.target.value }))}
               className="h-7 text-xs"
             />
           </div>
 
           {/* Train tips — booking advice (singles vs returns, off-peak
               windows etc). Renders in the public prose as its own
-              sentence right after warnings. */}
+              sentence right after miscellany. */}
           <div className="mb-3">
             <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
               Train tips
