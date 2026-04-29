@@ -947,13 +947,13 @@ function buildRamblerNotes(args) {
     return
   }
 
-  writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
-  // eslint-disable-next-line no-console
-  console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
+  // ── Compute derived outputs ────────────────────────────────────────
+  // Hoisted above the writes so `returnData` mode (used by API routes
+  // that commit via the GitHub API) can hand them off without touching
+  // the filesystem at all — important on Vercel's read-only fs.
 
-  // ── Derived file: station-seasons.json ─────────────────────────────
-  // Build a diff-friendly output: entries sorted by coordKey, empty
-  // season sets skipped, seasons inside each entry in calendar order.
+  // station-seasons.json: entries sorted by coordKey, empty season sets
+  // skipped, seasons inside each entry in calendar order — diff-friendly.
   const seasonsOut = {}
   for (const [coordKey, { name, seasons }] of [...perStationSeasons.entries()].sort(([a], [b]) => a.localeCompare(b))) {
     if (seasons.size === 0) continue
@@ -962,24 +962,38 @@ function buildRamblerNotes(args) {
       seasons: SEASON_ORDER.filter((s) => seasons.has(s)),
     }
   }
+
+  // stations-hiked.json: sorted array of coordKeys for stations whose
+  // attached walks include at least one variant with a non-empty
+  // previousWalkDates. The admin "Undiscovered" filter hides these.
+  const hikedOut = [...perStationHiked].sort()
+
+  // stations-with-komoot.json: sorted array of coordKeys for stations
+  // with at least one walk variant carrying a komootUrl. Drives the
+  // admin-only "Komoot" map filter.
+  const komootOut = [...perStationKomoot].sort()
+
+  // returnData mode: hand back the computed data instead of writing.
+  // Callers (API routes) commit these atomically via writeDataFile so
+  // the derived files end up in git alongside the walk file. This is
+  // also the only viable path on Vercel, where writeFileSync would
+  // throw EROFS.
+  if (args.returnData) {
+    return { notes, seasons: seasonsOut, hiked: hikedOut, komoot: komootOut }
+  }
+
+  writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
+
   writeFileSync(SEASONS_PATH, JSON.stringify(seasonsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${Object.keys(seasonsOut).length} entries to ${SEASONS_PATH}`)
 
-  // ── Derived file: stations-hiked.json ──────────────────────────────
-  // Sorted array of coordKeys for stations we've personally walked at
-  // least one attached walk from. The client fetches this into a Set<string>
-  // and the "Undiscovered" admin filter hides anything in it.
-  const hikedOut = [...perStationHiked].sort()
   writeFileSync(HIKED_PATH, JSON.stringify(hikedOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${hikedOut.length} entries to ${HIKED_PATH}`)
 
-  // ── Derived file: stations-with-komoot.json ────────────────────────
-  // Sorted array of coordKeys for stations with at least one attached
-  // walk variant carrying a Komoot tour URL. Drives the admin-only
-  // "Komoot" filter on the map.
-  const komootOut = [...perStationKomoot].sort()
   writeFileSync(KOMOOT_PATH, JSON.stringify(komootOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${komootOut.length} entries to ${KOMOOT_PATH}`)

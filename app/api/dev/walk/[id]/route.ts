@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
-import { handleAdminWrite } from "@/app/api/dev/_helpers"
-import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
+import { commitDerivedFiles, handleAdminWrite } from "@/app/api/dev/_helpers"
 
 // Files that hold walk entries — mirrors scripts/build-rambler-notes.mjs.
 const WALKS_FILES = [
@@ -330,19 +329,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   await writeDataFile(file, data, `Update walk ${id} (${slug})`, sha)
 
-  // Rebuild in-process so station-notes.json + station-seasons.json
-  // reflect the change immediately. The builder logs to stdout — fine
-  // for now; the client just cares about the result.
+  // Rebuild + commit the derived station-* files so the public view
+  // (which reads station-notes.json) reflects the change immediately
+  // and atomically — same code path in dev and prod.
   try {
-    await buildRamblerNotes({ dryRun: false, flipOnMap: false })
+    await commitDerivedFiles(`Update walk ${id} (${slug})`)
   } catch (err) {
-    // The save itself succeeded — only the in-process rebuild of the
-    // derived station-notes.json failed. This is expected on Vercel
-    // (read-only filesystem); the next deploy will regenerate it. Return
-    // 200 with `rebuildPending` so the client can show a "visible after
-    // next deploy" notice instead of treating this as a save failure.
+    // The walk save itself succeeded — only the derived-file commits
+    // failed. Surface as a soft 200 so the client can show a "visible
+    // after next rebuild" notice instead of treating this as a save
+    // failure.
     // eslint-disable-next-line no-console
-    console.error("rebuild after walk patch failed:", err)
+    console.error("derived-file commit after walk patch failed:", err)
     return NextResponse.json({ message: "ok", id, rebuildPending: true })
   }
 
@@ -377,12 +375,12 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   await writeDataFile(file, data, `Delete walk ${id} (${slug})`, sha)
 
   try {
-    await buildRamblerNotes({ dryRun: false, flipOnMap: false })
+    await commitDerivedFiles(`Delete walk ${id} (${slug})`)
   } catch (err) {
-    // Same pattern as PATCH: the delete write succeeded; only the
-    // derived-file rebuild failed (expected on Vercel's read-only fs).
+    // Same pattern as PATCH: the delete commit succeeded; only the
+    // derived-file commits failed.
     // eslint-disable-next-line no-console
-    console.error("rebuild after walk delete failed:", err)
+    console.error("derived-file commit after walk delete failed:", err)
     return NextResponse.json({ message: "ok", id, rebuildPending: true })
   }
 
