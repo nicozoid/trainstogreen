@@ -244,12 +244,9 @@ function cleanLunchStop(raw: unknown): {
   return out
 }
 
-// Walk ids are now in the format `[startCRS][endCRS][word]`, all
-// lowercase letters — e.g. "hunhunfox" (HUN circular + "fox") or
-// "saldenwren" (SAL → DEN + "wren"). 9 chars minimum (3 + 3 + a
-// 3-letter word like "fox"); upper bound is generous to allow for
-// long words ("fritillary") plus rare numeric collision suffixes.
-const WALK_ID_RE = /^[a-z]{6}[a-z0-9]{3,15}$/
+// New-format ids: `[startCRS][endCRS][word]` (9+ chars, e.g. "hunhunfox").
+// Legacy 4-char ids (e.g. "ml6i") still exist in data — accept both.
+const WALK_ID_RE = /^[a-z0-9]{4}$|^[a-z]{6}[a-z0-9]{3,15}$/
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

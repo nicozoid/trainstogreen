@@ -31,12 +31,16 @@ export function ConfirmDialog({
   onConfirm: () => void | Promise<void>
 }) {
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   async function handleConfirm() {
     setBusy(true)
+    setError(null)
     try {
       await onConfirm()
       onOpenChange(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong")
     } finally {
       setBusy(false)
     }
@@ -49,6 +53,9 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
             {cancelLabel}
