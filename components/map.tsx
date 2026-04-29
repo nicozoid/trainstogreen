@@ -5265,19 +5265,37 @@ export default function HikeMap() {
           const coordKey = f.properties.coordKey as string
           const isBuried = buriedStations.has(coordKey)
           const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+          const synthAnchor = isClusterMember ? MEMBER_TO_SYNTHETIC[coordKey] : undefined
+          const synthBuried = synthAnchor ? buriedStations.has(synthAnchor) : false
+          // synthEarly: cluster diamond should appear at zoom 9 (the
+          // "early" tier) instead of the default zoom 11. True when the
+          // parent synthetic is the active primary/friend, or when
+          // either the synth anchor or the diamond station itself is
+          // placemark-flagged. Buried wins over early (synthBuried check
+          // is applied at the layer-filter level, since a buried synth
+          // can also satisfy one of these conditions).
+          const synthEarly = isClusterMember && !!synthAnchor && (
+            synthAnchor === primaryOrigin
+            || (!!friendOrigin && synthAnchor === friendOrigin)
+            || placemarkStations.has(synthAnchor)
+            || placemarkStations.has(coordKey)
+          )
           const hadBuried = !!f.properties.isBuried
           const hadClusterMember = !!f.properties.isClusterMember
-          // Skip allocation if nothing's changing.
-          if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
+          const hadSynthBuried = !!f.properties.synthBuried
+          const hadSynthEarly = !!f.properties.synthEarly
+          if (isBuried === hadBuried && isClusterMember === hadClusterMember && synthBuried === hadSynthBuried && synthEarly === hadSynthEarly) return f
           const next: Record<string, unknown> = { ...f.properties }
           if (isBuried) next.isBuried = true; else delete next.isBuried
           if (isClusterMember) next.isClusterMember = true; else delete next.isClusterMember
+          if (synthBuried) next.synthBuried = true; else delete next.synthBuried
+          if (synthEarly) next.synthEarly = true; else delete next.synthEarly
           return { ...f, properties: next as typeof f.properties }
         }),
         ...synthFeatures,
       ],
     }
-  }, [routedStations, buriedStations, primaryOrigin, friendOrigin])
+  }, [routedStations, buriedStations, primaryOrigin, friendOrigin, placemarkStations])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -5941,12 +5959,33 @@ export default function HikeMap() {
     return {
       icons: {
         type: "FeatureCollection" as const,
-        features: allClusterDiamondFeatures.icons.features.filter((f) =>
-          visibleSynthAnchors.has(f.properties.synthAnchor as string),
-        ),
+        features: allClusterDiamondFeatures.icons.features
+          .filter((f) => visibleSynthAnchors.has(f.properties.synthAnchor as string))
+          .map((f) => {
+            const anchor = f.properties.synthAnchor as string
+            const coordKey = f.properties.coordKey as string
+            const synthBuried = buriedStations.has(anchor)
+            // synthEarly mirrors the same rule applied to cluster
+            // members in the stations memo above: parent synth is the
+            // active primary/friend, or either the anchor or the
+            // diamond's own coord is placemark-flagged. Drives the
+            // zoom-9 diamond layer; without it diamonds default to
+            // zoom 11.
+            const synthEarly = (
+              anchor === primaryOrigin
+              || (!!friendOrigin && anchor === friendOrigin)
+              || placemarkStations.has(anchor)
+              || placemarkStations.has(coordKey)
+            )
+            if (!synthBuried && !synthEarly) return f
+            const props = { ...f.properties }
+            if (synthBuried) props.synthBuried = true
+            if (synthEarly) props.synthEarly = true
+            return { ...f, properties: props }
+          }),
       },
     }
-  }, [allClusterDiamondFeatures, visibleSynthAnchors])
+  }, [allClusterDiamondFeatures, visibleSynthAnchors, buriedStations, primaryOrigin, friendOrigin, placemarkStations])
 
   // Filter-change pill: flash "{N} stations" at viewport-centre when
   // the user toggles a filter input. Trigger is signature-based —
@@ -7258,7 +7297,8 @@ export default function HikeMap() {
       // the candidate set so first-tap detection fires for diamonds
       // the same way it does for regular station hit areas.
       "london-terminus-icon", "london-terminus-origin-icon",
-      "cluster-diamond-icon", "station-hit-area-cluster",
+      "cluster-diamond-icon-early", "cluster-diamond-icon", "cluster-diamond-icon-buried",
+      "station-hit-area-cluster-early", "station-hit-area-cluster", "station-hit-area-cluster-buried",
     ]
       .filter((id) => !!map.getLayer(id))
     const features = candidateLayers.length
@@ -7459,8 +7499,12 @@ export default function HikeMap() {
       feature.layer?.id === "london-terminus-icon" ||
       feature.layer?.id === "london-terminus-origin-icon" ||
       feature.layer?.id === "friend-cluster-icon" ||
+      feature.layer?.id === "cluster-diamond-icon-early" ||
       feature.layer?.id === "cluster-diamond-icon" ||
-      feature.layer?.id === "station-hit-area-cluster"
+      feature.layer?.id === "cluster-diamond-icon-buried" ||
+      feature.layer?.id === "station-hit-area-cluster-early" ||
+      feature.layer?.id === "station-hit-area-cluster" ||
+      feature.layer?.id === "station-hit-area-cluster-buried"
     ) {
       const diamondCoord = feature.properties?.coordKey as string | undefined
       const anchorCoord = diamondCoord ? MEMBER_TO_SYNTHETIC[diamondCoord] : undefined
@@ -8523,7 +8567,7 @@ export default function HikeMap() {
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
         interactiveLayerIds={[
-          "hovered-station-hit", "station-hit-area", "station-hit-area-buried-zoomed", "station-hit-area-cluster", "london-hit-area", "secret-admin-hit",
+          "hovered-station-hit", "station-hit-area", "station-hit-area-buried-zoomed", "station-hit-area-cluster-early", "station-hit-area-cluster", "station-hit-area-cluster-buried", "london-hit-area", "secret-admin-hit",
           // Terminus diamonds open the same stripped-down station modal
           // that other active-primary cluster members get (title + photos
           // only, no journey info, no Hike button). Both main (zoom 9+)
@@ -8534,7 +8578,7 @@ export default function HikeMap() {
           // Always-on cluster diamonds (renders for every visible
           // synthetic, active or not). Click resolves to the parent
           // synthetic's overlay via MEMBER_TO_SYNTHETIC.
-          "cluster-diamond-icon",
+          "cluster-diamond-icon-early", "cluster-diamond-icon", "cluster-diamond-icon-buried",
         ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
@@ -8835,16 +8879,24 @@ export default function HikeMap() {
                 here so it doesn't render at the static 0.6× size
                 while the dedicated hovered-diamond-icon below
                 animates its own pulsing copy. */}
+            {/* "Early" tier — diamonds whose parent synth is the active
+                primary/friend, or where either the synth or the diamond
+                station itself is placemark-flagged. Visible from zoom 9
+                (the lowest diamond threshold). synthBuried still wins
+                over synthEarly: a buried synth that's also placemarked
+                stays at zoom 12, since the buried filter check below
+                isn't excluded here. To prevent the rare double-render,
+                we exclude synthBuried features from this layer too. */}
             <Layer
-              id="cluster-diamond-icon"
+              id="cluster-diamond-icon-early"
               type="symbol"
-              minzoom={9}
+              minzoom={10}
               filter={
                 hoveredDiamond
                   /* eslint-disable @typescript-eslint/no-explicit-any */
-                  ? (["!=", ["get", "coordKey"], hoveredDiamond.coordKey] as any)
+                  ? (["all", ["has", "synthEarly"], ["!", ["has", "synthBuried"]], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
+                  : (["all", ["has", "synthEarly"], ["!", ["has", "synthBuried"]]] as any)
                   /* eslint-enable @typescript-eslint/no-explicit-any */
-                  : true
               }
               layout={{
                 "icon-image": "icon-london-terminus",
@@ -8853,6 +8905,76 @@ export default function HikeMap() {
                 "icon-ignore-placement": true,
               }}
             />
+            {/* Default tier — non-placemark, non-buried, non-active
+                diamonds. Deferred to zoom 11 to keep the map cleaner
+                at lower zooms. */}
+            <Layer
+              id="cluster-diamond-icon"
+              type="symbol"
+              minzoom={11}
+              filter={
+                hoveredDiamond
+                  /* eslint-disable @typescript-eslint/no-explicit-any */
+                  ? (["all", ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
+                  : (["all", ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]]] as any)
+                  /* eslint-enable @typescript-eslint/no-explicit-any */
+              }
+              layout={{
+                "icon-image": "icon-london-terminus",
+                "icon-size": 0.6,
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+              }}
+            />
+            {/* Diamonds whose parent synthetic IS buried — deferred to
+                zoom 12, matching the buried synthetic's own threshold. */}
+            <Layer
+              id="cluster-diamond-icon-buried"
+              type="symbol"
+              minzoom={12}
+              filter={
+                hoveredDiamond
+                  /* eslint-disable @typescript-eslint/no-explicit-any */
+                  ? (["all", ["has", "synthBuried"], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
+                  : (["has", "synthBuried"] as any)
+                  /* eslint-enable @typescript-eslint/no-explicit-any */
+              }
+              layout={{
+                "icon-image": "icon-london-terminus",
+                "icon-size": 0.6,
+                "icon-allow-overlap": true,
+                "icon-ignore-placement": true,
+              }}
+            />
+            {/* Hover override — when ANY station/synth is being hovered,
+                show every diamond whose parent synth matches the hovered
+                coord, regardless of zoom tier. Effectively bypasses the
+                early/default/buried minzooms while a hover is active.
+                Hovering a diamond redirects `hovered` to its parent
+                synth's coord (see the cluster-diamond hover branch in
+                handleMouseMove), so this also reveals sibling diamonds
+                of any hovered diamond. The currently-pulsing diamond is
+                excluded so the dedicated `hovered-diamond-icon` overlay
+                owns its rendering without double-stamping. */}
+            {hovered && (
+              <Layer
+                id="cluster-diamond-icon-hovered-synth"
+                type="symbol"
+                filter={
+                  hoveredDiamond
+                    /* eslint-disable @typescript-eslint/no-explicit-any */
+                    ? (["all", ["==", ["get", "synthAnchor"], hovered.coordKey], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
+                    : (["==", ["get", "synthAnchor"], hovered.coordKey] as any)
+                    /* eslint-enable @typescript-eslint/no-explicit-any */
+                }
+                layout={{
+                  "icon-image": "icon-london-terminus",
+                  "icon-size": 0.6,
+                  "icon-allow-overlap": true,
+                  "icon-ignore-placement": true,
+                }}
+              />
+            )}
             <Layer
               id="cluster-diamond-label"
               type="symbol"
@@ -9296,14 +9418,36 @@ export default function HikeMap() {
                 ],
               }}
             />
-            {/* Cluster-member hit area — mirrors cluster-diamond-icon's
-                minzoom 9. Below z=9 the diamond doesn't render, so the
-                hit area has to disappear too. */}
+            {/* Cluster-member hit areas — three tiers mirroring the
+                three diamond icon layers. Hit area minzoom must match
+                the corresponding icon layer or clicks go nowhere. */}
+            <Layer
+              id="station-hit-area-cluster-early"
+              type="circle"
+              minzoom={10}
+              filter={["all", ["has", "isClusterMember"], ["has", "synthEarly"], ["!", ["has", "synthBuried"]]]}
+              paint={{
+                "circle-radius": isMobile ? 14 : 10,
+                "circle-color": "#000000",
+                "circle-opacity": 0.005,
+              }}
+            />
             <Layer
               id="station-hit-area-cluster"
               type="circle"
-              minzoom={9}
-              filter={["has", "isClusterMember"]}
+              minzoom={11}
+              filter={["all", ["has", "isClusterMember"], ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]]]}
+              paint={{
+                "circle-radius": isMobile ? 14 : 10,
+                "circle-color": "#000000",
+                "circle-opacity": 0.005,
+              }}
+            />
+            <Layer
+              id="station-hit-area-cluster-buried"
+              type="circle"
+              minzoom={12}
+              filter={["all", ["has", "isClusterMember"], ["has", "synthBuried"]]}
               paint={{
                 "circle-radius": isMobile ? 14 : 10,
                 "circle-color": "#000000",
