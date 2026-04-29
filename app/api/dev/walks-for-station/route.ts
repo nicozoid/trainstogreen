@@ -115,7 +115,7 @@ type WalkPayload = {
 //                       further sorted among themselves by subtype —
 //                       the SOURCE_TYPES dropdown order no longer
 //                       affects position)
-//   4. ratingTier      (4, 3, 2, unrated, 1 — Flawed explicitly demoted)
+//   4. ratingTier      (4, 3, 2, 1, unrated — any rating beats unrated)
 //   5. distanceScore   (|distanceKm - IDEAL_LENGTH_KM| — closest to
 //                       ideal first; missing distance sorts last)
 //   6. pageTitle       (deterministic tiebreaker)
@@ -127,8 +127,8 @@ const RATING_TIERS: Record<string, number> = {
   "4": 0,
   "3": 1,
   "2": 2,
-  unrated: 3,
-  "1": 4,
+  "1": 3,
+  unrated: 4,
 }
 function ratingTier(rating: number | null | undefined): number {
   if (rating == null) return RATING_TIERS.unrated
@@ -227,7 +227,7 @@ export async function GET(req: NextRequest) {
     const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
     const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
     if (ma !== mb) return ma - mb
-    // 4. Rating tier (4 → 3 → 2 → unrated → 1).
+    // 4. Rating tier (4 → 3 → 2 → 1 → unrated).
     const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
     if (ta !== tb) return ta - tb
     // 5. Distance proximity to IDEAL_LENGTH_KM — closest first; missing last.
