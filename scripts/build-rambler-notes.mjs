@@ -205,6 +205,9 @@ function formatTerrainTags(raw) {
     .map((s) => s.replace(/[.!?]+$/, "").trim())
     .filter(Boolean)
   if (items.length === 0) return null
+  // Auto-capitalise the first item so admin-entered lowercase renders
+  // as a proper sentence opener in the walk prose.
+  items[0] = items[0][0].toUpperCase() + items[0].slice(1)
   if (items.length === 1) return `${items[0]}.`
   if (items.length === 2) return `${items[0]} and ${items[1]}.`
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}.`
@@ -401,7 +404,8 @@ function formatBestSeasons(months) {
 // existing punctuation before appending.
 function withPeriod(s) {
   const trimmed = s.trim().replace(/[.!?]+$/, "")
-  return trimmed ? `${trimmed}.` : ""
+  if (!trimmed) return ""
+  return `${trimmed[0].toUpperCase()}${trimmed.slice(1)}.`
 }
 
 // Compose the markdown string for one walk variant attached to a station.
