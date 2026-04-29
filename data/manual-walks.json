@@ -128,5 +128,47 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-ml6i": {
+    "slug": "manual-ml6i",
+    "title": "Manual COH Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "COH",
+        "endStation": "COH",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "",
+        "id": "ml6i",
+        "suffix": "",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-29T19:48:00.091Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
