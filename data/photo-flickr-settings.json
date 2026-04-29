@@ -992,5 +992,16 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "0.1880389,51.0462372": {
+    "name": "Crowborough",
+    "custom": {
+      "includeTags": [
+        "crowborough"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
