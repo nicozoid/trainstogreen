@@ -297,6 +297,12 @@ type StationModalProps = {
   hasIssue?: boolean
   /** Admin-only: toggles the hasIssue flag for this station. */
   onToggleIssue?: (hasIssue: boolean) => void
+  /** Admin-only: true when the station is flagged as a placemark — its
+   *  name-label is forced visible at zoom 8+ regardless of rating. No
+   *  visible effect when the rating already surfaces the label at zoom ≤ 8. */
+  isPlacemark?: boolean
+  /** Admin-only: toggles the placemark flag for this station. */
+  onTogglePlacemark?: (isPlacemark: boolean) => void
   /** Admin-only: called after a structured walk edit saves + rebuilds.
    *  Parent should refetch station-notes so the updated ramblerNote
    *  flows back into this overlay via the `ramblerNote` prop. */
@@ -763,6 +769,8 @@ export default function StationModal({
   isLondonHome = false,
   hasIssue = false,
   onToggleIssue,
+  isPlacemark = false,
+  onTogglePlacemark,
   onWalkSaved,
 }: StationModalProps) {
   // allPhotos = full buffer from Flickr (more than we display, for replacements)
@@ -1913,6 +1921,30 @@ export default function StationModal({
                       strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="12" y1="4" x2="12" y2="14" />
                       <line x1="12" y1="19" x2="12" y2="19.01" />
+                    </svg>
+                  }
+                />
+              )}
+
+              {/* Placemark toggle — admin-only, station-global. Forces the
+                  name-label visible at zoom 8+ even if the station's rating
+                  would normally hide it until zoom 9 (rating 2) or 10 (unrated).
+                  No visible effect when the rating already surfaces a label by
+                  zoom 8 (rating 4 / 3 / 1). */}
+              {onTogglePlacemark && (
+                <DevActionButton
+                  label={isPlacemark ? "Unplacemark" : "Placemark"}
+                  active={isPlacemark}
+                  onClick={() => onTogglePlacemark(!isPlacemark)}
+                  icon={
+                    /* Map-pin glyph — highlighted primary when active. */
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                      stroke={isPlacemark ? 'var(--primary)' : 'currentColor'}
+                      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      {/* Teardrop pin body */}
+                      <path d="M12 21s-7-7.5-7-12a7 7 0 0 1 14 0c0 4.5-7 12-7 12z" />
+                      {/* Inner dot */}
+                      <circle cx="12" cy="9" r="2.5" />
                     </svg>
                   }
                 />

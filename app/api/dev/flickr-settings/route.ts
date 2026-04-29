@@ -11,8 +11,9 @@ const FILE_PATH = "data/photo-flickr-settings.json"
 //
 // The algo itself (landscapes / hikes / station / custom) is no longer stored
 // per-station — the default is decided by the client based on cluster/excluded
-// membership (always landscapes except for Central London terminals + excluded
-// stations, which default to station). Admins edit only the custom tag config.
+// membership (always landscapes except for synthetic-cluster members and
+// excluded stations, which default to station). Admins edit only the custom
+// tag config.
 export type FlickrSort = "relevance" | "interestingness-desc"
 export type FlickrCustomSettings = {
   name?: string

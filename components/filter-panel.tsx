@@ -275,8 +275,8 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster") => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
@@ -1398,7 +1398,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1419,6 +1419,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     issue button. The flag is station-global, so the same
                     set shows regardless of which primary origin is selected. */}
                 <option value="issues">Issues</option>
+                {/* "Placemark" — keeps only stations flagged via the admin
+                    placemark button. Station-global like Issues. Lets the
+                    admin audit the placemark set in one shot. */}
+                <option value="placemark">Placemark</option>
                 {/* "No travel data" — keeps only stations whose
                     `londonMinutes` is null (no journey time from any
                     primary origin). Selecting this option auto-opens
