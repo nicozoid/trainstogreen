@@ -1,9 +1,6 @@
 import { NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
-import {
-  PRIMARY_ORIGIN_CLUSTER,
-  FRIEND_ORIGIN_CLUSTER,
-} from "@/lib/clusters"
+import { ALL_CLUSTERS } from "@/lib/clusters"
 
 // Sources of walk records. Mirrors WALKS_FILES in walks-for-station/route.ts.
 const WALKS_FILES = [
@@ -129,11 +126,11 @@ export async function GET() {
   const coordToCrs = new Map<string, string>()
   for (const [crs, ck] of crsToCoord) coordToCrs.set(ck, crs)
 
-  const allClusters: Record<string, string[]> = {
-    ...PRIMARY_ORIGIN_CLUSTER,
-    ...FRIEND_ORIGIN_CLUSTER,
-  }
-  for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+  // Iterate every cluster — destination-only ones (e.g. Windsor) also
+  // need their rating aggregated from member walks so the synthetic's
+  // diamond on the map carries the right rating tier.
+  for (const [synthCoord, def] of Object.entries(ALL_CLUSTERS)) {
+    const memberCoords = def.members
     let max: number | null = null
     let sawAnyWalk = false
     let sawRated1 = false

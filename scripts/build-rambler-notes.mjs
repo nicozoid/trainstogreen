@@ -39,13 +39,27 @@ const EXTRA_WALKS_PATHS = [
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // Synthetic-cluster topology — read from lib/clusters-data.json so this
-// .mjs script and the .ts client both share one definition.
+// .mjs script and the .ts client both share one definition. The JSON
+// holds a unified CLUSTERS map keyed by anchor coord; we derive the
+// legacy primary/friend/displayName shapes here so the rest of this
+// script (which predates the unified shape) stays unchanged.
 const CLUSTERS_PATH = join(PROJECT_ROOT, "lib", "clusters-data.json")
-const {
-  PRIMARY_ORIGIN_CLUSTER,
-  FRIEND_ORIGIN_CLUSTER,
-  SYNTHETIC_DISPLAY_NAMES,
-} = JSON.parse(readFileSync(CLUSTERS_PATH, "utf-8"))
+const { CLUSTERS } = JSON.parse(readFileSync(CLUSTERS_PATH, "utf-8"))
+const PRIMARY_ORIGIN_CLUSTER = Object.fromEntries(
+  Object.entries(CLUSTERS).filter(([, d]) => d.isPrimaryOrigin).map(([k, d]) => [k, d.members]),
+)
+const FRIEND_ORIGIN_CLUSTER = Object.fromEntries(
+  Object.entries(CLUSTERS).filter(([, d]) => d.isFriendOrigin).map(([k, d]) => [k, d.members]),
+)
+const SYNTHETIC_DISPLAY_NAMES = Object.fromEntries(
+  Object.entries(CLUSTERS).map(([k, d]) => [k, d.displayName]),
+)
+// Every cluster's members keyed by anchor — used by the synthetic
+// aggregation pass so destination-only clusters (no origin flags)
+// also get their members' walks rolled up under the anchor.
+const ALL_CLUSTER_MEMBERS = Object.fromEntries(
+  Object.entries(CLUSTERS).map(([k, d]) => [k, d.members]),
+)
 // Organisation registry — slug → { name, url }. Used to render the
 // human-readable "<Org> walk" link text in the relatedSource clause.
 const SOURCES_PATH = join(PROJECT_ROOT, "data", "sources.json")
@@ -804,8 +818,10 @@ function buildRamblerNotes(args) {
   // overall, picked using identical curation rules. Synthetics are
   // looped through alongside real stations so they get the same
   // perStation treatment downstream.
-  const allClusters = { ...PRIMARY_ORIGIN_CLUSTER, ...FRIEND_ORIGIN_CLUSTER }
-  for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+  // Iterate every cluster — destination-only ones (no origin flags) also
+  // need their members' walks aggregated under the anchor, otherwise the
+  // cluster modal renders no walks even though members have plenty.
+  for (const [synthCoord, memberCoords] of Object.entries(ALL_CLUSTER_MEMBERS)) {
     const aggregatedParts = []
     let aggregatedHiked = false
     let aggregatedKomoot = false

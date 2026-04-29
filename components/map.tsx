@@ -18,6 +18,7 @@ import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
 import {
   PRIMARY_ORIGIN_CLUSTER,
   FRIEND_ORIGIN_CLUSTER,
+  ALL_CLUSTERS,
   ALL_CLUSTER_MEMBER_COORDS,
   MEMBER_TO_SYNTHETIC,
   ALL_SYNTHETIC_COORDS,
@@ -1869,15 +1870,14 @@ export default function HikeMap() {
   // so `new Map()` here resolves to the React component and blows up.
   const clusterMemberToPrimary = useMemo(() => {
     const out: Record<string, string> = {}
-    for (const [primary, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
-      // Synthetic clusters (Central London, Stratford) are now ALSO
-      // included so picking a member station via search redirects to
-      // the synthetic. Previously this map excluded synthetic clusters
-      // — a search for "Kings Cross" used to land on KGX as a custom
-      // primary and route via the wrong path (no public-primary
-      // coverage). Redirecting to Central London routes the cluster
-      // properly via terminal-matrix.
-      for (const m of members) out[m] = primary
+    // Iterate every cluster — including destination-only ones (Windsor,
+    // Maidstone, Folkestone, Canterbury). Member-name-to-cluster
+    // redirect is intrinsic to clustering: typing "Windsor and Eton
+    // Riverside" in primary search collapses to the Windsor cluster row
+    // even though Windsor isn't yet a primary origin (it'll show as
+    // "Coming soon" until promoted).
+    for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
+      for (const m of def.members) out[m] = anchor
     }
     return out
   }, [])
@@ -2618,9 +2618,16 @@ export default function HikeMap() {
       // synthetic — the cluster routing covers it correctly, whereas
       // KGX as a standalone custom primary had degraded coverage.
       const primaryCoord = clusterMemberToPrimary[coord] ?? coord
-      const hasCluster = !!PRIMARY_ORIGIN_CLUSTER[primaryCoord]
+      // Cluster-membership is read from ALL_CLUSTERS so destination-
+      // only clusters (Windsor, Maidstone…) collapse member rows under
+      // the cluster's displayName, just like primary-side clusters do.
+      // Falls back to PRIMARY_ORIGINS' menuName when present (preserves
+      // the "Central London" wording for the London cluster).
+      const hasCluster = !!ALL_CLUSTERS[primaryCoord]
       const displayLabel = hasCluster
-        ? (PRIMARY_ORIGINS[primaryCoord]?.menuName ?? stationName)
+        ? (PRIMARY_ORIGINS[primaryCoord]?.menuName
+          ?? ALL_CLUSTERS[primaryCoord]?.displayName
+          ?? stationName)
         : stationName
       // Check primaryCoord first so cluster members (St Pancras, Waterloo
       // East, etc.) inherit their parent's data status — picking St Pancras
@@ -2635,14 +2642,23 @@ export default function HikeMap() {
         hasData,
       })
     }
-    // Synthetic anchors (Central London, Stratford) aren't in OSM but
-    // we still want them findable by typing their name directly. Add
-    // one entry per non-admin synthetic in PRIMARY_ORIGINS — the
-    // dedupe-by-primaryCoord step in matchingStations collapses any
-    // overlap with cluster-member rows.
+    // Synthetic anchors (Central London, Stratford, Windsor, Maidstone…)
+    // aren't in OSM but we still want them findable by typing their
+    // name directly. The dedupe-by-primaryCoord step in matchingStations
+    // collapses any overlap with cluster-member rows.
+    //
+    // Iterates EVERY cluster, not just primary-flagged ones, so
+    // destination-only clusters (Windsor, Maidstone, Folkestone,
+    // Canterbury) also appear as findable rows. Their hasData stays
+    // false — the dropdown renders them as "Coming soon" disabled rows
+    // until they're promoted to primary origins. Bypasses the London
+    // bbox filter above, which is critical for clusters like Maidstone
+    // and Folkestone whose member coords sit east of the bbox.
+    const seenAnchors = new Set<string>()
     for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
       if (!def?.isSynthetic) continue
       if (def.adminOnly) continue
+      seenAnchors.add(coord)
       const label = def.menuName ?? def.canonicalName ?? coord
       out.push({
         coord,
@@ -2650,10 +2666,24 @@ export default function HikeMap() {
         crs: "",
         primaryCoord: coord,
         displayLabel: label,
-        // Synthetics are always usable as primaries — the cluster covers
-        // routing via terminal-matrix even if the synthetic coord
-        // itself isn't in origin-routes.
+        // Synthetics in PRIMARY_ORIGINS are fully usable as primaries —
+        // the cluster covers routing via terminal-matrix even if the
+        // synthetic coord itself isn't in origin-routes.
         hasData: true,
+      })
+    }
+    for (const [coord, def] of Object.entries(ALL_CLUSTERS)) {
+      if (seenAnchors.has(coord)) continue
+      out.push({
+        coord,
+        name: def.displayName, // searchable via "windsor" / "maidstone"
+        crs: "",
+        primaryCoord: coord,
+        displayLabel: def.displayName,
+        // Destination-only clusters can't act as primaries yet — render
+        // disabled so the user knows the cluster exists but isn't
+        // pickable as a home station.
+        hasData: false,
       })
     }
     return out
@@ -2678,15 +2708,12 @@ export default function HikeMap() {
   // its own row instead of collapsing under "Central London".
   const friendClusterMemberToPrimary = useMemo(() => {
     const map: Record<string, string> = {}
-    for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
-      for (const m of members) map[m] = anchor
-    }
-    for (const [anchor, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
-      // Only include synthetic primaries — non-synthetic primary
-      // clusters don't exist (every primary cluster anchor is
-      // synthetic anyway), but the guard keeps the intent explicit.
-      if (!PRIMARY_ORIGINS[anchor]?.isSynthetic) continue
-      for (const m of members) map[m] = anchor
+    // Iterate every cluster — friend, primary, or destination-only.
+    // Member-name-to-anchor redirect must work uniformly so the friend
+    // dropdown collapses cluster members under their anchor regardless
+    // of selectability.
+    for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
+      for (const m of def.members) map[m] = anchor
     }
     return map
   }, [])
@@ -2717,7 +2744,13 @@ export default function HikeMap() {
     // so picking a London-cluster member still routes through
     // friend-side journey data (or shows "Coming soon" if missing).
     const syntheticAnchorMenuName = (anchor: string): string | undefined =>
-      FRIEND_ORIGINS[anchor]?.menuName ?? PRIMARY_ORIGINS[anchor]?.menuName
+      FRIEND_ORIGINS[anchor]?.menuName
+      ?? PRIMARY_ORIGINS[anchor]?.menuName
+      // Destination-only clusters aren't in either origin map, so fall
+      // through to the cluster's displayName from the registry. Without
+      // this, member rows for Windsor/Maidstone/etc. would display as
+      // "Windsor and Eton Riverside" instead of collapsing to "Windsor".
+      ?? ALL_CLUSTERS[anchor]?.displayName
     const out: SearchableStation[] = []
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
@@ -2783,6 +2816,23 @@ export default function HikeMap() {
     for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
       if (!def?.isSynthetic) continue
       addSyntheticEntry(coord, def, false)
+    }
+    // Destination-only clusters (Windsor, Maidstone, Folkestone,
+    // Canterbury) aren't in either origin map, but still need to be
+    // findable in friend search and collapse member rows under their
+    // anchor. hasData=false → "Coming soon" disabled row.
+    for (const [coord, def] of Object.entries(ALL_CLUSTERS)) {
+      if (seenSyntheticAnchors.has(coord)) continue
+      if (FRIEND_ORIGINS[coord] || PRIMARY_ORIGINS[coord]) continue // already handled
+      seenSyntheticAnchors.add(coord)
+      out.push({
+        coord,
+        name: def.displayName,
+        crs: "",
+        primaryCoord: coord,
+        displayLabel: def.displayName,
+        hasData: false,
+      })
     }
     return out
   }, [baseStations, friendClusterMemberToPrimary])
@@ -5091,11 +5141,12 @@ export default function HikeMap() {
     // only filter behave intuitively. The journey paragraph in the
     // overlay reads from these too.
     const synthFeatures: typeof routedStations.features = []
-    const allClusters: Record<string, string[]> = {
-      ...PRIMARY_ORIGIN_CLUSTER,
-      ...FRIEND_ORIGIN_CLUSTER,
-    }
-    for (const [synthCoord, memberCoords] of Object.entries(allClusters)) {
+    // Iterate every cluster — including destination-only ones (no
+    // origin flags) — so they all flow through the same virtual-
+    // feature pipeline. Windsor for example has no origin flags yet
+    // but still needs its anchor to render and be clickable.
+    for (const [synthCoord, def] of Object.entries(ALL_CLUSTERS)) {
+      const memberCoords = def.members
       // Skip the active primary/friend — their hexagon/square is
       // already rendered, and we don't want a duplicate icon on top.
       if (synthCoord === primaryOrigin) continue
@@ -5713,21 +5764,16 @@ export default function HikeMap() {
       properties: Record<string, unknown>
     }
     const iconFeatures: PointFeature[] = []
-    // Combined synthetic cluster source — every member of every synthetic
-    // PRIMARY_ORIGIN_CLUSTER + FRIEND_ORIGIN_CLUSTER. Anchor coord and
+    // Combined synthetic cluster source — every member of every cluster
+    // (primary, friend, or destination-only). Anchor coord and
     // displayName tag along so satellite labels can disambiguate against
     // their cluster's own display label (e.g. SRA cleans to "Stratford"
-    // which collides with the Stratford anchor's label).
+    // which collides with the Stratford anchor's label). Iterates the
+    // full registry so destination-only clusters (e.g. Windsor) also
+    // contribute their member diamonds.
     const clusters: { anchor: string; displayName: string; members: string[] }[] = []
-    for (const [anchor, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
-      const def = PRIMARY_ORIGINS[anchor]
-      if (!def) continue
-      clusters.push({ anchor, displayName: def.displayName, members })
-    }
-    for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
-      const def = FRIEND_ORIGINS[anchor]
-      if (!def?.isSynthetic) continue
-      clusters.push({ anchor, displayName: def.displayName, members })
+    for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
+      clusters.push({ anchor, displayName: def.displayName, members: def.members })
     }
     for (const { anchor, displayName, members } of clusters) {
       for (const coord of members) {
@@ -7367,6 +7413,10 @@ export default function HikeMap() {
           ?? PRIMARY_ORIGINS[anchorCoord]?.displayName
           ?? FRIEND_ORIGINS[anchorCoord]?.overlayName
           ?? FRIEND_ORIGINS[anchorCoord]?.displayName
+          // Final fallback: destination-only clusters (e.g. Windsor)
+          // aren't in the origin maps, but every cluster has a
+          // displayName in SYNTHETIC_DISPLAY_NAMES.
+          ?? SYNTHETIC_DISPLAY_NAMES[anchorCoord]
           ?? null)
         : null
       if (anchorCoord && anchorName) {
@@ -9395,6 +9445,17 @@ export default function HikeMap() {
                         // state, not a feature property.
                         devExcludeActive
                           ? ["case",
+                              // SYNTH: virtual cluster anchors (Windsor,
+                              // Stratford, Birmingham, Central London…).
+                              // These are centroid pseudo-features built
+                              // in the `stations` memo, not real stations,
+                              // so they have no CRS — but they're
+                              // categorically different from "missing CRS"
+                              // non-NR stations and deserve their own tag.
+                              // Checked first so the NULL branch below
+                              // never matches a synthetic.
+                              ["==", ["get", "isSynthetic"], true],
+                              ["concat", "SYNTH ", ["get", "name"]],
                               // Non-NR detection: no CRS, OR a Z-prefix
                               // code that isn't on our allowlist of Z-prefix
                               // codes that ARE actually National Rail
@@ -9764,11 +9825,33 @@ export default function HikeMap() {
             originY={displayStation.screenY}
             devMode={devExcludeActive}
             adminMode={devExcludeActive}
-            stationCrs={
-              stations?.features.find(
+            stationCrs={(() => {
+              // Real-station CRS (most cases). Synthetic features have
+              // no ref:crs, so this stays undefined for cluster anchors.
+              const own = stations?.features.find(
                 (x) => (x.properties as { coordKey?: string } | undefined)?.coordKey === displayStation.coordKey,
               )?.properties?.["ref:crs"] as string | undefined
-            }
+              if (own) return own
+              // For synthetic clusters, fall back to the first member's
+              // CRS. WalksAdminPanel uses this as the default for the
+              // create-walk picker AND as the gate that decides whether
+              // the panel renders at all (in photo-overlay.tsx). Without
+              // this fallback, admins can't edit walks via a cluster
+              // overlay — the panel never mounts. extraCrsCodes still
+              // contributes ALL members so every member's walks list
+              // alongside the default.
+              if (ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) {
+                const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
+                for (const c of memberCoords) {
+                  const f = baseStations?.features.find(
+                    (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c,
+                  )
+                  const crs = f?.properties?.["ref:crs"] as string | undefined
+                  if (crs) return crs
+                }
+              }
+              return undefined
+            })()}
             isLondonHome={primaryOrigin === "-0.1269,51.5196"}
             hasIssue={issueStations.has(displayStation.coordKey)}
             onToggleIssue={(hasIssue: boolean) => handleToggleIssue(
@@ -9848,10 +9931,10 @@ export default function HikeMap() {
             // user-facing cluster members).
             clusterMemberNames={(() => {
               if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
-              const memberCoords =
-                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? []
+              // Lookup via the unified cluster registry so destination-
+              // only clusters (no origin flags) resolve their members
+              // the same way primary/friend clusters do.
+              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
               const names: string[] = []
               const seen = new Set<string>()
               for (const c of memberCoords) {
@@ -9876,10 +9959,7 @@ export default function HikeMap() {
             // per-member Komoot URLs.
             clusterMembers={(() => {
               if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
-              const memberCoords =
-                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? []
+              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
               const out: { name: string; lat: number; lng: number }[] = []
               const seen = new Set<string>()
               for (const c of memberCoords) {
@@ -9903,10 +9983,7 @@ export default function HikeMap() {
             // panel; the synthetic itself has no CRS.
             clusterMemberCrsCodes={(() => {
               if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
-              const memberCoords =
-                PRIMARY_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? FRIEND_ORIGIN_CLUSTER[displayStation.coordKey]
-                ?? []
+              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
               const out: string[] = []
               for (const c of memberCoords) {
                 const f = baseStations?.features.find(
