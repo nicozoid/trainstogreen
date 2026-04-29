@@ -819,6 +819,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 // Disabled 'Coming soon' row — same treatment as the
                 // primary search dropdown. Tooltip on desktop hover;
                 // inline suffix on mobile (where tooltips don't fire).
+                // Use displayLabel (e.g. "Central London") rather than
+                // name (e.g. "St Pancras International") so cluster
+                // members fold under their synthetic anchor in the
+                // disabled state too — matches the available-row
+                // rendering below.
                 return (
                   <Tooltip key={s.primaryCoord}>
                     <TooltipTrigger asChild>
@@ -828,7 +833,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                           onSelect={(e) => e.preventDefault()}
                           className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
                         >
-                          <span>{s.name}</span>
+                          <span>{s.displayLabel}</span>
                           <span className="text-xs text-muted-foreground/70">
                             Coming soon
                           </span>
