@@ -298,6 +298,13 @@ type OriginDef = {
    */
   mobileDisplayName?: string
   /**
+   * Optional override for the modal title when this origin's overlay is
+   * opened (e.g. London → "London termini"). Falls back to
+   * displayName when undefined. Doesn't affect the filter trigger, the
+   * map label, or the dropdown — only the photo overlay's heading.
+   */
+  overlayName?: string
+  /**
    * If true, only visible in the dropdown when admin mode is active. Used for
    * origins whose journey data is partial (e.g. RTT-only origins where stations
    * off the origin's own lines have no journey data yet).
@@ -341,7 +348,7 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // canonicalName "London" matches the entry we'll add to londonTerminals
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
-  "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", isSynthetic: true },
+  "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", overlayName: "London termini", isSynthetic: true },
   // Stratford synthetic — anchor at the midpoint between SRA and SFA so
   // the cluster reads as a balanced pair on the map (not pinned to one
   // station). The synthetic coord isn't in origin-routes.json, but the
@@ -2664,10 +2671,21 @@ export default function HikeMap() {
   // clusterMemberToPrimary on the friend side so picking a cluster
   // member (e.g. Birmingham Moor Street, Cardiff Queen Street) via
   // friend search activates the parent cluster rather than the
-  // individual station.
+  // individual station. Also includes the synthetic-PRIMARY clusters
+  // (Central London, Stratford) so their cluster members fold under
+  // the synthetic anchor in friend search the same way Birmingham's
+  // do — without this, "St Pancras" in friend search would appear as
+  // its own row instead of collapsing under "Central London".
   const friendClusterMemberToPrimary = useMemo(() => {
     const map: Record<string, string> = {}
     for (const [anchor, members] of Object.entries(FRIEND_ORIGIN_CLUSTER)) {
+      for (const m of members) map[m] = anchor
+    }
+    for (const [anchor, members] of Object.entries(PRIMARY_ORIGIN_CLUSTER)) {
+      // Only include synthetic primaries — non-synthetic primary
+      // clusters don't exist (every primary cluster anchor is
+      // synthetic anyway), but the guard keeps the intent explicit.
+      if (!PRIMARY_ORIGINS[anchor]?.isSynthetic) continue
       for (const m of members) map[m] = anchor
     }
     return map
@@ -2690,6 +2708,16 @@ export default function HikeMap() {
       hasData: boolean
     }
     const friendAnchors = new Set(Object.keys(FRIEND_ORIGINS))
+    // Synthetic primaries (Central London, Stratford) aren't in
+    // FRIEND_ORIGINS but they ARE valid synthetic anchors that
+    // friend-search rows should collapse under, mirroring how
+    // synthetic friends (Birmingham, Manchester) work. Treat any
+    // synthetic anchor — primary or friend — as a known anchor for
+    // the displayLabel lookup. hasData stays gated on FRIEND_ORIGINS
+    // so picking a London-cluster member still routes through
+    // friend-side journey data (or shows "Coming soon" if missing).
+    const syntheticAnchorMenuName = (anchor: string): string | undefined =>
+      FRIEND_ORIGINS[anchor]?.menuName ?? PRIMARY_ORIGINS[anchor]?.menuName
     const out: SearchableStation[] = []
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
@@ -2701,13 +2729,13 @@ export default function HikeMap() {
       const stationName = f.properties.name as string
       // Cluster members redirect to their anchor for selection. The
       // displayed label still uses the cluster's menuName (e.g.
-      // 'Birmingham') rather than the station's own OSM name (e.g.
-      // 'Birmingham Moor Street') so search results dedupe naturally.
+      // 'Birmingham', 'Central London') rather than the station's
+      // own OSM name (e.g. 'Birmingham Moor Street', 'St Pancras')
+      // so search results dedupe naturally.
       const anchorCoord = friendClusterMemberToPrimary[coord] ?? coord
+      const anchorMenuName = syntheticAnchorMenuName(anchorCoord)
       const hasData = friendAnchors.has(anchorCoord)
-      const displayLabel = hasData && FRIEND_ORIGINS[anchorCoord]?.menuName
-        ? (FRIEND_ORIGINS[anchorCoord]?.menuName as string)
-        : stationName
+      const displayLabel = anchorMenuName ?? stationName
       out.push({
         coord,
         name: stationName,
@@ -2716,6 +2744,45 @@ export default function HikeMap() {
         displayLabel,
         hasData,
       })
+    }
+    // Synthetic anchors (Birmingham, Manchester, Edinburgh, Central
+    // London, Stratford, …) aren't in OSM but we still want them
+    // findable by typing their display name directly. Mirrors the
+    // primary-search loop above — without these entries, a user
+    // typing "Birmingham" or "Central London" relies on a cluster
+    // member's OSM coord matching the cluster JSON exactly, which
+    // can't be guaranteed. With them, the synthetic itself is a
+    // first-class search hit and any cluster-member matches collapse
+    // to the same primaryCoord during dedupe.
+    //
+    // Includes synthetics from BOTH FRIEND_ORIGINS (Birmingham &c.)
+    // and PRIMARY_ORIGINS (Central London, Stratford) — the primary-
+    // only synthetics surface in friend search the same way friend
+    // synthetics do. hasData is gated on FRIEND_ORIGINS so primary-
+    // only synthetics render as "Coming soon" until they're wired up
+    // as friends with their own journey-data file.
+    const seenSyntheticAnchors = new Set<string>()
+    const addSyntheticEntry = (coord: string, def: OriginDef, hasData: boolean) => {
+      if (def.adminOnly) return
+      if (seenSyntheticAnchors.has(coord)) return
+      seenSyntheticAnchors.add(coord)
+      const label = def.menuName ?? def.canonicalName ?? coord
+      out.push({
+        coord,
+        name: label,
+        crs: "",
+        primaryCoord: coord,
+        displayLabel: label,
+        hasData,
+      })
+    }
+    for (const [coord, def] of Object.entries(FRIEND_ORIGINS)) {
+      if (!def?.isSynthetic) continue
+      addSyntheticEntry(coord, def, true)
+    }
+    for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
+      if (!def?.isSynthetic) continue
+      addSyntheticEntry(coord, def, false)
     }
     return out
   }, [baseStations, friendClusterMemberToPrimary])
@@ -6934,11 +7001,10 @@ export default function HikeMap() {
       }
       // Cluster-diamond pulse — only mounted while a diamond is hovered.
       // Static diamonds render at 0.6×; the hovered one breathes between
-      // 0.6× (static size) at trough and 0.72× (+20%) at peak, so it
-      // never shrinks below the resting size and the growth is just
-      // enough to register as a hover indicator.
+      // 0.6× (static size) at trough and 0.8× at peak, so it never
+      // shrinks below the resting size while still reading as enlarged.
       if (map.getLayer("hovered-diamond-icon")) {
-        map.setLayoutProperty("hovered-diamond-icon", "icon-size", 0.6 + s * 0.12)
+        map.setLayoutProperty("hovered-diamond-icon", "icon-size", 0.6 + s * 0.2)
       }
       frame = requestAnimationFrame(loop)
     }
@@ -6979,8 +7045,14 @@ export default function HikeMap() {
     // SYNTHETIC's coord (so its icon pulses at the centroid) and stamp
     // the diamond on a dedicated `hoveredDiamond` state so the diamond
     // itself can grow + pulse via its own dedicated layer.
-    const synthAnchor = feature.properties?.synthAnchor as string | undefined
-    if (feature.properties?.isTerminus && synthAnchor) {
+    // Resolve the synthetic anchor — diamond features carry it directly
+    // as `synthAnchor`, but station-hit-area-cluster features (which
+    // Mapbox often returns first because their layer renders on top)
+    // only have `isClusterMember`. Fall back to the MEMBER_TO_SYNTHETIC
+    // lookup so both paths enter the diamond hover branch.
+    const synthAnchor = (feature.properties?.synthAnchor as string | undefined)
+      ?? (feature.properties?.isClusterMember ? MEMBER_TO_SYNTHETIC[coordKey] : undefined)
+    if (synthAnchor) {
       const [synthLngStr, synthLatStr] = synthAnchor.split(",")
       const synthLng = parseFloat(synthLngStr)
       const synthLat = parseFloat(synthLatStr)
@@ -6994,11 +7066,22 @@ export default function HikeMap() {
       const synthFeat = stations?.features.find(
         (f) => (f.properties as { coordKey?: string }).coordKey === synthAnchor
       )
+      // The synthetic feature in `stations` is built without a `rating`
+      // — that property is stamped later in allStationsWithRatings.
+      // Pull it from the `ratings` state directly so the hover icon
+      // matches the static one (e.g. London = hexagon for rating 2).
+      // Without this, resolveStationIconImage sees no rating and
+      // returns "icon-unrated" — the pulse renders as a circle on top
+      // of the static hexagon.
+      const synthRating = ratings[synthAnchor]
+      const synthPropsForIcon = synthRating != null
+        ? { ...(synthFeat?.properties ?? {}), rating: synthRating }
+        : (synthFeat?.properties ?? undefined)
       const synthIconImage = synthAnchor === primaryOrigin
         ? "icon-london"
         : synthAnchor === friendOrigin
         ? "icon-origin"
-        : resolveStationIconImage(synthFeat?.properties ?? undefined)
+        : resolveStationIconImage(synthPropsForIcon)
       setHovered({ lng: synthLng, lat: synthLat, coordKey: synthAnchor, iconImage: synthIconImage })
       setHoveredDiamond({
         coordKey,
@@ -7030,7 +7113,7 @@ export default function HikeMap() {
     // the journey polyline, neither are hiking destinations.
     if (feature.properties?.isLondon || feature.properties?.isTerminus) setRadiusPos(null)
     else setRadiusPos({ lng, lat })
-  }, [stations, primaryOrigin, friendOrigin])
+  }, [stations, primaryOrigin, friendOrigin, ratings])
 
   const handleMouseLeave = useCallback(() => {
     hoveredRef.current = null
@@ -7073,6 +7156,7 @@ export default function HikeMap() {
       // the candidate set so first-tap detection fires for diamonds
       // the same way it does for regular station hit areas.
       "london-terminus-icon", "london-terminus-origin-icon",
+      "cluster-diamond-icon", "station-hit-area-cluster",
     ]
       .filter((id) => !!map.getLayer(id))
     const features = candidateLayers.length
@@ -7227,7 +7311,7 @@ export default function HikeMap() {
         const aLat = parseFloat(aLatStr)
         const pt = mapRef.current?.project([aLng, aLat])
         setSelectedStation({
-          name: friendDef.displayName,
+          name: friendDef.overlayName ?? friendDef.displayName,
           lng: aLng,
           lat: aLat,
           minutes: 0,
@@ -7273,12 +7357,15 @@ export default function HikeMap() {
       feature.layer?.id === "london-terminus-icon" ||
       feature.layer?.id === "london-terminus-origin-icon" ||
       feature.layer?.id === "friend-cluster-icon" ||
-      feature.layer?.id === "cluster-diamond-icon"
+      feature.layer?.id === "cluster-diamond-icon" ||
+      feature.layer?.id === "station-hit-area-cluster"
     ) {
       const diamondCoord = feature.properties?.coordKey as string | undefined
       const anchorCoord = diamondCoord ? MEMBER_TO_SYNTHETIC[diamondCoord] : undefined
       const anchorName = anchorCoord
-        ? (PRIMARY_ORIGINS[anchorCoord]?.displayName
+        ? (PRIMARY_ORIGINS[anchorCoord]?.overlayName
+          ?? PRIMARY_ORIGINS[anchorCoord]?.displayName
+          ?? FRIEND_ORIGINS[anchorCoord]?.overlayName
           ?? FRIEND_ORIGINS[anchorCoord]?.displayName
           ?? null)
         : null
@@ -7329,7 +7416,7 @@ export default function HikeMap() {
         if (primaryDef?.isSynthetic) {
           const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
           setSelectedStation({
-            name: primaryDef.displayName,
+            name: primaryDef.overlayName ?? primaryDef.displayName,
             lng: originCoords.lng,
             lat: originCoords.lat,
             minutes: 0,
@@ -7397,7 +7484,7 @@ export default function HikeMap() {
       if (primaryDef?.isSynthetic) {
         const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
         setSelectedStation({
-          name: primaryDef.displayName,
+          name: primaryDef.overlayName ?? primaryDef.displayName,
           lng: originCoords.lng,
           lat: originCoords.lat,
           minutes: 0,
@@ -8664,6 +8751,16 @@ export default function HikeMap() {
               id="cluster-diamond-label"
               type="symbol"
               minzoom={12}
+              // Hide the static label for the currently-hovered diamond
+              // so the dedicated hover label below (which shows at any
+              // zoom 9+) doesn't double up with this one at zoom 12+.
+              filter={
+                hoveredDiamond
+                  /* eslint-disable @typescript-eslint/no-explicit-any */
+                  ? (["!=", ["get", "coordKey"], hoveredDiamond.coordKey] as any)
+                  /* eslint-enable @typescript-eslint/no-explicit-any */
+                  : true
+              }
               layout={{
                 "text-field": ["get", "name"],
                 "text-size": 11,
@@ -8707,6 +8804,29 @@ export default function HikeMap() {
                 "icon-size": 0.66,       // overwritten by the rAF loop (0.6 → 0.72)
                 "icon-allow-overlap": true,
                 "icon-ignore-placement": true,
+              }}
+            />
+            {/* Hover label — appears whenever the diamond is visible
+                (zoom 9+), matching the icon's minzoom. Below the static
+                label's threshold (zoom 12), this is the only label the
+                diamond gets, so hovering reveals the station name even
+                when other diamonds nearby are still unlabelled. */}
+            <Layer
+              id="hovered-diamond-label"
+              type="symbol"
+              minzoom={9}
+              layout={{
+                "text-field": ["get", "name"],
+                "text-size": 11,
+                "text-offset": [0, 1.2],
+                "text-anchor": "top",
+                "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+                "text-allow-overlap": true,
+              }}
+              paint={{
+                "text-color": labelColor,
+                "text-halo-color": haloColor,
+                "text-halo-width": 1.5,
               }}
             />
           </Source>
@@ -9613,7 +9733,9 @@ export default function HikeMap() {
             lng={displayStation.lng}
             // Title resolution:
             //   1. Click on the primary coord itself of a SYNTHETIC primary
-            //      (Central London) → use the cluster menuName as the title.
+            //      (Central London) → prefer overlayName (an explicit
+            //      modal-only override, e.g. "London termini"),
+            //      falling back to menuName, then to displayStation.name.
             //      There's no real station at the synthetic coord.
             //   2. Any other click → prefer the london-terminals.json
             //      canonical name if this station matches one. Rewrites
@@ -9629,7 +9751,9 @@ export default function HikeMap() {
             stationName={
               displayStation.coordKey === primaryOrigin &&
               !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
-                ? (PRIMARY_ORIGINS[primaryOrigin]?.menuName ?? displayStation.name)
+                ? (PRIMARY_ORIGINS[primaryOrigin]?.overlayName
+                    ?? PRIMARY_ORIGINS[primaryOrigin]?.menuName
+                    ?? displayStation.name)
                 // Shared helper resolves "London Waterloo East" → "Waterloo
                 // East" and similar canonicalisations via matchTerminal.
                 : cleanTerminusLabel(displayStation.name)
