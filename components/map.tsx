@@ -5265,37 +5265,18 @@ export default function HikeMap() {
           const coordKey = f.properties.coordKey as string
           const isBuried = buriedStations.has(coordKey)
           const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
-          const synthAnchor = isClusterMember ? MEMBER_TO_SYNTHETIC[coordKey] : undefined
-          const synthBuried = synthAnchor ? buriedStations.has(synthAnchor) : false
-          // synthEarly: cluster diamond should appear at zoom 9 (the
-          // "early" tier) instead of the default zoom 11. True when the
-          // parent synthetic is the active primary/friend, or when
-          // either the synth anchor or the diamond station itself is
-          // placemark-flagged. Buried wins over early (synthBuried check
-          // is applied at the layer-filter level, since a buried synth
-          // can also satisfy one of these conditions).
-          const synthEarly = isClusterMember && !!synthAnchor && (
-            synthAnchor === primaryOrigin
-            || (!!friendOrigin && synthAnchor === friendOrigin)
-            || placemarkStations.has(synthAnchor)
-            || placemarkStations.has(coordKey)
-          )
           const hadBuried = !!f.properties.isBuried
           const hadClusterMember = !!f.properties.isClusterMember
-          const hadSynthBuried = !!f.properties.synthBuried
-          const hadSynthEarly = !!f.properties.synthEarly
-          if (isBuried === hadBuried && isClusterMember === hadClusterMember && synthBuried === hadSynthBuried && synthEarly === hadSynthEarly) return f
+          if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
           const next: Record<string, unknown> = { ...f.properties }
           if (isBuried) next.isBuried = true; else delete next.isBuried
           if (isClusterMember) next.isClusterMember = true; else delete next.isClusterMember
-          if (synthBuried) next.synthBuried = true; else delete next.synthBuried
-          if (synthEarly) next.synthEarly = true; else delete next.synthEarly
           return { ...f, properties: next as typeof f.properties }
         }),
         ...synthFeatures,
       ],
     }
-  }, [routedStations, buriedStations, primaryOrigin, friendOrigin, placemarkStations])
+  }, [routedStations, buriedStations])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -5960,32 +5941,10 @@ export default function HikeMap() {
       icons: {
         type: "FeatureCollection" as const,
         features: allClusterDiamondFeatures.icons.features
-          .filter((f) => visibleSynthAnchors.has(f.properties.synthAnchor as string))
-          .map((f) => {
-            const anchor = f.properties.synthAnchor as string
-            const coordKey = f.properties.coordKey as string
-            const synthBuried = buriedStations.has(anchor)
-            // synthEarly mirrors the same rule applied to cluster
-            // members in the stations memo above: parent synth is the
-            // active primary/friend, or either the anchor or the
-            // diamond's own coord is placemark-flagged. Drives the
-            // zoom-9 diamond layer; without it diamonds default to
-            // zoom 11.
-            const synthEarly = (
-              anchor === primaryOrigin
-              || (!!friendOrigin && anchor === friendOrigin)
-              || placemarkStations.has(anchor)
-              || placemarkStations.has(coordKey)
-            )
-            if (!synthBuried && !synthEarly) return f
-            const props = { ...f.properties }
-            if (synthBuried) props.synthBuried = true
-            if (synthEarly) props.synthEarly = true
-            return { ...f, properties: props }
-          }),
+          .filter((f) => visibleSynthAnchors.has(f.properties.synthAnchor as string)),
       },
     }
-  }, [allClusterDiamondFeatures, visibleSynthAnchors, buriedStations, primaryOrigin, friendOrigin, placemarkStations])
+  }, [allClusterDiamondFeatures, visibleSynthAnchors])
 
   // Filter-change pill: flash "{N} stations" at viewport-centre when
   // the user toggles a filter input. Trigger is signature-based —
@@ -7066,6 +7025,208 @@ export default function HikeMap() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interTerminalLines])
 
+  // --- Cluster anchor lines on cluster hover ---
+  // When ANY element of a cluster is hovered (the anchor itself or any of
+  // its diamonds), draw a dotted line from each diamond to the cluster
+  // anchor. The line "grows" from the diamond outward over CLUSTER_ANCHOR_GROW_MS.
+  // Resolves the effective anchor coord, mapping the London marker's
+  // sentinel "london" coordKey back to primaryOrigin (which is what each
+  // diamond's synthAnchor property holds).
+  // STABLE string id of the currently hovered cluster's anchor (or null).
+  // The animation effect below depends on this string — NOT on the line-
+  // targets array — so it fires once per cluster-hover instead of once
+  // per render. Without this, every setState from the rAF would create
+  // a new memo reference and the effect cleanup would cancel the rAF
+  // before it could advance (feedback loop → progress stuck at 0).
+  const hoveredClusterAnchor = useMemo(() => {
+    if (!hovered) return null
+    const effective = hovered.coordKey === "london" ? primaryOrigin : hovered.coordKey
+    return ALL_SYNTHETIC_COORDS.has(effective) ? effective : null
+  }, [hovered, primaryOrigin])
+
+  const clusterAnchorLineTargets = useMemo(() => {
+    if (!hoveredClusterAnchor || !visibleClusterDiamondFeatures) return null
+    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(hoveredClusterAnchor)
+    if (!Number.isFinite(anchorLng) || !Number.isFinite(anchorLat)) return null
+    // Pair each cluster member's diamond coord with the anchor coord.
+    // Result is the FULL line — the rAF effect below interpolates the
+    // endpoint each frame to make the line appear to grow.
+    const pairs = visibleClusterDiamondFeatures.icons.features
+      .filter((f) => f.properties.synthAnchor === hoveredClusterAnchor)
+      .map((f) => {
+        const [lng, lat] = f.geometry.coordinates as [number, number]
+        return { from: [lng, lat] as [number, number], to: [anchorLng, anchorLat] as [number, number], coordKey: f.properties.coordKey as string }
+      })
+    return pairs.length > 0 ? pairs : null
+  }, [hoveredClusterAnchor, visibleClusterDiamondFeatures])
+
+  // Grow progress 0 → 1. Drives the line endpoint lerp below. Resets
+  // to 0 whenever the hovered cluster changes (so the lines re-grow
+  // for each new cluster), and snaps to 0 when no cluster is hovered.
+  const [clusterAnchorProgress, setClusterAnchorProgress] = useState(0)
+  const clusterAnchorAnimRef = useRef<number | null>(null)
+  const CLUSTER_ANCHOR_GROW_MS = 2000
+  useEffect(() => {
+    if (clusterAnchorAnimRef.current) {
+      cancelAnimationFrame(clusterAnchorAnimRef.current)
+      clusterAnchorAnimRef.current = null
+    }
+    if (!hoveredClusterAnchor) {
+      setClusterAnchorProgress(0)
+      return
+    }
+    setClusterAnchorProgress(0)
+    const start = performance.now()
+    function step(now: number) {
+      const t = Math.min((now - start) / CLUSTER_ANCHOR_GROW_MS, 1)
+      // ease-out cubic — quick start, gentle landing on the anchor
+      const eased = 1 - Math.pow(1 - t, 3)
+      setClusterAnchorProgress(eased)
+      if (t < 1) {
+        clusterAnchorAnimRef.current = requestAnimationFrame(step)
+      } else {
+        clusterAnchorAnimRef.current = null
+      }
+    }
+    clusterAnchorAnimRef.current = requestAnimationFrame(step)
+    return () => {
+      if (clusterAnchorAnimRef.current) cancelAnimationFrame(clusterAnchorAnimRef.current)
+    }
+  }, [hoveredClusterAnchor])
+
+  // Walking-route cache. Each entry holds the full polyline (real
+  // footpaths from Mapbox Directions) plus pre-computed cumulative
+  // distances along the path. The cumulative array makes the
+  // arc-length slicing in the build memo a binary-search-cheap
+  // operation per frame (vs. recomputing distances every render).
+  // Keyed "fromLng,fromLat|toLng,toLat" so each from→to pair is
+  // fetched once per session and reused on every subsequent hover.
+  // `Map` is shadowed by the react-map-gl Map import at the top of
+  // this file, so reach for the JS-builtin constructor explicitly.
+  const walkingRouteCacheRef = useRef<globalThis.Map<string, { coords: [number, number][]; cumLengths: number[]; total: number }>>(new globalThis.Map())
+  // Bumped when new routes land in the cache, forcing the
+  // clusterAnchorLines memo to recompute. Without this, the lines
+  // would keep using the straight-line fallback even after the
+  // walking polyline is available — useMemo can't see ref mutations.
+  const [walkingRouteCacheVersion, setWalkingRouteCacheVersion] = useState(0)
+
+  // Fetch walking routes from Mapbox Directions API when the hovered
+  // cluster changes. Misses are filled in parallel; hits are skipped.
+  // Falls back silently to straight-line in the build memo below if a
+  // request fails — the line still grows, just without the winding
+  // footpath shape. Uses the existing NEXT_PUBLIC_MAPBOX_TOKEN; this
+  // request is included in the standard Mapbox subscription.
+  useEffect(() => {
+    if (!hoveredClusterAnchor || !visibleClusterDiamondFeatures) return
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
+    if (!token) return
+    // Re-derive the from→to pairs here (rather than depending on the
+    // clusterAnchorLineTargets memo) so this effect's dep array stays
+    // a stable string and we don't refetch on every render.
+    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(hoveredClusterAnchor)
+    if (!Number.isFinite(anchorLng) || !Number.isFinite(anchorLat)) return
+    const pairs = visibleClusterDiamondFeatures.icons.features
+      .filter((f) => f.properties.synthAnchor === hoveredClusterAnchor)
+      .map((f) => {
+        const [lng, lat] = f.geometry.coordinates as [number, number]
+        return { from: [lng, lat] as [number, number], to: [anchorLng, anchorLat] as [number, number] }
+      })
+    const tasks = pairs
+      .map((p) => ({ ...p, key: `${p.from[0]},${p.from[1]}|${p.to[0]},${p.to[1]}` }))
+      .filter((t) => !walkingRouteCacheRef.current.has(t.key))
+    if (tasks.length === 0) return
+    let cancelled = false
+    Promise.all(tasks.map(async (t) => {
+      try {
+        // overview=full keeps every coord (default would simplify),
+        // which we want for the most authentic "winding footpath" feel.
+        const url = `https://api.mapbox.com/directions/v5/mapbox/walking/${t.from[0]},${t.from[1]};${t.to[0]},${t.to[1]}?geometries=geojson&overview=full&access_token=${token}`
+        const res = await fetch(url)
+        if (!res.ok) return null
+        const data = await res.json()
+        const coords = data.routes?.[0]?.geometry?.coordinates as [number, number][] | undefined
+        if (!coords || coords.length < 2) return null
+        // Pre-compute cumulative distances. Degree-space distance is
+        // fine for slicing — we just need RELATIVE lengths to find
+        // the point at progress * total. No geographic correction
+        // needed since we never expose the values, only their ratios.
+        const cumLengths: number[] = [0]
+        for (let i = 1; i < coords.length; i++) {
+          const dx = coords[i][0] - coords[i - 1][0]
+          const dy = coords[i][1] - coords[i - 1][1]
+          cumLengths.push(cumLengths[i - 1] + Math.sqrt(dx * dx + dy * dy))
+        }
+        return { key: t.key, route: { coords, cumLengths, total: cumLengths[cumLengths.length - 1] } }
+      } catch {
+        return null
+      }
+    })).then((results) => {
+      if (cancelled) return
+      let added = 0
+      for (const r of results) {
+        if (r) {
+          walkingRouteCacheRef.current.set(r.key, r.route)
+          added++
+        }
+      }
+      if (added > 0) setWalkingRouteCacheVersion((v) => v + 1)
+    })
+    return () => { cancelled = true }
+  }, [hoveredClusterAnchor, visibleClusterDiamondFeatures])
+
+  // Build the GeoJSON line features for the current animation frame.
+  // For routes that have arrived in the cache, slice the real walking
+  // polyline by ARC LENGTH so the line reveals at uniform speed along
+  // the actual footpath (not in equal-coord chunks — which would race
+  // along straight stretches and crawl through twisty bits). For
+  // routes still in flight, fall back to a straight-line lerp from
+  // diamond → anchor; the route will swap in seamlessly when the
+  // fetch resolves.
+  const clusterAnchorLines = useMemo(() => {
+    if (!clusterAnchorLineTargets) return null
+    const features = clusterAnchorLineTargets.map(({ from, to, coordKey }) => {
+      const key = `${from[0]},${from[1]}|${to[0]},${to[1]}`
+      const cached = walkingRouteCacheRef.current.get(key)
+      let coordinates: [number, number][]
+      if (cached && cached.total > 0) {
+        const target = clusterAnchorProgress * cached.total
+        // Walk forward to the segment containing `target`, then
+        // interpolate the partial segment so the head of the line
+        // lands exactly at progress * total — no quantisation steps.
+        let i = 1
+        while (i < cached.coords.length && cached.cumLengths[i] < target) i++
+        if (i >= cached.coords.length) {
+          coordinates = cached.coords
+        } else {
+          const segLen = cached.cumLengths[i] - cached.cumLengths[i - 1]
+          const segFrac = segLen > 0 ? (target - cached.cumLengths[i - 1]) / segLen : 0
+          const interp: [number, number] = [
+            cached.coords[i - 1][0] + (cached.coords[i][0] - cached.coords[i - 1][0]) * segFrac,
+            cached.coords[i - 1][1] + (cached.coords[i][1] - cached.coords[i - 1][1]) * segFrac,
+          ]
+          coordinates = [...cached.coords.slice(0, i), interp]
+        }
+      } else {
+        // Straight-line fallback while route is loading or if fetch failed.
+        const lerpedTo: [number, number] = [
+          from[0] + (to[0] - from[0]) * clusterAnchorProgress,
+          from[1] + (to[1] - from[1]) * clusterAnchorProgress,
+        ]
+        coordinates = [from, lerpedTo]
+      }
+      return {
+        type: "Feature" as const,
+        geometry: { type: "LineString" as const, coordinates },
+        properties: { coordKey },
+      }
+    })
+    return { type: "FeatureCollection" as const, features }
+    // walkingRouteCacheVersion is the trigger for re-running this memo
+    // when new routes are added to the cache (refs alone don't trigger
+    // memo recomputes).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clusterAnchorLineTargets, clusterAnchorProgress, walkingRouteCacheVersion])
+
   // Tracks which station is currently hovered without triggering re-renders.
   // We compare against this ref in onMouseMove to skip redundant state updates.
   const hoveredRef = useRef<string | null>(null)
@@ -7140,12 +7301,10 @@ export default function HikeMap() {
       if (map.getLayer("hovered-station-icon")) {
         map.setLayoutProperty("hovered-station-icon", "icon-size", 1.3 + s * 0.2)
       }
-      // Cluster-diamond pulse — only mounted while a diamond is hovered.
-      // Static diamonds render at 0.6×; the hovered one breathes between
-      // 0.6× (static size) at trough and 0.8× at peak, so it never
-      // shrinks below the resting size while still reading as enlarged.
-      if (map.getLayer("hovered-diamond-icon")) {
-        map.setLayoutProperty("hovered-diamond-icon", "icon-size", 0.6 + s * 0.2)
+      // Cluster-diamond pulse — ALL diamonds in the hovered cluster
+      // breathe together via the hovered-synth layer.
+      if (map.getLayer("cluster-diamond-icon-hovered-synth")) {
+        map.setLayoutProperty("cluster-diamond-icon-hovered-synth", "icon-size", 0.6 + s * 0.2)
       }
       frame = requestAnimationFrame(loop)
     }
@@ -7297,8 +7456,8 @@ export default function HikeMap() {
       // the candidate set so first-tap detection fires for diamonds
       // the same way it does for regular station hit areas.
       "london-terminus-icon", "london-terminus-origin-icon",
-      "cluster-diamond-icon-early", "cluster-diamond-icon", "cluster-diamond-icon-buried",
-      "station-hit-area-cluster-early", "station-hit-area-cluster", "station-hit-area-cluster-buried",
+      "cluster-diamond-icon",
+      "station-hit-area-cluster",
     ]
       .filter((id) => !!map.getLayer(id))
     const features = candidateLayers.length
@@ -7499,12 +7658,8 @@ export default function HikeMap() {
       feature.layer?.id === "london-terminus-icon" ||
       feature.layer?.id === "london-terminus-origin-icon" ||
       feature.layer?.id === "friend-cluster-icon" ||
-      feature.layer?.id === "cluster-diamond-icon-early" ||
       feature.layer?.id === "cluster-diamond-icon" ||
-      feature.layer?.id === "cluster-diamond-icon-buried" ||
-      feature.layer?.id === "station-hit-area-cluster-early" ||
-      feature.layer?.id === "station-hit-area-cluster" ||
-      feature.layer?.id === "station-hit-area-cluster-buried"
+      feature.layer?.id === "station-hit-area-cluster"
     ) {
       const diamondCoord = feature.properties?.coordKey as string | undefined
       const anchorCoord = diamondCoord ? MEMBER_TO_SYNTHETIC[diamondCoord] : undefined
@@ -8567,7 +8722,7 @@ export default function HikeMap() {
         // Without this, onMouseEnter/[[-4.0, 50.0], [2.0, 54.0]]Leave won't receive feature data.
         // Both layers are interactive so rated stations (icons) are also hoverable/clickable
         interactiveLayerIds={[
-          "hovered-station-hit", "station-hit-area", "station-hit-area-buried-zoomed", "station-hit-area-cluster-early", "station-hit-area-cluster", "station-hit-area-cluster-buried", "london-hit-area", "secret-admin-hit",
+          "hovered-station-hit", "station-hit-area", "station-hit-area-buried-zoomed", "station-hit-area-cluster", "london-hit-area", "secret-admin-hit",
           // Terminus diamonds open the same stripped-down station modal
           // that other active-primary cluster members get (title + photos
           // only, no journey info, no Hike button). Both main (zoom 9+)
@@ -8578,7 +8733,7 @@ export default function HikeMap() {
           // Always-on cluster diamonds (renders for every visible
           // synthetic, active or not). Click resolves to the parent
           // synthetic's overlay via MEMBER_TO_SYNTHETIC.
-          "cluster-diamond-icon-early", "cluster-diamond-icon", "cluster-diamond-icon-buried",
+          "cluster-diamond-icon",
         ]}
         cursor={hovered ? "pointer" : undefined}
         onMouseMove={handleMouseMove}
@@ -8862,6 +9017,33 @@ export default function HikeMap() {
           />
         </Source>
 
+        {/* Cluster anchor lines — dotted line from each diamond to its
+            cluster anchor, mounted while a cluster element is hovered.
+            Each line "grows" from the diamond toward the anchor over
+            ~220ms (rAF lerps the endpoint). Rendered BEFORE the
+            cluster-diamonds Source so the lines sit beneath the
+            diamond icons. */}
+        {clusterAnchorLines && (
+          <Source id="cluster-anchor-lines" type="geojson" data={clusterAnchorLines}>
+            <Layer
+              id="cluster-anchor-lines-layer"
+              type="line"
+              layout={{
+                "line-cap": "round",
+                "line-join": "round",
+              }}
+              paint={{
+                // Brand green, matches the hover-glow palette.
+                "line-color": "#15803d",
+                "line-width": 1.5,
+                "line-opacity": 0.7,
+                // Dotted look: short on-segment, larger gap (multiples of line-width).
+                "line-dasharray": [0.6, 2],
+              }}
+            />
+          </Source>
+        )}
+
         {/* Universal cluster-diamond layer — every member of every
             synthetic cluster (London / Stratford / Birmingham /
             Manchester / Edinburgh / Glasgow / Cardiff / Portsmouth /
@@ -8875,48 +9057,23 @@ export default function HikeMap() {
             pass through to the station hit-area below. */}
         {visibleClusterDiamondFeatures && (
           <Source id="all-cluster-diamonds" type="geojson" data={visibleClusterDiamondFeatures.icons}>
-            {/* Static diamonds. The hovered diamond is filtered OUT
-                here so it doesn't render at the static 0.6× size
-                while the dedicated hovered-diamond-icon below
-                animates its own pulsing copy. */}
-            {/* "Early" tier — diamonds whose parent synth is the active
-                primary/friend, or where either the synth or the diamond
-                station itself is placemark-flagged. Visible from zoom 9
-                (the lowest diamond threshold). synthBuried still wins
-                over synthEarly: a buried synth that's also placemarked
-                stays at zoom 12, since the buried filter check below
-                isn't excluded here. To prevent the rare double-render,
-                we exclude synthBuried features from this layer too. */}
-            <Layer
-              id="cluster-diamond-icon-early"
-              type="symbol"
-              minzoom={10}
-              filter={
-                hoveredDiamond
-                  /* eslint-disable @typescript-eslint/no-explicit-any */
-                  ? (["all", ["has", "synthEarly"], ["!", ["has", "synthBuried"]], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
-                  : (["all", ["has", "synthEarly"], ["!", ["has", "synthBuried"]]] as any)
-                  /* eslint-enable @typescript-eslint/no-explicit-any */
-              }
-              layout={{
-                "icon-image": "icon-london-terminus",
-                "icon-size": 0.6,
-                "icon-allow-overlap": true,
-                "icon-ignore-placement": true,
-              }}
-            />
-            {/* Default tier — non-placemark, non-buried, non-active
-                diamonds. Deferred to zoom 11 to keep the map cleaner
-                at lower zooms. */}
+            {/* Static diamonds — single tier, all diamonds appear at
+                zoom 11 regardless of their parent cluster's state.
+                When hovered, the diamonds of the hovered cluster are
+                filtered out here so the pulsing hovered-synth layer
+                below owns their rendering. The London primary marker
+                carries coordKey "london" (a sentinel string), so we
+                map that back to the actual primaryOrigin coord — which
+                is what the diamonds' synthAnchor property holds. */}
             <Layer
               id="cluster-diamond-icon"
               type="symbol"
               minzoom={11}
               filter={
-                hoveredDiamond
+                hovered
                   /* eslint-disable @typescript-eslint/no-explicit-any */
-                  ? (["all", ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
-                  : (["all", ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]]] as any)
+                  ? (["!=", ["get", "synthAnchor"], hovered.coordKey === "london" ? primaryOrigin : hovered.coordKey] as any)
+                  : (true as any)
                   /* eslint-enable @typescript-eslint/no-explicit-any */
               }
               layout={{
@@ -8926,46 +9083,18 @@ export default function HikeMap() {
                 "icon-ignore-placement": true,
               }}
             />
-            {/* Diamonds whose parent synthetic IS buried — deferred to
-                zoom 12, matching the buried synthetic's own threshold. */}
-            <Layer
-              id="cluster-diamond-icon-buried"
-              type="symbol"
-              minzoom={12}
-              filter={
-                hoveredDiamond
-                  /* eslint-disable @typescript-eslint/no-explicit-any */
-                  ? (["all", ["has", "synthBuried"], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
-                  : (["has", "synthBuried"] as any)
-                  /* eslint-enable @typescript-eslint/no-explicit-any */
-              }
-              layout={{
-                "icon-image": "icon-london-terminus",
-                "icon-size": 0.6,
-                "icon-allow-overlap": true,
-                "icon-ignore-placement": true,
-              }}
-            />
-            {/* Hover override — when ANY station/synth is being hovered,
-                show every diamond whose parent synth matches the hovered
-                coord, regardless of zoom tier. Effectively bypasses the
-                early/default/buried minzooms while a hover is active.
-                Hovering a diamond redirects `hovered` to its parent
-                synth's coord (see the cluster-diamond hover branch in
-                handleMouseMove), so this also reveals sibling diamonds
-                of any hovered diamond. The currently-pulsing diamond is
-                excluded so the dedicated `hovered-diamond-icon` overlay
-                owns its rendering without double-stamping. */}
+            {/* Hover override — when ANY cluster element is hovered,
+                show ALL diamonds of that cluster and pulse them together
+                via the rAF loop. Bypasses zoom-tier minzooms while
+                hover is active. */}
             {hovered && (
               <Layer
                 id="cluster-diamond-icon-hovered-synth"
                 type="symbol"
                 filter={
-                  hoveredDiamond
-                    /* eslint-disable @typescript-eslint/no-explicit-any */
-                    ? (["all", ["==", ["get", "synthAnchor"], hovered.coordKey], ["!=", ["get", "coordKey"], hoveredDiamond.coordKey]] as any)
-                    : (["==", ["get", "synthAnchor"], hovered.coordKey] as any)
-                    /* eslint-enable @typescript-eslint/no-explicit-any */
+                  /* eslint-disable @typescript-eslint/no-explicit-any */
+                  ["==", ["get", "synthAnchor"], hovered.coordKey === "london" ? primaryOrigin : hovered.coordKey] as any
+                  /* eslint-enable @typescript-eslint/no-explicit-any */
                 }
                 layout={{
                   "icon-image": "icon-london-terminus",
@@ -9006,13 +9135,10 @@ export default function HikeMap() {
           </Source>
         )}
 
-        {/* Pulsing single-feature overlay for the hovered cluster
-            diamond. Mounted only while a diamond is hovered; the rAF
-            loop above animates its icon-size every frame so the diamond
-            visibly breathes while the parent synthetic's icon pulses
-            simultaneously at the centroid. The label is shared with
-            the static cluster-diamond-label layer above (the diamond's
-            own name doesn't need a duplicate). */}
+        {/* Hover label for the directly-hovered diamond. The icon
+            is handled by cluster-diamond-icon-hovered-synth (all
+            diamonds pulse together); this just adds the station name
+            so you can tell which diamond you're pointing at. */}
         {hoveredDiamond && (
           <Source
             id="hovered-diamond"
@@ -9023,22 +9149,6 @@ export default function HikeMap() {
               properties: { coordKey: hoveredDiamond.coordKey, name: hoveredDiamond.name },
             }}
           >
-            <Layer
-              id="hovered-diamond-icon"
-              type="symbol"
-              minzoom={9}
-              layout={{
-                "icon-image": "icon-london-terminus",
-                "icon-size": 0.66,       // overwritten by the rAF loop (0.6 → 0.72)
-                "icon-allow-overlap": true,
-                "icon-ignore-placement": true,
-              }}
-            />
-            {/* Hover label — appears whenever the diamond is visible
-                (zoom 9+), matching the icon's minzoom. Below the static
-                label's threshold (zoom 12), this is the only label the
-                diamond gets, so hovering reveals the station name even
-                when other diamonds nearby are still unlabelled. */}
             <Layer
               id="hovered-diamond-label"
               type="symbol"
@@ -9256,7 +9366,7 @@ export default function HikeMap() {
               <Layer
                 id="station-issue-halo"
                 type="circle"
-                filter={["has", "hasIssue"]}
+                filter={["all", ["has", "hasIssue"], ["!", ["has", "isClusterMember"]]]}
                 paint={{
                   "circle-color": "#dc2626", // red-600 — matches admin exclude cross
                   "circle-radius": 10,
@@ -9418,36 +9528,13 @@ export default function HikeMap() {
                 ],
               }}
             />
-            {/* Cluster-member hit areas — three tiers mirroring the
-                three diamond icon layers. Hit area minzoom must match
-                the corresponding icon layer or clicks go nowhere. */}
-            <Layer
-              id="station-hit-area-cluster-early"
-              type="circle"
-              minzoom={10}
-              filter={["all", ["has", "isClusterMember"], ["has", "synthEarly"], ["!", ["has", "synthBuried"]]]}
-              paint={{
-                "circle-radius": isMobile ? 14 : 10,
-                "circle-color": "#000000",
-                "circle-opacity": 0.005,
-              }}
-            />
+            {/* Cluster-member hit area — single tier matching the
+                unified diamond icon layer at zoom 11. */}
             <Layer
               id="station-hit-area-cluster"
               type="circle"
               minzoom={11}
-              filter={["all", ["has", "isClusterMember"], ["!", ["has", "synthEarly"]], ["!", ["has", "synthBuried"]]]}
-              paint={{
-                "circle-radius": isMobile ? 14 : 10,
-                "circle-color": "#000000",
-                "circle-opacity": 0.005,
-              }}
-            />
-            <Layer
-              id="station-hit-area-cluster-buried"
-              type="circle"
-              minzoom={12}
-              filter={["all", ["has", "isClusterMember"], ["has", "synthBuried"]]}
+              filter={["has", "isClusterMember"]}
               paint={{
                 "circle-radius": isMobile ? 14 : 10,
                 "circle-color": "#000000",
