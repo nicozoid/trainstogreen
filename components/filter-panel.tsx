@@ -1193,7 +1193,14 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                                       onSelect={(e) => e.preventDefault()}
                                       className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
                                     >
-                                      <span>{s.name}</span>
+                                      {/* Use displayLabel (e.g. "Windsor")
+                                          rather than name (e.g. "Windsor and
+                                          Eton Riverside") so cluster members
+                                          fold under the cluster's anchor name
+                                          in disabled rows too — matches the
+                                          friend-side rendering and the
+                                          enabled-row case below. */}
+                                      <span>{s.displayLabel}</span>
                                       {/* Inline "Coming soon" suffix —
                                           smaller + further muted than the
                                           already-dimmed row text so it reads
@@ -1876,7 +1883,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       key={s.primaryCoord}
                       className="flex items-baseline gap-2 w-full text-left px-4 py-3 text-sm border-b border-border/30 text-muted-foreground opacity-60 cursor-not-allowed"
                     >
-                      <span>{s.name}</span>
+                      {/* Use displayLabel (e.g. "Windsor") not name (e.g.
+                          "Windsor and Eton Riverside") so cluster members
+                          fold under the cluster anchor's name in the mobile
+                          disabled state too — matches the desktop path. */}
+                      <span>{s.displayLabel}</span>
                       {/* Same "Coming soon" suffix as the desktop path —
                           small + further muted than the row text. Mobile
                           can't show a tooltip on hover, so this inline
