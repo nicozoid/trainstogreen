@@ -2505,7 +2505,14 @@ export default function HikeMap() {
   // the memos return stale cached values and leaving features reappear.
   // Only updated when the animation completes, keeping newlyRemovedRatings
   // non-empty throughout the leave animation so features stay on the map.
-  const [prevVisibleRatings, setPrevVisibleRatings] = useState<Set<string>>(new Set())
+  // Initialised to match visibleRatings so the initial load doesn't treat
+  // every default-checked category as "newly added" — that would stamp every
+  // station with isNew, render them at iconScale (0.01 = invisible), and
+  // leave them stuck there because the grow-in animation effect bails when
+  // stationsForMap is still null on the first mapReady transition.
+  const [prevVisibleRatings, setPrevVisibleRatings] = useState<Set<string>>(
+    () => new Set(["4", "3", "2"]),
+  )
 
   const [searchQuery, setSearchQuery] = useState("")
   // Only filter once the user has typed at least 3 characters
