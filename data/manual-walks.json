@@ -159,13 +159,15 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-29T20:05:03.403Z",
+        "updatedAt": "2026-04-29T21:18:20.850Z",
         "komootUrl": "https://www.komoot.com/tour/2919353871",
         "bestSeasons": [
           "apr",
           "may"
         ],
-        "rating": 2
+        "rating": 2,
+        "distanceKm": 7.47,
+        "hours": 2.02
       }
     ],
     "extracted": true,
