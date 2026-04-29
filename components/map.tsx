@@ -1880,7 +1880,7 @@ export default function HikeMap() {
   // anchor is already in the curated dropdown; non-synthetic standalone
   // primaries (Charing Cross, Waterloo) and other NR stations (Farringdon,
   // East Croydon) all go to recents.
-  const londonClusterCoords = useMemo(() => {
+  const syntheticClusterCoords = useMemo(() => {
     const set = new Set<string>()
     for (const k of Object.keys(PRIMARY_ORIGINS)) {
       if (!PRIMARY_ORIGINS[k]?.isSynthetic) continue
@@ -9671,9 +9671,10 @@ export default function HikeMap() {
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             onWalkSaved={refreshStationDerivedData}
             defaultAlgo={
-              // Central London terminals (18 + synthetic) and buried stations
+              // Synthetic anchors and any of their cluster members (London,
+              // Stratford, Birmingham, Manchester, etc.) plus buried stations
               // default to "station"; everything else defaults to "landscapes".
-              londonClusterCoords.has(displayStation.coordKey) || buriedStations.has(displayStation.coordKey)
+              syntheticClusterCoords.has(displayStation.coordKey) || buriedStations.has(displayStation.coordKey)
                 ? "station"
                 : "landscapes"
             }
