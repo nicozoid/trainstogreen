@@ -2176,7 +2176,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "no-travel-data" | "oyster"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
   // Build the Oyster CRS Set with oysterStationsData as the dep — when
   // the JSON hot-reloads in dev the import gives a new array reference,
   // which busts this memo and the downstream filteredStations memo.
@@ -2372,6 +2372,11 @@ export default function HikeMap() {
   // admin issue button. Drives the red halo overlay regardless of which
   // primary is selected.
   const [issueStations, setIssueStations] = useState<Set<string>>(new Set())
+  // Station-global "placemark" flag — a Set of coordKeys flagged via the
+  // admin placemark button. Forces the name-label to appear at zoom 8+,
+  // overriding the rating's normal label-zoom threshold (no-op when the
+  // rating already surfaces the label at zoom ≤ 8).
+  const [placemarkStations, setPlacemarkStations] = useState<Set<string>>(new Set())
   // Which rating categories to filter to — empty means "show all" (no filter active).
   // "unrated" is a pseudo-category for stations without any rating.
   // Empty set = no filter = all stations visible. Not persisted — rating
@@ -2480,6 +2485,11 @@ export default function HikeMap() {
     fetch("/api/dev/has-issue-station")
       .then((res) => res.json())
       .then((keys: string[]) => setIssueStations(new Set(keys)))
+    // Stations flagged as "placemark" (force label visible at zoom 8+).
+    // Same shape as has-issue-stations: flat string[] wrapped in a Set.
+    fetch("/api/dev/toggle-placemark")
+      .then((res) => res.json())
+      .then((keys: string[]) => setPlacemarkStations(new Set(keys)))
   }, [])
 
 
@@ -5328,6 +5338,12 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "issues") {
             return issueStations.has(f.properties.coordKey as string)
           }
+          // "Placemark" — admin-flagged stations whose name-label is forced
+          // visible at zoom 8+. Station-global like "Issues", same Set-keyed
+          // lookup pattern. Lets the admin audit the placemark set in one shot.
+          if (primaryFeatureFilter === "placemark") {
+            return placemarkStations.has(f.properties.coordKey as string)
+          }
           // "No travel data" — destinations with no journey-time data
           // (londonMinutes is null). Only effective when the time sliders
           // are unconstrained, since passesTimeFilter() above already hides
@@ -5451,7 +5467,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations, placemarkStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -5479,10 +5495,15 @@ export default function HikeMap() {
   // visibility gate for buried unrated stations.
   //
   // `isBuriedHidden` = true when the feature is buried AND unrated AND
-  // NOT the active primary/friend or any of their cluster members. The
-  // Mapbox layer config below uses this flag (combined with `minzoom`
-  // on a dedicated layer) so the gating happens entirely on the GPU
-  // without re-uploading GeoJSON on every zoom change.
+  // NOT the active primary/friend or any of their cluster members AND
+  // NOT a placemark. The Mapbox layer config below uses this flag
+  // (combined with `minzoom` on a dedicated layer) so the gating happens
+  // entirely on the GPU without re-uploading GeoJSON on every zoom change.
+  //
+  // Placemark wins over bury: a placemarked station should surface at
+  // zoom 8 regardless of bury, so we skip the stamp for placemarks and
+  // they fall through to the regular icon/label layers + the placemark
+  // label layer.
   const allStationsWithRatings = useMemo(() => {
     if (!displayedStations) return null
     // Build the "active origin set" once per memo run — primary origin,
@@ -5517,14 +5538,22 @@ export default function HikeMap() {
         // Buried + unrated + not in active-origin set → only renders
         // at zoom 12+. Stamp the flag so Mapbox's per-layer minzoom
         // can do the zoom gating without re-running this memo.
-        if (f.properties.isBuried && !r && !activeOrigins.has(coordKey)) {
+        // Placemark overrides bury — skip the stamp so the station
+        // surfaces normally and the placemark label layer (zoom 8+)
+        // takes effect.
+        if (
+          f.properties.isBuried &&
+          !r &&
+          !activeOrigins.has(coordKey) &&
+          !placemarkStations.has(coordKey)
+        ) {
           extra.isBuriedHidden = 1
         }
         if (Object.keys(extra).length === 0) return f
         return { ...f, properties: { ...f.properties, ...extra } }
       }),
     }
-  }, [displayedStations, ratings, friendOrigin, primaryOrigin])
+  }, [displayedStations, ratings, friendOrigin, primaryOrigin, placemarkStations])
 
   // Categories just toggled on — their icons get isNew=1 and grow in.
   const newlyAddedRatings = useMemo(() => {
@@ -5812,9 +5841,14 @@ export default function HikeMap() {
           const coord = f.properties.coordKey as string
           const isDest = coord !== primaryOrigin
           const hasIssue = isDest && issueStations.has(coord)
-          const base = hasIssue
-            ? { ...f.properties, hasIssue: 1 }
-            : f.properties
+          // Admin-only "placemark" flag — same shape as hasIssue, stamped
+          // here so label-layer filters can read a cheap `isPlacemark` boolean
+          // and gate visibility at zoom 8+ for stations whose rating would
+          // otherwise hide them until zoom 9+ (rating 2) or 10+ (unrated).
+          const isPlacemark = placemarkStations.has(coord)
+          let base: typeof f.properties = f.properties
+          if (hasIssue) base = { ...base, hasIssue: 1 }
+          if (isPlacemark) base = { ...base, isPlacemark: 1 }
           if (newlyAddedRatings.has(category)) {
             return { ...f, properties: { ...base, isNew: 1 } }
           }
@@ -5824,7 +5858,7 @@ export default function HikeMap() {
           return { ...f, properties: base }
         }),
     }
-  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, primaryOrigin])
+  }, [allStationsWithRatings, visibleRatings, newlyAddedRatings, newlyRemovedRatings, friendOrigin, issueStations, placemarkStations, primaryOrigin])
 
   // Set of synthetic-anchor coordKeys that survived the filter pipeline
   // — i.e. the synthetic features that ARE rendered as rating icons in
@@ -6037,6 +6071,28 @@ export default function HikeMap() {
       body: { coordKey, name, hasIssue },
       key: `has-issue:${coordKey}`,
       label: `${hasIssue ? "Flag" : "Clear"} issue on ${name}`,
+    })
+  }, [])
+
+  // Admin-only: toggle "placemark" on a station (forces name-label at zoom 8+).
+  // Same shape as handleToggleIssue — local Set update + outbox-queued POST so
+  // the map updates instantly and the GitHub commit happens in the background.
+  const handleTogglePlacemark = useCallback(async (
+    coordKey: string,
+    name: string,
+    isPlacemark: boolean,
+  ) => {
+    setPlacemarkStations((prev) => {
+      const next = new Set(prev)
+      if (isPlacemark) next.add(coordKey); else next.delete(coordKey)
+      return next
+    })
+    outbox.enqueue({
+      endpoint: "/api/dev/toggle-placemark",
+      method: "POST",
+      body: { coordKey, name, isPlacemark },
+      key: `placemark:${coordKey}`,
+      label: `${isPlacemark ? "Mark" : "Unmark"} placemark on ${name}`,
     })
   }, [])
 
@@ -9218,9 +9274,20 @@ export default function HikeMap() {
               // carry from their underlying walks.
               ["station-labels-highlight", isMobile ? 6 : 7, ["all", ["==", ["get", "rating"], 4], ["!", ["has", "isClusterMember"]]]],
               ["station-labels-rated", 8, ["all", ["==", ["get", "rating"], 3], ["!", ["has", "isClusterMember"]]]],
-              ["station-labels-unverified", 9, ["all", ["==", ["get", "rating"], 2], ["!", ["has", "isClusterMember"]]]],
+              // Unverified (rating 2): normally surfaces at zoom 9, but if the
+              // station is a placemark, the dedicated placemark layer below
+              // takes over at zoom 8 — exclude here to avoid double-rendering.
+              ["station-labels-unverified", 9, ["all", ["==", ["get", "rating"], 2], ["!", ["has", "isClusterMember"]], ["!", ["has", "isPlacemark"]]]],
               ["station-labels-not-recommended", 8, ["all", ["==", ["get", "rating"], 1], ["!", ["has", "isClusterMember"]]]],
-              ["station-labels-unrated", 10, ["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]]]],
+              // Unrated: normally surfaces at zoom 10, same placemark override
+              // as unverified — placemark layer below catches these at zoom 8.
+              ["station-labels-unrated", 10, ["all", ["!", ["has", "rating"]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]], ["!", ["has", "isPlacemark"]]]],
+              // Placemark: forces label visible at zoom 8+ for stations whose
+              // rating would otherwise hide them until zoom 9 (rating 2) or
+              // zoom 10 (unrated). Rating 4/3/1 stations already surface by
+              // zoom 8 via the layers above, so the filter here only catches
+              // rating 2 and unrated — placemark is a no-op for the others.
+              ["station-labels-placemark", 8, ["all", ["has", "isPlacemark"], ["any", ["==", ["get", "rating"], 2], ["!", ["has", "rating"]]], ["!", ["has", "isBuriedHidden"]], ["!", ["has", "isClusterMember"]]]],
             ] as const).map(([id, minZ, filter]) => (
               <Layer
                 key={id}
@@ -9775,6 +9842,12 @@ export default function HikeMap() {
               displayStation.coordKey,
               displayStation.name,
               hasIssue,
+            )}
+            isPlacemark={placemarkStations.has(displayStation.coordKey)}
+            onTogglePlacemark={(isPlacemark: boolean) => handleTogglePlacemark(
+              displayStation.coordKey,
+              displayStation.name,
+              isPlacemark,
             )}
             currentRating={ratings[displayStation.coordKey] ?? null}
             onBury={() => handleToggleBuried(displayStation.name, displayStation.coordKey)}
