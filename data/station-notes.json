@@ -3598,5 +3598,13 @@
     "adminWalksAll": "**St Albans Abbey to Park Street**: An alternative variant of [Abbey Trail](https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/). 4 km.",
     "publicWalksS2S": "**St Albans Abbey to Park Street**: An alternative variant of [Abbey Trail](https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/). 4 km.",
     "publicWalksCircular": ""
+  },
+  "0.1880389,51.0462372": {
+    "name": "Crowborough",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**Crowborough Circular via Hornshurst Wood**: woodland, streams, meadows, and bluebells. No lunch stops on route. Plenty in Crowborough itself. 7 km. 2 hours. **[Komoot route →](https://www.komoot.com/tour/2919353871)**",
+    "publicWalksS2S": "",
+    "publicWalksCircular": "**Crowborough Circular via Hornshurst Wood**: woodland, streams, meadows, and bluebells. No lunch stops on route. Plenty in Crowborough itself. 7 km. 2 hours. **[Komoot route →](https://www.komoot.com/tour/2919353871)**"
   }
 }
