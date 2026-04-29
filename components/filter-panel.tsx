@@ -884,7 +884,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // + fixed sidebar width.
   return (
     <>
-    <div className="absolute inset-x-2 top-2 z-10 rounded-lg bg-card p-4 text-card-foreground shadow-md sm:inset-x-auto sm:left-4 sm:top-4 sm:w-64">
+    <div className="absolute inset-x-2 top-2 z-10 flex max-h-[calc(100dvh-1rem)] flex-col rounded-lg bg-card p-4 text-card-foreground shadow-md sm:inset-x-auto sm:left-4 sm:top-4 sm:max-h-[calc(100dvh-2rem)] sm:w-64">
 
       {/* Header row — single button wrapping logo + chevron so the entire
           row is one continuous hit area for toggling collapse */}
@@ -923,7 +923,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
           grid-rows-[1fr] expands to the content's natural height, and
           transition-[grid-template-rows] animates smoothly between them.
           Clicking the logo toggles collapsed on both mobile and desktop. */}
-      <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+      <div className={`grid min-h-0 transition-[grid-template-rows] duration-300 ease-in-out ${
         collapsed ? "grid-rows-[0fr]" : "grid-rows-[1fr]"
       }`}>
         {/* overflow-y-clip clips content vertically for the collapse animation
@@ -935,7 +935,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             off-screen. With min-w-0, the grid child respects its column's
             available width and the inner `truncate` class actually kicks
             in early enough to clip to "Stratford Interna…". */}
-        <div className="min-h-0 min-w-0 overflow-y-clip">
+        <div className={`min-h-0 min-w-0 ${collapsed ? "overflow-y-clip" : "overflow-y-auto overscroll-contain"}`}>
           {/* mt-3 on mobile adds the space that was previously on the header row;
               sm:mt-0 removes it since desktop never collapsed */}
           {/* Search bar only shows when admin mode is toggled on */}
