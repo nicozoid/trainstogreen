@@ -184,27 +184,30 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "",
         "endPlace": "",
         "startStation": "COH",
         "endStation": "COH",
         "stationToStation": true,
-        "distanceKm": null,
-        "hours": null,
         "lunchStops": [],
-        "terrain": "",
+        "terrain": "woodland, streams, meadows, bluebells",
         "sights": [],
-        "miscellany": "",
+        "miscellany": "No lunch stops on route. Plenty in Crowborough itself",
         "id": "cohcohbream",
-        "suffix": "",
+        "suffix": "via Hornshurst Wood",
         "source": {
           "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-29T20:03:56.693Z"
+        "updatedAt": "2026-04-29T20:05:03.403Z",
+        "komootUrl": "https://www.komoot.com/tour/2919353871",
+        "bestSeasons": [
+          "apr",
+          "may"
+        ],
+        "rating": 2
       }
     ],
     "extracted": true,
