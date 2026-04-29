@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
 import { handleAdminWrite } from "@/app/api/dev/_helpers"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
+import { WALK_ID_WORDS } from "@/scripts/walk-id-words.mjs"
 
 // All walk files — we read them all to ensure the generated id is
 // globally unique across sources, not just within manual-walks.json.
@@ -15,23 +16,31 @@ const WALKS_FILES = [
 ]
 
 const MANUAL_FILE = "data/manual-walks.json"
-const ID_ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyz"
-// Matches the existing id regex used in /api/dev/walk/[id]/route.ts.
-const ID_LENGTH = 4
 
 type WalkVariant = { id?: string; [k: string]: unknown }
 type WalkEntry = { slug?: string; walks?: WalkVariant[]; [k: string]: unknown }
 type ManualFile = { _readme?: string; [slug: string]: WalkEntry | string | undefined }
 
-// Random 4-char id from [0-9a-z]. ~1.6M possible values — a linear
-// collision check against every existing walk id is fine at this
-// scale (well under 10k walks total).
-function randomId(): string {
-  let out = ""
-  for (let i = 0; i < ID_LENGTH; i++) {
-    out += ID_ALPHABET[Math.floor(Math.random() * ID_ALPHABET.length)]
+// Mint a memorable id in the `[startCRS][endCRS][word]` format used by
+// scripts/assign-walk-ids.mjs — e.g. "cohcohfox" for a Crowborough
+// circular. Word picked at random from WALK_ID_WORDS, retrying on
+// collisions; falls back to a numeric suffix on the (extremely
+// unlikely) event that every word is taken for this prefix.
+function mintWalkId(startCrs: string, endCrs: string, taken: Set<string>): string {
+  const prefix = startCrs.toLowerCase() + endCrs.toLowerCase()
+  // Shuffle a copy so each call gets a different word ordering.
+  const shuffled = [...WALK_ID_WORDS].sort(() => Math.random() - 0.5)
+  for (const w of shuffled) {
+    const id = prefix + w
+    if (!taken.has(id)) return id
   }
-  return out
+  for (let n = 2; n < 1000; n++) {
+    for (const w of WALK_ID_WORDS) {
+      const id = `${prefix}${w}${n}`
+      if (!taken.has(id)) return id
+    }
+  }
+  throw new Error(`exhausted all ids for prefix ${prefix}`)
 }
 
 async function collectExistingIds(): Promise<Set<string>> {
@@ -70,16 +79,10 @@ export async function POST(req: NextRequest) {
   }
 
   return handleAdminWrite(async () => {
-  // Generate a non-colliding id. Retry a handful of times in the
-  // vanishingly unlikely event of a collision; the id space is ~1.6M
-  // so even with 10k walks the miss rate is ~0.6%.
+  // Generate a non-colliding `[start][end][word]` id by passing every
+  // existing id in as the "taken" set so the picker avoids them.
   const existingIds = await collectExistingIds()
-  let id = randomId()
-  let tries = 0
-  while (existingIds.has(id) && tries++ < 10) id = randomId()
-  if (existingIds.has(id)) {
-    return NextResponse.json({ error: "could not mint unique id" }, { status: 500 })
-  }
+  const id = mintWalkId(startStation, endStation, existingIds)
 
   const slug = `manual-${id}`
   const { data, sha } = await readDataFile<ManualFile>(MANUAL_FILE)
