@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { ConflictError } from "@/lib/github-data"
+import { ConflictError, readDataFile, writeDataFile } from "@/lib/github-data"
+import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
 
 /**
  * Wraps an admin-write route handler with automatic conflict-retry and
@@ -43,4 +44,60 @@ export async function handleAdminWrite(
     { error: "conflict — please retry" },
     { status: 409 },
   )
+}
+
+// Files written by buildRamblerNotes — kept here so route handlers
+// don't have to know the paths.
+const DERIVED_FILES = {
+  notes: "data/station-notes.json",
+  seasons: "data/station-seasons.json",
+  hiked: "data/stations-hiked.json",
+  komoot: "data/stations-with-komoot.json",
+} as const
+
+/**
+ * Rebuild the derived station-* files in-process and commit each one
+ * via writeDataFile. Called after every walk save (create/edit/delete)
+ * so the public view (which reads station-notes.json) stays in sync
+ * with the walk data without anyone having to remember to run the
+ * build script and stage the result.
+ *
+ * Why writeDataFile rather than letting the script writeFileSync:
+ * - In production (Vercel) the filesystem is read-only, so the script's
+ *   writeFileSync would EROFS. writeDataFile commits via the GitHub
+ *   Contents API instead.
+ * - In local dev writeDataFile falls through to fs.writeFileSync — same
+ *   net effect as the script, just routed through one path.
+ *
+ * Each derived file is committed independently (own sha, own commit).
+ * That's a few extra commits per walk save — acceptable for now since
+ * the alternative (one commit with multiple files) needs the GitHub
+ * tree API and a bigger change to writeDataFile.
+ */
+export async function commitDerivedFiles(baseMessage: string): Promise<void> {
+  // returnData: true makes buildRamblerNotes return the computed
+  // datasets instead of writing files; the non-null assertion below is
+  // safe because of that flag (the script only returns undefined in
+  // its CLI/file-write mode).
+  const built = (await buildRamblerNotes({
+    dryRun: false,
+    flipOnMap: false,
+    returnData: true,
+  }))!
+  const payloads = {
+    notes: built.notes,
+    seasons: built.seasons,
+    hiked: built.hiked,
+    komoot: built.komoot,
+  } as const
+
+  for (const [key, path] of Object.entries(DERIVED_FILES)) {
+    const next = payloads[key as keyof typeof payloads]
+    // Fresh sha per file — GitHub rejects writes whose sha doesn't
+    // match the file's current state, so we re-read just before each
+    // commit. Cheap (one HEAD-equivalent request) and keeps us
+    // resilient to concurrent edits.
+    const { sha } = await readDataFile<unknown>(path)
+    await writeDataFile(path, next, `${baseMessage} — ${path.split("/").pop()}`, sha)
+  }
 }

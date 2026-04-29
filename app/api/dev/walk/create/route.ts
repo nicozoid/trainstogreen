@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile, writeDataFile } from "@/lib/github-data"
-import { handleAdminWrite } from "@/app/api/dev/_helpers"
-import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
+import { commitDerivedFiles, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { WALK_ID_WORDS } from "@/scripts/walk-id-words.mjs"
 
 // All walk files — we read them all to ensure the generated id is
@@ -140,12 +139,12 @@ export async function POST(req: NextRequest) {
   await writeDataFile(MANUAL_FILE, data, `Create manual walk ${id} at ${startStation}`, sha)
 
   try {
-    await buildRamblerNotes({ dryRun: false, flipOnMap: false })
+    await commitDerivedFiles(`Create manual walk ${id} at ${startStation}`)
   } catch (err) {
-    // Same pattern as PATCH: the create write succeeded; only the
-    // derived-file rebuild failed (expected on Vercel's read-only fs).
+    // Same pattern as PATCH: the create commit succeeded; only the
+    // derived-file commits failed.
     // eslint-disable-next-line no-console
-    console.error("rebuild after walk create failed:", err)
+    console.error("derived-file commit after walk create failed:", err)
     return NextResponse.json({ message: "ok", id, rebuildPending: true })
   }
 
