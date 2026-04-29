@@ -38,6 +38,13 @@
       "Spring"
     ]
   },
+  "-0.1361095,51.3188036": {
+    "name": "Coulsdon",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
   "-0.137032,51.0555957": {
     "name": "Balcombe",
     "seasons": [
@@ -83,6 +90,12 @@
       "Autumn"
     ]
   },
+  "-0.2099994,51.4161361": {
+    "name": "Wimbledon",
+    "seasons": [
+      "Autumn"
+    ]
+  },
   "-0.2153478,51.4609339": {
     "name": "Putney",
     "seasons": [
@@ -110,6 +123,13 @@
   },
   "-0.3286723,51.2539871": {
     "name": "Box Hill & Westhumble",
+    "seasons": [
+      "Spring",
+      "Autumn"
+    ]
+  },
+  "-0.3319931,51.23876": {
+    "name": "Dorking",
     "seasons": [
       "Spring",
       "Autumn"
@@ -218,6 +238,13 @@
     ]
   },
   "-0.7129145,51.2497298": {
+    "name": "Ash",
+    "seasons": [
+      "Spring",
+      "Summer"
+    ]
+  },
+  "-0.7171858,51.2611317": {
     "name": "Ash",
     "seasons": [
       "Spring",
@@ -596,6 +623,12 @@
       "Spring",
       "Summer",
       "Autumn"
+    ]
+  },
+  "1.0755646,51.2792048": {
+    "name": "Canterbury",
+    "seasons": [
+      "Spring"
     ]
   },
   "1.07582,51.274185": {
