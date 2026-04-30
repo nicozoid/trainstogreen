@@ -119,6 +119,14 @@ export const SYNTHETIC_KIND: Record<string, "primary" | "friend" | undefined> = 
 // a synthetic centroid?").
 export const ALL_SYNTHETIC_COORDS: Set<string> = new Set<string>(Object.keys(ALL_CLUSTERS))
 
+// The Central London cluster's anchor coord. Hard-coded because the
+// "London termini are individually selectable as primary" feature is
+// scoped to this one cluster only — every other cluster keeps its
+// "members aren't selectable on their own" rule. Kept in sync with
+// the entry in clusters-data.json. Surfaced as a named constant so
+// the gating sites in components/map.tsx don't bury a magic string.
+export const CENTRAL_LONDON_ANCHOR = "-0.1269,51.5196"
+
 // ── Route ranking ────────────────────────────────────────────────────
 //
 // Mirrors the candidate-comparison rule in lib/stitch-journey.ts: when

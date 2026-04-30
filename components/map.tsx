@@ -23,6 +23,7 @@ import {
   MEMBER_TO_SYNTHETIC,
   ALL_SYNTHETIC_COORDS,
   SYNTHETIC_DISPLAY_NAMES,
+  CENTRAL_LONDON_ANCHOR,
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
@@ -422,8 +423,10 @@ const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
 const COORD_MIGRATIONS: Record<string, string> = {
   // Old Stratford (SRA) standalone primary → new synthetic midpoint
   "-0.0035472,51.541289": "-0.0061483,51.5430422",
-  // Old Kings Cross cluster primary (now removed) → Central London synthetic
-  "-0.1239491,51.530609": "-0.1269,51.5196",
+  // Kings Cross used to redirect to the Central London synthetic here.
+  // Removed now that individual Central London termini are selectable as
+  // primaries — a stored "-0.1239491,51.530609" should resolve as
+  // Kings Cross, not get silently rewritten to the cluster on reload.
 }
 
 // Seeded recents for the primary dropdown — coords pre-populated as if
@@ -465,6 +468,38 @@ const DEFAULT_RECENT_PRIMARIES: string[] = [
 // to Farringdon as the departure point.
 const FARRINGDON_COORD = "-0.104555,51.519964"
 const FARRINGDON_CRS = "ZFD"
+
+// Display-name overrides for Central London cluster members whose OSM
+// `properties.name` carries the "London " prefix (and/or an unwanted
+// "International" suffix). Without these overrides:
+//   • "London King's Cross" — picked as primary, square label reads
+//     "London King's Cross"; as a destination from another terminus it
+//     also reads "London King's Cross". Inconsistent with the cluster
+//     diamond label ("Kings Cross") shown when the synthetic London
+//     primary is active.
+//   • Two St Pancras coords (main concourse + HS1 concourse) have OSM
+//     names "London St. Pancras International" and "St Pancras
+//     International" — also surface in the long form.
+// Stamped onto baseStations features at fetch time so every consumer
+// (search dropdown, primary square, regular destination label,
+// coordToName, recents lookup) reads the cleaner short form.
+const TERMINUS_DISPLAY_OVERRIDES: Record<string, string> = {
+  "-0.1230224,51.5323954": "Kings Cross",       // KGX National Rail
+  "-0.1270027,51.5327196": "St Pancras",        // STP main concourse
+  "-0.1276185,51.5322106": "St Pancras",        // STP HS1 concourse
+}
+
+// Same-station alias coords inside the Central London cluster — both
+// resolve to a single canonical primary on selection. The HS1 St Pancras
+// concourse is ~80m from the main concourse, has no origin-routes data
+// of its own, and shares timetabled service patterns with main; picking
+// it should land on the main coord. Without this, the HS1 row would be
+// pickable as a primary with no data, and the search dropdown would show
+// two "St Pancras" rows side by side (filter-panel.tsx dedupes by
+// primaryCoord, so both rows must share the same primaryCoord to fold).
+const TERMINUS_COORD_ALIASES: Record<string, string> = {
+  "-0.1276185,51.5322106": "-0.1270027,51.5327196",
+}
 
 // Compute the set of coord keys that "belong" to a given primary — the primary
 // itself plus any cluster members. Used by the modal-render site to decide
@@ -1876,7 +1911,32 @@ export default function HikeMap() {
     // Riverside" in primary search collapses to the Windsor cluster row
     // even though Windsor isn't yet a primary origin (it'll show as
     // "Coming soon" until promoted).
+    //
+    // EXCEPTION: Central London members (Kings Cross, Waterloo,
+    // Liverpool Street, …). They're individually selectable as primary
+    // — typing "Kings Cross" in the search lands on Kings Cross-the-
+    // station, not on the "London" cluster. The cluster row is still
+    // findable separately via the synthetic-anchor loop in
+    // searchableStations. Picking a member here also bypasses the
+    // anchor-redirect in selectCustomPrimary, so the terminus becomes
+    // the actual primaryOrigin and the rest of the cluster is implicitly
+    // disabled (no diamonds, no hover pulse, no anchor lines, no cluster
+    // overlay) via downstream gates that key off `isClusterMember`.
     for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
+      if (anchor === CENTRAL_LONDON_ANCHOR) {
+        // Central London members are individually selectable as primaries
+        // (see comment above), but a few "alias coords" still need to fold
+        // into a canonical sibling — currently just the HS1 St Pancras
+        // concourse → main concourse (TERMINUS_COORD_ALIASES). Without
+        // these entries, the aliased coord would be pickable as its own
+        // primary with no origin-routes data, and the primary search would
+        // show two adjacent "St Pancras" rows that filter-panel can't
+        // dedupe (its dedupe is keyed by primaryCoord).
+        for (const [from, to] of Object.entries(TERMINUS_COORD_ALIASES)) {
+          out[from] = to
+        }
+        continue
+      }
       for (const m of def.members) out[m] = anchor
     }
     return out
@@ -1950,6 +2010,16 @@ export default function HikeMap() {
       })
     })
   }, [setPrimaryOriginRaw, setRecentCustomPrimaries, clusterMemberToPrimary])
+  // True when the active primary is a Central London cluster member
+  // (Kings Cross, Waterloo East, St Pancras, …) rather than the synthetic
+  // "London" anchor itself. Drives the "cluster is temporarily disabled"
+  // behaviour: Central London members render as ordinary stations (no
+  // diamonds, no hover pulse, no anchor lines, no cluster overlay) so the
+  // selected terminus reads as a standalone primary. Switching back to
+  // any non-London-terminus primary makes this false again and the cluster
+  // resumes its normal behaviour. Friend-side is intentionally NOT mirrored
+  // here — friends keep redirecting to the Central London anchor for now.
+  const isLondonTerminusActive = MEMBER_TO_SYNTHETIC[primaryOrigin] === CENTRAL_LONDON_ANCHOR
   const originCoords = parseCoordKey(primaryOrigin)
   // Ref keeps theme accessible inside the style.load callback (which is a stale
   // closure from handleMapLoad). Without this, registerIcons would always see
@@ -3399,7 +3469,18 @@ export default function HikeMap() {
       coordKey: string,
       customCoord: string,
     ): { journey: JourneyInfo; mins: number; changes: number } | null {
-      const hopRow = terminalMatrix[primaryName]
+      // Canonicalise the primary name before the matrix lookup. Callers
+      // pass `coordToName[primaryOrigin]` which holds the OSM `name` field
+      // ("London St Pancras", "London Euston", "London King's Cross") —
+      // but terminalMatrix keys come from terminal-matrix.json (canonical
+      // short names: "St Pancras", "Euston", "Kings Cross") and the TfL
+      // hop fetch ("St Pancras International"). Without this resolve, a
+      // London-terminus custom primary (newly possible since the per-
+      // terminus primary feature) bails here and never composes the
+      // tube-hop path that would unlock other termini's lines —
+      // e.g. STP→Euston→Tring drops Tring on the floor.
+      const canonical = matchTerminal(primaryName, londonTerminals) ?? primaryName
+      const hopRow = terminalMatrix[canonical]
       if (!hopRow) return null
       let best1: { journey: JourneyInfo; mins: number } | null = null
       let best2: { journey: JourneyInfo; mins: number } | null = null
@@ -5168,6 +5249,13 @@ export default function HikeMap() {
       // already rendered, and we don't want a duplicate icon on top.
       if (synthCoord === primaryOrigin) continue
       if (synthCoord === friendOrigin) continue
+      // When a Central London terminus is the active primary, the whole
+      // Central London cluster is "disabled" — skip its virtual feature
+      // so it doesn't surface as a destination icon at the British Museum
+      // centroid, and (crucially) its anchor doesn't get added to
+      // visibleSynthAnchors below, which would otherwise re-enable the
+      // members' diamonds + cluster hover/anchor-line behaviours.
+      if (isLondonTerminusActive && synthCoord === CENTRAL_LONDON_ANCHOR) continue
 
       // Collect each member's feature from routedStations.
       type Feat = (typeof routedStations.features)[number]
@@ -5271,7 +5359,21 @@ export default function HikeMap() {
         ...routedStations.features.map((f) => {
           const coordKey = f.properties.coordKey as string
           const isBuried = buriedStations.has(coordKey)
-          const isClusterMember = ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+          // When a Central London terminus IS the active primary, suspend
+          // the cluster-member treatment for every Central London member.
+          // Without this, those members are filtered out of every regular
+          // station layer (which all carry `["!", ["has", "isClusterMember"]]`)
+          // AND filtered out of the cluster diamond layer (because the
+          // Central London anchor isn't in visibleSynthAnchors when the
+          // primary isn't the anchor) — they'd render NOWHERE. Stripping
+          // the flag lets them render as ordinary station icons under
+          // the standard zoom-tier rules, which matches the spec: in
+          // London-terminus-as-primary mode, the cluster is "disabled"
+          // and members behave like normal stations.
+          const isCentralLondonMember = MEMBER_TO_SYNTHETIC[coordKey] === CENTRAL_LONDON_ANCHOR
+          const isClusterMember =
+            ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+            && !(isLondonTerminusActive && isCentralLondonMember)
           const hadBuried = !!f.properties.isBuried
           const hadClusterMember = !!f.properties.isClusterMember
           if (isBuried === hadBuried && isClusterMember === hadClusterMember) return f
@@ -5283,7 +5385,7 @@ export default function HikeMap() {
         ...synthFeatures,
       ],
     }
-  }, [routedStations, buriedStations])
+  }, [routedStations, buriedStations, isLondonTerminusActive])
 
   // Lookup sets for the admin Interchange filter. Built lazily at filter
   // time so the sets are identity-stable across renders and the memo
@@ -6489,6 +6591,14 @@ export default function HikeMap() {
           const coordKey = `${lng},${lat}`
           // Stamp coordKey for consistent identity
           const extra: Record<string, unknown> = { coordKey }
+          // Apply Central London terminus name overrides (see
+          // TERMINUS_DISPLAY_OVERRIDES). Overriding `name` on the base
+          // feature propagates the cleaner short form to every consumer
+          // — Mapbox label layers via ["get","name"], searchableStations,
+          // coordToName, the station modal title — without each
+          // consumer needing to know about the override map.
+          const nameOverride = TERMINUS_DISPLAY_OVERRIDES[coordKey]
+          if (nameOverride) extra.name = nameOverride
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
           return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
         })
