@@ -59014,7 +59014,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Otford",
         "endPlace": "Otford",
         "startStation": "OTF",
@@ -59026,38 +59025,31 @@
         "lunchStops": [
           {
             "name": "Rising Sun",
-            "location": "Cotman's Ash",
-            "url": null
+            "location": "Cotman's Ash"
           },
           {
             "name": "King's Arms",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           },
           {
             "name": "Crown",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           },
           {
             "name": "Samuel Palmer",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           },
           {
             "name": "Shoreham Aircraft Museum Tea Room",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           },
           {
             "name": "Honey Pot",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           },
           {
             "name": "Mount Vineyard",
-            "location": "Shoreham",
-            "url": null
+            "location": "Shoreham"
           }
         ],
         "terrain": "North Downs hills, chalk woodland, bluebell woods, open commons, grassy fields, disused golf course, Darent Valley riverbank, quaint village",
@@ -59071,24 +59063,22 @@
             "url": "http://www.tate.org.uk/collections/glossary/definition.jsp?entryId=231"
           },
           {
-            "name": "Church of St Peter and St Paul",
-            "url": null
+            "name": "Church of St Peter and St Paul"
           },
           {
-            "name": "Otford Palace",
-            "url": null
+            "name": "Otford Palace"
           },
           {
-            "name": "Otford Solar System",
-            "url": null
+            "name": "Otford Solar System"
           }
         ],
         "miscellany": "Can be muddy",
         "id": "otfotfpolecat",
         "mudWarning": true,
         "bestSeasons": [
-          "apr",
-          "may"
+          "jan",
+          "nov",
+          "dec"
         ],
         "rating": 3,
         "source": {
@@ -59097,7 +59087,8 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
           "type": "main"
         },
-        "suffix": "via Romney Street"
+        "suffix": "via Romney Street",
+        "updatedAt": "2026-04-30T09:36:19.066Z"
       },
       {
         "role": "shorter",
