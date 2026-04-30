@@ -13135,8 +13135,8 @@
         "endStation": "WND",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 20.5,
-        "hours": 6.5,
+        "distanceKm": 20.2,
+        "hours": 5.33,
         "lunchStops": [
           {
             "name": "Oak",
@@ -13190,7 +13190,8 @@
           "pageName": "Tring to Wendover",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-to-wendover/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920846007"
       }
     ]
   },
@@ -80780,8 +80781,8 @@
         "endStation": "OXF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.3,
-        "hours": 4,
+        "distanceKm": 12.8,
+        "hours": 3.27,
         "lunchStops": [
           {
             "name": "Trout Inn",
@@ -80955,7 +80956,8 @@
           "pageName": "Oxford Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/oxford-circular/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920905703"
       }
     ]
   },
@@ -94403,8 +94405,8 @@
         "endStation": "GOD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 21.23,
-        "hours": 6,
+        "distanceKm": 19.4,
+        "hours": 5.18,
         "lunchStops": [
           {
             "name": "Barley Mow",
@@ -94440,7 +94442,8 @@
           "pageName": "Farnham to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/farnham-to-godalming/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920859171"
       }
     ]
   },
