@@ -13135,8 +13135,8 @@
         "endStation": "WND",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 20.5,
-        "hours": 6.5,
+        "distanceKm": 20.2,
+        "hours": 5.33,
         "lunchStops": [
           {
             "name": "Oak",
@@ -13190,7 +13190,8 @@
           "pageName": "Tring to Wendover",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-to-wendover/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920846007"
       }
     ]
   },
