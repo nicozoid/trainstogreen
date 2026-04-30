@@ -1053,8 +1053,8 @@
         "endStation": "WOB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 18.7,
-        "hours": 5.5,
+        "distanceKm": 21.1,
+        "hours": 5.6,
         "lunchStops": [
           {
             "name": "Bell Inn",
@@ -1116,7 +1116,8 @@
           "pageName": "Bow Brickhill to Woburn Sands",
           "pageURL": "https://www.walkingclub.org.uk/walk/bow-brickhill-to-woburn-sands/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921098649"
       },
       {
         "role": "shorter",
@@ -5390,8 +5391,8 @@
         "endStation": "WNR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.98,
-        "hours": 4,
+        "distanceKm": 14.5,
+        "hours": 3.78,
         "lunchStops": [
           {
             "name": "Savill Garden Restaurant",
@@ -5465,7 +5466,8 @@
           "pageName": "Sunningdale to Windsor",
           "pageURL": "https://www.walkingclub.org.uk/walk/sunningdale-to-windsor/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921106856"
       },
       {
         "role": "alternative",
