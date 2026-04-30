@@ -57777,8 +57777,8 @@
         "endStation": "TBW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 18.58,
-        "hours": 5.333,
+        "distanceKm": 16.2,
+        "hours": 4.42,
         "lunchStops": [
           {
             "name": "Spotted Dog",
@@ -57833,7 +57833,8 @@
           "pageName": "Leigh to Tunbridge Wells",
           "pageURL": "https://www.walkingclub.org.uk/walk/leigh-to-tunbridge-wells/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921069953"
       }
     ],
     "resolved": true,
@@ -94823,8 +94824,8 @@
         "endStation": "GLD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 15.62,
-        "hours": 3.833,
+        "distanceKm": 16.0,
+        "hours": 4.2,
         "lunchStops": [
           {
             "name": "William IV",
@@ -94885,7 +94886,8 @@
           "pageName": "Gomshall to Guildford",
           "pageURL": "https://www.walkingclub.org.uk/walk/gomshall-to-guildford/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921052519"
       },
       {
         "role": "shorter",
@@ -107188,8 +107190,8 @@
         "endStation": "BAB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19,
-        "hours": 5,
+        "distanceKm": 14.3,
+        "hours": 3.98,
         "lunchStops": [
           {
             "name": "Red Lion",
@@ -107256,7 +107258,8 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/balcombe-circular/",
           "type": "main"
         },
-        "suffix": "via Nymans"
+        "suffix": "via Nymans",
+        "komootUrl": "https://www.komoot.com/tour/2921079856"
       }
     ]
   },
