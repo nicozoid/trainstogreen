@@ -171,5 +171,51 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-fkcfkcsamphire": {
+    "slug": "manual-fkcfkcsamphire",
+    "title": "Manual FKC Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "FKC",
+        "endStation": "FKC",
+        "stationToStation": true,
+        "lunchStops": [],
+        "terrain": "verdant coastal cliffs, rolling hills, suburban streets",
+        "sights": [],
+        "miscellany": "Begins, necessarily, with a lengthy suburban segment, but then becomes very beautiful and surprisingly quiet. Particularly lovely on the walk along the cliffs east of Folkestone, where there are also a number of lunch spot choices. The narrow overgrown paths are best. But note that there is a LOT of steep ascents and descents on this walk.",
+        "id": "fkcfkcsamphire",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T00:00:00.000Z",
+        "komootUrl": "https://www.komoot.com/tour/2913988093",
+        "rating": 3,
+        "mudWarning": false,
+        "distanceKm": 16,
+        "hours": 4.63,
+        "previousWalkDates": [
+          "2025-04-27"
+        ]
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
