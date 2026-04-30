@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { readDataFile, writeDataFile } from "@/lib/github-data"
-import { commitDerivedFiles, handleAdminWrite } from "@/app/api/dev/_helpers"
+import { readDataFile } from "@/lib/github-data"
+import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { WALK_ID_WORDS } from "@/scripts/walk-id-words.mjs"
 
 // All walk files — we read them all to ensure the generated id is
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
   const id = mintWalkId(startStation, endStation, existingIds)
 
   const slug = `manual-${id}`
-  const { data, sha } = await readDataFile<ManualFile>(MANUAL_FILE)
+  const { data } = await readDataFile<ManualFile>(MANUAL_FILE)
 
   // Circular when start === end; this drives the derived title
   // ("X Circular" vs "X to Y") in scripts/build-rambler-notes.mjs.
@@ -136,17 +136,9 @@ export async function POST(req: NextRequest) {
     outsideMainlandBritain: false,
   }
 
-  await writeDataFile(MANUAL_FILE, data, `Create manual walk ${id} at ${startStation}`, sha)
-
-  try {
-    await commitDerivedFiles(`Create manual walk ${id} at ${startStation}`)
-  } catch (err) {
-    // Same pattern as PATCH: the create commit succeeded; only the
-    // derived-file commits failed.
-    // eslint-disable-next-line no-console
-    console.error("derived-file commit after walk create failed:", err)
-    return NextResponse.json({ message: "ok", id, rebuildPending: true })
-  }
+  // Single atomic commit: source manual-walks.json + rebuilt derived
+  // station-* files. See commitWalkSave for why one bundled commit.
+  await commitWalkSave({ path: MANUAL_FILE, data }, `Create manual walk ${id} at ${startStation}`)
 
   return NextResponse.json({ message: "ok", id })
   })
