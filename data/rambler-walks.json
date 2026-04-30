@@ -60286,15 +60286,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Ramsgate",
         "endPlace": "Margate",
         "startStation": "RAM",
         "endStation": "MAR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 15.7,
-        "hours": null,
+        "distanceKm": 16,
+        "hours": 4.2,
         "lunchStops": [
           {
             "name": "Royal Victoria Pavillion",
@@ -60334,20 +60333,16 @@
         "terrain": "Low chalk cliffs, sandy bays and coves, cliff-top grassland, seaside promenades, historic coastal towns",
         "sights": [
           {
-            "name": "Turner Contemporary Gallery",
-            "url": null
+            "name": "Turner Contemporary Gallery"
           },
           {
-            "name": "Dickens House Museum",
-            "url": null
+            "name": "Dickens House Museum"
           },
           {
-            "name": "Kingsgate Castle",
-            "url": null
+            "name": "Kingsgate Castle"
           },
           {
-            "name": "North Foreland Lighthouse",
-            "url": null
+            "name": "North Foreland Lighthouse"
           },
           {
             "name": "Royal Victoria Pavilion",
@@ -60362,7 +60357,9 @@
           "pageName": "Ramsgate to Margate",
           "pageURL": "https://www.walkingclub.org.uk/walk/ramsgate-to-margate/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2797333523",
+        "updatedAt": "2026-04-30T12:49:40.800Z"
       },
       {
         "role": "variant",
