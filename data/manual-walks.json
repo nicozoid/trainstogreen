@@ -217,5 +217,272 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-pevbatfox": {
+    "slug": "manual-pevbatfox",
+    "title": "Manual PEV to BAT",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "PEV",
+        "endStation": "BAT",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "pevbatfox",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T14:30:07.298Z",
+        "komootUrl": "https://www.komoot.com/tour/2920345301",
+        "rating": 4,
+        "previousWalkDates": [
+          "2023-05-01"
+        ],
+        "distanceKm": 28.4,
+        "hours": 7.6
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-gomgomwren": {
+    "slug": "manual-gomgomwren",
+    "title": "Manual GOM Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "GOM",
+        "endStation": "GOM",
+        "stationToStation": true,
+        "lunchStops": [
+          {
+            "name": "Dabbling Duck",
+            "location": "Shere",
+            "rating": "good",
+            "busy": "busy"
+          }
+        ],
+        "sights": [
+          {
+            "name": "Shere",
+            "url": "https://www.visitsurrey.com/listing/shere/83223101/",
+            "description": "a beautiful, quintessential English village"
+          }
+        ],
+        "id": "gomgomwren",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T14:30:07.815Z",
+        "suffix": "via Shere & the Surrey Hills",
+        "terrain": "woods, quaint village, hilly",
+        "komootUrl": "https://www.komoot.com/tour/2920217304",
+        "rating": 4,
+        "mudWarning": true,
+        "previousWalkDates": [
+          "2020-11-07",
+          "2026-02-01"
+        ],
+        "distanceKm": 10.2,
+        "hours": 2.85
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-tritrirobin": {
+    "slug": "manual-tritrirobin",
+    "title": "Manual TRI Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "TRI",
+        "endStation": "TRI",
+        "stationToStation": true,
+        "lunchStops": [
+          {
+            "name": "Bakehouse",
+            "location": "Ashridge House",
+            "rating": "good"
+          }
+        ],
+        "sights": [
+          {
+            "name": "Ashridge Estate",
+            "url": "https://www.nationaltrust.org.uk/visit/essex-bedfordshire-hertfordshire/ashridge-estate"
+          }
+        ],
+        "id": "tritrirobin",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T14:30:08.482Z",
+        "suffix": "via Ashridge Estate",
+        "terrain": "ancient trees, rolling chalk downlands, lush meadows",
+        "komootUrl": "https://www.komoot.com/tour/2665054524",
+        "miscellany": "Marked trails can be excessively busy",
+        "rating": 4,
+        "mudWarning": true,
+        "previousWalkDates": [
+          "2025-03-22",
+          "2025-11-02"
+        ],
+        "distanceKm": 13.1,
+        "hours": 3.57
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-hndhndswift": {
+    "slug": "manual-hndhndswift",
+    "title": "Manual HND Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "HND",
+        "endStation": "HND",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [
+          {
+            "name": "Blenheim Palace",
+            "url": "https://www.blenheimpalace.com"
+          }
+        ],
+        "id": "hndhndswift",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T14:30:09.140Z",
+        "suffix": "via Blenheim Palace Park",
+        "komootUrl": "https://www.komoot.com/tour/2920249192",
+        "rating": 4,
+        "previousWalkDates": [
+          "2024-01-01"
+        ],
+        "distanceKm": 12.4,
+        "hours": 3.27
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-egregrswallow": {
+    "slug": "manual-egregrswallow",
+    "title": "Manual EGR Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "EGR",
+        "endStation": "EGR",
+        "stationToStation": true,
+        "lunchStops": [
+          {
+            "name": "Standen House café",
+            "rating": "good"
+          }
+        ],
+        "sights": [
+          {
+            "name": "Standen House",
+            "url": "https://www.nationaltrust.org.uk/visit/sussex/standen-house-and-garden",
+            "description": "late 19th Century; large and beautiful; filled with Arts and Crafts designs."
+          }
+        ],
+        "id": "egregrswallow",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-30T14:30:09.601Z",
+        "suffix": "via Standen House",
+        "terrain": "stately home, woods",
+        "komootUrl": "https://www.komoot.com/tour/2920186661",
+        "rating": 4,
+        "previousWalkDates": [
+          "2026-01-01"
+        ],
+        "distanceKm": 8.35,
+        "hours": 2.28
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
