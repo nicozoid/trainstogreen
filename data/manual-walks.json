@@ -1178,7 +1178,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-04-30T16:31:13.036Z",
         "komootUrl": "https://www.komoot.com/tour/921270625",
         "distanceKm": 10.3,
         "hours": 3.02,
@@ -1186,7 +1186,8 @@
         "terrain": "hills, woodland",
         "previousWalkDates": [
           "2020-11-01"
-        ]
+        ],
+        "miscellany": "Popular and busy"
       }
     ],
     "extracted": true,
