@@ -80781,8 +80781,8 @@
         "endStation": "OXF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 11.7,
-        "hours": 2.98,
+        "distanceKm": 12.8,
+        "hours": 3.27,
         "lunchStops": [
           {
             "name": "Trout Inn",
@@ -80957,7 +80957,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/oxford-circular/",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2920888138"
+        "komootUrl": "https://www.komoot.com/tour/2920905703"
       }
     ]
   },
