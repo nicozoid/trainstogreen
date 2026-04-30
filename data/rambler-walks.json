@@ -11424,8 +11424,8 @@
         "endStation": "AMR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.9,
-        "hours": 5,
+        "distanceKm": 19.8,
+        "hours": 5.32,
         "lunchStops": [
           {
             "name": "Squirrel",
@@ -11494,7 +11494,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
           "type": "main"
         },
-        "suffix": "via Parish Church of St Peter and St Paul"
+        "suffix": "via Parish Church of St Peter and St Paul",
+        "komootUrl": "https://www.komoot.com/tour/2920274295",
+        "updatedAt": "2026-04-30T10:46:39.352Z"
       },
       {
         "role": "shorter",
@@ -32325,8 +32327,8 @@
         "endStation": "SUY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.62,
-        "hours": 4.5,
+        "distanceKm": 13.4,
+        "hours": 3.58,
         "lunchStops": [
           {
             "name": "Fox",
@@ -32380,7 +32382,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/bures-to-sudbury/",
           "type": "main"
         },
-        "suffix": "via Loshes Woodland"
+        "suffix": "via Loshes Woodland",
+        "komootUrl": "https://www.komoot.com/tour/2920318605",
+        "updatedAt": "2026-04-30T11:07:14.719Z"
       },
       {
         "role": "shorter",
@@ -40939,8 +40943,8 @@
         "endStation": "BOE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 15.18,
-        "hours": 4.25,
+        "distanceKm": 17.8,
+        "hours": 4.58,
         "lunchStops": [
           {
             "name": "Harper's Steakhouse (The Navigator)",
@@ -40994,7 +40998,9 @@
           "pageName": "Netley to Botley",
           "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920240122",
+        "updatedAt": "2026-04-30T10:31:03.792Z"
       },
       {
         "role": "alternative",
@@ -45095,8 +45101,8 @@
         "endStation": "SAC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.55,
-        "hours": 4,
+        "distanceKm": 14.2,
+        "hours": 3.65,
         "lunchStops": [
           {
             "name": "Moor Mill",
@@ -45181,7 +45187,9 @@
           "pageName": "Garston to St Albans",
           "pageURL": "https://www.walkingclub.org.uk/walk/garston-to-st-albans/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920312228",
+        "updatedAt": "2026-04-30T11:03:59.423Z"
       },
       {
         "role": "alternative",
@@ -59020,8 +59028,8 @@
         "endStation": "OTF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.38,
-        "hours": 3.5,
+        "distanceKm": 11,
+        "hours": 3.13,
         "lunchStops": [
           {
             "name": "Rising Sun",
@@ -59074,6 +59082,7 @@
         ],
         "miscellany": "Can be muddy",
         "id": "otfotfpolecat",
+        "komootUrl": "https://www.komoot.com/tour/2920077816",
         "mudWarning": true,
         "rating": 3,
         "source": {
@@ -79041,8 +79050,8 @@
         "endStation": "HOT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.46,
-        "hours": 4.5,
+        "distanceKm": 17.8,
+        "hours": 4.75,
         "lunchStops": [
           {
             "name": "Stag & Huntsman",
@@ -79087,7 +79096,8 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
           "type": "main"
         },
-        "suffix": "via Great Wood"
+        "suffix": "via Great Wood",
+        "komootUrl": "https://www.komoot.com/tour/2920170092"
       },
       {
         "role": "variant",
@@ -81033,8 +81043,8 @@
         "endStation": "PAN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 13.88,
-        "hours": 4,
+        "distanceKm": 12.6,
+        "hours": 3.4,
         "lunchStops": [
           {
             "name": "Swan",
@@ -81082,7 +81092,7 @@
             "url": null
           }
         ],
-        "miscellany": "Can be muddy",
+        "miscellany": "Can be muddy. Note that the lunch stops listed are at the start/end station rather than at the natural midpoint of the route",
         "id": "panpanelm",
         "mudWarning": true,
         "source": {
@@ -81091,7 +81101,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/pangbourne-circular/",
           "type": "main"
         },
-        "suffix": "via Church of St John the Baptist"
+        "suffix": "via Church of St John the Baptist",
+        "komootUrl": "https://www.komoot.com/tour/2920257524",
+        "updatedAt": "2026-04-30T10:41:22.356Z"
       },
       {
         "role": "shorter",
@@ -98518,8 +98530,8 @@
         "endStation": "HSL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 15,
-        "hours": 4.5,
+        "distanceKm": 14.7,
+        "hours": 4.15,
         "lunchStops": [
           {
             "name": "Red Lion",
@@ -98559,7 +98571,9 @@
           "pageName": "Liphook to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/liphook-to-haslemere/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920301093",
+        "updatedAt": "2026-04-30T11:00:41.283Z"
       },
       {
         "role": "shorter",
@@ -99349,21 +99363,15 @@
         ],
         "komootUrl": "https://www.komoot.com/tour/2905513618",
         "source": {
-          "orgSlug": "trains-to-green",
-          "pageName": "",
-          "pageURL": "",
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Milford to Haslemere",
+          "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
           "type": "main"
         },
         "distanceKm": 16.4,
         "rating": 3,
-        "updatedAt": "2026-04-24T22:48:07.113Z",
-        "suffix": "via Grave of an Unknown Sailor",
-        "relatedSource": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Milford to Haslemere",
-          "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
-          "type": "adapted"
-        }
+        "updatedAt": "2026-04-30T09:54:07.758Z",
+        "suffix": "via Grave of an Unknown Sailor"
       },
       {
         "role": "variant",
@@ -102902,8 +102910,8 @@
         "endStation": "GOD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.87,
-        "hours": 3.5,
+        "distanceKm": 11.6,
+        "hours": 3.12,
         "lunchStops": [
           {
             "name": "Withies Inn",
@@ -102955,7 +102963,8 @@
           "pageName": "Wanborough to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/wanborough-to-godalming/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920224124"
       },
       {
         "role": "longer",
