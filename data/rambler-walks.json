@@ -10018,8 +10018,8 @@
         "endStation": "BCF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.5,
-        "hours": 5.5,
+        "distanceKm": 21.1,
+        "hours": 5.57,
         "lunchStops": [
           {
             "name": "Merlins Cave",
@@ -10095,7 +10095,8 @@
           "pageName": "Beaconsfield Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920801358"
       },
       {
         "role": "shorter",
