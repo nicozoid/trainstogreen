@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { readDataFile, writeDataFile } from "@/lib/github-data"
-import { commitDerivedFiles, handleAdminWrite } from "@/app/api/dev/_helpers"
+import { readDataFile } from "@/lib/github-data"
+import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 
 // Files that hold walk entries — mirrors scripts/build-rambler-notes.mjs.
 const WALKS_FILES = [
@@ -262,7 +262,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const located = await locateWalk(id)
   if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
 
-  const { file, data, sha, slug, variantIndex } = located
+  const { file, data, slug, variantIndex } = located
   const entry = data[slug]
   const variant = entry.walks![variantIndex] as WalkVariant
 
@@ -327,22 +327,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     variant.updatedAt = new Date().toISOString()
   }
 
-  await writeDataFile(file, data, `Update walk ${id} (${slug})`, sha)
-
-  // Rebuild + commit the derived station-* files so the public view
-  // (which reads station-notes.json) reflects the change immediately
-  // and atomically — same code path in dev and prod.
-  try {
-    await commitDerivedFiles(`Update walk ${id} (${slug})`)
-  } catch (err) {
-    // The walk save itself succeeded — only the derived-file commits
-    // failed. Surface as a soft 200 so the client can show a "visible
-    // after next rebuild" notice instead of treating this as a save
-    // failure.
-    // eslint-disable-next-line no-console
-    console.error("derived-file commit after walk patch failed:", err)
-    return NextResponse.json({ message: "ok", id, rebuildPending: true })
-  }
+  // Single atomic commit: source walk file + rebuilt derived station-*
+  // files. One commit → one Vercel preview deploy → public view stays
+  // in sync because there's no intermediate state where the source
+  // changed but the derived files haven't caught up yet.
+  await commitWalkSave({ path: file, data }, `Update walk ${id} (${slug})`)
 
   return NextResponse.json({ message: "ok", id })
   })
@@ -363,7 +352,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const located = await locateWalk(id)
   if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
 
-  const { file, data, sha, slug, variantIndex } = located
+  const { file, data, slug, variantIndex } = located
   const entry = data[slug]
   entry.walks!.splice(variantIndex, 1)
   // If that was the entry's only variant, drop the entry entirely —
@@ -372,17 +361,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     delete data[slug]
   }
 
-  await writeDataFile(file, data, `Delete walk ${id} (${slug})`, sha)
-
-  try {
-    await commitDerivedFiles(`Delete walk ${id} (${slug})`)
-  } catch (err) {
-    // Same pattern as PATCH: the delete commit succeeded; only the
-    // derived-file commits failed.
-    // eslint-disable-next-line no-console
-    console.error("derived-file commit after walk delete failed:", err)
-    return NextResponse.json({ message: "ok", id, rebuildPending: true })
-  }
+  await commitWalkSave({ path: file, data }, `Delete walk ${id} (${slug})`)
 
   return NextResponse.json({ message: "ok", id })
   })

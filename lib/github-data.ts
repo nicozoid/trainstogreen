@@ -182,6 +182,159 @@ export async function writeDataFile<T>(
 }
 
 /**
+ * Commit multiple JSON data files in a SINGLE commit. Locally writes each
+ * file to disk; in production uses the GitHub Git Data API to bundle all
+ * files into one tree → one commit → one ref update.
+ *
+ * Why this exists: the simple `writeDataFile` path uses the Contents API,
+ * which only commits one file at a time. Saving a walk touches 5 files
+ * (source walk JSON + 4 rebuilt station-* files), and committing each one
+ * separately produced 5 commits → 5 Vercel preview deploys per save.
+ * Bundling into one commit gives us one deploy per save.
+ *
+ * Conflict handling: instead of per-file SHA matching (Contents API style),
+ * we detect conflicts at the ref-update step. If another commit landed on
+ * the branch between when we read HEAD and when we update the ref, GitHub
+ * rejects the ref update and we throw ConflictError. The caller (wrapped
+ * in handleAdminWrite) retries the whole read→mutate→commit cycle.
+ */
+export async function commitMultipleDataFiles(
+  files: Array<{ path: string; data: unknown }>,
+  commitMessage: string,
+): Promise<void> {
+  const token = getToken()
+
+  // Same JSON formatting as writeDataFile so the file diffs stay stable
+  // (2-space indent, trailing newline).
+  const filesWithContent = files.map(({ path: relativePath, data }) => ({
+    path: relativePath,
+    content: JSON.stringify(data, null, 2) + "\n",
+  }))
+
+  if (!token) {
+    // Local dev — write each file straight to disk. No commit involved
+    // (the local filesystem isn't a git repo from this code's POV).
+    for (const { path: relativePath, content } of filesWithContent) {
+      const fullPath = path.join(process.cwd(), relativePath)
+      fs.writeFileSync(fullPath, content, "utf-8")
+    }
+    return
+  }
+
+  // Production — Git Data API multi-file commit. Five round-trips total:
+  //   1. Resolve branch HEAD SHA + its tree SHA
+  //   2..N. Create one blob per file (parallelizable)
+  //   N+1. Create a tree with base_tree=current_tree (so we inherit every
+  //         OTHER file in the repo and only list the ones we're changing)
+  //   N+2. Create a commit pointing at the new tree
+  //   N+3. Update the branch ref to the new commit
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github.v3+json",
+  }
+  const apiBase = `https://api.github.com/repos/${OWNER}/${REPO}`
+
+  // 1. Get current HEAD commit SHA + its tree SHA
+  const refRes = await fetch(`${apiBase}/git/refs/heads/${BRANCH}`, {
+    headers,
+    cache: "no-store",
+  })
+  if (!refRes.ok) {
+    throw new Error(`GitHub refs read failed (${refRes.status}): ${await refRes.text()}`)
+  }
+  const refJson = await refRes.json()
+  const headSha: string = refJson?.object?.sha
+  if (!headSha) throw new Error(`GitHub refs read returned no SHA for ${BRANCH}`)
+
+  const commitRes = await fetch(`${apiBase}/git/commits/${headSha}`, {
+    headers,
+    cache: "no-store",
+  })
+  if (!commitRes.ok) {
+    throw new Error(`GitHub commit read failed (${commitRes.status}): ${await commitRes.text()}`)
+  }
+  const commitJson = await commitRes.json()
+  const baseTreeSha: string = commitJson?.tree?.sha
+  if (!baseTreeSha) throw new Error(`GitHub commit ${headSha} has no tree SHA`)
+
+  // 2. Create one blob per file. Parallelize — these are independent.
+  const blobShas = await Promise.all(
+    filesWithContent.map(async ({ content }) => {
+      const res = await fetch(`${apiBase}/git/blobs`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          content: Buffer.from(content).toString("base64"),
+          encoding: "base64",
+        }),
+      })
+      if (!res.ok) {
+        throw new Error(`GitHub blob create failed (${res.status}): ${await res.text()}`)
+      }
+      const json = await res.json()
+      return json.sha as string
+    }),
+  )
+
+  // 3. Create a tree that inherits from the current HEAD tree and
+  // overlays our changed files. base_tree means we don't have to list
+  // every file in the repo — just the ones we're updating.
+  const treeRes = await fetch(`${apiBase}/git/trees`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      base_tree: baseTreeSha,
+      tree: filesWithContent.map(({ path: relativePath }, i) => ({
+        path: relativePath,
+        mode: "100644", // standard file mode, same as Contents API uses
+        type: "blob",
+        sha: blobShas[i],
+      })),
+    }),
+  })
+  if (!treeRes.ok) {
+    throw new Error(`GitHub tree create failed (${treeRes.status}): ${await treeRes.text()}`)
+  }
+  const treeJson = await treeRes.json()
+  const newTreeSha: string = treeJson.sha
+
+  // 4. Create the commit object
+  const newCommitRes = await fetch(`${apiBase}/git/commits`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      message: commitMessage,
+      tree: newTreeSha,
+      parents: [headSha],
+    }),
+  })
+  if (!newCommitRes.ok) {
+    throw new Error(`GitHub commit create failed (${newCommitRes.status}): ${await newCommitRes.text()}`)
+  }
+  const newCommitJson = await newCommitRes.json()
+  const newCommitSha: string = newCommitJson.sha
+
+  // 5. Update the branch ref. This is where conflicts surface — if HEAD
+  // moved since step 1 (someone else committed in between), GitHub
+  // returns 422 because we're not a fast-forward update.
+  const updateRes = await fetch(`${apiBase}/git/refs/heads/${BRANCH}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({
+      sha: newCommitSha,
+      force: false, // be paranoid — we only want fast-forwards
+    }),
+  })
+  if (!updateRes.ok) {
+    const body = await updateRes.text()
+    if (updateRes.status === 422 || updateRes.status === 409) {
+      throw new ConflictError(`GitHub ref update ${updateRes.status}: ${body}`)
+    }
+    throw new Error(`GitHub ref update failed (${updateRes.status}): ${body}`)
+  }
+}
+
+/**
  * Read → mutate → write cycle with automatic conflict retry. Pass a `mutate`
  * function that receives the current parsed data and returns the new value
  * plus a commit message. If the write 409s (someone else committed in the
