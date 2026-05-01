@@ -1370,57 +1370,39 @@ function WalkCard({
               rating, Komoot URL, distance/hours. These are what
               changes most often when curating a walk. */}
           <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`}>
-            {/* Title preview — derived from start/end station names +
-                optional admin-authored suffix; custom-title input
-                below can override it entirely. */}
-            {(() => {
-              const effectiveTitle = draft.name.trim()
-                ? draft.name.trim()
-                : derivedTitleOf(walk, draft.suffix)
-              return (
-                <div className="mb-3 rounded border border-border/60 bg-background px-2 py-1.5">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Title preview
-                  </div>
-                  <div className="text-sm font-medium text-foreground">{effectiveTitle}</div>
-                </div>
-              )
-            })()}
-
-            {/* Suffix — appended to the derived title with a leading
-                space. Ignored when a custom title override is set. */}
-            <div className="mb-3">
-              <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Suffix
-                {draft.name.trim() && (
+            {/* Suffix + Custom title — side by side */}
+            <div className="mb-3 flex gap-3">
+              <div className="flex-1 min-w-0">
+                <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  Suffix
+                  {draft.name.trim() && (
+                    <span className="ml-1 italic text-muted-foreground/70">
+                      (ignored)
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  id={`suffix-${walk.id}`}
+                  value={draft.suffix}
+                  onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
+                  className="h-7 text-xs"
+                  disabled={!!draft.name.trim()}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  Custom title
                   <span className="ml-1 italic text-muted-foreground/70">
-                    (ignored while custom title is set)
+                    (overrides)
                   </span>
-                )}
-              </Label>
-              <Input
-                id={`suffix-${walk.id}`}
-                value={draft.suffix}
-                onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
-                className="h-7 text-xs"
-                disabled={!!draft.name.trim()}
-              />
-            </div>
-
-            {/* Custom title — full override of the derived title. */}
-            <div className="mb-3">
-              <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Custom title
-                <span className="ml-1 italic text-muted-foreground/70">
-                  (overrides derived title)
-                </span>
-              </Label>
-              <Input
-                id={`name-${walk.id}`}
-                value={draft.name}
-                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                className="h-7 text-xs"
-              />
+                </Label>
+                <Input
+                  id={`name-${walk.id}`}
+                  value={draft.name}
+                  onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                  className="h-7 text-xs"
+                />
+              </div>
             </div>
 
             {/* Rating — Unrated + four tier icons. Active tier lights

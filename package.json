@@ -35,6 +35,8 @@
     "@anthropic-ai/sdk": "^0.90.0",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.2.1",
+    "@turf/boolean-point-in-polygon": "^7.3.5",
+    "@turf/helpers": "^7.3.5",
     "@types/node": "^25.5.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

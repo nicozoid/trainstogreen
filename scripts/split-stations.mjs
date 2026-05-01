@@ -44,14 +44,17 @@ const ORIGIN_SLUG = {
 // dead OSM metadata that bloats the file without UI purpose. Keep this in
 // sync with how the app consumes f.properties in components/.
 const KEEP_PROPS = new Set([
-  "name",            // station name, shown everywhere
-  "ref:crs",         // CRS code — London-terminal matching, RTT lookups
-  "network",         // filter: London Underground vs DLR vs NR
-  "usage",           // filter: exclude `usage=tourism` heritage railways
-  "londonMinutes",   // default home-journey time from Central London
-  "flickrCount",     // photo modal availability indicator
-  "popularityScore", // rating / filter
-  "trailScore",      // rating / filter
+  "name",              // station name, shown everywhere
+  "ref:crs",           // CRS code — London-terminal matching, RTT lookups
+  "network",           // filter: London Underground vs DLR vs NR
+  "usage",             // filter: exclude `usage=tourism` heritage railways
+  "londonMinutes",     // default home-journey time from Central London
+  "flickrCount",       // photo modal availability indicator
+  "popularityScore",   // rating / filter
+  "trailScore",        // rating / filter
+  "county",            // ceremonial county (e.g. "Kent", "Surrey")
+  "protectedArea",     // national park / AONB name (e.g. "South Downs")
+  "protectedAreaType", // "national_park" | "national_landscape"
 ])
 
 async function main() {

@@ -50,3 +50,6 @@ storybook-static
 # TfL master-queue runtime artefacts (master-queue.txt, log, status JSON).
 # Regenerated on every run via scripts/tfl-build-master-queue.mjs.
 .tfl-queue/
+
+# Boundary GeoJSON files (re-downloaded by scripts/fetch-station-areas.mjs)
+data/boundaries/

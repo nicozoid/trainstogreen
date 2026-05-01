@@ -10259,6 +10259,30 @@ export default function HikeMap() {
               return undefined
             })()}
             isLondonHome={primaryOrigin === "-0.1269,51.5196"}
+            {...(() => {
+              // Direct lookup — works for non-synthetic stations.
+              let f = baseStations?.features.find(
+                (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === displayStation.coordKey,
+              )
+              // Synthetic clusters have no feature at the anchor coord, so
+              // borrow location info from the first member that has it.
+              if (!f?.properties?.county && ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) {
+                const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
+                for (const c of memberCoords) {
+                  const memberF = baseStations?.features.find(
+                    (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === c,
+                  )
+                  if (memberF?.properties?.county) {
+                    f = memberF
+                    break
+                  }
+                }
+              }
+              return {
+                county: f?.properties?.county as string | undefined,
+                protectedArea: f?.properties?.protectedArea as string | undefined,
+              }
+            })()}
             hasIssue={issueStations.has(displayStation.coordKey)}
             onToggleIssue={(hasIssue: boolean) => handleToggleIssue(
               displayStation.coordKey,
