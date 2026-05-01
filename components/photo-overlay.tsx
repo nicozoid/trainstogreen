@@ -1309,48 +1309,38 @@ export default function StationModal({
                 && normForCompare(historicCounty) !== normForCompare(county)
 
               // The county portion of the line — either just the modern name, or
-              // a "{historic} | {modern label}: {modern}" pair when they differ.
-              // Both halves link to explainers chosen for the user's likely
-              // confusion ("Huntingdonshire? Where's that?" vs "wait, why's
-              // Hampstead in Greater London now?").
+              // a "{historic} (or {modern})" pair when they differ. Both halves
+              // link to explainers chosen for the user's likely confusion
+              // ("Huntingdonshire? Where's that?" vs "wait, why's Hampstead in
+              // Greater London now?").
               const HISTORIC_INFO_URL =
                 "https://owlcation.com/social-sciences/the-complete-guide-to-britains-historic-counties-an-introduction"
               const linkClass =
                 "underline decoration-muted-foreground/50 hover:decoration-muted-foreground"
 
-              // Modern-side label and link branch on country. England + Wales
-              // both have ceremonial-county lieutenancies (defined by the 1997
-              // Lieutenancies Act); Scotland was reorganised into council-area
-              // unitary authorities by the 1994 Act, so calling those "ceremonial
-              // counties" would be wrong. NI / unknown fall back to a plain
-              // "Modern:" label with no link, since neither explainer fits.
-              let modernLabel: string
               let modernUrl: string | null
               if (country === "Scotland") {
-                modernLabel = "Unitary authority"
                 modernUrl =
                   "https://en.wikipedia.org/wiki/Local_Government_etc._(Scotland)_Act_1994"
               } else if (country === "England" || country === "Wales") {
-                modernLabel = "Lieutenancy"
                 modernUrl =
                   "https://abcounties.com/counties/county-confusion/"
               } else {
-                modernLabel = "Modern"
                 modernUrl = null
               }
-              const modernText = `${modernLabel}: ${displayCounty}`
 
               const countyPortion = historicDiffers ? (
                 <>
                   <a href={HISTORIC_INFO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
                     {historicCounty}
                   </a>
-                  {" | "}
+                  {" (or "}
                   {modernUrl ? (
                     <a href={modernUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                      {modernText}
+                      {displayCounty}
                     </a>
-                  ) : modernText}
+                  ) : displayCounty}
+                  {")"}
                 </>
               ) : displayCounty
 
