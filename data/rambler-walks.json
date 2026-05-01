@@ -81478,7 +81478,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Shiplake",
         "endPlace": "Henley",
         "startStation": "SHI",
@@ -81490,56 +81489,44 @@
         "lunchStops": [
           {
             "name": "Maltsters Arms",
-            "location": "Rotherfield Greys",
-            "url": null
+            "location": "Rotherfield Greys"
           },
           {
             "name": "Bottle & Glass Inn",
-            "location": "Binfield Heath",
-            "url": null
+            "location": "Binfield Heath"
           }
         ],
         "terrain": "Riverside Thames path, bluebell and beech woods, open agricultural fields, gentle hills, golf course, historic village, market town riverfront",
         "sights": [
           {
-            "name": "Shiplake Lock",
-            "url": null
+            "name": "Shiplake Lock"
           },
           {
-            "name": "Shiplake Church",
-            "url": null
+            "name": "Shiplake Church"
           },
           {
-            "name": "Shiplake College",
-            "url": null
+            "name": "Shiplake College"
           },
           {
-            "name": "St Nicholas Church",
-            "url": null
+            "name": "St Nicholas Church"
           },
           {
-            "name": "Greys Court",
-            "url": null
+            "name": "Greys Court"
           },
           {
-            "name": "Lambridge Wood",
-            "url": null
+            "name": "Lambridge Wood"
           },
           {
-            "name": "Friar Park",
-            "url": null
+            "name": "Friar Park"
           },
           {
-            "name": "Friar Park's lodge house",
-            "url": null
+            "name": "Friar Park's lodge house"
           },
           {
-            "name": "St Mary the Virgin",
-            "url": null
+            "name": "St Mary the Virgin"
           },
           {
-            "name": "Red Lion Hotel",
-            "url": null
+            "name": "Red Lion Hotel"
           }
         ],
         "miscellany": "Can flood after rain",
@@ -81554,8 +81541,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
           "type": "main"
         },
-        "suffix": "via Shiplake Lock",
-        "komootUrl": "https://www.komoot.com/tour/2920707447"
+        "suffix": "via Greys Court",
+        "komootUrl": "https://www.komoot.com/tour/2920707447",
+        "updatedAt": "2026-05-01T14:13:53.286Z"
       },
       {
         "role": "variant",
