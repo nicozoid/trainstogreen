@@ -241,11 +241,29 @@ function formatDistance(km) {
   return `${Math.floor(km)} km`
 }
 
+// Uphill in metres, rounded DOWN to the nearest 10 m.
+function formatUphill(metres) {
+  if (typeof metres !== "number" || !Number.isFinite(metres)) return null
+  const rounded = Math.floor(metres / 10) * 10
+  if (rounded <= 0) return null
+  return `${rounded} m uphill`
+}
+
 // Hours round to nearest 30 minutes with ties going UP (4.25 → 4.5, 4.75 → 5).
 function formatHours(hours) {
   if (typeof hours !== "number") return null
   const rounded = Math.floor(hours * 2 + 0.5) / 2
   return `${rounded} hours`
+}
+
+// Difficulty — capitalised one-word sentence.
+function formatDifficulty(difficulty) {
+  if (typeof difficulty !== "string") return null
+  const lower = difficulty.toLowerCase()
+  if (lower === "easy") return "Easy"
+  if (lower === "moderate") return "Moderate"
+  if (lower === "hard") return "Hard"
+  return null
 }
 
 // Lunch stops: "the Gun Inn in Keyhaven, or the Marine in Milford".
@@ -642,14 +660,18 @@ function buildSummary(variant, entry, crsIndex, sources) {
   const relatedClause = formatRelatedSourceClause(variant, sources)
   if (relatedClause) parts.push(relatedClause)
 
-  // Distance and hours — each their own sentence, terse. Always
-  // emitted when present, including alongside a Komoot route (the
-  // "Pull distance" admin button keeps the structured fields in
+  // Distance, uphill, hours, difficulty — each their own sentence.
+  // Always emitted when present, including alongside a Komoot route
+  // (the "Pull data" admin button keeps the structured fields in
   // sync with the Komoot tour, so they no longer disagree).
   const dist = formatDistance(variant.distanceKm)
   if (dist) parts.push(`${dist}.`)
+  const uphill = formatUphill(variant.uphillMetres)
+  if (uphill) parts.push(`${uphill}.`)
   const time = formatHours(variant.hours)
   if (time) parts.push(`${time}.`)
+  const diff = formatDifficulty(variant.difficulty)
+  if (diff) parts.push(`${diff}.`)
 
   // GPX file — entry-level (applies to the whole page, not per
   // variant). Renders as a trailing "[GPX file](URL)." clause so the

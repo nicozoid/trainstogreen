@@ -53,6 +53,8 @@ type WalkPayload = {
   stationToStation: boolean
   distanceKm: number | null
   hours: number | null
+  uphillMetres: number | null
+  difficulty: "easy" | "moderate" | "hard" | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
@@ -188,6 +190,8 @@ export async function GET(req: NextRequest) {
           stationToStation: !!v.stationToStation,
           distanceKm: v.distanceKm ?? null,
           hours: v.hours ?? null,
+          uphillMetres: typeof v.uphillMetres === "number" ? v.uphillMetres : null,
+          difficulty: typeof v.difficulty === "string" && ["easy", "moderate", "hard"].includes(v.difficulty) ? v.difficulty : null,
           terrain: v.terrain ?? "",
           sights: v.sights ?? [],
           lunchStops: v.lunchStops ?? [],
@@ -211,6 +215,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Dedupe by id — the same walk variant can appear in multiple data
+  // files (110 such duplicates exist between rambler-walks.json and the
+  // per-source files). The build script's "later file overrides on slug
+  // collision" rule means the LAST occurrence is authoritative; mirror
+  // that here so the editor displays the same copy that gets rendered
+  // into public prose. Without this dedupe the editor would show two
+  // identical cards and saves would appear to "lose" data when the
+  // refetch surfaces the un-edited duplicate.
+  const dedup = new Map<string, WalkPayload>()
+  for (const w of out) dedup.set(w.id, w)
+  const deduped = [...dedup.values()]
+
   // Proximity to the ideal walk length. Closer to IDEAL_LENGTH_KM
   // sorts first; missing distances fall to the bottom of their tier
   // via Infinity so gaps in the data don't win ties.
@@ -231,7 +247,7 @@ export async function GET(req: NextRequest) {
     return 2
   }
 
-  out.sort((a, b) => {
+  deduped.sort((a, b) => {
     // 1. Bus-requiring walks always sink to the bottom. These can
     //    never be published to the public (the build script filters
     //    on stationToStation), so they're admin-curation-only — no
@@ -264,5 +280,5 @@ export async function GET(req: NextRequest) {
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 
-  return NextResponse.json(out)
+  return NextResponse.json(deduped)
 }

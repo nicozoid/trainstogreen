@@ -28,6 +28,8 @@ const EDITABLE_FIELDS = [
   "terrain",
   "distanceKm",
   "hours",
+  "uphillMetres",
+  "difficulty",
   "name",
   "suffix",
   "sights",
@@ -49,12 +51,22 @@ type WalkVariant = Record<string, unknown>
 type WalkEntry = { slug?: string; walks?: WalkVariant[]; [k: string]: unknown }
 
 // Finds the file + walks entry + variant index for a given walk id.
-// Returns null if nothing matches. Scans ALL walk files because ids
-// are globally unique across sources.
+// Returns null if nothing matches.
+//
+// Returns the LAST occurrence across files — important when the same
+// walk id (or slug) appears in multiple data files. The build script
+// (scripts/build-rambler-notes.mjs) merges files in WALKS_FILES order
+// with later files overriding earlier ones on slug collision, so the
+// LAST file's entry is the authoritative copy used to render the
+// public prose. We mirror that here so save updates the same file
+// the build reads from — otherwise saves go to a "stale" copy and
+// the public view never updates. (Pre-existing data has 110 such
+// duplicates between rambler-walks.json and the per-source files.)
 async function locateWalk(id: string): Promise<
   | { file: string; data: Record<string, WalkEntry>; sha: string | null; slug: string; variantIndex: number }
   | null
 > {
+  let lastHit: { file: string; data: Record<string, WalkEntry>; sha: string | null; slug: string; variantIndex: number } | null = null
   for (const file of WALKS_FILES) {
     let read
     try {
@@ -66,11 +78,11 @@ async function locateWalk(id: string): Promise<
       if (!Array.isArray(entry.walks)) continue
       const idx = entry.walks.findIndex((v) => (v as WalkVariant).id === id)
       if (idx >= 0) {
-        return { file, data: read.data, sha: read.sha, slug, variantIndex: idx }
+        lastHit = { file, data: read.data, sha: read.sha, slug, variantIndex: idx }
       }
     }
   }
-  return null
+  return lastHit
 }
 
 // Apply/clean one editable field. Returns the value we should actually
@@ -109,11 +121,18 @@ function cleanField(key: string, value: unknown): unknown | undefined {
       return rounded
     }
     case "distanceKm":
-    case "hours": {
+    case "hours":
+    case "uphillMetres": {
       // Numeric fields — null or non-finite drops the field. Negative
       // values are treated as garbage (sanity floor).
       if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined
       return value
+    }
+    case "difficulty": {
+      if (typeof value !== "string") return undefined
+      const lower = value.toLowerCase().trim() as "easy" | "moderate" | "hard"
+      if (!["easy", "moderate", "hard"].includes(lower)) return undefined
+      return lower
     }
 case "mudWarning": {
       // Only store `true` — absence means "not muddy", so false collapses
