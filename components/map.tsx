@@ -7017,59 +7017,22 @@ export default function HikeMap() {
   // `category` properties so the symbol layer can render the label and (if
   // we ever want per-category styling) branch on category. Computed only
   // when admin mode is active — non-admin viewers never pay the cost.
-  // Drive region-label opacity from the rating-checkbox state. When all
-  // five checkboxes are unchecked (visibleRatings.size === 0) the labels
-  // fade in after a short pause; when any checkbox is checked again they
-  // fade out. The admin toggle (showRegions) overrides this and snaps to
-  // fully visible.
-  //
-  // Why imperative setPaintProperty instead of the layer's `paint` prop:
-  // Mapbox transition specs (text-opacity-transition) need to be set
-  // BEFORE the value they govern, otherwise the value change uses the
-  // previous transition spec — which is what made the fade-out look
-  // instant after the fade-in had already happened. Calling
-  // setPaintProperty in order guarantees the transition is in place when
-  // the opacity update lands. react-map-gl's <Layer paint={...}> diff
-  // doesn't guarantee this ordering across re-renders.
-  useEffect(() => {
-    if (!mapReady) return
-    const map = mapRef.current?.getMap()
-    if (!map) return
-    // Compute + apply the desired opacity. Returns false when the layer
-    // isn't in the style yet (caller will retry on the next `idle`).
-    const apply = (): boolean => {
-      if (!map.getLayer("region-labels")) return false
-      let transition: { duration: number; delay: number }
-      let opacity: number
-      if (showRegions) {
-        transition = { duration: 0, delay: 0 }
-        opacity = 1
-      } else if (visibleRatings.size === 0) {
-        transition = { duration: 2000, delay: 5000 }
-        opacity = 1
-      } else {
-        transition = { duration: 2000, delay: 0 }
-        opacity = 0
-      }
-      // Order matters — transition spec first, then the value change so
-      // the new transition governs the interpolation.
-      map.setPaintProperty("region-labels", "text-opacity-transition", transition)
-      map.setPaintProperty("region-labels", "text-opacity", opacity)
-      return true
-    }
-    if (apply()) return
-    // Layer not registered yet (the <Layer> JSX mounts after mapReady
-    // flips, so on the first run we race the layer-add). Retry once
-    // Mapbox finishes its next idle cycle, by which point react-map-gl
-    // has flushed pending layer additions. Without this, opening the
-    // page with showRegions=true (e.g. the local-dev default) shows
-    // nothing until the user toggles the checkbox to force a re-run.
-    const onIdle = () => {
-      if (apply()) map.off("idle", onIdle)
-    }
-    map.on("idle", onIdle)
-    return () => { map.off("idle", onIdle) }
-  }, [mapReady, visibleRatings, showRegions])
+  // Region-label opacity is driven declaratively by the rating-checkbox
+  // state and the admin toggle (showRegions). Computed here, applied via
+  // the Layer's `paint` prop below. The transition spec lives in the
+  // same paint object — react-map-gl iterates paint keys in insertion
+  // order when syncing changes, so listing `text-opacity-transition`
+  // BEFORE `text-opacity` guarantees the transition is in place when
+  // the value update lands. (Earlier this was an imperative
+  // setPaintProperty effect, but react-map-gl tears down + re-creates
+  // the layer on its own schedule, which clobbered the imperative value
+  // and left the labels invisible until the user toggled the checkbox.)
+  const regionLabelsOpacity = showRegions || visibleRatings.size === 0 ? 1 : 0
+  const regionLabelsTransition = showRegions
+    ? { duration: 0, delay: 0 }
+    : visibleRatings.size === 0
+      ? { duration: 2000, delay: 5000 }  // fade in after a short pause when all ratings are off
+      : { duration: 2000, delay: 0 }     // fade out when any rating is on
   // Always populate the source — visibility is driven entirely by the
   // text-opacity paint property, which Mapbox interpolates smoothly.
   // (Earlier version returned empty features when "off", but that
@@ -8965,11 +8928,12 @@ export default function HikeMap() {
                 theme === "dark" ? "#14532d" : "#dcfce7",
               ],
               "text-halo-width": 1.5,
-              // Initial text-opacity is 0 — the imperative setPaintProperty
-              // effect above takes over from there to fade in/out based on
-              // visibleRatings. Setting it here just avoids a one-frame
-              // flash of fully-opaque labels at mount.
-              "text-opacity": 0,
+              // Transition spec MUST come before text-opacity in the
+              // object — react-map-gl applies paint changes in insertion
+              // order, and the transition needs to land before the value
+              // change for the new transition to govern the interpolation.
+              "text-opacity-transition": regionLabelsTransition,
+              "text-opacity": regionLabelsOpacity,
             }}
           />
         </Source>
