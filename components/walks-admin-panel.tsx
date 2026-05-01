@@ -56,6 +56,8 @@ export type WalkPayload = {
   stationToStation: boolean
   distanceKm: number | null
   hours: number | null
+  uphillMetres: number | null
+  difficulty: "easy" | "moderate" | "hard" | null
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
@@ -135,6 +137,8 @@ type EditableFields = {
   terrain: string
   distanceKm: number | null
   hours: number | null
+  uphillMetres: number | null
+  difficulty: "easy" | "moderate" | "hard" | null
   sights: SightDraft[]
   lunchStops: LunchDraft[]
   // Source provenance — all four fields editable. orgSlug comes from
@@ -867,7 +871,7 @@ function WalkCard({
   const [sourcesExpanded, setSourcesExpanded] = useState(
     !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
   )
-  // "Pull distance" button next to the komoot URL field. Spinner +
+  // "Pull data" button next to the komoot URL field. Spinner +
   // ephemeral error string while the scrape runs. Error is cleared
   // by the next attempt or by editing the URL.
   const [pullingDistance, setPullingDistance] = useState(false)
@@ -891,6 +895,8 @@ function WalkCard({
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
       hours: walk.hours,
+      uphillMetres: walk.uphillMetres,
+      difficulty: walk.difficulty,
       sights: sightsToDraft(walk.sights),
       lunchStops: lunchToDraft(walk.lunchStops),
       source: {
@@ -912,7 +918,7 @@ function WalkCard({
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
       walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
-      walk.distanceKm, walk.hours,
+      walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
       walk.sights, walk.lunchStops,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
       walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
@@ -940,6 +946,8 @@ function WalkCard({
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
       draft.hours !== serverState.hours ||
+      draft.uphillMetres !== serverState.uphillMetres ||
+      draft.difficulty !== serverState.difficulty ||
       // Array compare — order-sensitive but the server returns them in
       // calendar order, so both sides are stable.
       JSON.stringify(draft.bestSeasons) !== JSON.stringify(serverState.bestSeasons) ||
@@ -996,6 +1004,8 @@ function WalkCard({
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
           hours: draft.hours,
+          uphillMetres: draft.uphillMetres,
+          difficulty: draft.difficulty,
           // The server cleanSight/cleanLunchStop drop rows with empty
           // names and strip empty optional fields — we send the raw
           // drafts as-is and trust the server-side filter.
@@ -1476,10 +1486,9 @@ function WalkCard({
               </div>
             </div>
 
-            {/* Komoot tour URL — when set, the build drops the km/hours
-                line because Komoot provides the authoritative figures.
-                "Pull distance" scrapes the tour page for distance +
-                duration and writes them into the km/hours fields below. */}
+            {/* Komoot tour URL — "Pull data" scrapes the tour page for
+                distance, duration, uphill, difficulty, and name, writing
+                them into the corresponding fields below. */}
             <div className="mb-3">
               <Label htmlFor={`komoot-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
                 Komoot URL
@@ -1513,6 +1522,11 @@ function WalkCard({
                         ...d,
                         distanceKm: Math.round(j.distanceKm * 100) / 100,
                         hours: j.hours,
+                        // Uphill, difficulty, and name are optional — only
+                        // overwrite when the API returned a value.
+                        ...(typeof j.uphillMetres === "number" ? { uphillMetres: Math.round(j.uphillMetres * 100) / 100 } : {}),
+                        ...(j.difficulty ? { difficulty: j.difficulty } : {}),
+                        ...(j.name ? { name: j.name } : {}),
                       }))
                     } catch (e) {
                       setPullDistanceError((e as Error).message)
@@ -1522,7 +1536,7 @@ function WalkCard({
                   }}
                   disabled={pullingDistance || !draft.komootUrl.trim()}
                   className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
-                  title="Fetch distance and duration from the Komoot tour page"
+                  title="Fetch distance, duration, uphill, difficulty, and name from the Komoot tour page"
                 >
                   {pullingDistance ? (
                     <span className="inline-flex items-center gap-1">
@@ -1538,7 +1552,7 @@ function WalkCard({
                       Pulling…
                     </span>
                   ) : (
-                    "Pull distance"
+                    "Pull data"
                   )}
                 </button>
               </div>
@@ -1549,9 +1563,9 @@ function WalkCard({
               )}
             </div>
 
-            {/* Distance + hours — two number inputs side by side.
-                Empty input maps to null (clears the field). */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Distance, hours, uphill, difficulty — single row of four
+                fields. Empty input maps to null (clears the field). */}
+            <div className="grid grid-cols-4 gap-2">
               <div>
                 <Label htmlFor={`km-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
                   km
@@ -1583,6 +1597,44 @@ function WalkCard({
                   }}
                   className="h-7 text-xs"
                 />
+              </div>
+              <div>
+                <Label htmlFor={`uphill-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  uphill (m)
+                </Label>
+                <Input
+                  id={`uphill-${walk.id}`}
+                  type="number"
+                  step="1"
+                  value={draft.uphillMetres ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDraft((d) => ({ ...d, uphillMetres: v === "" ? null : Number(v) }))
+                  }}
+                  className="h-7 text-xs"
+                />
+              </div>
+              <div>
+                <Label htmlFor={`difficulty-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  difficulty
+                </Label>
+                {/* Native <select> — matches the Interchange/Feature/
+                    Source/Season dropdowns elsewhere in the admin UI.
+                    Empty option clears the field. */}
+                <select
+                  id={`difficulty-${walk.id}`}
+                  value={draft.difficulty ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDraft((d) => ({ ...d, difficulty: v === "" ? null : (v as "easy" | "moderate" | "hard") }))
+                  }}
+                  className="h-7 w-full rounded border border-border bg-background px-1 text-xs"
+                >
+                  <option value="">—</option>
+                  <option value="easy">Easy</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="hard">Hard</option>
+                </select>
               </div>
             </div>
           </CollapsibleSection>
