@@ -10025,68 +10025,54 @@
         "lunchStops": [
           {
             "name": "Merlins Cave",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Deli on the Green",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Feathers pub",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Crown Coffee",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Milton's Head",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "White Hart Inn",
-            "location": "Three Households",
-            "url": null
+            "location": "Three Households"
           }
         ],
         "terrain": "Gently rolling wooded hills, open fields, Buckinghamshire countryside, parkland, golf course",
         "sights": [
           {
-            "name": "Bekonscot Model Village and Railway",
-            "url": null
+            "name": "Bekonscot Model Village and Railway"
           },
           {
-            "name": "Parish Church of St Michael and All Angels",
-            "url": null
+            "name": "Parish Church of St Michael and All Angels"
           },
           {
-            "name": "Hodgemoor Woods",
-            "url": null
+            "name": "Hodgemoor Woods"
           },
           {
-            "name": "Milton's Cottage",
-            "url": null
+            "name": "Milton's Cottage"
           },
           {
-            "name": "Parish Church of Chalfont St Giles",
-            "url": null
+            "name": "Parish Church of Chalfont St Giles"
           },
           {
-            "name": "Friends Meeting House",
-            "url": null
+            "name": "Friends Meeting House"
           },
           {
-            "name": "Quaker Burial Ground",
-            "url": null
+            "name": "Quaker Burial Ground"
           },
           {
-            "name": "Mayflower Barn",
-            "url": null
+            "name": "Mayflower Barn"
           }
         ],
         "miscellany": "Can be muddy",
@@ -10098,7 +10084,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2920801358"
+        "komootUrl": "https://www.komoot.com/tour/2920801358",
+        "suffix": "via Chalfont St Giles",
+        "updatedAt": "2026-05-01T14:16:22.688Z"
       },
       {
         "role": "shorter",
