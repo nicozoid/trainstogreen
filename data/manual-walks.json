@@ -1482,12 +1482,12 @@
         "sights": [],
         "id": "wnrwnrrook",
         "source": {
-          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-01T11:46:16.727Z",
         "komootUrl": "https://www.komoot.com/tour/2921499158",
         "rating": 2,
         "suffix": "via the Ox & Obelisk Ponds of Windsor Great Park",
@@ -1845,9 +1845,9 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-01T11:49:12.676Z",
         "komootUrl": "https://www.komoot.com/tour/2921509210",
-        "rating": 1,
+        "rating": 2,
         "suffix": "via Roydon Woods",
         "miscellany": "Can be EXTREME mud in Lymington Reeds Beds Nature Reserve",
         "previousWalkDates": [
@@ -1855,52 +1855,6 @@
         ],
         "distanceKm": 12.6,
         "hours": 3.28
-      }
-    ],
-    "extracted": true,
-    "onMap": true,
-    "issues": false,
-    "notes": "",
-    "outsideMainlandBritain": false
-  },
-  "manual-rammareagle": {
-    "slug": "manual-rammareagle",
-    "title": "Manual RAM to MAR",
-    "url": "",
-    "favourite": false,
-    "tags": [
-      "manual"
-    ],
-    "categories": [],
-    "region": "",
-    "walks": [
-      {
-        "role": "main",
-        "startPlace": "",
-        "endPlace": "",
-        "startStation": "RAM",
-        "endStation": "MAR",
-        "stationToStation": true,
-        "lunchStops": [],
-        "sights": [],
-        "id": "rammareagle",
-        "source": {
-          "orgSlug": "trains-to-green",
-          "pageName": "",
-          "pageURL": "",
-          "type": "main"
-        },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
-        "komootUrl": "https://www.komoot.com/tour/2797333523",
-        "rating": 2,
-        "suffix": "via Viking Bay",
-        "terrain": "beaches, cliffs, seaside towns",
-        "miscellany": "Very busy; infinite cafés/restaurants",
-        "previousWalkDates": [
-          "2026-02-25"
-        ],
-        "distanceKm": 16,
-        "hours": 4.2
       }
     ],
     "extracted": true,

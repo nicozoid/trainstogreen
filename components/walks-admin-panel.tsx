@@ -796,12 +796,16 @@ function CollapsibleSection({
   return (
     <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
       <div className="flex items-center gap-1">
+        {/* flex-1 stretches the toggle button across the whole header
+            row so the entire bar (everything except `rightSlot`) is
+            clickable. cursor-pointer is explicit so the affordance is
+            obvious even where browser defaults vary. */}
         <button
           type="button"
           onClick={() => setOpen(!isOpen)}
           aria-expanded={isOpen}
           aria-controls={bodyId}
-          className="flex items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+          className="flex flex-1 cursor-pointer items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
         >
           <span
             aria-hidden="true"
@@ -853,18 +857,14 @@ function WalkCard({
   // true for ~1.2s after a successful copy so the chip can render
   // "Copied!" feedback in place of the id.
   const [idCopied, setIdCopied] = useState(false)
-  // Related Source section — admin cross-reference, collapsed by
-  // default. Auto-expand when the walk already has a related source
-  // set so the admin sees it on open.
-  const [relatedSourceExpanded, setRelatedSourceExpanded] = useState(
+  // Sources section — single collapsible holding both Main source
+  // and Related source. Collapsed by default (provenance is rarely
+  // edited) but auto-opens when a related source is already set so
+  // the admin sees it on open. The Subordinate button stays in the
+  // header so it remains reachable without expanding.
+  const [sourcesExpanded, setSourcesExpanded] = useState(
     !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
   )
-  // Source section — collapsed by default. Most admin edits on a
-  // walk are about the rated content (komoot, ratings, name) rather
-  // than provenance, so the section sits folded until the admin
-  // explicitly opens it. The Subordinate button stays in the header
-  // row so it remains reachable without expanding.
-  const [sourceExpanded, setSourceExpanded] = useState(false)
   // "Pull distance" button next to the komoot URL field. Spinner +
   // ephemeral error string while the scrape runs. Error is cleared
   // by the next attempt or by editing the URL.
@@ -1130,43 +1130,39 @@ function WalkCard({
 
       {expanded && (
         <div className="border-t border-border px-3 py-3 text-xs">
-          {/* Source — editable block: which organisation this walk
-              came from, the original page title + URL, and the
-              walk's type relative to that page (main / variant). The
-              render pipeline uses source.type to emit the "A shorter
-              variant of [X](url)." clause; source.pageName/pageURL
-              populate the link. */}
+          {/* Sources — single collapsible holding Main source +
+              Related source. The render pipeline uses source.type to
+              emit the "A shorter variant of [X](url)." clause;
+              relatedSource is admin-only and never appears in public
+              prose. */}
           <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
-            {/* Section header — flex row. The "Source" label is now a
-                button that toggles the section open/closed (chevron
-                rotates), and the "Subordinate" action button sits at
-                the right edge alongside it. The Subordinate button
-                stays in the header (not the body) so it remains
-                reachable when the section is collapsed. */}
+            {/* Header row — chevron toggle on the left, Subordinate
+                action on the right. Subordinate stays in the header
+                so it's reachable while the section is collapsed. */}
             <div className="mb-1.5 flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setSourceExpanded((v) => !v)}
-                aria-expanded={sourceExpanded}
-                aria-controls={`source-body-${walk.id}`}
-                className="flex items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+                onClick={() => setSourcesExpanded((v) => !v)}
+                aria-expanded={sourcesExpanded}
+                aria-controls={`sources-body-${walk.id}`}
+                className="flex flex-1 cursor-pointer items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
               >
                 <span
                   aria-hidden="true"
-                  className={`inline-block transition-transform ${sourceExpanded ? "rotate-90" : ""}`}
+                  className={`inline-block transition-transform ${sourcesExpanded ? "rotate-90" : ""}`}
                 >
                   ▸
                 </span>
-                Source
+                Sources
               </button>
               {/* Subordinate — demote the current external source to a
                   Related Source entry and rebrand this walk as a
                   Trains-to-Green main walk. Used when we're taking
                   ownership of a walk that started life as someone
-                  else's route (e.g. a Saturday Walkers Club page we've
-                  rewritten). The Related Source `type` is preserved
-                  so the admin can pre-set it (e.g. "Adapted from")
-                  before clicking. */}
+                  else's route (e.g. a Saturday Walkers Club page
+                  we've rewritten). The Related Source `type` is
+                  preserved so the admin can pre-set it (e.g.
+                  "Adapted from") before clicking. */}
               <button
                 type="button"
                 onClick={() => {
@@ -1186,9 +1182,7 @@ function WalkCard({
                       pageURL: "",
                     },
                   }))
-                  // Auto-expand the Related Source panel so the admin
-                  // can immediately see (and tweak) the copied values.
-                  setRelatedSourceExpanded(true)
+                  setSourcesExpanded(true)
                 }}
                 className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/40"
                 title="Move current source into Related Source and mark this walk as a Trains-to-Green main walk"
@@ -1196,164 +1190,167 @@ function WalkCard({
                 Subordinate
               </button>
             </div>
-            {sourceExpanded && (
-            <div id={`source-body-${walk.id}`}>
-            <div className="grid grid-cols-2 gap-1.5">
-              {/* Organisation — dropdown of slugs from sources.json.
-                  Adding a new org requires editing data/sources.json
-                  by hand (no UI for that yet). */}
+            {sourcesExpanded && (
+            <div id={`sources-body-${walk.id}`} className="space-y-2">
+              {/* Main source */}
               <div>
-                <Label htmlFor={`src-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                  Organisation
-                </Label>
-                <select
-                  id={`src-org-${walk.id}`}
-                  value={draft.source.orgSlug}
-                  onChange={(e) => setDraft((d) => ({
-                    ...d, source: { ...d.source, orgSlug: e.target.value },
-                  }))}
-                  className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                >
-                  {!SOURCE_ORGS.some((o) => o.slug === draft.source.orgSlug) && draft.source.orgSlug && (
-                    <option value={draft.source.orgSlug}>{draft.source.orgSlug} (unknown)</option>
-                  )}
-                  {SOURCE_ORGS.map((o) => (
-                    <option key={o.slug} value={o.slug}>{o.name}</option>
-                  ))}
-                </select>
-              </div>
-              {/* Type — fixed enum. Drives the "A longer variant
-                  of…" clause in the rendered prose. */}
-              <div>
-                <Label htmlFor={`src-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                  Type
-                </Label>
-                <select
-                  id={`src-type-${walk.id}`}
-                  value={draft.source.type}
-                  onChange={(e) => setDraft((d) => ({
-                    ...d, source: { ...d.source, type: e.target.value },
-                  }))}
-                  className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                >
-                  {SOURCE_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="mt-1.5 space-y-1.5">
-              <Input
-                value={draft.source.pageName}
-                onChange={(e) => setDraft((d) => ({
-                  ...d, source: { ...d.source, pageName: e.target.value },
-                }))}
-                placeholder="Page name (e.g. Milford to Haslemere)"
-                className="h-7 text-xs"
-              />
-              <Input
-                type="url"
-                value={draft.source.pageURL}
-                onChange={(e) => setDraft((d) => ({
-                  ...d, source: { ...d.source, pageURL: e.target.value },
-                }))}
-                placeholder="Page URL"
-                className="h-7 text-xs"
-              />
-            </div>
-
-            {/* Related Source — collapsible admin-only cross-reference.
-                Same four fields as the primary Source, but entirely
-                optional: the server drops the whole `relatedSource`
-                key when all fields are blank. Never rendered in
-                public prose; purely a curation aid to link related
-                walk pages together. */}
-            <div className="mt-2 border-t border-border/60 pt-2">
-              <button
-                type="button"
-                onClick={() => setRelatedSourceExpanded((v) => !v)}
-                aria-expanded={relatedSourceExpanded}
-                aria-controls={`related-source-body-${walk.id}`}
-                className="flex w-full items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
-              >
-                <span
-                  aria-hidden="true"
-                  className={`inline-block transition-transform ${relatedSourceExpanded ? "rotate-90" : ""}`}
-                >
-                  ▸
-                </span>
-                Related source
-                {(draft.relatedSource.orgSlug || draft.relatedSource.pageName || draft.relatedSource.pageURL) && (
-                  <span className="italic text-muted-foreground/70 normal-case">(set)</span>
-                )}
-              </button>
-              {relatedSourceExpanded && (
-                <div id={`related-source-body-${walk.id}`} className="mt-1.5">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    <div>
-                      <Label htmlFor={`rsrc-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                        Organisation
-                      </Label>
-                      <select
-                        id={`rsrc-org-${walk.id}`}
-                        value={draft.relatedSource.orgSlug}
-                        onChange={(e) => setDraft((d) => ({
-                          ...d, relatedSource: { ...d.relatedSource, orgSlug: e.target.value },
-                        }))}
-                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                      >
-                        {/* Empty option so the admin can clear the
-                            whole related-source block; server then
-                            deletes the field on save. */}
-                        <option value="">— none —</option>
-                        {!SOURCE_ORGS.some((o) => o.slug === draft.relatedSource.orgSlug) && draft.relatedSource.orgSlug && (
-                          <option value={draft.relatedSource.orgSlug}>{draft.relatedSource.orgSlug} (unknown)</option>
-                        )}
-                        {SOURCE_ORGS.map((o) => (
-                          <option key={o.slug} value={o.slug}>{o.name}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor={`rsrc-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                        Type
-                      </Label>
-                      <select
-                        id={`rsrc-type-${walk.id}`}
-                        value={draft.relatedSource.type}
-                        onChange={(e) => setDraft((d) => ({
-                          ...d, relatedSource: { ...d.relatedSource, type: e.target.value },
-                        }))}
-                        className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                      >
-                        {SOURCE_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>{t.label}</option>
-                        ))}
-                      </select>
-                    </div>
+                <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Main source
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {/* Organisation — dropdown of slugs from
+                      sources.json. Adding a new org requires editing
+                      data/sources.json by hand. */}
+                  <div>
+                    <Label htmlFor={`src-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Organisation
+                    </Label>
+                    <select
+                      id={`src-org-${walk.id}`}
+                      value={draft.source.orgSlug}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, source: { ...d.source, orgSlug: e.target.value },
+                      }))}
+                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                    >
+                      {!SOURCE_ORGS.some((o) => o.slug === draft.source.orgSlug) && draft.source.orgSlug && (
+                        <option value={draft.source.orgSlug}>{draft.source.orgSlug} (unknown)</option>
+                      )}
+                      {SOURCE_ORGS.map((o) => (
+                        <option key={o.slug} value={o.slug}>{o.name}</option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="mt-1.5 space-y-1.5">
+                  {/* Type — drives the "A longer variant of…" prose. */}
+                  <div>
+                    <Label htmlFor={`src-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Type
+                    </Label>
+                    <select
+                      id={`src-type-${walk.id}`}
+                      value={draft.source.type}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, source: { ...d.source, type: e.target.value },
+                      }))}
+                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                    >
+                      {SOURCE_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor={`src-name-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Page name
+                    </Label>
                     <Input
+                      id={`src-name-${walk.id}`}
+                      value={draft.source.pageName}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, source: { ...d.source, pageName: e.target.value },
+                      }))}
+                      placeholder="e.g. Milford to Haslemere"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`src-url-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Page URL
+                    </Label>
+                    <Input
+                      id={`src-url-${walk.id}`}
+                      type="url"
+                      value={draft.source.pageURL}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, source: { ...d.source, pageURL: e.target.value },
+                      }))}
+                      placeholder="https://…"
+                      className="h-7 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Related source — same four fields, fully optional.
+                  Server drops the whole `relatedSource` key when all
+                  fields are blank. Never rendered in public prose. */}
+              <div className="border-t border-border/60 pt-2">
+                <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Related source
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div>
+                    <Label htmlFor={`rsrc-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Organisation
+                    </Label>
+                    <select
+                      id={`rsrc-org-${walk.id}`}
+                      value={draft.relatedSource.orgSlug}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, orgSlug: e.target.value },
+                      }))}
+                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                    >
+                      {/* Empty option clears the related-source
+                          block; the server deletes the field on
+                          save. */}
+                      <option value="">— none —</option>
+                      {!SOURCE_ORGS.some((o) => o.slug === draft.relatedSource.orgSlug) && draft.relatedSource.orgSlug && (
+                        <option value={draft.relatedSource.orgSlug}>{draft.relatedSource.orgSlug} (unknown)</option>
+                      )}
+                      {SOURCE_ORGS.map((o) => (
+                        <option key={o.slug} value={o.slug}>{o.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor={`rsrc-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Type
+                    </Label>
+                    <select
+                      id={`rsrc-type-${walk.id}`}
+                      value={draft.relatedSource.type}
+                      onChange={(e) => setDraft((d) => ({
+                        ...d, relatedSource: { ...d.relatedSource, type: e.target.value },
+                      }))}
+                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                    >
+                      {SOURCE_TYPES.map((t) => (
+                        <option key={t.value} value={t.value}>{t.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <Label htmlFor={`rsrc-name-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Page name
+                    </Label>
+                    <Input
+                      id={`rsrc-name-${walk.id}`}
                       value={draft.relatedSource.pageName}
                       onChange={(e) => setDraft((d) => ({
                         ...d, relatedSource: { ...d.relatedSource, pageName: e.target.value },
                       }))}
-                      placeholder="Related page name"
+                      placeholder="e.g. Milford to Haslemere"
                       className="h-7 text-xs"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor={`rsrc-url-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+                      Page URL
+                    </Label>
                     <Input
+                      id={`rsrc-url-${walk.id}`}
                       type="url"
                       value={draft.relatedSource.pageURL}
                       onChange={(e) => setDraft((d) => ({
                         ...d, relatedSource: { ...d.relatedSource, pageURL: e.target.value },
                       }))}
-                      placeholder="Related page URL"
+                      placeholder="https://…"
                       className="h-7 text-xs"
                     />
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
             </div>
             )}
           </div>
@@ -1370,59 +1367,6 @@ function WalkCard({
               rating, Komoot URL, distance/hours. These are what
               changes most often when curating a walk. */}
           <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`}>
-            {/* Title preview — derived from start/end station names +
-                optional admin-authored suffix; custom-title input
-                below can override it entirely. */}
-            {(() => {
-              const effectiveTitle = draft.name.trim()
-                ? draft.name.trim()
-                : derivedTitleOf(walk, draft.suffix)
-              return (
-                <div className="mb-3 rounded border border-border/60 bg-background px-2 py-1.5">
-                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Title preview
-                  </div>
-                  <div className="text-sm font-medium text-foreground">{effectiveTitle}</div>
-                </div>
-              )
-            })()}
-
-            {/* Suffix — appended to the derived title with a leading
-                space. Ignored when a custom title override is set. */}
-            <div className="mb-3">
-              <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Suffix
-                {draft.name.trim() && (
-                  <span className="ml-1 italic text-muted-foreground/70">
-                    (ignored while custom title is set)
-                  </span>
-                )}
-              </Label>
-              <Input
-                id={`suffix-${walk.id}`}
-                value={draft.suffix}
-                onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
-                className="h-7 text-xs"
-                disabled={!!draft.name.trim()}
-              />
-            </div>
-
-            {/* Custom title — full override of the derived title. */}
-            <div className="mb-3">
-              <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Custom title
-                <span className="ml-1 italic text-muted-foreground/70">
-                  (overrides derived title)
-                </span>
-              </Label>
-              <Input
-                id={`name-${walk.id}`}
-                value={draft.name}
-                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-                className="h-7 text-xs"
-              />
-            </div>
-
             {/* Rating — Unrated + four tier icons. Active tier lights
                 up; clicking the active tier clears it. */}
             <div className="mb-3">
@@ -1482,6 +1426,45 @@ function WalkCard({
                     {RATING_LABELS[draft.rating as 1 | 2 | 3 | 4]}
                   </span>
                 )}
+              </div>
+            </div>
+
+            {/* Suffix + Custom title — paired controls. Suffix is
+                appended to the derived title; Custom title overrides
+                the derived title entirely (and disables Suffix while
+                it has a value). Side-by-side because they're
+                conceptually two ways to set the same field. */}
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  Suffix
+                  {draft.name.trim() && (
+                    <span className="ml-1 italic text-muted-foreground/70">
+                      (ignored)
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  id={`suffix-${walk.id}`}
+                  value={draft.suffix}
+                  onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
+                  className="h-7 text-xs"
+                  disabled={!!draft.name.trim()}
+                />
+              </div>
+              <div>
+                <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  Custom title
+                  <span className="ml-1 italic text-muted-foreground/70">
+                    (overrides)
+                  </span>
+                </Label>
+                <Input
+                  id={`name-${walk.id}`}
+                  value={draft.name}
+                  onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                  className="h-7 text-xs"
+                />
               </div>
             </div>
 
@@ -1601,6 +1584,53 @@ function WalkCard({
               seasons chips, mud warning, free-text miscellany, train
               tips. Less frequently edited than Key info. */}
           <CollapsibleSection title="Tips" bodyId={`tips-section-${walk.id}`}>
+            {/* Best seasons + Mud warning — paired on one row. Seasons
+                takes the remaining space (flex-1) so the 12 month
+                chips can wrap; Mud warning's checkbox tucks to the
+                right at its natural width. items-end keeps the mud
+                checkbox aligned with the chip row, not the label. */}
+            <div className="mb-3 flex items-end gap-3">
+              <div className="flex-1">
+                <Label className="mb-1.5 block text-xs text-muted-foreground">Best seasons</Label>
+                <div className="flex flex-wrap gap-1">
+                  {MONTHS.map((m) => {
+                    const active = draft.bestSeasons.includes(m.code)
+                    return (
+                      <button
+                        key={m.code}
+                        type="button"
+                        onClick={() => toggleSeason(m.code)}
+                        aria-pressed={active}
+                        title={m.code}
+                        className={
+                          "h-6 w-6 rounded text-[11px] font-medium transition-colors " +
+                          (active
+                            ? "bg-orange-500 text-white hover:bg-orange-600"
+                            : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                        }
+                      >
+                        {m.short}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              {/* Mud warning — single boolean. When true the build
+                  emits "Can be muddy." and suppresses any duplicate
+                  free-text. shrink-0 keeps it from being squeezed
+                  when the seasons row wraps. */}
+              <div className="flex shrink-0 items-center gap-2 pb-1">
+                <Checkbox
+                  id={`mud-${walk.id}`}
+                  checked={draft.mudWarning}
+                  onCheckedChange={(v) => setDraft((d) => ({ ...d, mudWarning: v === true }))}
+                />
+                <Label htmlFor={`mud-${walk.id}`} className="cursor-pointer text-xs">
+                  Mud warning
+                </Label>
+              </div>
+            </div>
+
             {/* Rating explanation — appended after the rating
                 flourish ("Rambler favourite!" / "An essential walk!")
                 in the public prose. */}
@@ -1636,65 +1666,9 @@ function WalkCard({
               />
             </div>
 
-            {/* Best seasons — 12 month chips. Click to toggle. */}
-            <div className="mb-3">
-              <Label className="mb-1.5 block text-xs text-muted-foreground">Best seasons</Label>
-              <div className="flex flex-wrap gap-1">
-                {MONTHS.map((m) => {
-                  const active = draft.bestSeasons.includes(m.code)
-                  return (
-                    <button
-                      key={m.code}
-                      type="button"
-                      onClick={() => toggleSeason(m.code)}
-                      aria-pressed={active}
-                      title={m.code}
-                      className={
-                        "h-6 w-6 rounded text-[11px] font-medium transition-colors " +
-                        (active
-                          ? "bg-orange-500 text-white hover:bg-orange-600"
-                          : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
-                      }
-                    >
-                      {m.short}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Mud warning — single boolean. When true the build emits
-                "Can be muddy." and suppresses any duplicate free-text. */}
-            <div className="mb-3 flex items-center gap-2">
-              <Checkbox
-                id={`mud-${walk.id}`}
-                checked={draft.mudWarning}
-                onCheckedChange={(v) => setDraft((d) => ({ ...d, mudWarning: v === true }))}
-              />
-              <Label htmlFor={`mud-${walk.id}`} className="cursor-pointer text-xs">
-                Mud warning
-              </Label>
-            </div>
-
-            {/* Free-text miscellany — non-mud warnings plus other notes. */}
-            <div className="mb-3">
-              <Label htmlFor={`misc-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                Miscellany
-                <span className="ml-1 font-normal italic text-muted-foreground/70">
-                  free text
-                </span>
-              </Label>
-              <Input
-                id={`misc-${walk.id}`}
-                value={draft.miscellany}
-                onChange={(e) => setDraft((d) => ({ ...d, miscellany: e.target.value }))}
-                className="h-7 text-xs"
-              />
-            </div>
-
             {/* Train tips — booking advice. Renders as its own
-                sentence right after miscellany. */}
-            <div>
+                sentence in the public prose. */}
+            <div className="mb-3">
               <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
                 Train tips
                 <span className="ml-1 font-normal italic text-muted-foreground/70">
@@ -1705,6 +1679,22 @@ function WalkCard({
                 id={`tips-${walk.id}`}
                 value={draft.trainTips}
                 onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
+
+            {/* Free-text miscellany — non-mud warnings plus other notes. */}
+            <div>
+              <Label htmlFor={`misc-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Miscellany
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  free text
+                </span>
+              </Label>
+              <Input
+                id={`misc-${walk.id}`}
+                value={draft.miscellany}
+                onChange={(e) => setDraft((d) => ({ ...d, miscellany: e.target.value }))}
                 className="h-7 text-xs"
               />
             </div>
@@ -1964,27 +1954,33 @@ function SightsEditor({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Input
-                value={s.name}
-                onChange={(e) => {
-                  const next = [...sights]
-                  next[i] = { ...next[i], name: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="Name (required)"
-                className="h-7 text-xs"
-              />
-              <Input
-                type="url"
-                value={s.url}
-                onChange={(e) => {
-                  const next = [...sights]
-                  next[i] = { ...next[i], url: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="URL (optional)"
-                className="h-7 text-xs"
-              />
+              {/* Name + URL on one row. Name takes more horizontal
+                  space than URL — sights names tend to be shorter
+                  than URLs but this matches the way users scan the
+                  fields (label first). */}
+              <div className="flex gap-1.5">
+                <Input
+                  value={s.name}
+                  onChange={(e) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], name: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="Name (required)"
+                  className="h-7 flex-1 text-xs"
+                />
+                <Input
+                  type="url"
+                  value={s.url}
+                  onChange={(e) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], url: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="URL (optional)"
+                  className="h-7 flex-1 text-xs"
+                />
+              </div>
               <Input
                 value={s.description}
                 onChange={(e) => {
@@ -2099,37 +2095,42 @@ function LunchStopsEditor({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Input
-                value={s.name}
-                onChange={(e) => {
-                  const next = [...stops]
-                  next[i] = { ...next[i], name: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="Name (required)"
-                className="h-7 text-xs"
-              />
-              <Input
-                value={s.location}
-                onChange={(e) => {
-                  const next = [...stops]
-                  next[i] = { ...next[i], location: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="Location (e.g. Keyhaven)"
-                className="h-7 text-xs"
-              />
-              <Input
-                type="url"
-                value={s.url}
-                onChange={(e) => {
-                  const next = [...stops]
-                  next[i] = { ...next[i], url: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="URL (optional)"
-                className="h-7 text-xs"
-              />
+              {/* Name + Location + URL on one row. Three equal flex
+                  cells keep the row scannable; longer values truncate
+                  inside their input rather than wrapping the row. */}
+              <div className="flex gap-1.5">
+                <Input
+                  value={s.name}
+                  onChange={(e) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], name: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="Name (required)"
+                  className="h-7 flex-1 text-xs"
+                />
+                <Input
+                  value={s.location}
+                  onChange={(e) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], location: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="Location"
+                  className="h-7 flex-1 text-xs"
+                />
+                <Input
+                  type="url"
+                  value={s.url}
+                  onChange={(e) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], url: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="URL (optional)"
+                  className="h-7 flex-1 text-xs"
+                />
+              </div>
               <Input
                 value={s.notes}
                 onChange={(e) => {
