@@ -11,39 +11,70 @@ const WALKS_FILES = [
   "data/manual-walks.json",
 ]
 
-type WalkVariant = { startStation?: string | null; endStation?: string | null; rating?: number | null }
-type WalkEntry = { walks?: WalkVariant[] }
+type WalkVariant = {
+  id?: string
+  startStation?: string | null
+  endStation?: string | null
+  rating?: number | null
+  komootUrl?: string | null
+  stationToStation?: boolean
+  source?: { type?: string }
+  role?: string
+}
+type WalkEntry = { walks?: WalkVariant[]; gpx?: string }
+
+// Lightweight record of one walk-station attachment, carrying just the
+// fields the rating + tier filter need. Each S2S walk produces TWO
+// attachments (one for each endpoint) so the rating reflects walks
+// that end at the station too. The `role` distinguishes which
+// endpoint this attachment represents — used by deriveRating to
+// enforce the "rating-4 only if a rated-4 walk STARTS here" rule.
+type Attachment = {
+  walkId: string  // for synthetic-level dedup when a walk has both endpoints inside the same cluster
+  role: "starting" | "ending"
+  rating: number | null
+  hasKomoot: boolean
+  hasGpx: boolean
+  isMain: boolean
+}
 
 // Returns a map of coordKey → derived station rating (1..4). Stations
 // without an entry in the response are unrated.
 //
-// Derivation rules (per spec):
-//   1. A station with NO walks at all is absent from the response
-//      (treated as null / unrated by the client).
-//   2. A station-with-walks is rated 2 by DEFAULT. Any walk that
-//      deviates from 2 — up or down — takes priority over the default.
-//   3. Upward deviation wins over downward deviation: when the
-//      maximum walk rating is 3 or 4, that wins outright.
-//   4. Below that, a single rated-1 walk overrides the default 2 —
-//      "this station has at least one bad walk and no great walk".
-//   5. Anything else (only rated-2 walks, or only unrated walks) lands
-//      on the default 2.
+// Only PUBLICLY-VISIBLE walks count. Public visibility is determined
+// the same way scripts/build-rambler-notes.mjs decides what prose to
+// publish:
+//   1. Walks with stationToStation === false are skipped outright —
+//      bus walks and walks with non-mainline endpoints never reach
+//      the public view, so they don't influence the rating either.
+//   2. The remaining walks at a station go through a station-wide
+//      tier cascade (matching publicTierFilter in build-rambler-notes):
+//        Tier 1: any Komoot or GPX walk → only those count
+//        Tier 2: else any main walk → only mains count
+//        Tier 3: else all (already filtered to S2S above)
+//   3. The rating is computed from the survivors.
 //
-// Concrete table:
+// Derivation rules on the surviving set:
+//   - No survivors → unrated (absent from response).
+//   - max >= 3 → max wins outright (upward deviation beats everything).
+//   - else if any rated-1 walk → 1 (downward deviation).
+//   - else → 2 (default for "we know there's something here").
+//
+// Concrete table (against the surviving set):
 //   walks       │ rating
 //   ───────────────────
 //   [2, 4]      │ 4   (upward deviation wins)
 //   [1, 4]      │ 4   (upward beats downward)
-//   [2, 3]      │ 3   (upward deviation)
-//   [1, 2]      │ 1   (downward deviation, no upward)
+//   [2, 3]      │ 3
+//   [1, 2]      │ 1
 //   [1]         │ 1
-//   [2, 2, 2]   │ 2   (no deviation)
-//   [unrated]   │ 2   (default for "we know there's something here")
-//   (no walks)  │ unrated
+//   [2, 2, 2]   │ 2
+//   [unrated]   │ 2
+//   (none)      │ unrated
 //
-// The response is keyed by coordKey so the client can drop it straight
-// into the existing per-feature lookup. CRS → coordKey is resolved via
-// public/stations.json.
+// Synthetic clusters (Central London, Lymington, …) aggregate every
+// member's S2S walks, dedup by walk id, then run the same tier filter
+// + derivation against the union — exactly like the build script.
 export async function GET() {
   // Load the station list to resolve CRS → coordKey.
   const { data: stations } = await readDataFile<{
@@ -53,8 +84,6 @@ export async function GET() {
     }>
   }>("public/stations.json")
 
-  // Build CRS → coordKey index. coordKey is "lng,lat" (the same shape
-  // the rest of the app uses).
   const crsToCoord = new Map<string, string>()
   for (const f of stations.features) {
     const crs = f.properties?.["ref:crs"]
@@ -64,13 +93,10 @@ export async function GET() {
     if (ck) crsToCoord.set(crs, ck)
   }
 
-  // Per CRS we track three signals:
-  //   max          — highest numeric rating seen across this station's walks
-  //   sawAnyWalk   — at least one walk record exists (drives the default-2 rule)
-  //   sawRated1    — at least one walk has rating === 1 (drives the
-  //                  downward-deviation rule)
-  type Tally = { max: number | null; sawAnyWalk: boolean; sawRated1: boolean }
-  const byCrs = new Map<string, Tally>()
+  // Per CRS: every S2S walk attachment touching this station, kept
+  // raw (not yet tier-filtered) so the synthetic aggregation step
+  // can re-tier on the cluster's union.
+  const byCrs = new Map<string, Attachment[]>()
 
   for (const file of WALKS_FILES) {
     let entries: Record<string, WalkEntry>
@@ -82,83 +108,141 @@ export async function GET() {
     }
     for (const entry of Object.values(entries)) {
       if (!Array.isArray(entry.walks)) continue
+      const entryHasGpx = typeof entry.gpx === "string" && entry.gpx.trim() !== ""
       for (const v of entry.walks) {
-        // Each walk contributes to BOTH endpoints' tallies. A
-        // rating-1 walk from BCU to LYT signals "below-average walks
-        // on this corridor" for both Brockenhurst and Lymington Town.
-        // Circular walks (start === end) only contribute once via the
-        // dedup below.
-        const endpoints = new Set<string>()
-        if (v.startStation) endpoints.add(v.startStation)
-        if (v.endStation) endpoints.add(v.endStation)
-        for (const crs of endpoints) {
-          const tally = byCrs.get(crs) ?? { max: null, sawAnyWalk: false, sawRated1: false }
-          tally.sawAnyWalk = true
-          if (typeof v.rating === "number") {
-            const r = Math.round(v.rating)
-            if (r >= 1 && r <= 4) {
-              tally.max = tally.max == null ? r : Math.max(tally.max, r)
-              if (r === 1) tally.sawRated1 = true
-            }
-          }
-          byCrs.set(crs, tally)
+        // Skip non-public walks entirely. Mirrors the build script's
+        // `entry.walks.filter((v) => v.stationToStation)` gate.
+        if (!v.stationToStation) continue
+
+        const isMain = (v.source?.type ?? v.role ?? "main") === "main"
+        const baseAttachment = {
+          walkId: v.id ?? "",
+          rating: typeof v.rating === "number" ? v.rating : null,
+          hasKomoot: typeof v.komootUrl === "string" && v.komootUrl.trim() !== "",
+          hasGpx: entryHasGpx,
+          isMain,
+        }
+
+        // Attach to BOTH endpoints with distinct roles so the rating
+        // derivation can enforce the "rating-4 only via a starting
+        // walk" rule. Circular walks (start === end) get a single
+        // "starting" attachment via the seenStations dedup.
+        const seenStations = new Set<string>()
+        for (const { crs, role } of [
+          { crs: v.startStation, role: "starting" as const },
+          { crs: v.endStation, role: "ending" as const },
+        ]) {
+          if (!crs) continue
+          if (seenStations.has(crs)) continue
+          seenStations.add(crs)
+          const arr = byCrs.get(crs) ?? []
+          arr.push({ ...baseAttachment, role })
+          byCrs.set(crs, arr)
         }
       }
     }
   }
 
-  // Apply the derivation rules described above. Order matters: upward
-  // deviation (max >= 3) wins outright; otherwise a rated-1 walk
-  // overrides the default 2; otherwise default 2.
+  // Tier filter — station-wide cascade. Returns the visible subset.
+  function publicTierFilter(items: Attachment[]): Attachment[] {
+    if (items.some((a) => a.hasKomoot || a.hasGpx)) {
+      return items.filter((a) => a.hasKomoot || a.hasGpx)
+    }
+    if (items.some((a) => a.isMain)) {
+      return items.filter((a) => a.isMain)
+    }
+    return items
+  }
+
+  // Apply the derivation rules to a tier-filtered set. Returns null
+  // when the set is empty (station ends up unrated).
+  //
+  // Priority cascade — first matching rule wins:
+  //   1. any rating-4 walk that STARTS here          → 4
+  //   2. else any rating-3 or rating-4 walk          → 3
+  //   3. else any rating-2 walk                      → 2
+  //   4. else any rating-1 walk                      → 1
+  //   5. else at least one walk (all unrated)        → 2  (default)
+  //   6. else                                        → null (unrated)
+  //
+  // Note: rule 3 fires BEFORE rule 4, so [2, 1] → 2. A rating-1 walk
+  // only pulls the rating down when there's nothing else around. The
+  // role distinction matters only for rule 1 (rating-4 lift); for
+  // ratings 1, 2, 3 starting walks and ending walks count equally.
+  function deriveRating(visible: Attachment[]): 1 | 2 | 3 | 4 | null {
+    if (visible.length === 0) return null
+    let hasStartingR4 = false
+    let hasR3OrR4 = false
+    let hasR2 = false
+    let hasR1 = false
+    for (const a of visible) {
+      if (typeof a.rating !== "number") continue
+      const r = Math.round(a.rating)
+      if (r === 4) {
+        hasR3OrR4 = true
+        if (a.role === "starting") hasStartingR4 = true
+      } else if (r === 3) {
+        hasR3OrR4 = true
+      } else if (r === 2) {
+        hasR2 = true
+      } else if (r === 1) {
+        hasR1 = true
+      }
+    }
+    if (hasStartingR4) return 4
+    if (hasR3OrR4) return 3
+    if (hasR2) return 2
+    if (hasR1) return 1
+    return 2
+  }
+
   const out: Record<string, 1 | 2 | 3 | 4> = {}
-  for (const [crs, tally] of byCrs) {
+
+  for (const [crs, attachments] of byCrs) {
     const ck = crsToCoord.get(crs)
     if (!ck) continue
-    if (!tally.sawAnyWalk) continue
-    let rating: 1 | 2 | 3 | 4
-    if (tally.max != null && tally.max >= 3) rating = tally.max as 3 | 4
-    else if (tally.sawRated1) rating = 1
-    else rating = 2
-    out[ck] = rating
+    const visible = publicTierFilter(attachments)
+    const rating = deriveRating(visible)
+    if (rating != null) out[ck] = rating
   }
 
   // ── Synthetic ratings ──────────────────────────────────────────────
-  // Each synthetic (Central London, Birmingham, …) "possesses" its
-  // cluster members' walks. We aggregate every member's tallies into
-  // a single per-synthetic tally, then apply the same derivation
-  // rules. The synthetic's own coordKey isn't in stations.json (it's
-  // the cluster's centroid, not a real station), so we look up its
-  // members' coordKeys and recompute the synthetic's tally directly
-  // from the member tallies — using the per-CRS Tally we already
-  // computed, joined back via crsToCoord.
+  // Aggregate raw attachments from every member, dedup by walkId so
+  // an intra-cluster walk (both endpoints in the same cluster) only
+  // counts once, then re-tier and re-derive on the union. The tier
+  // chosen for the cluster can differ from any individual member's
+  // tier — e.g. one member with only mains + another member with one
+  // Komoot walk → the cluster is tier 1 (Komoot only).
   const coordToCrs = new Map<string, string>()
   for (const [crs, ck] of crsToCoord) coordToCrs.set(ck, crs)
 
-  // Iterate every cluster — destination-only ones (e.g. Windsor) also
-  // need their rating aggregated from member walks so the synthetic's
-  // diamond on the map carries the right rating tier.
   for (const [synthCoord, def] of Object.entries(ALL_CLUSTERS)) {
-    const memberCoords = def.members
-    let max: number | null = null
-    let sawAnyWalk = false
-    let sawRated1 = false
-    for (const memberCoord of memberCoords) {
+    // Dedup by walkId across members. When a walk has both endpoints
+    // inside the cluster (e.g. a Charing Cross → Waterloo walk on the
+    // Central London cluster), it appears twice — once via the start
+    // member's bucket as "starting", once via the end member's bucket
+    // as "ending". Prefer the "starting" attachment so the rating-4
+    // rule sees it correctly: a walk starting in the cluster lets
+    // the cluster reach 4; a walk only ending in the cluster doesn't.
+    const seenWalks = new Map<string, Attachment>()
+    const unkeyed: Attachment[] = []
+    for (const memberCoord of def.members) {
       const memberCrs = coordToCrs.get(memberCoord)
       if (!memberCrs) continue
-      const memberTally = byCrs.get(memberCrs)
-      if (!memberTally) continue
-      if (memberTally.sawAnyWalk) sawAnyWalk = true
-      if (memberTally.sawRated1) sawRated1 = true
-      if (memberTally.max != null) {
-        max = max == null ? memberTally.max : Math.max(max, memberTally.max)
+      const memberAttachments = byCrs.get(memberCrs)
+      if (!memberAttachments) continue
+      for (const a of memberAttachments) {
+        if (!a.walkId) { unkeyed.push(a); continue }
+        const existing = seenWalks.get(a.walkId)
+        if (!existing || (existing.role === "ending" && a.role === "starting")) {
+          seenWalks.set(a.walkId, a)
+        }
       }
     }
-    if (!sawAnyWalk) continue
-    let rating: 1 | 2 | 3 | 4
-    if (max != null && max >= 3) rating = max as 3 | 4
-    else if (sawRated1) rating = 1
-    else rating = 2
-    out[synthCoord] = rating
+    const aggregated = [...seenWalks.values(), ...unkeyed]
+    const visible = publicTierFilter(aggregated)
+    const rating = deriveRating(visible)
+    if (rating != null) out[synthCoord] = rating
   }
 
   return NextResponse.json(out)
