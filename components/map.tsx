@@ -2246,7 +2246,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
   // Build the Oyster CRS Set with oysterStationsData as the dep — when
   // the JSON hot-reloads in dev the import gives a new array reference,
   // which busts this memo and the downstream filteredStations memo.
@@ -2268,6 +2268,16 @@ export default function HikeMap() {
   // for the chosen season. "off" = no filter. Cleared on admin-off (below).
   type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
   const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
+  // Admin-only "Source" dropdown — slice destinations to those with at
+  // least one attached walk whose source.orgSlug or relatedSource.orgSlug
+  // matches the picked org. "off" = no filter. The string value is an
+  // orgSlug from data/sources.json. Cleared on admin-off (below).
+  const [sourceFilter, setSourceFilter] = useState<string>("off")
+  // orgSlug → Set<coordKey>. Hydrated from /api/dev/stations-by-source
+  // on mount; the admin-only "Source" filter does Set.has(coordKey)
+  // against the slug picked in the dropdown. Each value's Set is built
+  // from the JSON's sorted coordKey[] for O(1) membership lookups.
+  const [stationsBySource, setStationsBySource] = useState<Record<string, Set<string>>>({})
   // Public "[current-season] highlights" checkbox — when on, only stations
   // recommended for the current season are shown. Coexists with seasonFilter
   // (both filters applied independently, AND semantics).
@@ -2551,6 +2561,19 @@ export default function HikeMap() {
     fetch("/api/dev/stations-with-komoot")
       .then((res) => res.json())
       .then((data: string[]) => setStationsWithKomoot(new Set(data)))
+    // Admin-only "Source" filter index. Re-shapes the served
+    // { [orgSlug]: coordKey[] } into { [orgSlug]: Set<coordKey> } for
+    // O(1) membership lookups inside passesFeatureFilter. Tolerates a
+    // missing file (initial dev install before the build ran) by
+    // leaving the state as the empty record.
+    fetch("/api/dev/stations-by-source")
+      .then((res) => res.json())
+      .then((data: Record<string, string[]>) => {
+        const out: Record<string, Set<string>> = {}
+        for (const [org, keys] of Object.entries(data ?? {})) out[org] = new Set(keys)
+        setStationsBySource(out)
+      })
+      .catch(() => { /* derived file may not exist yet — leave empty */ })
     fetch("/api/dev/flickr-settings")
       .then((res) => res.json())
       .then((data) => setFlickrSettings(data))
@@ -5499,6 +5522,13 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "komoot") {
             return stationsWithKomoot.has(f.properties.coordKey as string)
           }
+          // "No komoot" — inverse of "komoot": only stations that
+          // DON'T have any attached walk with a Komoot URL. Note this
+          // includes stations with no attached walks at all; the rating
+          // filter still applies to gate that further if needed.
+          if (primaryFeatureFilter === "no-komoot") {
+            return !stationsWithKomoot.has(f.properties.coordKey as string)
+          }
           // "Issues" — admin-flagged stations only. hasIssue is station-global
           // (set keyed by coordKey alone), so no primary-origin lookup needed.
           if (primaryFeatureFilter === "issues") {
@@ -5595,6 +5625,15 @@ export default function HikeMap() {
         // Admin-only Feature filter — see `passesFeatureFilter` helper
         // above for the per-option criteria.
         if (!passesFeatureFilter()) return false
+        // Admin-only Source filter — keeps only stations whose attached
+        // walks include at least one variant from the picked source org
+        // (matches either source.orgSlug or relatedSource.orgSlug). The
+        // index is built once at server build-time; here we just do a
+        // Set.has lookup.
+        if (sourceFilter !== "off") {
+          const set = stationsBySource[sourceFilter]
+          if (!set || !set.has(f.properties.coordKey as string)) return false
+        }
         // Season filters. Two independent filters both look up this
         // station's recommended seasons in stationSeasons:
         //   • seasonFilter (admin dropdown) — hides stations whose seasons
@@ -5633,7 +5672,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations, placemarkStations])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, sourceFilter, stationsBySource, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations, placemarkStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -8238,6 +8277,7 @@ export default function HikeMap() {
           setHideNoTravelTime(false)
           setPrimaryInterchangeFilter("off")
           setPrimaryFeatureFilter("off")
+          setSourceFilter("off")
           setSeasonFilter("off")
           setMaxMinutes(600)
           setMinMinutes(0)
@@ -8317,6 +8357,8 @@ export default function HikeMap() {
         }}
         primaryFeatureFilter={primaryFeatureFilter}
         onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
+        sourceFilter={sourceFilter}
+        onSourceFilterChange={setSourceFilter}
         seasonFilter={seasonFilter}
         onSeasonFilterChange={setSeasonFilter}
         currentSeason={currentSeason()}
@@ -8439,6 +8481,7 @@ export default function HikeMap() {
                 setMinMinutes(0)
                 setPrimaryInterchangeFilter("off")
                 setPrimaryFeatureFilter("off")
+                setSourceFilter("off")
                 // Admin-only season dropdown — clear its selection on
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.

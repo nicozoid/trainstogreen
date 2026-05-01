@@ -140,6 +140,8 @@ export function FilterPanelDemo() {
         onPrimaryInterchangeFilterChange={() => {}}
         primaryFeatureFilter="off"
         onPrimaryFeatureFilterChange={() => {}}
+        sourceFilter="off"
+        onSourceFilterChange={() => {}}
         seasonFilter="off"
         onSeasonFilterChange={() => {}}
         currentSeason="Spring"

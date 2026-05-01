@@ -17,6 +17,16 @@ import { cn } from "@/lib/utils"
 import { Slider } from "@/components/ui/slider"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { Fragment, useEffect, useMemo, useRef, useState } from "react"
+import sourcesJson from "@/data/sources.json"
+
+// Walk-source organisations registered in data/sources.json. Used to
+// populate the admin-only "Source" dropdown — alphabetically by name,
+// with the `_readme` documentation key filtered out. The slug is the
+// dropdown's `value`; the name is what the user sees.
+const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson)
+  .filter(([k]) => k !== "_readme")
+  .map(([slug, meta]) => ({ slug, name: (meta as { name?: string })?.name ?? slug }))
+  .sort((a, b) => a.name.localeCompare(b.name))
 
 // Wraps any inline content with a tooltip that works on both desktop (hover)
 // and touchscreens (tap toggles open/closed). Uses controlled `open` state
@@ -275,8 +285,13 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster") => void
+  /** Admin-only Source filter — keeps only stations with at least one
+   *  attached walk whose source.orgSlug or relatedSource.orgSlug
+   *  matches. Value is "off" or an orgSlug from data/sources.json. */
+  sourceFilter: string
+  onSourceFilterChange: (value: string) => void
   /** Admin-only season filter — hides destinations whose recommended
    *  seasons don't include the selected one. "off" = no filter. */
   seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
@@ -298,7 +313,7 @@ type FilterPanelProps = {
   onHideNoTravelTimeChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1398,7 +1413,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "issues" | "placemark" | "no-travel-data" | "oyster",
+                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster",
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1415,6 +1430,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     variant carrying a Komoot tour URL. Surfaces
                     destinations that already have a planned route. */}
                 <option value="komoot">Komoot</option>
+                {/* "No komoot" — inverse of "Komoot": stations with
+                    NO attached walk variants carrying a Komoot tour
+                    URL. Surfaces destinations that still need a
+                    Komoot route to be planned. */}
+                <option value="no-komoot">No komoot</option>
                 {/* "Issues" — keeps only stations flagged via the admin
                     issue button. The flag is station-global, so the same
                     set shows regardless of which primary origin is selected. */}
@@ -1436,6 +1456,40 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     in data/oyster-stations.json. Auto-opens the time
                     sliders so no-RTT-data Underground stations still show. */}
                 <option value="oyster">Oyster</option>
+              </select>
+            </div>
+          )}
+
+          {/* Admin-only: "Source" filter. Slices destinations by which
+              walk-source organisation contributes ≥1 walk to the
+              station — checks both source.orgSlug AND relatedSource.orgSlug
+              on every attached variant (including non-public ones). The
+              option list is generated from data/sources.json, alphabetised
+              by display name. Distinct from the Feature dropdown because
+              this is a one-vs-many lookup that doesn't fit cleanly under
+              "feature toggles". */}
+          {adminMode && (
+            <div className="mt-1.5 flex items-center gap-[0.4rem]">
+              <Label htmlFor="primary-source-filter" className="cursor-pointer text-xs text-muted-foreground">
+                Source
+              </Label>
+              <select
+                id="primary-source-filter"
+                value={sourceFilter}
+                onChange={(e) => onSourceFilterChange(e.target.value)}
+                className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+              >
+                <option value="off">—</option>
+                {/* "No source" — sentinel value matching the build
+                    script's "none" key. Surfaces stations where ≥1
+                    attached walk has neither source.orgSlug nor
+                    relatedSource.orgSlug populated. Hand-coded above
+                    the registered orgs because there's no entry for
+                    it in sources.json. */}
+                <option value="none">No source</option>
+                {SOURCE_ORGS.map((o) => (
+                  <option key={o.slug} value={o.slug}>{o.name}</option>
+                ))}
               </select>
             </div>
           )}

@@ -102,6 +102,9 @@ type WalkPayload = {
   }
   // admin-only metadata (not editable in v1 but preserved on write)
   previousWalkDates?: string[]
+  // Page-level tags (e.g. "TO1:24" for Time Out Book 1, Walk 24).
+  // Read-only in the editor — derived from source URL matching.
+  pageTags: string[]
 }
 
 // Walk ordering — automatic, not admin-overridable.
@@ -202,6 +205,7 @@ export async function GET(req: NextRequest) {
           source: v.source && typeof v.source === "object" ? v.source : undefined,
           relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
           previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
+          pageTags: Array.isArray(entry.tags) ? entry.tags : [],
         })
       }
     }

@@ -92,6 +92,7 @@ export type WalkPayload = {
     type: string
   }
   previousWalkDates?: string[]
+  pageTags?: string[]
 }
 
 // The editable subset — the card's draft state only tracks these. Any
@@ -240,6 +241,7 @@ const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: "longer",      label: "Longer variant" },
   { value: "similar",     label: "Similar to" },
   { value: "adapted",     label: "Adapted from" },
+  { value: "related",     label: "Related to" },
 ]
 
 // Rating-level icons — mirror the map marker shapes used in the
@@ -1098,6 +1100,7 @@ function WalkCard({
           // external product, not the app's own visual language. Dark-mode pair
           // keeps contrast acceptable on the dark muted bg.
           const komootChip = `${chipBase} bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300`
+          const bookTags = (walk.pageTags ?? []).filter((t: string) => t.startsWith("TO1:") || t.startsWith("TO2:"))
           return (
             <>
               {walk.requiresBus && (
@@ -1113,6 +1116,11 @@ function WalkCard({
                   {Math.floor(walk.distanceKm)} km
                 </span>
               )}
+              {bookTags.map((tag: string) => (
+                <span key={tag} className={neutralChip} title={`Time Out ${tag.startsWith("TO1:") ? "Book 1" : "Book 2"}, Walk ${tag.split(":")[1]}`}>
+                  {tag}
+                </span>
+              ))}
             </>
           )
         })()}
@@ -1366,7 +1374,7 @@ function WalkCard({
           {/* Key info — the everyday-edit fields: title pieces,
               rating, Komoot URL, distance/hours. These are what
               changes most often when curating a walk. */}
-          <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`}>
+          <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`} defaultOpen>
             {/* Rating — Unrated + four tier icons. Active tier lights
                 up; clicking the active tier clears it. */}
             <div className="mb-3">

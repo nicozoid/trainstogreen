@@ -99,6 +99,7 @@ export async function commitWalkSave(
       { path: "data/station-seasons.json", data: built.seasons },
       { path: "data/stations-hiked.json", data: built.hiked },
       { path: "data/stations-with-komoot.json", data: built.komoot },
+      { path: "data/stations-by-source.json", data: built.bySource },
     ],
     baseMessage,
   )
