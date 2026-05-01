@@ -13106,7 +13106,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Tring",
         "endPlace": "Wendover",
         "startStation": "TRI",
@@ -13118,47 +13117,37 @@
         "lunchStops": [
           {
             "name": "Oak",
-            "location": "Aston Clinton",
-            "url": null
+            "location": "Aston Clinton"
           }
         ],
         "terrain": "Flat canal towpath, reservoir banks, open arable fields, wooded Chilterns hills, steep descents",
         "sights": [
           {
-            "name": "Tring Reservoirs",
-            "url": null
+            "name": "Tring Reservoirs"
           },
           {
-            "name": "All Saints Church, Buckland",
-            "url": null
+            "name": "All Saints Church, Buckland"
           },
           {
-            "name": "St Mary the Virgin, Drayton Beauchamp",
-            "url": null
+            "name": "St Mary the Virgin, Drayton Beauchamp"
           },
           {
-            "name": "Halton House",
-            "url": null
+            "name": "Halton House"
           },
           {
-            "name": "Wendover Arm Canal",
-            "url": null
+            "name": "Wendover Arm Canal"
           },
           {
-            "name": "Boddington Hill Fort",
-            "url": null
+            "name": "Boddington Hill Fort"
           },
           {
-            "name": "Coombe Hill",
-            "url": null
+            "name": "Coombe Hill"
           },
           {
-            "name": "Go Ape",
-            "url": null
+            "name": "Go Ape"
           },
           {
-            "name": "Rumsey's Chocolaterie",
-            "url": null
+            "name": "Rumsey's Chocolaterie"
           }
         ],
         "miscellany": "Steep chalky descent",
@@ -13169,7 +13158,9 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-to-wendover/",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2920846007"
+        "komootUrl": "https://www.komoot.com/tour/2920846007",
+        "suffix": "via Aston Clinton",
+        "updatedAt": "2026-05-01T14:27:01.607Z"
       }
     ]
   },
