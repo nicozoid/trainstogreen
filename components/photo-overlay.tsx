@@ -1272,25 +1272,20 @@ export default function StationModal({
         >
           <div className="flex flex-col gap-0.5 min-w-0">
             <DialogTitle className="text-2xl sm:text-3xl">
-              {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
+              {adminMode ? (isSynthetic ? "SYNTH " : (stationCrs ? `${stationCrs} ` : "")) : ""}{stationName}{isSynthetic ? "" : " Station"}
             </DialogTitle>
             {/* Cluster header — only when the modal is open for a synthetic
                 primary or friend (e.g. "Stratford", "Birmingham"). Lists
                 the underlying member stations using the standard "A, B,
                 and C" English serial form. */}
             {/* County + optional protected area — sits ABOVE the cluster
-                header so the geographic context comes first. Skipped when
-                the county name starts with the cluster's plain name (e.g.
-                the "London" cluster has county "London"; the "Leicester"
-                cluster has county "Leicestershire" — both redundant). We
-                check against `clusterDisplayName` first so the suppression
-                still fires when the title uses `overlayName` ("London
-                termini") — matching against the rewritten title would let
-                "London" county slip through. */}
-            {county && !county.toLowerCase().startsWith((clusterDisplayName ?? stationName).toLowerCase()) && (() => {
+                header so the geographic context comes first. Suppressed
+                only for the Central London cluster, which spans four
+                historic counties (Middlesex, Surrey, Essex, Kent) — picking
+                one would be actively misleading. */}
+            {county && clusterDisplayName !== "London" && (() => {
               // "East Sussex" / "West Sussex" → "Sussex"; any Yorkshire variant → "Yorkshire";
-              // bare "London" → "Greater London". (Note: the redundancy check above
-              // still uses the raw county, so the London cluster's line is hidden.)
+              // bare "London" → "Greater London".
               const displayCounty = /^(East|West) Sussex$/.test(county) ? "Sussex"
                 : county.includes("Yorkshire") ? "Yorkshire"
                 : county === "London" ? "Greater London"
@@ -1304,6 +1299,7 @@ export default function StationModal({
               const normForCompare = (c: string) =>
                 /^(East|West) Sussex$/.test(c) ? "Sussex"
                   : c.includes("Yorkshire") ? "Yorkshire"
+                  : c === "Durham" || c === "County Durham" ? "Durham"
                   : c
               const historicDiffers = !!historicCounty
                 && normForCompare(historicCounty) !== normForCompare(county)
@@ -1329,10 +1325,16 @@ export default function StationModal({
                 modernUrl = null
               }
 
+              // The historic county of Durham is conventionally written
+               // "County Durham" — the bare "Durham" form is the modern usage.
+              const displayHistoricCounty = historicCounty === "Durham"
+                ? "County Durham"
+                : historicCounty
+
               const countyPortion = historicDiffers ? (
                 <>
                   <a href={HISTORIC_INFO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                    {historicCounty}
+                    {displayHistoricCounty}
                   </a>
                   {" (or "}
                   {modernUrl ? (
