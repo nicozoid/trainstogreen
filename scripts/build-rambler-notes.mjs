@@ -81,6 +81,15 @@ const HIKED_PATH = join(PROJECT_ROOT, "data", "stations-hiked.json")
 // surfaces destinations that already have a Komoot tour wired up.
 const KOMOOT_PATH = join(PROJECT_ROOT, "data", "stations-with-komoot.json")
 
+// Derived index of stations grouped by source organisation. Shape:
+// { [orgSlug]: string[] } where the value is a sorted array of
+// coordKeys. Drives the admin-only "Source" filter, which keeps only
+// stations with at least one attached walk whose source.orgSlug or
+// relatedSource.orgSlug matches the picked org. Considers ALL walks
+// (including non-stationToStation), since the filter is admin-only and
+// non-public walks still belong to a station for curation purposes.
+const STATIONS_BY_SOURCE_PATH = join(PROJECT_ROOT, "data", "stations-by-source.json")
+
 // Month codes used in each variant's structured `bestSeasons` field.
 // Order matters — renders in calendar order regardless of how the source
 // data lists them. Also used to map months → high-level seasons when
@@ -713,6 +722,12 @@ function buildRamblerNotes(args) {
   // data/stations-with-komoot.json as a sorted array; the admin "Komoot"
   // filter keeps only these.
   const perStationKomoot = new Set()
+  // coordKey → Set<orgSlug>. Aggregated from every variant's
+  // source.orgSlug AND relatedSource.orgSlug (both contribute), across
+  // ALL walks (including non-s2s). Pivoted into { orgSlug: coordKey[] }
+  // at write-time and shipped to data/stations-by-source.json. Drives
+  // the admin-only "Source" dropdown.
+  const perStationSourceOrgs = new Map()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
   const urlsUsed = new Set()
@@ -723,6 +738,38 @@ function buildRamblerNotes(args) {
     if (entry.outsideMainlandBritain) continue
     if (!Array.isArray(entry.walks) || entry.walks.length === 0) continue
     urlsConsidered.add(slug)
+
+    // Source-org index. Iterates EVERY variant on the page (not just
+    // s2s) and records orgSlugs from BOTH source and relatedSource
+    // against whichever station endpoints the variant touches. Runs
+    // independently of the s2s/public pipeline so the admin "Source"
+    // filter sees curation-only walks too (requires-bus, half-mainline,
+    // etc.). Skipped silently when the station CRS isn't in crsIndex —
+    // that's the same defensive fall-through used elsewhere in the
+    // build, and avoids a hard failure if a walk references a
+    // station that's been retired from public/stations.json.
+    for (const variant of entry.walks) {
+      const orgs = []
+      const srcOrg = variant.source?.orgSlug
+      if (typeof srcOrg === "string" && srcOrg.trim()) orgs.push(srcOrg.trim())
+      const relOrg = variant.relatedSource?.orgSlug
+      if (typeof relOrg === "string" && relOrg.trim()) orgs.push(relOrg.trim())
+      if (orgs.length === 0) continue
+      const seen = new Set()
+      for (const crs of [variant.startStation, variant.endStation]) {
+        if (!crs) continue
+        const station = crsIndex.get(crs)
+        if (!station) continue
+        if (seen.has(station.coordKey)) continue
+        seen.add(station.coordKey)
+        let set = perStationSourceOrgs.get(station.coordKey)
+        if (!set) {
+          set = new Set()
+          perStationSourceOrgs.set(station.coordKey, set)
+        }
+        for (const o of orgs) set.add(o)
+      }
+    }
 
     // Every station-to-station variant gets its own paragraph. We no
     // longer dedup by source URL: the automatic sort (komoot →
@@ -1045,13 +1092,29 @@ function buildRamblerNotes(args) {
   // admin-only "Komoot" map filter.
   const komootOut = [...perStationKomoot].sort()
 
+  // stations-by-source.json: pivot the per-station Set<orgSlug> map
+  // into { [orgSlug]: coordKey[] } with each list sorted, so the admin
+  // "Source" filter can answer "stations with ≥1 walk from org X" via
+  // a single Set lookup keyed by the dropdown selection.
+  const bySourceOut = {}
+  for (const [coordKey, orgs] of perStationSourceOrgs) {
+    for (const org of orgs) {
+      if (!bySourceOut[org]) bySourceOut[org] = []
+      bySourceOut[org].push(coordKey)
+    }
+  }
+  for (const org of Object.keys(bySourceOut)) bySourceOut[org].sort()
+  const bySourceSorted = Object.fromEntries(
+    Object.keys(bySourceOut).sort().map((k) => [k, bySourceOut[k]]),
+  )
+
   // returnData mode: hand back the computed data instead of writing.
   // Callers (API routes) commit these atomically via writeDataFile so
   // the derived files end up in git alongside the walk file. This is
   // also the only viable path on Vercel, where writeFileSync would
   // throw EROFS.
   if (args.returnData) {
-    return { notes, seasons: seasonsOut, hiked: hikedOut, komoot: komootOut }
+    return { notes, seasons: seasonsOut, hiked: hikedOut, komoot: komootOut, bySource: bySourceSorted }
   }
 
   writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
@@ -1069,6 +1132,10 @@ function buildRamblerNotes(args) {
   writeFileSync(KOMOOT_PATH, JSON.stringify(komootOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${komootOut.length} entries to ${KOMOOT_PATH}`)
+
+  writeFileSync(STATIONS_BY_SOURCE_PATH, JSON.stringify(bySourceSorted, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${Object.keys(bySourceSorted).length} source orgs to ${STATIONS_BY_SOURCE_PATH}`)
 
   if (args.flipOnMap) {
     // Update onMap per-source so each file only holds its own entries —
