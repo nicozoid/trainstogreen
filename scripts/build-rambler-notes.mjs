@@ -758,10 +758,10 @@ function buildRamblerNotes(args) {
       const relOk = typeof relOrg === "string" && relOrg.trim() !== ""
       if (relOk) orgs.push(relOrg.trim())
       // Sentinel "none" — record stations with at least one variant
-      // missing source.orgSlug OR missing relatedSource.orgSlug.
-      // Drives the admin "No source" dropdown option, which surfaces
-      // walks with at least one provenance gap to fill.
-      if (!srcOk || !relOk) orgs.push("none")
+      // missing BOTH source.orgSlug AND relatedSource.orgSlug. Drives
+      // the admin "No source" dropdown option, which surfaces fully
+      // unattributed walks (the orphans most likely to need fixing).
+      if (!srcOk && !relOk) orgs.push("none")
       const seen = new Set()
       for (const crs of [variant.startStation, variant.endStation]) {
         if (!crs) continue
