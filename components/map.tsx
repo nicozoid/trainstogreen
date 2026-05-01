@@ -2377,6 +2377,17 @@ export default function HikeMap() {
     total: number
     slug: string
   } | null>(null)
+  // Drives the admin "pull all" button — bulk-pulls Komoot data
+  // (distance, hours, uphill, difficulty, name) for every walk with
+  // a komootUrl. Null = idle, otherwise progress through the list.
+  // Sequential (one walk at a time) so the public view rebuilds
+  // incrementally — admins can navigate around the map and see
+  // walks light up in real time.
+  const [pullAllProgress, setPullAllProgress] = useState<{
+    index: number
+    total: number
+    walkId: string
+  } | null>(null)
   // Refs tracking latest routedStations / baseStations values. The
   // admin "Regenerate routing" flow runs asynchronously across
   // multiple primary switches, and each await needs to read the
@@ -8842,6 +8853,132 @@ export default function HikeMap() {
                 terminal-matrix.json, excluded stations, …) so the
                 cheat-sheet files reflect the new output. Reloads the
                 page when done.
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {/* "pull all" — bulk-pulls Komoot data (distance, hours,
+              uphill, difficulty, name) for every walk that has a
+              komootUrl. Sequential client-side loop so progress is
+              visible AND each save individually rebuilds derived
+              files (the public view stays in sync as the loop runs).
+              Total runtime: ~3 min for 60-90 walks at ~2s per fetch. */}
+          {devExcludeActive && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={async () => {
+                    if (pullAllProgress) return
+                    if (!confirm(
+                      "Pull Komoot data for every walk with a komootUrl?\n\n"
+                      + "• Updates distance, hours, uphill, difficulty, and name\n"
+                      + "• Rebuilds derived files after each save (public view stays in sync)\n"
+                      + "• Sequential — takes ~3 minutes for ~80 walks\n\n"
+                      + "Walks already in sync are skipped silently."
+                    )) return
+                    let listResp
+                    try {
+                      listResp = await fetch("/api/dev/walks-with-komoot")
+                    } catch (e) {
+                      alert(`Couldn't fetch walks list: ${(e as Error).message}`)
+                      return
+                    }
+                    if (!listResp.ok) {
+                      alert(`Couldn't fetch walks list: HTTP ${listResp.status}`)
+                      return
+                    }
+                    type WalkRef = {
+                      id: string
+                      slug: string
+                      komootUrl: string
+                      distanceKm: number | null
+                      hours: number | null
+                      uphillMetres: number | null
+                      difficulty: string | null
+                      name: string
+                    }
+                    const list: WalkRef[] = await listResp.json()
+                    const updated: string[] = []
+                    const unchanged: string[] = []
+                    const failed: { id: string; error: string }[] = []
+                    // Sequential loop — concurrent PATCHes would race
+                    // each other on the file system since they all
+                    // rebuild the same derived files.
+                    for (let i = 0; i < list.length; i++) {
+                      const walk = list[i]
+                      setPullAllProgress({ index: i + 1, total: list.length, walkId: walk.id })
+                      // Yield so React paints the progress label before
+                      // each iteration's network round-trip starts.
+                      await new Promise((r) => setTimeout(r, 0))
+                      try {
+                        // 1. Scrape Komoot.
+                        const kr = await fetch("/api/dev/komoot-distance", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ url: walk.komootUrl }),
+                        })
+                        const kj = await kr.json()
+                        if (!kr.ok) throw new Error(kj?.error || `komoot HTTP ${kr.status}`)
+                        // 2. Build the PATCH body — only send fields that
+                        //    actually changed, so the server's "no-op"
+                        //    detection skips unnecessary commits when the
+                        //    walk already matches Komoot.
+                        const newDistance = Math.round(kj.distanceKm * 100) / 100
+                        const newUphill = typeof kj.uphillMetres === "number" ? Math.round(kj.uphillMetres * 100) / 100 : null
+                        const body: Record<string, unknown> = {}
+                        if (newDistance !== walk.distanceKm) body.distanceKm = newDistance
+                        if (kj.hours !== walk.hours) body.hours = kj.hours
+                        if (newUphill !== null && newUphill !== walk.uphillMetres) body.uphillMetres = newUphill
+                        if (kj.difficulty && kj.difficulty !== walk.difficulty) body.difficulty = kj.difficulty
+                        if (kj.name && kj.name !== walk.name) body.name = kj.name
+                        if (Object.keys(body).length === 0) {
+                          unchanged.push(walk.id)
+                          continue
+                        }
+                        // 3. Save.
+                        const sr = await fetch(`/api/dev/walk/${walk.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(body),
+                        })
+                        if (!sr.ok) throw new Error(`save HTTP ${sr.status}: ${await sr.text()}`)
+                        updated.push(walk.id)
+                      } catch (e) {
+                        failed.push({ id: walk.id, error: (e as Error).message })
+                      }
+                    }
+                    setPullAllProgress(null)
+                    const failedSummary = failed.length === 0
+                      ? ""
+                      : `\n\nFailed:\n${failed.map((f) => `  ${f.id}: ${f.error}`).join("\n")}`
+                    alert(
+                      `Pull all complete:\n`
+                      + `  ${updated.length} updated\n`
+                      + `  ${unchanged.length} unchanged\n`
+                      + `  ${failed.length} failed`
+                      + failedSummary,
+                    )
+                  }}
+                  disabled={pullAllProgress != null}
+                  className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60 disabled:opacity-70 disabled:cursor-default inline-flex items-center gap-2"
+                >
+                  {pullAllProgress ? (
+                    <>
+                      <LogoSpinner className="h-3" label="" />
+                      <span>{pullAllProgress.walkId} ({pullAllProgress.index}/{pullAllProgress.total})</span>
+                    </>
+                  ) : (
+                    <>pull all</>
+                  )}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-sm whitespace-normal text-left leading-snug">
+                Bulk-pulls Komoot data (distance, duration, uphill,
+                difficulty, name) for every walk with a komootUrl.
+                Sequential — runs through ~80 walks at roughly 2s
+                each, so allow ~3 minutes total. Each save rebuilds
+                derived files individually so the public view stays
+                in sync as the loop runs. Walks already matching
+                Komoot are skipped silently.
               </TooltipContent>
             </Tooltip>
           )}
