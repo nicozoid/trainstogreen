@@ -1113,12 +1113,18 @@
         "id": "bwbwobwagtail",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921098649",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bow Brickhill to Woburn Sands",
           "pageURL": "https://www.walkingclub.org.uk/walk/bow-brickhill-to-woburn-sands/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2921098649"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -1188,10 +1194,16 @@
         "id": "bwbapglobster",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bow Brickhill to Woburn Sands",
           "pageURL": "https://www.walkingclub.org.uk/walk/bow-brickhill-to-woburn-sands/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -3989,12 +4001,18 @@
         "id": "kitbdwadmiral",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Bedwyn Brail Roman Villa",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kintbury to Great Bedwyn",
           "pageURL": "https://www.walkingclub.org.uk/walk/kintbury-to-great-bedwyn/",
-          "type": "main"
-        },
-        "suffix": "via Bedwyn Brail Roman Villa"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -4030,12 +4048,18 @@
         "id": "kitbdwsparrow",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Inkpen Hill",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kintbury to Great Bedwyn",
           "pageURL": "https://www.walkingclub.org.uk/walk/kintbury-to-great-bedwyn/",
-          "type": "shorter"
-        },
-        "suffix": "via Inkpen Hill"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -4082,12 +4106,18 @@
         "id": "kitkitlichen",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "Walk",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kintbury to Great Bedwyn",
           "pageURL": "https://www.walkingclub.org.uk/walk/kintbury-to-great-bedwyn/",
-          "type": "variant"
-        },
-        "suffix": "Walk"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -4123,12 +4153,18 @@
         "id": "kitkithogweed",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "Walk with Shortcut",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kintbury to Great Bedwyn",
           "pageURL": "https://www.walkingclub.org.uk/walk/kintbury-to-great-bedwyn/",
-          "type": "shorter"
-        },
-        "suffix": "Walk with Shortcut"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -4871,10 +4907,16 @@
         "id": "moramtpipistrelle",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Mortimer to Aldermaston",
           "pageURL": "https://www.walkingclub.org.uk/walk/mortimer-to-aldermaston/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -4925,10 +4967,16 @@
         "id": "morthewren",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Mortimer to Aldermaston",
           "pageURL": "https://www.walkingclub.org.uk/walk/mortimer-to-aldermaston/",
-          "type": "longer"
+          "type": "related"
         }
       },
       {
@@ -4979,10 +5027,16 @@
         "id": "mormdgwhitebeam",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Mortimer to Aldermaston",
           "pageURL": "https://www.walkingclub.org.uk/walk/mortimer-to-aldermaston/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -5466,12 +5520,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921106856",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sunningdale to Windsor",
           "pageURL": "https://www.walkingclub.org.uk/walk/sunningdale-to-windsor/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2921106856"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -5545,10 +5605,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sunningdale to Windsor",
           "pageURL": "https://www.walkingclub.org.uk/walk/sunningdale-to-windsor/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -5630,10 +5696,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sunningdale to Windsor",
           "pageURL": "https://www.walkingclub.org.uk/walk/sunningdale-to-windsor/",
-          "type": "variant"
+          "type": "related"
         }
       }
     ],
@@ -10098,12 +10170,18 @@
         "id": "bcfbcflichen",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920801358",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Beaconsfield Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2920801358"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -10169,10 +10247,16 @@
         "id": "bcfsrgkittiwake",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Beaconsfield Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -10211,12 +10295,18 @@
         "miscellany": "",
         "id": "bcfclwchicory",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Chiltern Open Air Museum",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Beaconsfield Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
-          "type": "alternative"
-        },
-        "suffix": "via Chiltern Open Air Museum"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -10726,10 +10816,16 @@
         "id": "bwblbzcrow",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bow Brickhill to Leighton Buzzard",
           "pageURL": "https://www.walkingclub.org.uk/walk/bow-brickhill-to-leighton-buzzard/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -10919,12 +11015,18 @@
         "miscellany": "Steep descent into Great Missenden",
         "id": "zcmgmnlongtail",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via St John the Baptist Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chesham to Great Missenden",
           "pageURL": "https://www.walkingclub.org.uk/walk/chesham-to-great-missenden/",
-          "type": "main"
-        },
-        "suffix": "via St John the Baptist Church"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -10951,12 +11053,18 @@
         "miscellany": "",
         "id": "zcmgmncricket",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via St Mary Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chesham to Great Missenden",
           "pageURL": "https://www.walkingclub.org.uk/walk/chesham-to-great-missenden/",
-          "type": "shorter"
-        },
-        "suffix": "via St Mary Church"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -10980,12 +11088,18 @@
         "miscellany": "",
         "id": "zcmzcmolive",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "Walk",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chesham to Great Missenden",
           "pageURL": "https://www.walkingclub.org.uk/walk/chesham-to-great-missenden/",
-          "type": "variant"
-        },
-        "suffix": "Walk"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -11013,12 +11127,18 @@
         "miscellany": "",
         "id": "gmngmnstonechat",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "Walk",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chesham to Great Missenden",
           "pageURL": "https://www.walkingclub.org.uk/walk/chesham-to-great-missenden/",
-          "type": "variant"
-        },
-        "suffix": "Walk"
+          "type": "related"
+        }
       }
     ]
   },
@@ -11353,10 +11473,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Gerrards Cross to Cookham",
           "pageURL": "https://www.walkingclub.org.uk/walk/gerrards-cross-to-cookham/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -11495,14 +11621,20 @@
           "nov"
         ],
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Great Missenden to Amersham",
-          "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Penn Wood",
         "komootUrl": "https://www.komoot.com/tour/2920274295",
-        "updatedAt": "2026-05-01T11:58:04.718Z"
+        "updatedAt": "2026-05-01T11:58:04.718Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Great Missenden to Amersham",
+          "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -11540,12 +11672,18 @@
         "miscellany": "",
         "id": "gmnamrdotterel",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via St John the Baptist Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Great Missenden to Amersham",
           "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
-          "type": "shorter"
-        },
-        "suffix": "via St John the Baptist Church"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -11606,10 +11744,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Great Missenden to Amersham",
           "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -12366,10 +12510,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Princes Risborough to Great Missenden",
           "pageURL": "https://www.walkingclub.org.uk/walk/princes-risborough-to-great-missenden/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -12495,13 +12645,19 @@
         "mudWarning": true,
         "rating": 2,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Princes Risborough to Wendover",
-          "pageURL": "https://www.walkingclub.org.uk/walk/princes-risborough-to-wendover/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Whiteleaf Cross",
-        "updatedAt": "2026-05-01T08:57:45.641Z"
+        "updatedAt": "2026-05-01T08:57:45.641Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Princes Risborough to Wendover",
+          "pageURL": "https://www.walkingclub.org.uk/walk/princes-risborough-to-wendover/",
+          "type": "related"
+        }
       }
     ]
   },
@@ -12603,12 +12759,18 @@
         "id": "sdrsdrdock",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Bledlow Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Saunderton via Bledlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/saunderton-via-bledlow-circular/",
-          "type": "main"
-        },
-        "suffix": "via Bledlow Circular"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -12643,10 +12805,16 @@
         "id": "sdrprrsiskin",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Saunderton via Bledlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/saunderton-via-bledlow-circular/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -12774,12 +12942,18 @@
         "id": "sdrsdrmilkcap",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via West Wycombe Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Saunderton via West Wycombe Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/saunderton-via-west-wycombe-circular/",
-          "type": "main"
-        },
-        "suffix": "via West Wycombe Circular"
+          "type": "related"
+        }
       }
     ]
   },
@@ -12899,14 +13073,20 @@
           "nov"
         ],
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Tring Circular",
-          "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "updatedAt": "2026-04-27T17:25:23.547Z",
         "suffix": "via Ridgeway",
-        "rating": 4
+        "rating": 4,
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Tring Circular",
+          "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -12946,12 +13126,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Ivinghoe Beacon",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Ivinghoe Beacon"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -12996,12 +13182,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Ivinghoe Beacon",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
-          "type": "longer"
-        },
-        "suffix": "via Ivinghoe Beacon"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -13045,12 +13237,18 @@
         "miscellany": "",
         "id": "tribkmcrabapple",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Aldbury village stocks",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Aldbury village stocks"
+          "type": "related"
+        }
       }
     ]
   },
@@ -13191,12 +13389,18 @@
         "miscellany": "Steep chalky descent",
         "id": "triwndtern",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920846007",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring to Wendover",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-to-wendover/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2920846007"
+          "type": "related"
+        }
       }
     ]
   },
@@ -13315,12 +13519,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Pulpit Hill fort",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wendover-circular/",
-          "type": "main"
-        },
-        "suffix": "via Pulpit Hill fort"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -13359,12 +13569,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Whiteleaf Cross",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wendover-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Whiteleaf Cross"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -13403,10 +13619,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wendover-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -13451,10 +13673,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wendover-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -13488,12 +13716,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Coombe Hill",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wendover-circular/",
-          "type": "alternative"
-        },
-        "suffix": "via Coombe Hill"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -14583,12 +14817,18 @@
         "miscellany": "High tarmac count",
         "id": "sedcbgmussel",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via All Saints Church Little Shelford",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shelford to Cambridge",
           "pageURL": "https://www.walkingclub.org.uk/walk/shelford-to-cambridge/",
-          "type": "main"
-        },
-        "suffix": "via All Saints Church Little Shelford"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -14632,10 +14872,16 @@
         "miscellany": "",
         "id": "nulcbgslowworm",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shelford to Cambridge",
           "pageURL": "https://www.walkingclub.org.uk/walk/shelford-to-cambridge/",
-          "type": "variant"
+          "type": "related"
         }
       },
       {
@@ -14673,12 +14919,18 @@
         "miscellany": "High tarmac count",
         "id": "sedcbgthistle",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Church of St Mary the Virgin",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shelford to Cambridge",
           "pageURL": "https://www.walkingclub.org.uk/walk/shelford-to-cambridge/",
-          "type": "shorter"
-        },
-        "suffix": "via Church of St Mary the Virgin"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -21243,12 +21495,18 @@
         "id": "brkebnrook",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Filching Manor Motor Museum",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Berwick to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/berwick-to-eastbourne/",
-          "type": "main"
-        },
-        "suffix": "via Filching Manor Motor Museum"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -21278,10 +21536,16 @@
         "id": "brkplgbog",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Berwick to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/berwick-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -21325,12 +21589,18 @@
         "id": "brkebnbream",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Beachy Head",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Berwick to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/berwick-to-eastbourne/",
-          "type": "longer"
-        },
-        "suffix": "via Beachy Head"
+          "type": "related"
+        }
       }
     ]
   },
@@ -24375,12 +24645,18 @@
         "id": "glyseffir",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Firle Place",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Glynde to Seaford",
           "pageURL": "https://www.walkingclub.org.uk/walk/glynde-to-seaford/",
-          "type": "main"
-        },
-        "suffix": "via Firle Place"
+          "type": "related"
+        }
       }
     ]
   },
@@ -25044,10 +25320,16 @@
         "miscellany": "Can be slippery",
         "id": "hsklwsdace",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hassocks to Lewes",
           "pageURL": "https://www.walkingclub.org.uk/walk/hassocks-to-lewes/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -25094,10 +25376,16 @@
         "id": "hskpmppipistrelle",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hassocks to Lewes",
           "pageURL": "https://www.walkingclub.org.uk/walk/hassocks-to-lewes/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -25346,10 +25634,16 @@
         "id": "hgsryepeacock",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hastings to Rye",
           "pageURL": "https://www.walkingclub.org.uk/walk/hastings-to-rye/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -25378,12 +25672,18 @@
         "id": "hgshgstwite",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via St Clements Caves",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hastings to Rye",
           "pageURL": "https://www.walkingclub.org.uk/walk/hastings-to-rye/",
-          "type": "shorter"
-        },
-        "suffix": "via St Clements Caves"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -25425,10 +25725,16 @@
         "id": "hgswseweasel",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hastings to Rye",
           "pageURL": "https://www.walkingclub.org.uk/walk/hastings-to-rye/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -25469,10 +25775,16 @@
         "id": "hgsryetiger",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hastings to Rye",
           "pageURL": "https://www.walkingclub.org.uk/walk/hastings-to-rye/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -26139,10 +26451,16 @@
         "miscellany": "",
         "id": "lwsnulhare",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes to Saltdean",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-to-saltdean/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -26184,12 +26502,18 @@
         "miscellany": "",
         "id": "lwsseejuniper",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Lewes Priory",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes to Saltdean",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-to-saltdean/",
-          "type": "shorter"
-        },
-        "suffix": "via Lewes Priory"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -26227,12 +26551,18 @@
         "miscellany": "",
         "id": "lwslwssiskin",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Northease Manor",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes to Saltdean",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-to-saltdean/",
-          "type": "alternative"
-        },
-        "suffix": "via Northease Manor"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -26266,12 +26596,18 @@
         "miscellany": "",
         "id": "lwssefslug",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "Walk via South Downs",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes to Saltdean",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-to-saltdean/",
-          "type": "longer"
-        },
-        "suffix": "Walk via South Downs"
+          "type": "related"
+        }
       }
     ]
   },
@@ -26686,12 +27022,18 @@
         "miscellany": "Steep hills. Avoid Dec/Jan",
         "id": "lwslwsscallop",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via West Firle Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes via West Firle Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-via-west-firle-circular/",
-          "type": "main"
-        },
-        "suffix": "via West Firle Circular"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -26719,12 +27061,18 @@
         "miscellany": "Steep hill",
         "id": "lwsglybream",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via West Firle Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes via West Firle Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-via-west-firle-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via West Firle Circular"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -26754,12 +27102,18 @@
         "miscellany": "",
         "id": "glyseewinkle",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via West Firle Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes via West Firle Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-via-west-firle-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via West Firle Circular"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -26787,10 +27141,16 @@
         "miscellany": "",
         "id": "seelwsoak",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes via West Firle Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/lewes-via-west-firle-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -27536,12 +27896,18 @@
         "id": "rbrrbrreed",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Rother Valley Railway",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Robertsbridge Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/robertsbridge-circular/",
-          "type": "main"
-        },
-        "suffix": "via Rother Valley Railway"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -27570,12 +27936,18 @@
         "miscellany": "",
         "id": "rbrrbrlizard",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Bodiam Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Robertsbridge Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/robertsbridge-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Bodiam Castle"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -27610,12 +27982,18 @@
         "miscellany": "",
         "id": "rbrbattoad",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Battle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Robertsbridge Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/robertsbridge-circular/",
-          "type": "alternative"
-        },
-        "suffix": "via Battle"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -27649,12 +28027,18 @@
         "miscellany": "",
         "id": "rbrrbrredpoll",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via Hurst Green",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Robertsbridge Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/robertsbridge-circular/",
-          "type": "variant"
-        },
-        "suffix": "via Hurst Green"
+          "type": "related"
+        }
       }
     ]
   },
@@ -28409,12 +28793,18 @@
         "id": "sefebndunnock",
         "rating": 4,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-27T19:23:58.426Z",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "main"
-        },
-        "updatedAt": "2026-04-27T19:23:58.426Z"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -28446,10 +28836,16 @@
         "id": "sefnuldock",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -28486,10 +28882,16 @@
         "id": "sefnulhoopoe",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -28523,10 +28925,16 @@
         "id": "sefnulnightjar",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -28557,10 +28965,16 @@
         "id": "nulnulvetch",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -28594,10 +29008,16 @@
         "id": "nulebnpuffball",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaford to Eastbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/seaford-to-eastbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -29734,12 +30154,18 @@
         "miscellany": "",
         "id": "seesefjuniper",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Monk's House",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southease to Seaford",
           "pageURL": "https://www.walkingclub.org.uk/walk/southease-to-seaford/",
-          "type": "main"
-        },
-        "suffix": "via Monk's House"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -29762,12 +30188,18 @@
         "miscellany": "",
         "id": "seesefash",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via St Andrew's Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southease to Seaford",
           "pageURL": "https://www.walkingclub.org.uk/walk/southease-to-seaford/",
-          "type": "shorter"
-        },
-        "suffix": "via St Andrew's Church"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -29800,10 +30232,16 @@
         "miscellany": "",
         "id": "seebipmarsh",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southease to Seaford",
           "pageURL": "https://www.walkingclub.org.uk/walk/southease-to-seaford/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -29838,12 +30276,18 @@
         "miscellany": "",
         "id": "lwssefdormouse",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via St Andrew's Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southease to Seaford",
           "pageURL": "https://www.walkingclub.org.uk/walk/southease-to-seaford/",
-          "type": "longer"
-        },
-        "suffix": "via St Andrew's Church"
+          "type": "related"
+        }
       }
     ]
   },
@@ -31387,12 +31831,18 @@
         ],
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via All Saints Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchelsea to Hastings",
           "pageURL": "https://www.walkingclub.org.uk/walk/winchelsea-to-hastings/",
-          "type": "main"
-        },
-        "suffix": "via All Saints Church"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -31466,10 +31916,16 @@
         ],
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchelsea to Hastings",
           "pageURL": "https://www.walkingclub.org.uk/walk/winchelsea-to-hastings/",
-          "type": "longer"
+          "type": "related"
         }
       },
       {
@@ -31510,10 +31966,16 @@
         "id": "wsewsepike",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchelsea to Hastings",
           "pageURL": "https://www.walkingclub.org.uk/walk/winchelsea-to-hastings/",
-          "type": "variant"
+          "type": "related"
         }
       },
       {
@@ -31554,12 +32016,18 @@
         "id": "ryeryefinch",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via All Saints Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchelsea to Hastings",
           "pageURL": "https://www.walkingclub.org.uk/walk/winchelsea-to-hastings/",
-          "type": "variant"
-        },
-        "suffix": "via All Saints Church"
+          "type": "related"
+        }
       }
     ]
   },
@@ -32386,14 +32854,20 @@
         "id": "buesuycowslip",
         "mudWarning": true,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Bures to Sudbury",
-          "pageURL": "https://www.walkingclub.org.uk/walk/bures-to-sudbury/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Loshes Woodland",
         "komootUrl": "https://www.komoot.com/tour/2920318605",
-        "updatedAt": "2026-05-01T12:28:00.229Z"
+        "updatedAt": "2026-05-01T12:28:00.229Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Bures to Sudbury",
+          "pageURL": "https://www.walkingclub.org.uk/walk/bures-to-sudbury/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -32444,12 +32918,18 @@
         "id": "buesuylime",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Holy Innocents Church Lamarsh",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bures to Sudbury",
           "pageURL": "https://www.walkingclub.org.uk/walk/bures-to-sudbury/",
-          "type": "shorter"
-        },
-        "suffix": "via Holy Innocents Church Lamarsh"
+          "type": "related"
+        }
       }
     ]
   },
@@ -34003,12 +34483,18 @@
         "miscellany": "Can flood after rain",
         "id": "mngmngbullfinch",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Parish Church of Stratford St Mary",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Manningtree Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/manningtree-circular/",
-          "type": "main"
-        },
-        "suffix": "via Parish Church of Stratford St Mary"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -34088,12 +34574,18 @@
         "miscellany": "Can flood after rain",
         "id": "mngmngrosehip",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via St Mary's Church Lawford",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Manningtree Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/manningtree-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via St Mary's Church Lawford"
+          "type": "related"
+        }
       }
     ]
   },
@@ -34765,10 +35257,16 @@
         "id": "cwcbuecoaltit",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wakes Colne to Bures",
           "pageURL": "https://www.walkingclub.org.uk/walk/wakes-colne-to-bures/",
-          "type": "main"
+          "type": "related"
         }
       }
     ],
@@ -35283,10 +35781,16 @@
         "miscellany": "Check ferry timetable",
         "id": "wivwivthistle",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wivenhoe Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wivenhoe-circular/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -38758,12 +39262,18 @@
         "id": "aonaonanemone",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Church St Mary, East Worldham",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Alton Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/alton-circular/",
-          "type": "main"
-        },
-        "suffix": "via Church St Mary, East Worldham"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -38814,12 +39324,18 @@
         "miscellany": "",
         "id": "aonaonswallow",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Jane Austen's House",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Alton Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/alton-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Jane Austen's House"
+          "type": "related"
+        }
       }
     ]
   },
@@ -41008,13 +41524,19 @@
         "miscellany": "Check tide timings",
         "id": "ntlboeporpoise",
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Netley to Botley",
-          "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920240122",
-        "updatedAt": "2026-04-30T10:31:03.792Z"
+        "updatedAt": "2026-04-30T10:31:03.792Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Netley to Botley",
+          "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -41082,12 +41604,18 @@
         "miscellany": "Check tide timings",
         "id": "boentlwren",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "(reverse walk)",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Netley to Botley",
           "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
-          "type": "alternative"
-        },
-        "suffix": "(reverse walk)"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -41155,12 +41683,18 @@
         "miscellany": "Check tide timings",
         "id": "boeshosparrow",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "(reverse walk with extension)",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Netley to Botley",
           "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
-          "type": "longer"
-        },
-        "suffix": "(reverse walk with extension)"
+          "type": "related"
+        }
       }
     ]
   },
@@ -41770,12 +42304,18 @@
         "miscellany": "Steep ascent, slippery winter",
         "id": "ptrlischicory",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Edward Thomas Memorial Stone",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Liss",
           "pageURL": "https://www.walkingclub.org.uk/walk/petersfield-to-liss/",
-          "type": "main"
-        },
-        "suffix": "via Edward Thomas Memorial Stone"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -41808,10 +42348,16 @@
         "miscellany": "Steep descent, slippery winter",
         "id": "ptrptrheron",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Liss",
           "pageURL": "https://www.walkingclub.org.uk/walk/petersfield-to-liss/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -41842,12 +42388,18 @@
         "miscellany": "Steep ascent, slippery winter",
         "id": "ptrlisbarbel",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Shoulder of Mutton Hill",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Liss",
           "pageURL": "https://www.walkingclub.org.uk/walk/petersfield-to-liss/",
-          "type": "shorter"
-        },
-        "suffix": "via Shoulder of Mutton Hill"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -41870,10 +42422,16 @@
         "miscellany": "Steep ascent, slippery winter",
         "id": "ptrnuliris",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Liss",
           "pageURL": "https://www.walkingclub.org.uk/walk/petersfield-to-liss/",
-          "type": "longer"
+          "type": "related"
         }
       },
       {
@@ -41898,10 +42456,16 @@
         "miscellany": "Very long walk",
         "id": "ptraonwinkle",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Liss",
           "pageURL": "https://www.walkingclub.org.uk/walk/petersfield-to-liss/",
-          "type": "longer"
+          "type": "related"
         }
       }
     ]
@@ -43352,10 +43916,16 @@
         "id": "wchadvthrush",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Whitchurch to Andover",
           "pageURL": "https://www.walkingclub.org.uk/walk/whitchurch-to-andover/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -43407,10 +43977,16 @@
         "miscellany": "",
         "id": "wchnuldunnock",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Whitchurch to Andover",
           "pageURL": "https://www.walkingclub.org.uk/walk/whitchurch-to-andover/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ],
@@ -45201,13 +45777,19 @@
         "id": "gsnsacredfox",
         "mudWarning": true,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Garston to St Albans",
-          "pageURL": "https://www.walkingclub.org.uk/walk/garston-to-st-albans/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920312228",
-        "updatedAt": "2026-04-30T11:03:59.423Z"
+        "updatedAt": "2026-04-30T11:03:59.423Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Garston to St Albans",
+          "pageURL": "https://www.walkingclub.org.uk/walk/garston-to-st-albans/",
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -45300,10 +45882,16 @@
         "id": "gsnsaafalcon",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Garston to St Albans",
           "pageURL": "https://www.walkingclub.org.uk/walk/garston-to-st-albans/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ],
@@ -49875,10 +50463,16 @@
         "id": "cilcbepuffball",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chilham to Canterbury",
           "pageURL": "https://www.walkingclub.org.uk/walk/chilham-to-canterbury/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -50335,10 +50929,16 @@
         "id": "cwubatcowslip",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Crowhurst to Battle",
           "pageURL": "https://www.walkingclub.org.uk/walk/crowhurst-to-battle/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -50732,10 +51332,16 @@
         ],
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Dover to Deal",
           "pageURL": "https://www.walkingclub.org.uk/walk/dover-to-deal/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -50785,10 +51391,16 @@
         "id": "dvpnulsorbus",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Dover to Deal",
           "pageURL": "https://www.walkingclub.org.uk/walk/dover-to-deal/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -50840,10 +51452,16 @@
         ],
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Dover to Deal",
           "pageURL": "https://www.walkingclub.org.uk/walk/dover-to-deal/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -55720,12 +56338,18 @@
         "id": "hevlihgrayling",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Chiddingstone Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hever to Leigh",
           "pageURL": "https://www.walkingclub.org.uk/walk/hever-to-leigh/",
-          "type": "main"
-        },
-        "suffix": "via Chiddingstone Castle"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -55765,12 +56389,18 @@
         "id": "hevlihcowslip",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Hever Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hever to Leigh",
           "pageURL": "https://www.walkingclub.org.uk/walk/hever-to-leigh/",
-          "type": "shorter"
-        },
-        "suffix": "via Hever Castle"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -55806,12 +56436,18 @@
         "miscellany": "",
         "id": "hevphrgean",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Chiddingstone Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hever to Leigh",
           "pageURL": "https://www.walkingclub.org.uk/walk/hever-to-leigh/",
-          "type": "alternative"
-        },
-        "suffix": "via Chiddingstone Castle"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -55856,12 +56492,18 @@
         "id": "hevtonadmiral",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Chiddingstone Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hever to Leigh",
           "pageURL": "https://www.walkingclub.org.uk/walk/hever-to-leigh/",
-          "type": "longer"
-        },
-        "suffix": "via Chiddingstone Castle"
+          "type": "related"
+        }
       }
     ]
   },
@@ -56842,10 +57484,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -56871,10 +57519,16 @@
         "id": "huroxtshrimp",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -56907,10 +57561,16 @@
         "miscellany": "",
         "id": "ebrnulmallard",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -56943,10 +57603,16 @@
         "miscellany": "",
         "id": "ebrsevlapwing",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -56985,12 +57651,18 @@
         "miscellany": "",
         "id": "hursevwasp",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Chartwell",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
-          "type": "alternative"
-        },
-        "suffix": "via Chartwell"
+          "type": "related"
+        }
       }
     ]
   },
@@ -57709,10 +58381,16 @@
         "id": "lihsevelm",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Leigh to Sevenoaks",
           "pageURL": "https://www.walkingclub.org.uk/walk/leigh-to-sevenoaks/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -57853,12 +58531,18 @@
         "id": "lihtbwredpoll",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921069953",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Leigh to Tunbridge Wells",
           "pageURL": "https://www.walkingclub.org.uk/walk/leigh-to-tunbridge-wells/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2921069953"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -59114,13 +59798,19 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Otford Circular via Romney Street",
-          "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Romney Street",
-        "updatedAt": "2026-04-30T09:39:02.718Z"
+        "updatedAt": "2026-04-30T09:39:02.718Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Otford Circular via Romney Street",
+          "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -59166,10 +59856,16 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Otford Circular via Romney Street",
           "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -59529,10 +60225,16 @@
         "id": "otfeynpeat",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Otford to Eynsford",
           "pageURL": "https://www.walkingclub.org.uk/walk/otford-to-eynsford/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -60231,12 +60933,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Dering windows",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Pluckley Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/pluckley-circular/",
-          "type": "main"
-        },
-        "suffix": "via Dering windows"
+          "type": "related"
+        }
       }
     ]
   },
@@ -61779,10 +62487,16 @@
         "miscellany": "Nettles in summer",
         "id": "sdasortufted",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Snodland to Sole Street",
           "pageURL": "https://www.walkingclub.org.uk/walk/snodland-to-sole-street/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -61815,12 +62529,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "Walk",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Snodland to Sole Street",
           "pageURL": "https://www.walkingclub.org.uk/walk/snodland-to-sole-street/",
-          "type": "variant"
-        },
-        "suffix": "Walk"
+          "type": "related"
+        }
       }
     ]
   },
@@ -62087,12 +62807,18 @@
         "miscellany": "Nettles and brambles",
         "id": "sogsogfalcon",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Bateman's",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Stonegate Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/stonegate-circular/",
-          "type": "main"
-        },
-        "suffix": "via Bateman's"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -62124,10 +62850,16 @@
         "miscellany": "Nettles and brambles",
         "id": "sogwadshrimp",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Stonegate Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/stonegate-circular/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -63966,12 +64698,18 @@
         "id": "wadwadcornflower",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Bewl Water",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wadhurst-circular/",
-          "type": "main"
-        },
-        "suffix": "via Bewl Water"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -64001,12 +64739,18 @@
         "id": "wadwadelm",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Church of St Peter and St Paul",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wadhurst-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Church of St Peter and St Paul"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -64040,10 +64784,16 @@
         "id": "wadsogheron",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wadhurst-circular/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -64083,10 +64833,16 @@
         "id": "wadrbrheron",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wadhurst-circular/",
-          "type": "longer"
+          "type": "related"
         }
       },
       {
@@ -64123,10 +64879,16 @@
         "id": "etcetcpochard",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wadhurst-circular/",
-          "type": "variant"
+          "type": "related"
         }
       }
     ]
@@ -65578,12 +66340,18 @@
         "id": "wyewyecornflower",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Crown Memorial",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wye Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wye-circular/",
-          "type": "main"
-        },
-        "suffix": "via Crown Memorial"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -65650,12 +66418,18 @@
         "id": "wyewyedrinker",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Wye Nature Reserve",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wye Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/wye-circular/",
-          "type": "longer"
-        },
-        "suffix": "via Wye Nature Reserve"
+          "type": "related"
+        }
       }
     ]
   },
@@ -66062,12 +66836,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Church of St Lawrence",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Yalding to Borough Green",
           "pageURL": "https://www.walkingclub.org.uk/walk/yalding-to-borough-green/",
-          "type": "main"
-        },
-        "suffix": "via Church of St Lawrence"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -66110,12 +66890,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Roydon Hall",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Yalding to Borough Green",
           "pageURL": "https://www.walkingclub.org.uk/walk/yalding-to-borough-green/",
-          "type": "alternative"
-        },
-        "suffix": "via Roydon Hall"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -66159,12 +66945,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via St Dunstan's Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Yalding to Borough Green",
           "pageURL": "https://www.walkingclub.org.uk/walk/yalding-to-borough-green/",
-          "type": "alternative"
-        },
-        "suffix": "via St Dunstan's Church"
+          "type": "related"
+        }
       }
     ],
     "resolved": true,
@@ -78300,10 +79092,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cookham to Maidenhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/cookham-to-maidenhead/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -78374,12 +79172,18 @@
         "miscellany": "",
         "id": "coocooredfox",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Stanley Spencer Gallery",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cookham to Maidenhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/cookham-to-maidenhead/",
-          "type": "shorter"
-        },
-        "suffix": "via Stanley Spencer Gallery"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -78439,10 +79243,16 @@
         "miscellany": "",
         "id": "cootapcornflower",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cookham to Maidenhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/cookham-to-maidenhead/",
-          "type": "variant"
+          "type": "related"
         }
       },
       {
@@ -78492,12 +79302,18 @@
         "miscellany": "",
         "id": "mlwcootench",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Thames Path",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cookham to Maidenhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/cookham-to-maidenhead/",
-          "type": "alternative"
-        },
-        "suffix": "via Thames Path"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -78554,12 +79370,18 @@
         "miscellany": "",
         "id": "mlwmaipochard",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Thames Path",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cookham to Maidenhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/cookham-to-maidenhead/",
-          "type": "alternative"
-        },
-        "suffix": "via Thames Path"
+          "type": "related"
+        }
       }
     ]
   },
@@ -78941,13 +79763,19 @@
           "sep"
         ],
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Hanborough to Charlbury",
-          "pageURL": "https://www.walkingclub.org.uk/walk/hanborough-to-charlbury/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "rating": 4,
-        "updatedAt": "2026-04-27T17:41:11.779Z"
+        "updatedAt": "2026-04-27T17:41:11.779Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Hanborough to Charlbury",
+          "pageURL": "https://www.walkingclub.org.uk/walk/hanborough-to-charlbury/",
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -78998,10 +79826,16 @@
         "id": "cbyhndbream",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hanborough to Charlbury",
           "pageURL": "https://www.walkingclub.org.uk/walk/hanborough-to-charlbury/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -79136,13 +79970,19 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Henley Circular via Great Wood",
-          "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Great Wood",
-        "komootUrl": "https://www.komoot.com/tour/2920170092"
+        "komootUrl": "https://www.komoot.com/tour/2920170092",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Henley Circular via Great Wood",
+          "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -79198,12 +80038,18 @@
         ],
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via Great Wood & St Nicholas Church, Remenham",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley Circular via Great Wood",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
-          "type": "variant"
-        },
-        "suffix": "via Great Wood & St Nicholas Church, Remenham"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -79242,12 +80088,18 @@
         "id": "hotshimilkcap",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Great Wood",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley Circular via Great Wood",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
-          "type": "longer"
-        },
-        "suffix": "via Great Wood"
+          "type": "related"
+        }
       }
     ]
   },
@@ -79515,10 +80367,16 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley to Pangbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-to-pangbourne/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -79564,10 +80422,16 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley to Pangbourne",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-to-pangbourne/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -79702,12 +80566,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Hambleden Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley via Hambleden Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-via-hambleden-circular/",
-          "type": "main"
-        },
-        "suffix": "via Hambleden Circular"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -79756,10 +80626,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley via Hambleden Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-via-hambleden-circular/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -79818,12 +80694,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Hambleden Circular & Marsh Lock",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley via Hambleden Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-via-hambleden-circular/",
-          "type": "longer"
-        },
-        "suffix": "via Hambleden Circular & Marsh Lock"
+          "type": "related"
+        }
       }
     ]
   },
@@ -79935,12 +80817,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Stonor Circular",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley via Stonor Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-via-stonor-circular/",
-          "type": "main"
-        },
-        "suffix": "via Stonor Circular"
+          "type": "related"
+        }
       }
     ]
   },
@@ -80523,12 +81411,18 @@
         "miscellany": "",
         "id": "mlwmlwstarfish",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Parish Church of St Mary The Virgin, Hurley",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Marlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/marlow-circular/",
-          "type": "main"
-        },
-        "suffix": "via Parish Church of St Mary The Virgin, Hurley"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -80584,12 +81478,18 @@
         "miscellany": "",
         "id": "mlwmlwbluetit",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Hurley Lock",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Marlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/marlow-circular/",
-          "type": "longer"
-        },
-        "suffix": "via Hurley Lock"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -80622,12 +81522,18 @@
         "miscellany": "",
         "id": "mlwhotchicory",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Hurley Lock",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Marlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/marlow-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Hurley Lock"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -80669,12 +81575,18 @@
         "miscellany": "",
         "id": "mlwhotmole",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Hambleden Parish Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Marlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/marlow-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Hambleden Parish Church"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -80712,10 +81624,16 @@
         "miscellany": "",
         "id": "mlwnulpike",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Marlow Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/marlow-circular/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -81003,12 +81921,18 @@
         "miscellany": "Can be flooded",
         "id": "oxfoxfmarsh",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920905703",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Oxford Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/oxford-circular/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2920905703"
+          "type": "related"
+        }
       }
     ]
   },
@@ -81148,14 +82072,20 @@
         "id": "panpanelm",
         "mudWarning": true,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Pangbourne Circular",
-          "pageURL": "https://www.walkingclub.org.uk/walk/pangbourne-circular/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Church of St John the Baptist",
         "komootUrl": "https://www.komoot.com/tour/2920257524",
-        "updatedAt": "2026-04-30T10:41:22.356Z"
+        "updatedAt": "2026-04-30T10:41:22.356Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Pangbourne Circular",
+          "pageURL": "https://www.walkingclub.org.uk/walk/pangbourne-circular/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -81198,12 +82128,18 @@
         "id": "panpanbog",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Whitchurch Toll Bridge",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Pangbourne Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/pangbourne-circular/",
-          "type": "shorter"
-        },
-        "suffix": "via Whitchurch Toll Bridge"
+          "type": "related"
+        }
       }
     ]
   },
@@ -81611,13 +82547,19 @@
           "may"
         ],
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Shiplake to Henley",
-          "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "suffix": "via Shiplake Lock",
-        "komootUrl": "https://www.komoot.com/tour/2920707447"
+        "komootUrl": "https://www.komoot.com/tour/2920707447",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Shiplake to Henley",
+          "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -81671,12 +82613,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via High Wood",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shiplake to Henley",
           "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
-          "type": "variant"
-        },
-        "suffix": "via High Wood"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -81725,10 +82673,16 @@
         "miscellany": "Footbridge may be closed",
         "id": "shishidipper",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shiplake to Henley",
           "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
-          "type": "variant"
+          "type": "related"
         }
       }
     ]
@@ -92364,10 +93318,16 @@
         "miscellany": "Steep descents, can be slippery",
         "id": "bxwlhdcopper",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Leatherhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/box-hill-to-leatherhead/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -92427,12 +93387,18 @@
         "miscellany": "Steep descents, can be slippery",
         "id": "bxwbxwcampion",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Stepping Stones pub",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Leatherhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/box-hill-to-leatherhead/",
-          "type": "alternative"
-        },
-        "suffix": "via Stepping Stones pub"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -92499,12 +93465,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Norbury Park House",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Leatherhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/box-hill-to-leatherhead/",
-          "type": "alternative"
-        },
-        "suffix": "via Norbury Park House"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -92574,10 +93546,16 @@
         "miscellany": "Steep descents, can be slippery",
         "id": "lhdbxwpine",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Leatherhead",
           "pageURL": "https://www.walkingclub.org.uk/walk/box-hill-to-leatherhead/",
-          "type": "alternative"
+          "type": "related"
         }
       }
     ]
@@ -94266,12 +95244,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Polesden Lacey",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Effingham Junction to Westhumble",
           "pageURL": "https://www.walkingclub.org.uk/walk/effingham-junction-to-westhumble/",
-          "type": "main"
-        },
-        "suffix": "via Polesden Lacey"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -94319,10 +95303,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Effingham Junction to Westhumble",
           "pageURL": "https://www.walkingclub.org.uk/walk/effingham-junction-to-westhumble/",
-          "type": "variant"
+          "type": "related"
         }
       },
       {
@@ -94367,12 +95357,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Polesden Lacey",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Effingham Junction to Westhumble",
           "pageURL": "https://www.walkingclub.org.uk/walk/effingham-junction-to-westhumble/",
-          "type": "shorter"
-        },
-        "suffix": "via Polesden Lacey"
+          "type": "related"
+        }
       }
     ]
   },
@@ -94494,12 +95490,18 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920859171",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Farnham to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/farnham-to-godalming/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2920859171"
+          "type": "related"
+        }
       }
     ]
   },
@@ -94938,12 +95940,18 @@
         "id": "gomgldlime",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2921052519",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Gomshall to Guildford",
           "pageURL": "https://www.walkingclub.org.uk/walk/gomshall-to-guildford/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2921052519"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -94996,10 +96004,16 @@
         "id": "gomsfrtufted",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Gomshall to Guildford",
           "pageURL": "https://www.walkingclub.org.uk/walk/gomshall-to-guildford/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -95042,12 +96056,18 @@
         "id": "hlmgldwren",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Church of St James",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Gomshall to Guildford",
           "pageURL": "https://www.walkingclub.org.uk/walk/gomshall-to-guildford/",
-          "type": "longer"
-        },
-        "suffix": "via Church of St James"
+          "type": "related"
+        }
       }
     ]
   },
@@ -96367,12 +97387,18 @@
           "sep"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Loseley Park",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Farnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-farnham/",
-          "type": "main"
-        },
-        "suffix": "via Loseley Park"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -96416,12 +97442,18 @@
         "id": "gldgldtern",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Watts Gallery",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Farnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-farnham/",
-          "type": "shorter"
-        },
-        "suffix": "via Watts Gallery"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -96467,12 +97499,18 @@
         "miscellany": "Steep; more strenuous",
         "id": "gldfnhstonechat",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "suffix": "via Hog's Back",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Farnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-farnham/",
-          "type": "alternative"
-        },
-        "suffix": "via Hog's Back"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -96502,10 +97540,16 @@
         "miscellany": "",
         "id": "fnhfnhcentipede",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Farnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-farnham/",
-          "type": "variant"
+          "type": "related"
         }
       }
     ]
@@ -96650,12 +97694,18 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Guildford Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
-          "type": "main"
-        },
-        "suffix": "via Guildford Castle"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -96711,10 +97761,16 @@
         "miscellany": "Bus required from Abinger Hammer",
         "id": "gldnulstarfish",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -96785,10 +97841,16 @@
         "miscellany": "",
         "id": "gldbxwmallard",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
-          "type": "longer"
+          "type": "related"
         }
       },
       {
@@ -96822,12 +97884,18 @@
         "miscellany": "",
         "id": "gldchlnettle",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Pewley Down",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
-          "type": "shorter"
-        },
-        "suffix": "via Pewley Down"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -96847,13 +97915,19 @@
         ],
         "id": "gomgommallard",
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Guildford to Gomshall",
-          "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
           "type": "variant"
         },
         "rating": 4,
-        "updatedAt": "2026-04-27T17:54:34.310Z"
+        "updatedAt": "2026-04-27T17:54:34.310Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Guildford to Gomshall",
+          "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -96876,10 +97950,16 @@
         "miscellany": "",
         "id": "gombxwfritillary",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/guildford-to-gomshall/",
-          "type": "variant"
+          "type": "related"
         }
       }
     ]
@@ -97469,10 +98549,16 @@
           "aug"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haslemere Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/haslemere-circular/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -97935,10 +99021,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Holmwood to Gomshall",
           "pageURL": "https://www.walkingclub.org.uk/walk/holmwood-to-gomshall/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -98632,13 +99724,19 @@
         "id": "liphslrook",
         "mudWarning": true,
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Liphook to Haslemere",
-          "pageURL": "https://www.walkingclub.org.uk/walk/liphook-to-haslemere/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920301093",
-        "updatedAt": "2026-04-30T11:00:41.283Z"
+        "updatedAt": "2026-04-30T11:00:41.283Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Liphook to Haslemere",
+          "pageURL": "https://www.walkingclub.org.uk/walk/liphook-to-haslemere/",
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -98674,10 +99772,16 @@
         "id": "liphslmarsh",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Liphook to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/liphook-to-haslemere/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -99205,12 +100309,18 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-04-24T15:23:27.374Z",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-godalming/",
-          "type": "main"
-        },
-        "updatedAt": "2026-04-24T15:23:27.374Z"
+          "type": "related"
+        }
       },
       {
         "role": "alternative",
@@ -99258,10 +100368,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-godalming/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -99311,10 +100427,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-godalming/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -99430,15 +100552,21 @@
         ],
         "komootUrl": "https://www.komoot.com/tour/2905513618",
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Milford to Haslemere",
-          "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "distanceKm": 16.4,
         "rating": 3,
         "updatedAt": "2026-04-30T09:54:07.758Z",
-        "suffix": "via Grave of an Unknown Sailor"
+        "suffix": "via Grave of an Unknown Sailor",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Milford to Haslemere",
+          "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -99471,12 +100599,18 @@
         "id": "mlfhsladmiral",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via Devil's Punch Bowl",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
-          "type": "variant"
-        },
-        "suffix": "via Devil's Punch Bowl"
+          "type": "related"
+        }
       },
       {
         "role": "variant",
@@ -99512,12 +100646,18 @@
         "id": "mlfhslcomfrey",
         "rating": 3,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "suffix": "via Gibbet Hill",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
-          "type": "variant"
-        },
-        "suffix": "via Gibbet Hill"
+          "type": "related"
+        }
       }
     ]
   },
@@ -100179,10 +101319,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ockley to Warnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/ockley-to-warnham/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -100236,10 +101382,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ockley to Warnham",
           "pageURL": "https://www.walkingclub.org.uk/walk/ockley-to-warnham/",
-          "type": "longer"
+          "type": "related"
         }
       }
     ]
@@ -101985,10 +103137,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Riddlesdown to Coulsdon South",
           "pageURL": "https://www.walkingclub.org.uk/walk/riddlesdown-to-coulsdon-south/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -102042,10 +103200,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "alternative"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Riddlesdown to Coulsdon South",
           "pageURL": "https://www.walkingclub.org.uk/walk/riddlesdown-to-coulsdon-south/",
-          "type": "alternative"
+          "type": "related"
         }
       },
       {
@@ -102105,10 +103269,16 @@
           "nov"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Riddlesdown to Coulsdon South",
           "pageURL": "https://www.walkingclub.org.uk/walk/riddlesdown-to-coulsdon-south/",
-          "type": "longer"
+          "type": "related"
         }
       }
     ]
@@ -103029,12 +104199,18 @@
         "id": "wangodbog",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2920224124",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wanborough to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/wanborough-to-godalming/",
-          "type": "main"
-        },
-        "komootUrl": "https://www.komoot.com/tour/2920224124"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -103085,10 +104261,16 @@
         "id": "wangldwarbler",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wanborough to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/wanborough-to-godalming/",
-          "type": "longer"
+          "type": "related"
         }
       }
     ]
@@ -104135,12 +105317,18 @@
         "id": "wtyhslscallop",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Crown Inn",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Witley to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/witley-to-haslemere/",
-          "type": "main"
-        },
-        "suffix": "via Crown Inn"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -104179,10 +105367,16 @@
         "id": "wtyhslwoodlouse",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Witley to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/witley-to-haslemere/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]
@@ -105193,13 +106387,19 @@
           "aug"
         ],
         "source": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Amberley to Arundel",
-          "pageURL": "https://www.walkingclub.org.uk/walk/amberley-to-arundel/",
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
           "type": "main"
         },
         "rating": 4,
-        "updatedAt": "2026-04-27T22:09:38.796Z"
+        "updatedAt": "2026-04-27T22:09:38.796Z",
+        "relatedSource": {
+          "orgSlug": "saturday-walkers-club",
+          "pageName": "Amberley to Arundel",
+          "pageURL": "https://www.walkingclub.org.uk/walk/amberley-to-arundel/",
+          "type": "related"
+        }
       }
     ]
   },
@@ -106340,12 +107540,18 @@
         "miscellany": "Chalky paths slippery wet",
         "id": "aruamyseal",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via St Nicholas Parish Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Arundel to Amberley",
           "pageURL": "https://www.walkingclub.org.uk/walk/arundel-to-amberley/",
-          "type": "main"
-        },
-        "suffix": "via St Nicholas Parish Church"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -106390,12 +107596,18 @@
         "miscellany": "",
         "id": "aruamyspruce",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Arundel Castle & Hiorne Tower",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Arundel to Amberley",
           "pageURL": "https://www.walkingclub.org.uk/walk/arundel-to-amberley/",
-          "type": "shorter"
-        },
-        "suffix": "via Arundel Castle & Hiorne Tower"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -106436,12 +107648,18 @@
         "miscellany": "",
         "id": "aruamygoldcrest",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Arundel Castle & St Leonard's Parish Church",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Arundel to Amberley",
           "pageURL": "https://www.walkingclub.org.uk/walk/arundel-to-amberley/",
-          "type": "shorter"
-        },
-        "suffix": "via Arundel Castle & St Leonard's Parish Church"
+          "type": "related"
+        }
       },
       {
         "role": "shorter",
@@ -106483,12 +107701,18 @@
         "miscellany": "",
         "id": "aruaruweasel",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "suffix": "via Black Rabbit",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Arundel to Amberley",
           "pageURL": "https://www.walkingclub.org.uk/walk/arundel-to-amberley/",
-          "type": "shorter"
-        },
-        "suffix": "via Black Rabbit"
+          "type": "related"
+        }
       },
       {
         "role": "longer",
@@ -106533,12 +107757,18 @@
         "miscellany": "Very long; fit walkers only. Avoid midsummer",
         "id": "aruarugoldcrest",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "suffix": "via Amberley Castle",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Arundel to Amberley",
           "pageURL": "https://www.walkingclub.org.uk/walk/arundel-to-amberley/",
-          "type": "longer"
-        },
-        "suffix": "via Amberley Castle"
+          "type": "related"
+        }
       }
     ]
   },
@@ -107822,10 +109052,16 @@
           "may"
         ],
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Balcombe to East Grinstead",
           "pageURL": "https://www.walkingclub.org.uk/walk/balcombe-to-east-grinstead/",
-          "type": "main"
+          "type": "related"
         }
       }
     ]
@@ -110015,10 +111251,16 @@
         "miscellany": "Can be waterlogged",
         "id": "hsknulheather",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hassocks to Upper Beeding",
           "pageURL": "https://www.walkingclub.org.uk/walk/hassocks-to-upper-beeding/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -110065,10 +111307,16 @@
         "miscellany": "Waterlogged Oct–Mar. Avoid Oct to Mar",
         "id": "hsknulredwing",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "variant"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hassocks to Upper Beeding",
           "pageURL": "https://www.walkingclub.org.uk/walk/hassocks-to-upper-beeding/",
-          "type": "variant"
+          "type": "related"
         }
       },
       {
@@ -110119,10 +111367,16 @@
         "miscellany": "",
         "id": "hskssehairstreak",
         "source": {
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
+          "type": "longer"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hassocks to Upper Beeding",
           "pageURL": "https://www.walkingclub.org.uk/walk/hassocks-to-upper-beeding/",
-          "type": "longer"
+          "type": "related"
         }
       }
     ]
@@ -114680,10 +115934,16 @@
         "id": "sobcchnewt",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southbourne to Chichester",
           "pageURL": "https://www.walkingclub.org.uk/walk/southbourne-to-chichester/",
-          "type": "main"
+          "type": "related"
         }
       },
       {
@@ -114729,10 +115989,16 @@
         "id": "sobbohfitchet",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southbourne to Chichester",
           "pageURL": "https://www.walkingclub.org.uk/walk/southbourne-to-chichester/",
-          "type": "shorter"
+          "type": "related"
         }
       },
       {
@@ -114777,10 +116043,16 @@
         "id": "sobfsbcoaltit",
         "mudWarning": true,
         "source": {
+          "orgSlug": "time-out-country-walks-vol-1",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southbourne to Chichester",
           "pageURL": "https://www.walkingclub.org.uk/walk/southbourne-to-chichester/",
-          "type": "shorter"
+          "type": "related"
         }
       }
     ]

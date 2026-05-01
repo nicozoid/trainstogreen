@@ -241,6 +241,7 @@ const SOURCE_TYPES: { value: string; label: string }[] = [
   { value: "longer",      label: "Longer variant" },
   { value: "similar",     label: "Similar to" },
   { value: "adapted",     label: "Adapted from" },
+  { value: "related",     label: "Related to" },
 ]
 
 // Rating-level icons — mirror the map marker shapes used in the

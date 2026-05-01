@@ -461,6 +461,7 @@ function formatRelatedSourceClause(variant, sources) {
     case "alternative": phrase = "An alternative variant of"; break
     case "variant":     phrase = "A variant of"; break
     case "similar":     phrase = "Similar to"; break
+    case "related":     phrase = "Related to"; break
     // Unknown / unset types fall back to the most generic phrasing.
     case "adapted":
     default:            phrase = "Adapted from"; break
