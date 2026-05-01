@@ -2483,9 +2483,12 @@ export default function HikeMap() {
      *  note for the station, joined with \n\n. Set by
      *  scripts/build-rambler-notes.mjs. Replaces legacy `ramblerNote`. */
     adminWalksAll?: string
-    /** Public sectioned prose — station-to-station walks. Filtered to
-     *  3 walks max (mains plus top variants up to the gap). */
+    /** Public sectioned prose — station-to-station walks STARTING at
+     *  this station. 3-walks-per-section quota. */
     publicWalksS2S?: string
+    /** Public sectioned prose — station-to-station walks ENDING at
+     *  this station. Same 3-walks-per-section quota as publicWalksS2S. */
+    publicWalksS2SEnding?: string
     /** Public sectioned prose — circular walks. Same 3-walks-per-section
      *  filter as publicWalksS2S. */
     publicWalksCircular?: string
@@ -6441,9 +6444,10 @@ export default function HikeMap() {
   }, [])
 
   // Save public/private notes for a station — called when the overlay
-  // closes. Walk prose (adminWalksAll / publicWalksS2S / publicWalksCircular)
-  // is build-only and preserved on the existing entry by the API route,
-  // so we don't pass it in.
+  // closes. Walk prose (adminWalksAll / publicWalksS2S /
+  // publicWalksS2SEnding / publicWalksCircular) is build-only and
+  // preserved on the existing entry by the API route, so we don't
+  // pass it in.
   const handleSaveNotes = useCallback(async (coordKey: string, name: string, publicNote: string, privateNote: string) => {
     // Optimistic update — preserve the build-output walk fields from
     // any existing entry so the optimistic state matches what the
@@ -6453,6 +6457,7 @@ export default function HikeMap() {
       const hasAnyWalkProse = !!(
         existing?.adminWalksAll
         || existing?.publicWalksS2S
+        || existing?.publicWalksS2SEnding
         || existing?.publicWalksCircular
       )
       if (!publicNote && !privateNote && !hasAnyWalkProse) {
@@ -6468,6 +6473,7 @@ export default function HikeMap() {
           privateNote,
           adminWalksAll: existing?.adminWalksAll,
           publicWalksS2S: existing?.publicWalksS2S,
+          publicWalksS2SEnding: existing?.publicWalksS2SEnding,
           publicWalksCircular: existing?.publicWalksCircular,
         },
       }
@@ -10280,6 +10286,7 @@ export default function HikeMap() {
             privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
             adminWalksAll={stationNotes[displayStation.coordKey]?.adminWalksAll ?? ""}
             publicWalksS2S={stationNotes[displayStation.coordKey]?.publicWalksS2S ?? ""}
+            publicWalksS2SEnding={stationNotes[displayStation.coordKey]?.publicWalksS2SEnding ?? ""}
             publicWalksCircular={stationNotes[displayStation.coordKey]?.publicWalksCircular ?? ""}
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             onWalkSaved={refreshStationDerivedData}

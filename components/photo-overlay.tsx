@@ -204,9 +204,13 @@ type StationModalProps = {
   /** Admin's full unfiltered single-block walk prose (every walk +
    *  every note, joined). Rendered as one block when adminMode is on. */
   adminWalksAll?: string
-  /** Public sectioned walk prose — station-to-station walks. Filtered
-   *  to 3 walks per section by the build script. */
+  /** Public sectioned walk prose — station-to-station walks STARTING
+   *  at this station. Filtered to 3 walks per section by the build
+   *  script. */
   publicWalksS2S?: string
+  /** Public sectioned walk prose — station-to-station walks ENDING at
+   *  this station. Same 3-walks-per-section quota as publicWalksS2S. */
+  publicWalksS2SEnding?: string
   /** Public sectioned walk prose — circular walks (start === end). */
   publicWalksCircular?: string
   /** Saves the user-editable notes when the overlay closes. The walk
@@ -746,6 +750,7 @@ export default function StationModal({
   privateNote = "",
   adminWalksAll = "",
   publicWalksS2S = "",
+  publicWalksS2SEnding = "",
   publicWalksCircular = "",
   onSaveNotes,
   defaultAlgo = "landscapes",
@@ -1741,12 +1746,14 @@ export default function StationModal({
           ) : null}
 
           {/* ── Walks (prose preview) ──
-              Same rendering for admin and public — TWO sectioned blocks
-              under their own headers ("Circular walks",
-              "Station-to-station walks") plus an unheadered extras
-              block. Admins see exactly what the public sees; the
-              full unfiltered walk list with editing controls lives in
-              the WalksAdminPanel below. Each block is built from
+              Same rendering for admin and public — up to THREE
+              sectioned blocks under their own headers:
+                · "Circular walk(s)"
+                · "Station-to-station walk(s) starting at <name>"
+                · "Station-to-station walk(s) ending at <name>"
+              Admins see exactly what the public sees; the full
+              unfiltered walk list with editing controls lives in the
+              WalksAdminPanel below. Each block is built from
               \n\n-joined paragraphs in station-notes.json. */}
           {(() => {
             const renderParas = (text: string) => {
@@ -1767,18 +1774,16 @@ export default function StationModal({
             const countParas = (text: string) =>
               text ? text.split(/\n+/).filter(Boolean).length : 0
 
-            // Up to two walk sections. Each section only renders when
-            // it has content; the section header is singular when its
+            // Three potential walk sections. Each only renders when
+            // it has content; the header noun is singular when the
             // block contains exactly one walk.
-            const s2sCount = countParas(publicWalksS2S)
+            const s2sStartCount = countParas(publicWalksS2S)
+            const s2sEndCount = countParas(publicWalksS2SEnding)
             const circularCount = countParas(publicWalksCircular)
-            const hasS2S = s2sCount > 0
+            const hasS2SStart = s2sStartCount > 0
+            const hasS2SEnd = s2sEndCount > 0
             const hasCircular = circularCount > 0
-            // Empty state when nothing's there yet. Admins see a
-            // placeholder header so the section's location is visible
-            // in the modal even before walks are added; public users
-            // see nothing.
-            if (!hasS2S && !hasCircular) {
+            if (!hasS2SStart && !hasS2SEnd && !hasCircular) {
               // No public-facing walk paragraphs. Admins still get the
               // walks editor below (which has its own header), so we
               // skip rendering anything here in either mode.
@@ -1794,12 +1799,24 @@ export default function StationModal({
                     {renderParas(publicWalksCircular)}
                   </>
                 )}
-                {hasS2S && (
+                {hasS2SStart && (
                   <>
                     {sectionHeader(
-                      s2sCount === 1 ? "Station-to-station walk" : "Station-to-station walks",
+                      s2sStartCount === 1
+                        ? "Station-to-station walk starting here"
+                        : "Station-to-station walks starting here",
                     )}
                     {renderParas(publicWalksS2S)}
+                  </>
+                )}
+                {hasS2SEnd && (
+                  <>
+                    {sectionHeader(
+                      s2sEndCount === 1
+                        ? "Station-to-station walk ending here"
+                        : "Station-to-station walks ending here",
+                    )}
+                    {renderParas(publicWalksS2SEnding)}
                   </>
                 )}
               </>
