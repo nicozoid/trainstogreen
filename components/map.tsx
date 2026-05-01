@@ -2289,9 +2289,13 @@ export default function HikeMap() {
   } | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Region labels (counties, parks, AONBs) — controlled by a checkbox in
-  // FilterPanel sitting under "Waymarked trails". Off by default. Visible
-  // to all users (not admin-only) once toggled on.
-  const [showRegions, setShowRegions] = useState(false)
+  // FilterPanel sitting under "Waymarked trails". Off by default in
+  // production; ON by default for local dev so curation work has the
+  // region context visible without an extra click. Next.js inlines
+  // NODE_ENV into the client bundle, so this branches at build time —
+  // a Vercel preview/prod build always gets `false`, `next dev` gets
+  // `true`. Visible to all users (not admin-only) once toggled on.
+  const [showRegions, setShowRegions] = useState(process.env.NODE_ENV === "development")
   // Region-label opacity is driven imperatively by an effect (further down)
   // that calls map.setPaintProperty when visibleRatings or showRegions
   // change. No React state needed — Mapbox owns the animated value, and

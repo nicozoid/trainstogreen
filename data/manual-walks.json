@@ -725,63 +725,6 @@
     "notes": "",
     "outsideMainlandBritain": false
   },
-  "manual-babbabyew": {
-    "slug": "manual-babbabyew",
-    "title": "Manual BAB Circular",
-    "url": "",
-    "favourite": false,
-    "tags": [
-      "manual"
-    ],
-    "categories": [],
-    "region": "",
-    "walks": [
-      {
-        "role": "main",
-        "startPlace": "",
-        "endPlace": "",
-        "startStation": "BAB",
-        "endStation": "BAB",
-        "stationToStation": true,
-        "lunchStops": [
-          {
-            "name": "Nymans Gardens National Trust café",
-            "rating": "good"
-          }
-        ],
-        "sights": [
-          {
-            "name": "Nymans",
-            "url": "https://www.nationaltrust.org.uk/visit/sussex/nymans",
-            "description": "quite small but worthwhile; can easily fit a visit into a day hike"
-          }
-        ],
-        "id": "babbabyew",
-        "source": {
-          "orgSlug": "trains-to-green",
-          "pageName": "",
-          "pageURL": "",
-          "type": "main"
-        },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
-        "komootUrl": "https://www.komoot.com/tour/2707110991",
-        "distanceKm": 15.1,
-        "hours": 4.18,
-        "rating": 3,
-        "suffix": "via Nymans Gardens",
-        "terrain": "woods, hilly, stately home",
-        "mudWarning": true,
-        "previousWalkDates": [
-          "2025-12-16"
-        ]
-      }
-    ],
-    "extracted": true,
-    "onMap": true,
-    "issues": false,
-    "notes": "",
-    "outsideMainlandBritain": false
-  },
   "manual-apgapghazel": {
     "slug": "manual-apgapghazel",
     "title": "Manual APG Circular",
