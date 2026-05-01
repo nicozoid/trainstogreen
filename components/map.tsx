@@ -10557,6 +10557,11 @@ export default function HikeMap() {
             // via baseStations. Tube-only entries are skipped (Underground
             // entrances for Kings X / Euston are routing aliases, not
             // user-facing cluster members).
+            // Plain cluster displayName (e.g. "London", "Birmingham") — used
+            // by the modal's cluster description copy. Distinct from the
+            // modal title above, which may use `overlayName` ("London
+            // termini") for a more polished header.
+            clusterDisplayName={ALL_CLUSTERS[displayStation.coordKey]?.displayName}
             clusterMemberNames={(() => {
               if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
               // Lookup via the unified cluster registry so destination-

@@ -252,8 +252,13 @@ type StationModalProps = {
   /** Display names of the synthetic cluster's member stations, in declared
    *  order. When set (i.e. the modal is open for a synthetic primary or
    *  friend) we render a one-line header below the title:
-   *  "A cluster of N stations: A, B, and C". */
+   *  "{name} has N stations: A, B, and C." (or London-specific wording). */
   clusterMemberNames?: string[]
+  /** The cluster's plain `displayName` (e.g. "London", "Birmingham"), used
+   *  in the cluster description copy regardless of whether the modal title
+   *  has been rewritten via `overlayName` (e.g. "London termini"). Ignored
+   *  for non-cluster stations. */
+  clusterDisplayName?: string
   /** Cluster members with full coords + names — used to render the
    *  "Hikes from stations" dropdown (one menu item per member, sorted
    *  alphabetically by full name). Each item links to the same
@@ -781,6 +786,7 @@ export default function StationModal({
   isPrimaryOrigin = false,
   isSynthetic = false,
   clusterMemberNames,
+  clusterDisplayName,
   clusterMembers,
   syntheticJourneyMember,
   friendClusterMemberNames,
@@ -1274,11 +1280,14 @@ export default function StationModal({
                 and C" English serial form. */}
             {/* County + optional protected area — sits ABOVE the cluster
                 header so the geographic context comes first. Skipped when
-                the county name starts with the station name (e.g. the
-                "London" cluster has county "London"; the "Leicester"
-                cluster has county "Leicestershire" — both would be
-                redundant with the title). */}
-            {county && !county.toLowerCase().startsWith(stationName.toLowerCase()) && (() => {
+                the county name starts with the cluster's plain name (e.g.
+                the "London" cluster has county "London"; the "Leicester"
+                cluster has county "Leicestershire" — both redundant). We
+                check against `clusterDisplayName` first so the suppression
+                still fires when the title uses `overlayName` ("London
+                termini") — matching against the rewritten title would let
+                "London" county slip through. */}
+            {county && !county.toLowerCase().startsWith((clusterDisplayName ?? stationName).toLowerCase()) && (() => {
               // "East Sussex" / "West Sussex" → "Sussex"; any Yorkshire variant → "Yorkshire";
               // bare "London" → "Greater London". (Note: the redundancy check above
               // still uses the raw county, so the London cluster's line is hidden.)
@@ -1361,17 +1370,26 @@ export default function StationModal({
               }
               return <p className="text-sm text-muted-foreground">{countyPortion}</p>
             })()}
-            {clusterMemberNames && clusterMemberNames.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                {`A cluster of ${clusterMemberNames.length} stations: ${
-                  clusterMemberNames.length === 1
-                    ? clusterMemberNames[0]
-                    : clusterMemberNames.length === 2
-                      ? `${clusterMemberNames[0]} and ${clusterMemberNames[1]}`
-                      : `${clusterMemberNames.slice(0, -1).join(", ")}, and ${clusterMemberNames[clusterMemberNames.length - 1]}`
-                }.`}
-              </p>
-            )}
+            {clusterMemberNames && clusterMemberNames.length > 0 && (() => {
+              const memberList =
+                clusterMemberNames.length === 1
+                  ? clusterMemberNames[0]
+                  : clusterMemberNames.length === 2
+                    ? `${clusterMemberNames[0]}, and ${clusterMemberNames[1]}`
+                    : `${clusterMemberNames.slice(0, -1).join(", ")}, and ${clusterMemberNames[clusterMemberNames.length - 1]}`
+              // Use the cluster's plain displayName ("London") rather than
+              // the modal title, which may have been rewritten via
+              // overlayName ("London termini") and would read awkwardly here.
+              const anchor = clusterDisplayName ?? stationName
+              const isLondonCluster = anchor === "London"
+              return (
+                <p className="text-sm text-muted-foreground">
+                  {isLondonCluster
+                    ? `All trains from ${anchor} originate in one of ${clusterMemberNames.length} stations: ${memberList}.`
+                    : `${anchor} has ${clusterMemberNames.length} stations: ${memberList}.`}
+                </p>
+              )
+            })()}
           </div>
           {/* Desktop-only Hike control — either a single-station button
               (regular stations) or a "Hikes from stations ▾" dropdown
