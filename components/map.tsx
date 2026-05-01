@@ -10281,6 +10281,7 @@ export default function HikeMap() {
               return {
                 county: f?.properties?.county as string | undefined,
                 protectedArea: f?.properties?.protectedArea as string | undefined,
+                protectedAreaType: f?.properties?.protectedAreaType as string | undefined,
               }
             })()}
             hasIssue={issueStations.has(displayStation.coordKey)}

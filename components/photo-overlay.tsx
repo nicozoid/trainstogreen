@@ -25,6 +25,7 @@ import londonTerminalsData from "@/data/london-terminals.json"
 // Used here to gate the "no National Rail ticket needed" hint at the
 // bottom of the train-info block.
 import oysterStationsData from "@/data/oyster-stations.json"
+import { PROTECTED_AREA_INFO, protectedAreaLabel } from "@/lib/protected-areas"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
 // Why: Safari + iCloud Private Relay shares egress IPs that Flickr sometimes
@@ -281,6 +282,8 @@ type StationModalProps = {
   county?: string
   /** National park or AONB / National Landscape name (e.g. "South Downs") */
   protectedArea?: string
+  /** "national_park" or "national_landscape" — drives the type suffix */
+  protectedAreaType?: string
   /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
    *  adminMode is true, the title is prefixed with the code — helps
    *  cross-reference the admin RTT status panel and origin-routes.json. */
@@ -774,6 +777,7 @@ export default function StationModal({
   friendClusterMemberNames,
   county,
   protectedArea,
+  protectedAreaType,
   stationCrs,
   clusterMemberCrsCodes,
   adminMode = false,
@@ -1249,7 +1253,7 @@ export default function StationModal({
           }}
           className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
         >
-          <div className="flex flex-col gap-0 min-w-0">
+          <div className="flex flex-col gap-0.5 min-w-0">
             <DialogTitle className="text-2xl sm:text-3xl">
               {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
             </DialogTitle>
@@ -1263,11 +1267,32 @@ export default function StationModal({
                 "London" cluster has county "London"; the "Leicester"
                 cluster has county "Leicestershire" — both would be
                 redundant with the title). */}
-            {county && !county.toLowerCase().startsWith(stationName.toLowerCase()) && (
-              <p className="text-sm text-muted-foreground">
-                {protectedArea ? `${county} | ${protectedArea}` : county}
-              </p>
-            )}
+            {county && !county.toLowerCase().startsWith(stationName.toLowerCase()) && (() => {
+              // "East Sussex" / "West Sussex" → "Sussex"; any Yorkshire variant → "Yorkshire";
+              // bare "London" → "Greater London". (Note: the redundancy check above
+              // still uses the raw county, so the London cluster's line is hidden.)
+              const displayCounty = /^(East|West) Sussex$/.test(county) ? "Sussex"
+                : county.includes("Yorkshire") ? "Yorkshire"
+                : county === "London" ? "Greater London"
+                : county
+
+              if (protectedArea && protectedAreaType) {
+                const info = PROTECTED_AREA_INFO[protectedArea]
+                const label = protectedAreaLabel(protectedArea, protectedAreaType)
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    {info?.url ? (
+                      <a href={info.url} target="_blank" rel="noopener noreferrer"
+                        className="underline decoration-muted-foreground/50 hover:decoration-muted-foreground">
+                        {label}
+                      </a>
+                    ) : label}
+                    {" | "}{displayCounty}
+                  </p>
+                )
+              }
+              return <p className="text-sm text-muted-foreground">{displayCounty}</p>
+            })()}
             {clusterMemberNames && clusterMemberNames.length > 0 && (
               <p className="text-sm text-muted-foreground">
                 {`A cluster of ${clusterMemberNames.length} stations: ${
