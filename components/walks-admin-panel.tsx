@@ -494,6 +494,7 @@ export default function WalksAdminPanel({
   // to one start station per variant.
   const fetchAllWalks = useCallback(async (): Promise<WalkPayload[]> => {
     const allCrs: string[] = JSON.parse(allCrsKey)
+    const allCrsSet = new Set(allCrs)
     const responses = await Promise.all(
       allCrs.map((c) =>
         fetch(`/api/dev/walks-for-station?crs=${encodeURIComponent(c)}`)
@@ -512,6 +513,53 @@ export default function WalksAdminPanel({
         merged.push(w)
       }
     }
+
+    // Re-sort the merged list. The API's per-CRS sort is correct within
+    // each batch, but concatenating pre-sorted arrays for synthetics
+    // breaks the unified order — a Komoot walk attached to a LATER
+    // member CRS would otherwise lose its top spot to non-Komoot walks
+    // from the FIRST member's batch. Sort here using the same keys as
+    // the API, with sectionPriority computed against the FULL allCrs
+    // set so cluster-relative "circular / starting here / ending here"
+    // is correct for the merged view.
+    const IDEAL_LENGTH_KM = 13
+    const RATING_TIERS: Record<string, number> = { "4": 0, "3": 1, "2": 2, "1": 3, unrated: 4 }
+    const ratingTier = (r: number | null | undefined) =>
+      r == null ? RATING_TIERS.unrated : (RATING_TIERS[String(Math.round(r))] ?? RATING_TIERS.unrated)
+    const distanceScore = (km: number | null) =>
+      typeof km === "number" && Number.isFinite(km) ? Math.abs(km - IDEAL_LENGTH_KM) : Number.POSITIVE_INFINITY
+    const sectionPriority = (w: WalkPayload): number => {
+      // Circular = same start & end station, regardless of cluster.
+      if (w.startStation && w.startStation === w.endStation) return 0
+      // S2S starting here: start CRS is one of the queried CRSes.
+      if (w.startStation && allCrsSet.has(w.startStation)) return 1
+      // S2S ending here: only the end CRS is in the queried set.
+      return 2
+    }
+    merged.sort((a, b) => {
+      // 1. Bus walks sink to the bottom.
+      const ba = a.requiresBus ? 1 : 0, bb = b.requiresBus ? 1 : 0
+      if (ba !== bb) return ba - bb
+      // 2. Komoot walks first.
+      const ka = a.komootUrl ? 0 : 1, kb = b.komootUrl ? 0 : 1
+      if (ka !== kb) return ka - kb
+      // 3. Section priority (circular → starting here → ending here).
+      const sa = sectionPriority(a), sb = sectionPriority(b)
+      if (sa !== sb) return sa - sb
+      // 4. Main walks first.
+      const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
+      const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
+      if (ma !== mb) return ma - mb
+      // 5. Rating tier (4 → 3 → 2 → 1 → unrated).
+      const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
+      if (ta !== tb) return ta - tb
+      // 6. Distance proximity to IDEAL_LENGTH_KM.
+      const da = distanceScore(a.distanceKm), db = distanceScore(b.distanceKm)
+      if (da !== db) return da - db
+      // 7. Alphabetic tiebreak.
+      return a.pageTitle.localeCompare(b.pageTitle)
+    })
+
     return merged
   }, [allCrsKey])
 
@@ -675,24 +723,26 @@ export default function WalksAdminPanel({
               <ol className="list-decimal space-y-0.5 pl-5 text-xs text-muted-foreground">
                 <li><span className="font-mono text-foreground">bus</span> walks sink to the bottom</li>
                 <li>Komoot-linked walks come first</li>
+                <li>Circular walks first, then station-to-station starting here, then station-to-station ending here</li>
                 <li>Main walks first (no further subtype ordering)</li>
                 <li>Higher rating first (4 → 3 → 2 → 1 → unrated)</li>
-                <li>Distance closest to 10 km first</li>
+                <li>Distance closest to 13 km first</li>
                 <li>Alphabetic tiebreak</li>
               </ol>
             </div>
             <div>
               <p className="mb-1 font-medium">What the public sees</p>
               <ul className="list-disc space-y-0.5 pl-5 text-xs text-muted-foreground">
-                <li><strong>Always shown:</strong> every main walk.</li>
-                <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
                 <li>
-                  <strong>Walks split into two sections</strong> — Circular and Station-to-station — each filtered independently:
-                  <ul className="mt-0.5 list-disc space-y-0.5 pl-5">
-                    <li>If a section has <strong>3+ main walks</strong>, no variants are shown in it.</li>
-                    <li>Otherwise we add top-ranked variants until the section has 3 walks, or until there are no more variants.</li>
-                  </ul>
+                  <strong>Cascading station-wide tiers</strong> — the first matching tier wins, the others are hidden:
+                  <ol className="mt-0.5 list-decimal space-y-0.5 pl-5">
+                    <li>If the station has any <strong>Komoot or GPX</strong> walk → only those are shown.</li>
+                    <li>Else if the station has any <strong>main</strong> walk → only mains are shown (no variants).</li>
+                    <li>Else show all variants (bus walks are still hidden).</li>
+                  </ol>
                 </li>
+                <li><strong>Never shown:</strong> walks tagged <span className="font-mono">bus</span> (needs a bus/taxi/heritage rail).</li>
+                <li>The chosen tier still gets split into three sections — Circular, Station-to-station starting here, Station-to-station ending here. Empty sections are hidden. No per-section limit.</li>
               </ul>
             </div>
           </div>

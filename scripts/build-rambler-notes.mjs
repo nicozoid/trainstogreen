@@ -120,7 +120,7 @@ function ratingTierOf(rating) {
 // distance sort key. Tweak to shift the bias (e.g. 13 prefers a
 // full-day hike, 8 a half-day stroll). Keep in sync with
 // IDEAL_LENGTH_KM in app/api/dev/walks-for-station/route.ts.
-const IDEAL_LENGTH_KM = 10
+const IDEAL_LENGTH_KM = 13
 
 // Distance score — |distanceKm - IDEAL_LENGTH_KM|. Closer to ideal
 // sorts higher; walks without a recorded distance fall to the
@@ -135,16 +135,28 @@ function distanceScore(distanceKm) {
 
 // Order ramblerParts at a station:
 //   1. hasKomoot DESC (walks with a Komoot route come first)
+//   2. sectionPriority ASC (circular → S2S-starting → S2S-ending —
+//                           groups paragraphs of the same section
+//                           together within the admin's full prose)
 //   3. isMain DESC (main walks first; non-mains don't get a
 //                   further subtype ordering among themselves)
 //   4. ratingTier ASC (4 on top, then 3, 2, 1, unrated)
 //   5. distanceScore ASC (closest to IDEAL_LENGTH_KM first; missing
 //                         sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak
+// The bus key from the unified spec is omitted here because every
+// part already has stationToStation === true (bus walks are filtered
+// upstream at line ~719) — adding it would be a no-op.
 // Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
 // keep both in step.
+function sectionPriority(p) {
+  if (p.isCircular) return 0
+  return p.role === "starting" ? 1 : 2
+}
 function compareRamblerParts(a, b) {
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
+  const sa = sectionPriority(a), sb = sectionPriority(b)
+  if (sa !== sb) return sa - sb
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
@@ -722,15 +734,18 @@ function buildRamblerNotes(args) {
       const built = buildSummary(variant, entry, crsIndex, sources)
       if (!built) continue
       const { summary, displayName, baseDisplayName } = built
-      // Each walk attaches ONLY to its starting station in the public
-      // overlay prose — a visitor lands on the walk's natural starting
-      // point rather than seeing it duplicated on both ends. Circular
-      // walks still appear once (start === end); walks whose end
-      // station is the "more famous" stop are the main trade-off.
-      // seenStations is kept to defensively dedupe in case a future
-      // change re-introduces a secondary attachment key.
+      // Each S2S walk attaches to BOTH its start and end stations so
+      // the walk is discoverable from either endpoint. The `role`
+      // field on each attachment ("starting" / "ending") drives the
+      // public overlay's two sectioned headers ("…starting at X" vs
+      // "…ending at X"). Circular walks (start === end) attach once
+      // via the seenStations dedup and are always sectioned as
+      // "Circular" regardless of role.
       const seenStations = new Set()
-      for (const crs of [variant.startStation]) {
+      for (const { crs, role } of [
+        { crs: variant.startStation, role: "starting" },
+        { crs: variant.endStation, role: "ending" },
+      ]) {
         if (!crs) continue
         const station = crsIndex.get(crs)
         if (!station) continue
@@ -750,9 +765,21 @@ function buildRamblerNotes(args) {
         // each section applies its own 3-walks-per-section quota.
         const isCircular = !!variant.startStation && variant.startStation === variant.endStation
         perStation.get(station.coordKey).ramblerParts.push({
+          // Stable walk identity — used to dedup parts in synthetic
+          // aggregation when the same walk both starts AND ends inside
+          // the same cluster (Charing Cross → Waterloo within Central
+          // London, for example).
+          walkId: variant.id,
+          // Per-attachment role: which endpoint of the walk this
+          // station is. Drives the s2s prose split below.
+          role,
           summary,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
+          // GPX is an entry-level field, shared by every variant on
+          // the same source page. Tracked per-part so the public-tier
+          // filter (Komoot/GPX > main > all) can short-circuit on it.
+          hasGpx: typeof entry.gpx === "string" && entry.gpx.trim() !== "",
           isMain: sourceType === "main",
           isCircular,
           // Raw source type kept for possible future per-subtype
@@ -807,19 +834,24 @@ function buildRamblerNotes(args) {
   //   file stays clean.
   const changes = { added: 0, updated: 0, cleared: 0, removed: 0 }
 
-  // Apply per-section quota: every main passes; variants fill up to
-  // 3 walks per section (so 0 mains → 3 variants, 1 main → 2, 2 mains
-  // → 1, 3+ mains → 0). Returns the gated subset preserving order.
-  function quotaFilterPerSection(parts) {
-    const mainCount = parts.filter((p) => p.isMain).length
-    const variantQuota = mainCount >= 3 ? 0 : 3 - mainCount
-    let variantsAdded = 0
-    return parts.filter((p) => {
-      if (p.isMain) return true
-      if (variantsAdded >= variantQuota) return false
-      variantsAdded++
-      return true
-    })
+  // Station-wide public tier filter — drastically reduces clutter by
+  // showing only the most curated walks at each station. Cascading:
+  //   Tier 1: any walk with a Komoot URL or GPX → show only those
+  //   Tier 2: else any main walk → show only mains
+  //   Tier 3: else show all (parts already exclude bus walks because
+  //           the build only iterates stationToStation === true)
+  // The chosen tier applies station-wide; circular and S2S sections
+  // share one decision, so a single Komoot circular walk will hide
+  // non-Komoot S2S walks elsewhere on the station. No per-section
+  // quota — every walk in the chosen tier is rendered.
+  function publicTierFilter(parts) {
+    if (parts.some((p) => p.hasKomoot || p.hasGpx)) {
+      return parts.filter((p) => p.hasKomoot || p.hasGpx)
+    }
+    if (parts.some((p) => p.isMain)) {
+      return parts.filter((p) => p.isMain)
+    }
+    return parts
   }
 
   // ── Synthetic aggregation ────────────────────────────────────────
@@ -837,14 +869,24 @@ function buildRamblerNotes(args) {
   // need their members' walks aggregated under the anchor, otherwise the
   // cluster modal renders no walks even though members have plenty.
   for (const [synthCoord, memberCoords] of Object.entries(ALL_CLUSTER_MEMBERS)) {
-    const aggregatedParts = []
+    // Dedup by walkId: a walk with both endpoints in the same cluster
+    // attaches to two member stations (once as "starting", once as
+    // "ending") and would otherwise appear twice in the synthetic's
+    // prose. Prefer the "starting" attachment so the synthetic header
+    // reads "…starting at <Cluster>" rather than "…ending at".
+    const seenWalks = new Map()
     let aggregatedHiked = false
     let aggregatedKomoot = false
     const aggregatedSeasons = new Set()
     for (const memberCoord of memberCoords) {
       const memberBucket = perStation.get(memberCoord)
       if (memberBucket) {
-        for (const p of memberBucket.ramblerParts) aggregatedParts.push(p)
+        for (const p of memberBucket.ramblerParts) {
+          const existing = seenWalks.get(p.walkId)
+          if (!existing || (existing.role === "ending" && p.role === "starting")) {
+            seenWalks.set(p.walkId, p)
+          }
+        }
       }
       if (perStationHiked.has(memberCoord)) aggregatedHiked = true
       if (perStationKomoot.has(memberCoord)) aggregatedKomoot = true
@@ -853,6 +895,7 @@ function buildRamblerNotes(args) {
         for (const s of memberSeasons.seasons) aggregatedSeasons.add(s)
       }
     }
+    const aggregatedParts = [...seenWalks.values()]
     // Always set a perStation entry for the synthetic, even when
     // empty — keeps the cleanup pass below from removing the
     // synthetic's user-authored notes if no member walks exist yet.
@@ -878,21 +921,27 @@ function buildRamblerNotes(args) {
     // because buildSummary returns null when stationToStation is
     // false). Distinct from the public view's three sectioned blocks.
     const adminWalksAll = ordered.map((p) => p.summary).join("\n\n")
-    // Public sectioning. Each walk routes into one of two sections
-    // by `isCircular` (set per-variant from startStation === endStation).
-    const s2sParts = ordered.filter((p) => !p.isCircular)
-    const circularParts = ordered.filter((p) => p.isCircular)
-    const publicWalksS2S = quotaFilterPerSection(s2sParts)
-      .map((p) => p.summary).join("\n\n")
-    const publicWalksCircular = quotaFilterPerSection(circularParts)
-      .map((p) => p.summary).join("\n\n")
+    // Public view — apply the station-wide tier filter first, then
+    // split the survivors into the three section buckets:
+    // - circular  (isCircular — same start & end station)
+    // - s2s starting here (role === "starting")
+    // - s2s ending here   (role === "ending")
+    // Empty sections aren't rendered (handled by photo-overlay).
+    const publicOrdered = publicTierFilter(ordered)
+    const publicCircularParts = publicOrdered.filter((p) => p.isCircular)
+    const publicS2SStartingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "starting")
+    const publicS2SEndingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "ending")
+    const publicWalksCircular = publicCircularParts.map((p) => p.summary).join("\n\n")
+    const publicWalksS2S = publicS2SStartingParts.map((p) => p.summary).join("\n\n")
+    const publicWalksS2SEnding = publicS2SEndingParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const beforeAdmin = notes[coordKey].adminWalksAll
       notes[coordKey].adminWalksAll = adminWalksAll
       notes[coordKey].publicWalksS2S = publicWalksS2S
+      notes[coordKey].publicWalksS2SEnding = publicWalksS2SEnding
       notes[coordKey].publicWalksCircular = publicWalksCircular
       delete notes[coordKey].publicWalksExtras
-      // Tidy legacy fields — replaced by the three above.
+      // Tidy legacy fields — replaced by the four above.
       delete notes[coordKey].ramblerNote
       delete notes[coordKey].publicRamblerNote
       if ("ramblerMainCount" in notes[coordKey]) delete notes[coordKey].ramblerMainCount
@@ -904,6 +953,7 @@ function buildRamblerNotes(args) {
         privateNote: "",
         adminWalksAll,
         publicWalksS2S,
+        publicWalksS2SEnding,
         publicWalksCircular,
       }
       changes.added++
@@ -912,9 +962,15 @@ function buildRamblerNotes(args) {
 
   for (const [coordKey, entry] of Object.entries(notes)) {
     if (perStation.has(coordKey)) continue
-    if (entry.adminWalksAll || entry.publicWalksS2S || entry.publicWalksCircular) {
+    if (
+      entry.adminWalksAll
+      || entry.publicWalksS2S
+      || entry.publicWalksS2SEnding
+      || entry.publicWalksCircular
+    ) {
       entry.adminWalksAll = ""
       entry.publicWalksS2S = ""
+      entry.publicWalksS2SEnding = ""
       entry.publicWalksCircular = ""
       changes.cleared++
     }

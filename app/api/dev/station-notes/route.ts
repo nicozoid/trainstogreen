@@ -15,6 +15,7 @@ type NotesEntry = {
   // user-editable publicNote/privateNote so we don't clobber them.
   adminWalksAll?: string
   publicWalksS2S?: string
+  publicWalksS2SEnding?: string
   publicWalksCircular?: string
 }
 
@@ -31,9 +32,13 @@ export async function POST(req: NextRequest) {
     const existing = notes[coordKey]
     const existingAdminAll = existing?.adminWalksAll ?? ""
     const existingPublicS2S = existing?.publicWalksS2S ?? ""
+    const existingPublicS2SEnding = existing?.publicWalksS2SEnding ?? ""
     const existingPublicCircular = existing?.publicWalksCircular ?? ""
     const hasAnyExistingWalkProse =
-      existingAdminAll || existingPublicS2S || existingPublicCircular
+      existingAdminAll
+      || existingPublicS2S
+      || existingPublicS2SEnding
+      || existingPublicCircular
 
     if (publicNote || privateNote || hasAnyExistingWalkProse) {
       notes[coordKey] = {
@@ -42,6 +47,7 @@ export async function POST(req: NextRequest) {
         privateNote: privateNote ?? "",
         adminWalksAll: existingAdminAll,
         publicWalksS2S: existingPublicS2S,
+        publicWalksS2SEnding: existingPublicS2SEnding,
         publicWalksCircular: existingPublicCircular,
       }
     } else {
