@@ -2329,6 +2329,12 @@ export default function HikeMap() {
   const [editsDialogOpen, setEditsDialogOpen] = useState(false)
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
+  // True when the banner is currently open BECAUSE the user opened it via
+  // the ? help button (rather than the default cold-start appearance).
+  // Drives the data-attribution footer on the welcome card. Once flipped
+  // true it stays true — every subsequent ? open is also a deliberate
+  // summons, and that's the only path to re-open after dismissal.
+  const [bannerSummoned, setBannerSummoned] = useState(false)
   const [zoom, setZoom] = useState(INITIAL_VIEW.zoom)
   // Admin-only readout — last known cursor lng/lat. Updated from
   // handleMouseMove via e.lngLat. Rendered as a small badge next to the zoom
@@ -8382,6 +8388,7 @@ export default function HikeMap() {
         }}
         originX={bannerOrigin?.x}
         originY={bannerOrigin?.y}
+        summoned={bannerSummoned}
         // Spinner gated on `mapFirstIdle` — flips true on Mapbox's
         // first `idle` event (all tiles + icons rendered). Shows the
         // LogoSpinner while the map is still doing its initial paint
@@ -8423,6 +8430,7 @@ export default function HikeMap() {
             // position so the banner reads as "emerging" from whatever
             // summoned it, not from the London hexagon.
             setBannerOrigin(origin)
+            setBannerSummoned(true)
             setBannerVisible(true)
           }}
         />
@@ -10323,6 +10331,8 @@ export default function HikeMap() {
               }
               return {
                 county: f?.properties?.county as string | undefined,
+                historicCounty: f?.properties?.historicCounty as string | undefined,
+                country: f?.properties?.country as string | undefined,
                 protectedArea: f?.properties?.protectedArea as string | undefined,
                 protectedAreaType: f?.properties?.protectedAreaType as string | undefined,
               }

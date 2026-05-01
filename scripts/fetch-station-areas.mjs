@@ -6,9 +6,14 @@
  *   - Counties: postcodes.io bulk reverse geocoding (free, fast)
  *   - National Parks: ONS Open Geography Portal (BUC boundaries)
  *   - AONBs / National Landscapes: DEFRA WFS (Natural England)
+ *   - Historic Counties: Historic County Borders Project (HCBP), provided by
+ *     the Historic Counties Trust — https://www.county-borders.co.uk
+ *     (Definition A, WGS84 full resolution, simplified to ~5% with mapshaper.)
  *
- * Boundary files are cached in data/boundaries/. If missing, the script
- * downloads them automatically (requires network).
+ * National park / AONB boundary files are cached in data/boundaries/. If
+ * missing, the script downloads them automatically (requires network).
+ * The historic-counties file is checked into the repo (HCBP has no public
+ * download URL).
  *
  * Usage: node scripts/fetch-station-areas.mjs
  */
@@ -181,7 +186,10 @@ async function fetchCounties(features) {
         null
       if (county) {
         const ck = `${batch[j].geometry.coordinates[0]},${batch[j].geometry.coordinates[1]}`
-        results.set(ck, county)
+        // `country` is one of "England", "Wales", "Scotland", "Northern Ireland".
+        // Used by the UI to decide between "Modern ceremonial: X" (Eng/Wales)
+        // and "Unitary authority: X" (Scotland) labels alongside the historic name.
+        results.set(ck, { county, country: hit.country ?? null })
       }
     }
 
@@ -207,6 +215,12 @@ async function main() {
   const aonbData = await ensureBoundary("aonb.geojson", AONB_URL)
   const aonbs = loadAreas(aonbData, "name")
   console.log(`${aonbs.length} AONBs / National Landscapes`)
+
+  // Historic counties — no URL fallback, file is committed to the repo.
+  const historicPath = path.join(BOUNDARIES_DIR, "historic-counties.geojson")
+  const historicData = JSON.parse(await fs.readFile(historicPath, "utf-8"))
+  const historicCounties = loadAreas(historicData, "NAME")
+  console.log(`${historicCounties.length} historic counties`)
 
   // Protected-area tagging (local point-in-polygon)
   let npHits = 0
@@ -244,13 +258,28 @@ async function main() {
   let countyHits = 0
   for (const f of features) {
     const ck = `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}`
-    const county = counties.get(ck)
-    if (county) {
-      f.properties.county = county
+    const entry = counties.get(ck)
+    if (entry) {
+      f.properties.county = entry.county
+      if (entry.country) f.properties.country = entry.country
       countyHits++
     }
   }
   console.log(`Counties assigned: ${countyHits}/${features.length}`)
+
+  // Historic-county tagging (local point-in-polygon, same pattern as parks/AONBs)
+  let historicHits = 0
+  for (const f of features) {
+    const pt = point(f.geometry.coordinates)
+    for (const hc of historicCounties) {
+      if (booleanPointInPolygon(pt, hc.geometry)) {
+        f.properties.historicCounty = hc.name
+        historicHits++
+        break
+      }
+    }
+  }
+  console.log(`Historic counties assigned: ${historicHits}/${features.length}`)
 
   // Write back
   await fs.writeFile(STATIONS_PATH, JSON.stringify(stationsData))

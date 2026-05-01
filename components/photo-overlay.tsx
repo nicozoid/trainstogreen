@@ -280,6 +280,15 @@ type StationModalProps = {
   friendClusterMemberNames?: string[]
   /** Ceremonial county the station sits in (e.g. "Kent", "Surrey") */
   county?: string
+  /** Historic (pre-1974) county from the Historic County Borders Project
+   *  (e.g. "Huntingdonshire", "Middlesex"). Shown alongside `county` only
+   *  when the two differ — see render block for the comparison rule. */
+  historicCounty?: string
+  /** Country the station is in: "England", "Wales", "Scotland", "Northern
+   *  Ireland", or undefined. Drives the modern-side label: England/Wales
+   *  use "Lieutenancy: X", Scotland uses "Unitary authority: X", others
+   *  fall back to the unlabelled "Modern: X". */
+  country?: string
   /** National park or AONB / National Landscape name (e.g. "South Downs") */
   protectedArea?: string
   /** "national_park" or "national_landscape" — drives the type suffix */
@@ -776,6 +785,8 @@ export default function StationModal({
   syntheticJourneyMember,
   friendClusterMemberNames,
   county,
+  historicCounty,
+  country,
   protectedArea,
   protectedAreaType,
   stationCrs,
@@ -1276,22 +1287,79 @@ export default function StationModal({
                 : county === "London" ? "Greater London"
                 : county
 
+              // Historic county is "different" from modern only after applying the
+              // same Sussex/Yorkshire equivalence above — historic Sussex covers both
+              // East/West Sussex; historic Yorkshire covers all Y* ceremonial counties.
+              // Without this normalisation we'd show "Historic: Sussex | Modern: East
+              // Sussex" everywhere in Sussex, which is noise rather than signal.
+              const normForCompare = (c: string) =>
+                /^(East|West) Sussex$/.test(c) ? "Sussex"
+                  : c.includes("Yorkshire") ? "Yorkshire"
+                  : c
+              const historicDiffers = !!historicCounty
+                && normForCompare(historicCounty) !== normForCompare(county)
+
+              // The county portion of the line — either just the modern name, or
+              // a "{historic} | {modern label}: {modern}" pair when they differ.
+              // Both halves link to explainers chosen for the user's likely
+              // confusion ("Huntingdonshire? Where's that?" vs "wait, why's
+              // Hampstead in Greater London now?").
+              const HISTORIC_INFO_URL =
+                "https://owlcation.com/social-sciences/the-complete-guide-to-britains-historic-counties-an-introduction"
+              const linkClass =
+                "underline decoration-muted-foreground/50 hover:decoration-muted-foreground"
+
+              // Modern-side label and link branch on country. England + Wales
+              // both have ceremonial-county lieutenancies (defined by the 1997
+              // Lieutenancies Act); Scotland was reorganised into council-area
+              // unitary authorities by the 1994 Act, so calling those "ceremonial
+              // counties" would be wrong. NI / unknown fall back to a plain
+              // "Modern:" label with no link, since neither explainer fits.
+              let modernLabel: string
+              let modernUrl: string | null
+              if (country === "Scotland") {
+                modernLabel = "Unitary authority"
+                modernUrl =
+                  "https://en.wikipedia.org/wiki/Local_Government_etc._(Scotland)_Act_1994"
+              } else if (country === "England" || country === "Wales") {
+                modernLabel = "Lieutenancy"
+                modernUrl =
+                  "https://abcounties.com/counties/county-confusion/"
+              } else {
+                modernLabel = "Modern"
+                modernUrl = null
+              }
+              const modernText = `${modernLabel}: ${displayCounty}`
+
+              const countyPortion = historicDiffers ? (
+                <>
+                  <a href={HISTORIC_INFO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    {historicCounty}
+                  </a>
+                  {" | "}
+                  {modernUrl ? (
+                    <a href={modernUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                      {modernText}
+                    </a>
+                  ) : modernText}
+                </>
+              ) : displayCounty
+
               if (protectedArea && protectedAreaType) {
                 const info = PROTECTED_AREA_INFO[protectedArea]
                 const label = protectedAreaLabel(protectedArea, protectedAreaType)
                 return (
                   <p className="text-sm text-muted-foreground">
                     {info?.url ? (
-                      <a href={info.url} target="_blank" rel="noopener noreferrer"
-                        className="underline decoration-muted-foreground/50 hover:decoration-muted-foreground">
+                      <a href={info.url} target="_blank" rel="noopener noreferrer" className={linkClass}>
                         {label}
                       </a>
                     ) : label}
-                    {" | "}{displayCounty}
+                    {" | "}{countyPortion}
                   </p>
                 )
               }
-              return <p className="text-sm text-muted-foreground">{displayCounty}</p>
+              return <p className="text-sm text-muted-foreground">{countyPortion}</p>
             })()}
             {clusterMemberNames && clusterMemberNames.length > 0 && (
               <p className="text-sm text-muted-foreground">

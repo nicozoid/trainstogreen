@@ -17,6 +17,13 @@ type WelcomeBannerProps = {
    * Flips to the normal button once the map data has finished computing.
    */
   isLoading?: boolean
+  /**
+   * True when the user opened the banner deliberately via the ? help
+   * button (rather than the default cold-start appearance). Surfaces a
+   * data-attribution footer at the bottom of the card — useful info,
+   * but not something we want to greet first-time visitors with.
+   */
+  summoned?: boolean
 }
 
 /**
@@ -32,7 +39,7 @@ export type WelcomeBannerHandle = {
 const ANIM_DURATION = 400 // ms
 
 export const WelcomeBanner = forwardRef<WelcomeBannerHandle, WelcomeBannerProps>(function WelcomeBanner(
-  { open, onDismiss, originX, originY, isLoading = false },
+  { open, onDismiss, originX, originY, isLoading = false, summoned = false },
   ref,
 ) {
   // ── Manual close animation ──
@@ -277,6 +284,34 @@ export const WelcomeBanner = forwardRef<WelcomeBannerHandle, WelcomeBannerProps>
               relative wrapper gives both elements a shared positioning
               context; `min-h-[52px]` keeps the slot from collapsing
               during the fade. */}
+          {/* Data-attribution footer — only when the user opened the
+              banner via the ? button. Hidden on first cold-start so the
+              welcome screen stays focused on the core message. The
+              Historic Counties Trust licence asks for an acknowledgement
+              when their boundary data is used (we use it to flag the
+              station's historic county on the modal subtitle when it
+              differs from the modern ceremonial county). Sits ABOVE the
+              CTA so the button stays the visual end of the card. */}
+          {summoned && (
+            <p className="mt-5 text-xs text-muted-foreground">
+              Historic county data from the{" "}
+              <a
+                href="https://www.county-borders.co.uk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-muted-foreground/50 hover:decoration-muted-foreground"
+              >
+                Historic County Borders Project
+              </a>
+              .
+            </p>
+          )}
+          {/* CTA slot is only rendered on cold-start (the initial app-
+              load welcome). When the banner is re-summoned via the ?
+              button the user already knows the app — the X / backdrop
+              tap / second ? press are enough to dismiss, so the
+              "Find stations" button would just be visual noise. */}
+          {!summoned && (
           <div className="mt-5 relative min-h-[56px]">
             {/* Spinner layer — absolutely-positioned, primary-colour
                 ("text-primary" sets `color`, which the SVG strokes
@@ -337,6 +372,7 @@ export const WelcomeBanner = forwardRef<WelcomeBannerHandle, WelcomeBannerProps>
               {welcomeCopy.cta}
             </button>
           </div>
+          )}
         </div>
       </div>
     </div>
