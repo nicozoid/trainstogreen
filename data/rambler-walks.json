@@ -12452,7 +12452,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Princes Risborough",
         "endPlace": "Wendover",
         "startStation": "PRR",
@@ -12464,45 +12463,40 @@
         "lunchStops": [
           {
             "name": "Swan",
-            "location": "Smokey Row (Great Kimble)",
-            "url": null
+            "location": "Smokey Row (Great Kimble)"
           },
           {
             "name": "Plough",
-            "location": "Lower Cadsden",
-            "url": null
+            "location": "Lower Cadsden"
           }
         ],
         "terrain": "Beech woods, chalk downlands, high ridgeline, nature reserves, escarpments with wide views, a pleasant old market town",
         "sights": [
           {
-            "name": "Whiteleaf Cross",
-            "url": null
+            "name": "Whiteleaf Cross"
           },
           {
-            "name": "Chequers",
-            "url": null
+            "name": "Chequers"
           },
           {
-            "name": "Coombe Hill",
-            "url": null
+            "name": "Coombe Hill"
           },
           {
-            "name": "Boer War Monument",
-            "url": null
+            "name": "Boer War Monument"
           }
         ],
         "miscellany": "Can be muddy",
         "id": "prrwndtwite",
         "mudWarning": true,
-        "rating": 3,
+        "rating": 2,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Princes Risborough to Wendover",
           "pageURL": "https://www.walkingclub.org.uk/walk/princes-risborough-to-wendover/",
           "type": "main"
         },
-        "suffix": "via Whiteleaf Cross"
+        "suffix": "via Whiteleaf Cross",
+        "updatedAt": "2026-05-01T08:57:45.641Z"
       }
     ]
   },
@@ -94827,7 +94821,7 @@
         "endStation": "GLD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.0,
+        "distanceKm": 16,
         "hours": 4.2,
         "lunchStops": [
           {
@@ -107186,52 +107180,46 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Balcombe",
         "endPlace": "Balcombe",
         "startStation": "BAB",
         "endStation": "BAB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.3,
-        "hours": 3.98,
+        "distanceKm": 15.7,
+        "hours": 4.33,
         "lunchStops": [
           {
-            "name": "Red Lion",
-            "location": "Handcross",
-            "url": null
+            "name": "Nymans Gardens National Trust café",
+            "url": "https://www.nationaltrust.org.uk/visit/sussex/nymans"
           },
           {
-            "name": "Welcome Cafe",
-            "location": "Nymans",
-            "url": null
+            "name": "Red Lion",
+            "location": "Handcross"
           },
           {
             "name": "The Riding House",
-            "location": "Nymans",
-            "url": null
+            "location": "Nymans"
           },
           {
             "name": "The Heritage",
-            "location": "Slaugham",
-            "url": null
+            "location": "Slaugham"
           },
           {
             "name": "Victory Inn",
-            "location": "Staplefield",
-            "url": null
+            "location": "Staplefield"
           },
           {
             "name": "Jolly Tanners",
-            "location": "Staplefield",
-            "url": null
+            "location": "Staplefield"
           }
         ],
-        "terrain": "Fields, woods, stream valleys, grassy hillsides, estate parkland, a fine old village",
+        "terrain": "Fields, woods, stream valleys, grassy hillsides, estate parkland, a fine old village, stately home",
         "sights": [
           {
-            "name": "Nymans",
-            "url": "http://www.nationaltrust.org.uk/main/w-nymansgarden2"
+            "name": "Nymans House & Gardens",
+            "url": "https://www.nationaltrust.org.uk/visit/sussex/nymans",
+            "description": "quite small but worthwhile; can easily fit a visit into a day hike"
           },
           {
             "name": "Lord Snowdon's lake with Japanese pavilion"
@@ -107256,13 +107244,21 @@
         "id": "babbabpochard",
         "mudWarning": true,
         "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "suffix": "via Nymans & Slaugham",
+        "komootUrl": "https://www.komoot.com/tour/2707110991",
+        "rating": 3,
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Balcombe Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/balcombe-circular/",
-          "type": "main"
+          "type": "similar"
         },
-        "suffix": "via Nymans",
-        "komootUrl": "https://www.komoot.com/tour/2921079856"
+        "updatedAt": "2026-05-01T08:39:38.560Z"
       }
     ]
   },

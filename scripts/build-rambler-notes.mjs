@@ -492,23 +492,26 @@ function buildSummary(variant, entry, crsIndex, sources) {
     displayName = entry.title
     baseDisplayName = entry.title
   }
-  // Title linking is conditional on variant type:
-  //  - MAIN walks link the title directly to source.pageURL so the
-  //    most common case (canonical walk for a page) stays compact —
-  //    no trailing "From X" clause needed.
-  //  - VARIANTS (shorter / longer / alternative / variant) keep the
-  //    title plain; their provenance is carried in a dedicated
-  //    "A shorter variant of [X](url)." clause right after.
+  // Title linking rule: ONLY main walks link the title, and ONLY to
+  // their OWN main source URL (variant.source.pageURL). Variants
+  // (shorter / longer / alternative / similar / adapted / variant)
+  // NEVER link the title — their provenance is carried in the
+  // "A shorter variant of [X](url)." clause that emits right after.
+  // The title also never links to the related source URL or to
+  // entry.url. Both of those are easy to mistake for a "main source"
+  // in legacy data: entry.url is a holdover from when the entry was
+  // originally scraped from a single page, so for an admin-created
+  // T2G walk hung under a scraped-page slug, entry.url effectively
+  // IS the related source URL. Linking the title to either would be
+  // wrong. When variant.source.pageURL is empty, the title stays
+  // plain text — even for main walks.
   const sourceType = variant.source?.type ?? variant.role ?? "main"
   const isMain = sourceType === "main"
   // Title-link target. For book sources we deliberately skip the
-  // entry-level URL fallback — book entries often inherit a legacy
-  // entry.url from a previous source (e.g. the original SWC page),
-  // which would mislink the title. Book attribution flows through
-  // the source clause instead.
-  const sourceUrl = isBookSource(variant.source?.orgSlug)
-    ? null
-    : (variant.source?.pageURL || entry.url)
+  // pageURL too — book entries don't have per-walk URLs and book
+  // attribution flows through the dedicated source clause instead.
+  const ownSourceUrl = typeof variant.source?.pageURL === "string" ? variant.source.pageURL.trim() : ""
+  const sourceUrl = isBookSource(variant.source?.orgSlug) ? null : (ownSourceUrl || null)
 
   let opening
   if (isMain && sourceUrl) {
@@ -648,11 +651,19 @@ function buildSummary(variant, entry, crsIndex, sources) {
 // Load the primary walks dataset plus any extras, merging by slug.
 // Extras override primary on slug collision — that's intentional so
 // future sources can patch specific entries if needed.
-function loadAllWalks() {
-  const merged = JSON.parse(readFileSync(WALKS_PATH, "utf-8"))
+//
+// `overrideWalks` (optional): Map<absolutePath, walksObject>. When the
+// API-route caller has just-mutated walk data in memory that hasn't
+// been flushed to disk yet (e.g. mid-DELETE/PATCH), it passes the
+// new content here so the rebuild reflects the in-flight change
+// instead of re-reading the stale on-disk version. Without this,
+// derived files end up one-save behind the source file.
+function loadAllWalks(overrideWalks) {
+  const readOrOverride = (path) => overrideWalks?.get(path) ?? JSON.parse(readFileSync(path, "utf-8"))
+  const merged = readOrOverride(WALKS_PATH)
   for (const path of EXTRA_WALKS_PATHS) {
     try {
-      const extra = JSON.parse(readFileSync(path, "utf-8"))
+      const extra = overrideWalks?.has(path) ? overrideWalks.get(path) : JSON.parse(readFileSync(path, "utf-8"))
       for (const [slug, entry] of Object.entries(extra)) merged[slug] = entry
     } catch (err) {
       // Missing file is fine (extras are optional) — rethrow if it's a
@@ -665,7 +676,7 @@ function loadAllWalks() {
 }
 
 function buildRamblerNotes(args) {
-  const walks = loadAllWalks()
+  const walks = loadAllWalks(args?.overrideWalks)
   const notes = JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
   const crsIndex = buildCrsIndex()
   // sources.json — organisation registry. Loaded once here and threaded

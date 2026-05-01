@@ -79,10 +79,13 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-28T07:51:10.749Z",
+        "updatedAt": "2026-05-01T08:05:56.696Z",
         "rating": 1,
         "suffix": "via Saffron Walden",
-        "ratingExplanation": "Too much road at the beginning"
+        "ratingExplanation": "Too much road at the beginning",
+        "komootUrl": "https://www.komoot.com/tour/2921497547",
+        "distanceKm": 13.9,
+        "hours": 3.72
       }
     ],
     "extracted": true,
@@ -119,8 +122,12 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-27T22:14:38.086Z",
-        "rating": 1
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "rating": 1,
+        "komootUrl": "https://www.komoot.com/tour/2921483662",
+        "suffix": "via Chaldon Way",
+        "distanceKm": 15.1,
+        "hours": 4.07
       }
     ],
     "extracted": true,
@@ -718,63 +725,6 @@
     "notes": "",
     "outsideMainlandBritain": false
   },
-  "manual-babbabyew": {
-    "slug": "manual-babbabyew",
-    "title": "Manual BAB Circular",
-    "url": "",
-    "favourite": false,
-    "tags": [
-      "manual"
-    ],
-    "categories": [],
-    "region": "",
-    "walks": [
-      {
-        "role": "main",
-        "startPlace": "",
-        "endPlace": "",
-        "startStation": "BAB",
-        "endStation": "BAB",
-        "stationToStation": true,
-        "lunchStops": [
-          {
-            "name": "Nymans Gardens National Trust café",
-            "rating": "good"
-          }
-        ],
-        "sights": [
-          {
-            "name": "Nymans",
-            "url": "https://www.nationaltrust.org.uk/visit/sussex/nymans",
-            "description": "quite small but worthwhile; can easily fit a visit into a day hike"
-          }
-        ],
-        "id": "babbabyew",
-        "source": {
-          "orgSlug": "trains-to-green",
-          "pageName": "",
-          "pageURL": "",
-          "type": "main"
-        },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
-        "komootUrl": "https://www.komoot.com/tour/2707110991",
-        "distanceKm": 15.1,
-        "hours": 4.18,
-        "rating": 3,
-        "suffix": "via Nymans Gardens",
-        "terrain": "woods, hilly, stately home",
-        "mudWarning": true,
-        "previousWalkDates": [
-          "2025-12-16"
-        ]
-      }
-    ],
-    "extracted": true,
-    "onMap": true,
-    "issues": false,
-    "notes": "",
-    "outsideMainlandBritain": false
-  },
   "manual-apgapghazel": {
     "slug": "manual-apgapghazel",
     "title": "Manual APG Circular",
@@ -1187,6 +1137,770 @@
         "previousWalkDates": [
           "2020-11-01"
         ]
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-cldcldpipit": {
+    "slug": "manual-cldcldpipit",
+    "title": "Manual CLD Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "CLD",
+        "endStation": "CLD",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "cldcldpipit",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921492991",
+        "rating": 2,
+        "suffix": "via Down House",
+        "previousWalkDates": [
+          "2020-12-20"
+        ],
+        "distanceKm": 15.6,
+        "hours": 4.3
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-babbabdunnock": {
+    "slug": "manual-babbabdunnock",
+    "title": "Manual BAB Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BAB",
+        "endStation": "BAB",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [
+          {
+            "name": "Ouse Valley Viaduct",
+            "url": "https://hellosussex.com/ouse-valley-viaduct-west-sussex-visitor-guide/",
+            "description": "Victorian architectural marvel"
+          }
+        ],
+        "id": "babbabdunnock",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921150488",
+        "rating": 2,
+        "suffix": "via Ouse Valley Viaduct",
+        "previousWalkDates": [
+          "2021-04-03"
+        ],
+        "distanceKm": 11.8,
+        "hours": 3.18
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-lwsseethrush": {
+    "slug": "manual-lwsseethrush",
+    "title": "Manual LWS to SEE",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "LWS",
+        "endStation": "SEE",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "lwsseethrush",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921497025",
+        "rating": 4,
+        "suffix": "via Mt Caburn, Glynde & Firle",
+        "terrain": "escarpments",
+        "previousWalkDates": [
+          "2021-10-17"
+        ],
+        "distanceKm": 16,
+        "hours": 4.62
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-gbswrhblackcap": {
+    "slug": "manual-gbswrhblackcap",
+    "title": "Manual GBS to WRH",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "GBS",
+        "endStation": "WRH",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "gbswrhblackcap",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921495389",
+        "rating": 2,
+        "previousWalkDates": [
+          "2022-06-18"
+        ],
+        "distanceKm": 19.1,
+        "hours": 5.27
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-fsbfsbmagpie": {
+    "slug": "manual-fsbfsbmagpie",
+    "title": "Manual FSB Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "FSB",
+        "endStation": "FSB",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "fsbfsbmagpie",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921494524",
+        "rating": 2,
+        "suffix": "via Chichester Harbour",
+        "terrain": "sea",
+        "previousWalkDates": [
+          "2023-07-30"
+        ],
+        "distanceKm": 11.7,
+        "hours": 2.95
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-gldgldraven": {
+    "slug": "manual-gldgldraven",
+    "title": "Manual GLD Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "GLD",
+        "endStation": "GLD",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "gldgldraven",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921496141",
+        "rating": 3,
+        "suffix": "via Watt's Chapel",
+        "previousWalkDates": [
+          "2021-05-01"
+        ],
+        "distanceKm": 13.1,
+        "hours": 3.5
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-kitkitcrow": {
+    "slug": "manual-kitkitcrow",
+    "title": "Manual KIT Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "KIT",
+        "endStation": "KIT",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "kitkitcrow",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921496591",
+        "rating": 2,
+        "suffix": "via Combe Gibbet",
+        "previousWalkDates": [
+          "2022-01-03"
+        ],
+        "distanceKm": 16.4,
+        "hours": 4.5
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-wnrwnrrook": {
+    "slug": "manual-wnrwnrrook",
+    "title": "Manual WNR Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "WNR",
+        "endStation": "WNR",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "wnrwnrrook",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921499158",
+        "rating": 2,
+        "suffix": "via the Ox & Obelisk Ponds of Windsor Great Park",
+        "previousWalkDates": [
+          "2023-01-02"
+        ],
+        "distanceKm": 19.8,
+        "hours": 5.15
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-prrprrjackdaw": {
+    "slug": "manual-prrprrjackdaw",
+    "title": "Manual PRR Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "PRR",
+        "endStation": "PRR",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "prrprrjackdaw",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921497906",
+        "rating": 2,
+        "suffix": "via Lacey Green & Ninn Wood",
+        "previousWalkDates": [
+          "2022-02-19"
+        ],
+        "distanceKm": 15.8,
+        "hours": 4.37
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-wndwndjay": {
+    "slug": "manual-wndwndjay",
+    "title": "Manual WND Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "WND",
+        "endStation": "WND",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "wndwndjay",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921485105",
+        "rating": 2,
+        "suffix": "via Upper Bacombe",
+        "privateNote": "Found a nice place to walk",
+        "previousWalkDates": [
+          "2022-02-06"
+        ],
+        "distanceKm": 9.85,
+        "hours": 2.88
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-amramrgull": {
+    "slug": "manual-amramrgull",
+    "title": "Manual AMR Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "AMR",
+        "endStation": "AMR",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "amramrgull",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921490975",
+        "rating": 1,
+        "suffix": "via the Misbourne Valley",
+        "ratingExplanation": "Mostly just a succession of unremarkable fields",
+        "previousWalkDates": [
+          "2020-11-29"
+        ],
+        "distanceKm": 15,
+        "hours": 4.03
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-sacsacsnipe": {
+    "slug": "manual-sacsacsnipe",
+    "title": "Manual SAC Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "SAC",
+        "endStation": "SAC",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "sacsacsnipe",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921498612",
+        "rating": 3,
+        "suffix": "via Gothambury House",
+        "terrain": "historic city",
+        "miscellany": "Much of the walk is through St Albans, but its a beautiful city so this is no bad thing",
+        "previousWalkDates": [
+          "2020-08-22"
+        ],
+        "distanceKm": 13.2,
+        "hours": 3.5
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-bissawowl": {
+    "slug": "manual-bissawowl",
+    "title": "Manual BIS to SAW",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BIS",
+        "endStation": "SAW",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "bissawowl",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921491885",
+        "rating": 2,
+        "privateNote": "We made it better by extending the the walk to Harlow. but still merely 'okay'",
+        "previousWalkDates": [
+          "2020-11-22"
+        ],
+        "distanceKm": 7.69,
+        "hours": 1.95
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-cbgcbgfalcon": {
+    "slug": "manual-cbgcbgfalcon",
+    "title": "Manual CBG Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "CBG",
+        "endStation": "CBG",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "cbgcbgfalcon",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921492459",
+        "rating": 2,
+        "suffix": "via Granchester",
+        "ratingExplanation": "Pleasant but nothing spectacular except for Cambridge's architecture",
+        "previousWalkDates": [
+          "2021-05-15"
+        ],
+        "distanceKm": 12.6,
+        "hours": 3.2
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-salsalharrier": {
+    "slug": "manual-salsalharrier",
+    "title": "Manual SAL Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "SAL",
+        "endStation": "SAL",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "salsalharrier",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921513301",
+        "rating": 4,
+        "suffix": "via Old Sarum",
+        "miscellany": "Have lunch a café or pub next to the river. Return from Stonehenge to Salisbury by bus (very frequent & reliable!)",
+        "previousWalkDates": [
+          "2022-04-07"
+        ],
+        "distanceKm": 16.6,
+        "hours": 4.48
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-lytbcubuzzard": {
+    "slug": "manual-lytbcubuzzard",
+    "title": "Manual LYT to BCU",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "LYT",
+        "endStation": "BCU",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "lytbcubuzzard",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2921509210",
+        "rating": 1,
+        "suffix": "via Roydon Woods",
+        "miscellany": "Can be EXTREME mud in Lymington Reeds Beds Nature Reserve",
+        "previousWalkDates": [
+          "2024-02-03"
+        ],
+        "distanceKm": 12.6,
+        "hours": 3.28
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-rammareagle": {
+    "slug": "manual-rammareagle",
+    "title": "Manual RAM to MAR",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "RAM",
+        "endStation": "MAR",
+        "stationToStation": true,
+        "lunchStops": [],
+        "sights": [],
+        "id": "rammareagle",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "komootUrl": "https://www.komoot.com/tour/2797333523",
+        "rating": 2,
+        "suffix": "via Viking Bay",
+        "terrain": "beaches, cliffs, seaside towns",
+        "miscellany": "Very busy; infinite cafés/restaurants",
+        "previousWalkDates": [
+          "2026-02-25"
+        ],
+        "distanceKm": 16,
+        "hours": 4.2
       }
     ],
     "extracted": true,

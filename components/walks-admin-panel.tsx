@@ -702,6 +702,79 @@ export default function WalksAdminPanel({
   )
 }
 
+// Reusable collapsible section. Mirrors the chevron-rotate pattern used
+// throughout this panel (Source, Sights, Lunch stops…). Defaults to
+// uncontrolled (each instance owns its own open state). For sections
+// that need to be opened programmatically from elsewhere — e.g. the
+// Source > "Subordinate" button auto-expanding Related Source —
+// pass `open` + `onOpenChange` to operate it in controlled mode.
+//
+// `rightSlot` renders next to the title in the header row. Used for
+// header-level actions that should remain reachable when the section
+// is collapsed.
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  bodyId,
+  rightSlot,
+  count,
+  open,
+  onOpenChange,
+  children,
+}: {
+  title: string
+  defaultOpen?: boolean
+  bodyId: string
+  rightSlot?: React.ReactNode
+  // Optional count rendered as "(n)" after the title — useful for
+  // sections backed by an array (Sights, Lunch stops) so the admin
+  // sees the row count without expanding.
+  count?: number
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: React.ReactNode
+}) {
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
+  // Controlled-mode toggle: prefer the prop when supplied, otherwise
+  // fall back to internal state. `open` being undefined is the cue
+  // to use uncontrolled mode (matches Radix's primitive convention).
+  const isOpen = open ?? internalOpen
+  const setOpen = (v: boolean) => {
+    if (open === undefined) setInternalOpen(v)
+    onOpenChange?.(v)
+  }
+  return (
+    <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setOpen(!isOpen)}
+          aria-expanded={isOpen}
+          aria-controls={bodyId}
+          className="flex items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        >
+          <span
+            aria-hidden="true"
+            className={`inline-block transition-transform ${isOpen ? "rotate-90" : ""}`}
+          >
+            ▸
+          </span>
+          {title}
+          {count !== undefined && count > 0 && (
+            <span className="italic text-muted-foreground/70 normal-case">({count})</span>
+          )}
+        </button>
+        {rightSlot}
+      </div>
+      {isOpen && (
+        <div id={bodyId} className="mt-1.5">
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Single walk card. Collapsed by default — click the header to expand.
 // Drafts are kept in local state so keystrokes don't round-trip until
 // the user hits Save.
@@ -969,6 +1042,12 @@ function WalkCard({
           const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
           const neutralChip = `${chipBase} bg-muted text-muted-foreground`
           const destructiveChip = `${chipBase} bg-destructive/10 text-destructive`
+          // Komoot-branded chip: lime/yellow-green echoes Komoot's own brand
+          // colour (~#86c440) so the chip is instantly recognisable. Hard-coded
+          // Tailwind palette rather than a theme token because it's tied to an
+          // external product, not the app's own visual language. Dark-mode pair
+          // keeps contrast acceptable on the dark muted bg.
+          const komootChip = `${chipBase} bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300`
           return (
             <>
               {walk.requiresBus && (
@@ -977,7 +1056,7 @@ function WalkCard({
                 </span>
               )}
               {isVariant && <span className={destructiveChip} title={`Source type: ${walkType}`}>{walkType}</span>}
-              {walk.komootUrl && <span className={neutralChip} title="Has a Komoot tour URL">komoot</span>}
+              {walk.komootUrl && <span className={komootChip} title="Has a Komoot tour URL">komoot</span>}
               {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (
                 <span className={neutralChip} title={`${walk.distanceKm} km (floored for display)`}>
@@ -1229,150 +1308,254 @@ function WalkCard({
             )}
           </div>
 
-          {/* Title preview (read-only) + Suffix input + Custom-title
-              override. The title is normally derived from the start
-              and end station names ("Milford to Haslemere"), plus an
-              optional admin-authored suffix ("via Ightham Mote").
-              The custom-title input exists for edge cases where the
-              walk's name doesn't fit the derived pattern (e.g.
-              "Short Walk, omitting Old Warden") — when set it
-              replaces the whole title. */}
-          {(() => {
-            const effectiveTitle = draft.name.trim()
-              ? draft.name.trim()
-              : derivedTitleOf(walk, draft.suffix)
-            return (
-              <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-1.5">
-                <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Title preview
+          {/* ── Sections ────────────────────────────────────────────
+              The editor body is grouped into collapsible sections so
+              the admin can scan/jump quickly. All start collapsed.
+              Order: Source / Key info / Tips / Sights / Lunch stops /
+              Private. Sights and Lunch stops are existing dedicated
+              components that already render their own collapsible
+              header in the same style as CollapsibleSection. */}
+
+          {/* Key info — the everyday-edit fields: title pieces,
+              rating, Komoot URL, distance/hours. These are what
+              changes most often when curating a walk. */}
+          <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`}>
+            {/* Title preview — derived from start/end station names +
+                optional admin-authored suffix; custom-title input
+                below can override it entirely. */}
+            {(() => {
+              const effectiveTitle = draft.name.trim()
+                ? draft.name.trim()
+                : derivedTitleOf(walk, draft.suffix)
+              return (
+                <div className="mb-3 rounded border border-border/60 bg-background px-2 py-1.5">
+                  <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    Title preview
+                  </div>
+                  <div className="text-sm font-medium text-foreground">{effectiveTitle}</div>
                 </div>
-                <div className="text-sm font-medium text-foreground">{effectiveTitle}</div>
-              </div>
-            )
-          })()}
+              )
+            })()}
 
-          {/* Suffix — appended to the derived title with a leading
-              space. Ignored when a custom title override is set. */}
-          <div className="mb-3">
-            <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Suffix
-              {draft.name.trim() && (
+            {/* Suffix — appended to the derived title with a leading
+                space. Ignored when a custom title override is set. */}
+            <div className="mb-3">
+              <Label htmlFor={`suffix-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Suffix
+                {draft.name.trim() && (
+                  <span className="ml-1 italic text-muted-foreground/70">
+                    (ignored while custom title is set)
+                  </span>
+                )}
+              </Label>
+              <Input
+                id={`suffix-${walk.id}`}
+                value={draft.suffix}
+                onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
+                className="h-7 text-xs"
+                disabled={!!draft.name.trim()}
+              />
+            </div>
+
+            {/* Custom title — full override of the derived title. */}
+            <div className="mb-3">
+              <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Custom title
                 <span className="ml-1 italic text-muted-foreground/70">
-                  (ignored while custom title is set)
+                  (overrides derived title)
                 </span>
-              )}
-            </Label>
-            <Input
-              id={`suffix-${walk.id}`}
-              value={draft.suffix}
-              onChange={(e) => setDraft((d) => ({ ...d, suffix: e.target.value }))}
-              className="h-7 text-xs"
-              disabled={!!draft.name.trim()}
-            />
-          </div>
+              </Label>
+              <Input
+                id={`name-${walk.id}`}
+                value={draft.name}
+                onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
 
-          {/* Custom title — full override. Leave blank to use the
-              derived title + suffix above. Used mainly by legacy
-              walks whose names don't fit the "{start} to {end}"
-              pattern (e.g. Leicester Ramblers walks). */}
-          <div className="mb-3">
-            <Label htmlFor={`name-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Custom title
-              <span className="ml-1 italic text-muted-foreground/70">
-                (overrides derived title)
-              </span>
-            </Label>
-            <Input
-              id={`name-${walk.id}`}
-              value={draft.name}
-              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-              className="h-7 text-xs"
-            />
-          </div>
+            {/* Rating — Unrated + four tier icons. Active tier lights
+                up; clicking the active tier clears it. */}
+            <div className="mb-3">
+              <Label className="mb-1 block text-xs text-muted-foreground">Rating</Label>
+              <div className="flex items-center gap-1.5">
+                {(() => {
+                  const active = draft.rating == null
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setDraft((d) => ({ ...d, rating: null }))}
+                      title="Unrated"
+                      aria-label="Unrated"
+                      aria-pressed={active}
+                      className={
+                        "flex h-7 w-7 items-center justify-center rounded transition-colors " +
+                        (active
+                          ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
+                          : "text-muted-foreground hover:bg-muted/50")
+                      }
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"
+                        stroke={active ? "var(--primary)" : "currentColor"} strokeWidth={1.5}>
+                        <circle cx="12" cy="12" r="9" />
+                      </svg>
+                    </button>
+                  )
+                })()}
+                {([1, 2, 3, 4] as const).map((n) => {
+                  const active = draft.rating === n
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          rating: d.rating === n ? null : n,
+                        }))
+                      }
+                      title={`${RATING_LABELS[n]} (${n}/4)`}
+                      aria-label={`${RATING_LABELS[n]} — ${n} of 4`}
+                      aria-pressed={active}
+                      className={
+                        "flex h-7 w-7 items-center justify-center rounded transition-colors " +
+                        (active
+                          ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
+                          : "text-muted-foreground hover:bg-muted/50")
+                      }
+                    >
+                      <RatingIcon n={n} filled={active} />
+                    </button>
+                  )
+                })}
+                {typeof draft.rating === "number" && (
+                  <span className="ml-1 text-[11px] text-muted-foreground">
+                    {RATING_LABELS[draft.rating as 1 | 2 | 3 | 4]}
+                  </span>
+                )}
+              </div>
+            </div>
 
-          {/* ── Structured editors ─────────────────────────────────── */}
-
-          {/* Rating — an explicit Unrated button followed by four
-              tier icons (Okay / Probably / Rambler favourite /
-              Heavenly). Each tier is a distinct symbol rather than a
-              scale, so only the selected one lights up. The Unrated
-              button (a hollow circle) is always available and always
-              clears the rating — separating "set to nothing" from
-              "click the active tier to clear" eliminates the toggle
-              ambiguity that previously caused unrate clicks to
-              sometimes appear to do nothing. */}
-          <div className="mb-3">
-            <Label className="mb-1 block text-xs text-muted-foreground">Rating</Label>
-            <div className="flex items-center gap-1.5">
-              {/* Unrated — first in the row, distinct from the tier
-                  icons. Clicking always sets rating to null; the
-                  circle is hollow when not active so it visually reads
-                  as "no rating". */}
-              {(() => {
-                const active = draft.rating == null
-                return (
-                  <button
-                    type="button"
-                    onClick={() => setDraft((d) => ({ ...d, rating: null }))}
-                    title="Unrated"
-                    aria-label="Unrated"
-                    aria-pressed={active}
-                    className={
-                      "flex h-7 w-7 items-center justify-center rounded transition-colors " +
-                      (active
-                        ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
-                        : "text-muted-foreground hover:bg-muted/50")
-                    }
-                  >
-                    {/* Hollow circle — primary-coloured stroke when
-                        active, muted outline otherwise. Mirrors the
-                        fill/stroke pattern in RatingIcon. */}
-                    <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"
-                      stroke={active ? "var(--primary)" : "currentColor"} strokeWidth={1.5}>
-                      <circle cx="12" cy="12" r="9" />
-                    </svg>
-                  </button>
-                )
-              })()}
-              {([1, 2, 3, 4] as const).map((n) => {
-                const active = draft.rating === n
-                return (
-                  <button
-                    key={n}
-                    type="button"
-                    onClick={() =>
+            {/* Komoot tour URL — when set, the build drops the km/hours
+                line because Komoot provides the authoritative figures.
+                "Pull distance" scrapes the tour page for distance +
+                duration and writes them into the km/hours fields below. */}
+            <div className="mb-3">
+              <Label htmlFor={`komoot-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Komoot URL
+              </Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id={`komoot-${walk.id}`}
+                  type="url"
+                  value={draft.komootUrl}
+                  onChange={(e) => {
+                    setDraft((d) => ({ ...d, komootUrl: e.target.value }))
+                    if (pullDistanceError) setPullDistanceError(null)
+                  }}
+                  className="h-7 text-xs"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (pullingDistance) return
+                    setPullDistanceError(null)
+                    setPullingDistance(true)
+                    try {
+                      const r = await fetch("/api/dev/komoot-distance", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url: draft.komootUrl }),
+                      })
+                      const j = await r.json()
+                      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
                       setDraft((d) => ({
                         ...d,
-                        // Clicking the current rating again clears it.
-                        rating: d.rating === n ? null : n,
+                        distanceKm: Math.round(j.distanceKm * 100) / 100,
+                        hours: j.hours,
                       }))
+                    } catch (e) {
+                      setPullDistanceError((e as Error).message)
+                    } finally {
+                      setPullingDistance(false)
                     }
-                    title={`${RATING_LABELS[n]} (${n}/4)`}
-                    aria-label={`${RATING_LABELS[n]} — ${n} of 4`}
-                    aria-pressed={active}
-                    className={
-                      "flex h-7 w-7 items-center justify-center rounded transition-colors " +
-                      (active
-                        ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
-                        : "text-muted-foreground hover:bg-muted/50")
-                    }
-                  >
-                    <RatingIcon n={n} filled={active} />
-                  </button>
-                )
-              })}
-              {typeof draft.rating === "number" && (
-                <span className="ml-1 text-[11px] text-muted-foreground">
-                  {RATING_LABELS[draft.rating as 1 | 2 | 3 | 4]}
-                </span>
+                  }}
+                  disabled={pullingDistance || !draft.komootUrl.trim()}
+                  className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
+                  title="Fetch distance and duration from the Komoot tour page"
+                >
+                  {pullingDistance ? (
+                    <span className="inline-flex items-center gap-1">
+                      <svg
+                        aria-hidden="true"
+                        className="h-3 w-3 animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
+                        <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+                      </svg>
+                      Pulling…
+                    </span>
+                  ) : (
+                    "Pull distance"
+                  )}
+                </button>
+              </div>
+              {pullDistanceError && (
+                <p className="mt-1 text-[11px] text-destructive">
+                  {pullDistanceError}
+                </p>
               )}
             </div>
-            {/* Optional sentence appended to the rating flourish in
-                public prose (e.g. "Highly recommended by T2G! Best
-                springtime walk."). The renderer adds the trailing
-                period; the admin types just the sentence. */}
-            <div className="mt-2">
-              <Label htmlFor={`rating-explanation-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
+
+            {/* Distance + hours — two number inputs side by side.
+                Empty input maps to null (clears the field). */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor={`km-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  km
+                </Label>
+                <Input
+                  id={`km-${walk.id}`}
+                  type="number"
+                  step="0.1"
+                  value={draft.distanceKm ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDraft((d) => ({ ...d, distanceKm: v === "" ? null : Number(v) }))
+                  }}
+                  className="h-7 text-xs"
+                />
+              </div>
+              <div>
+                <Label htmlFor={`hrs-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  hours
+                </Label>
+                <Input
+                  id={`hrs-${walk.id}`}
+                  type="number"
+                  step="0.25"
+                  value={draft.hours ?? ""}
+                  onChange={(e) => {
+                    const v = e.target.value
+                    setDraft((d) => ({ ...d, hours: v === "" ? null : Number(v) }))
+                  }}
+                  className="h-7 text-xs"
+                />
+              </div>
+            </div>
+          </CollapsibleSection>
+
+          {/* Tips — descriptive prose pieces that flavour the public
+              summary: rating-flourish caveat, terrain tags, best
+              seasons chips, mud warning, free-text miscellany, train
+              tips. Less frequently edited than Key info. */}
+          <CollapsibleSection title="Tips" bodyId={`tips-section-${walk.id}`}>
+            {/* Rating explanation — appended after the rating
+                flourish ("Rambler favourite!" / "An essential walk!")
+                in the public prose. */}
+            <div className="mb-3">
+              <Label htmlFor={`rating-explanation-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
                 Rating explanation
                 <span className="ml-1 font-normal italic text-muted-foreground/70">
                   appended after the rating flourish
@@ -1385,271 +1568,140 @@ function WalkCard({
                 className="h-7 text-xs"
               />
             </div>
-            {/* Previously hiked — admin-only log of personal walk
-                dates. Each chip is a single ISO date with an ✕ to
-                remove; the date input + "Add" button appends a new
-                date. Server-side cleanField dedupes + sorts on save,
-                so we don't need to do that here. */}
-            <PreviousWalkDatesEditor
-              walkId={walk.id}
-              dates={draft.previousWalkDates}
-              onChange={(previousWalkDates) => setDraft((d) => ({ ...d, previousWalkDates }))}
-            />
-          </div>
 
-          {/* Terrain — comma-separated list of short tags (no
-              punctuation). The build script joins them with commas +
-              "and" and tacks on a period, so the admin just types the
-              items: "Chalk downland, bluebell woods, open farmland".
-              The renderer handles the rest ("Chalk downland, bluebell
-              woods, and open farmland."). */}
-          <div className="mb-3">
-            <Label htmlFor={`terrain-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Terrain
-              <span className="ml-1 font-normal italic text-muted-foreground/70">
-                comma-separated, no punctuation
-              </span>
-            </Label>
-            <Input
-              id={`terrain-${walk.id}`}
-              value={draft.terrain}
-              onChange={(e) => setDraft((d) => ({ ...d, terrain: e.target.value }))}
-              className="h-7 text-xs"
-            />
-          </div>
+            {/* Terrain — comma-separated short tags. Renderer joins
+                with commas + "and" + period. */}
+            <div className="mb-3">
+              <Label htmlFor={`terrain-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Terrain
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  comma-separated, no punctuation
+                </span>
+              </Label>
+              <Input
+                id={`terrain-${walk.id}`}
+                value={draft.terrain}
+                onChange={(e) => setDraft((d) => ({ ...d, terrain: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
 
-          {/* Sights editor — one row per sight. Name is required; URL
-              and description are optional. Description is admin-only
-              metadata for now (rendered prose doesn't include it). */}
+            {/* Best seasons — 12 month chips. Click to toggle. */}
+            <div className="mb-3">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">Best seasons</Label>
+              <div className="flex flex-wrap gap-1">
+                {MONTHS.map((m) => {
+                  const active = draft.bestSeasons.includes(m.code)
+                  return (
+                    <button
+                      key={m.code}
+                      type="button"
+                      onClick={() => toggleSeason(m.code)}
+                      aria-pressed={active}
+                      title={m.code}
+                      className={
+                        "h-6 w-6 rounded text-[11px] font-medium transition-colors " +
+                        (active
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                      }
+                    >
+                      {m.short}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Mud warning — single boolean. When true the build emits
+                "Can be muddy." and suppresses any duplicate free-text. */}
+            <div className="mb-3 flex items-center gap-2">
+              <Checkbox
+                id={`mud-${walk.id}`}
+                checked={draft.mudWarning}
+                onCheckedChange={(v) => setDraft((d) => ({ ...d, mudWarning: v === true }))}
+              />
+              <Label htmlFor={`mud-${walk.id}`} className="cursor-pointer text-xs">
+                Mud warning
+              </Label>
+            </div>
+
+            {/* Free-text miscellany — non-mud warnings plus other notes. */}
+            <div className="mb-3">
+              <Label htmlFor={`misc-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Miscellany
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  free text
+                </span>
+              </Label>
+              <Input
+                id={`misc-${walk.id}`}
+                value={draft.miscellany}
+                onChange={(e) => setDraft((d) => ({ ...d, miscellany: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
+
+            {/* Train tips — booking advice. Renders as its own
+                sentence right after miscellany. */}
+            <div>
+              <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Train tips
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  free text
+                </span>
+              </Label>
+              <Input
+                id={`tips-${walk.id}`}
+                value={draft.trainTips}
+                onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
+                className="h-7 text-xs"
+              />
+            </div>
+          </CollapsibleSection>
+
+          {/* Sights — repeatable list with name (required), URL and
+              description (both optional). The component owns its own
+              collapsible header in the CollapsibleSection style. */}
           <SightsEditor
             walkId={walk.id}
             sights={draft.sights}
             onChange={(sights) => setDraft((d) => ({ ...d, sights }))}
           />
 
-          {/* Lunch stops editor — name + location + url + notes +
-              rating. notes/rating are admin-only metadata (the prose
-              renderer still shows only the first three). */}
+          {/* Lunch stops — name + location + url + notes + rating.
+              notes/rating are admin-only; renderer shows only the
+              first three. The component owns its collapsible header. */}
           <LunchStopsEditor
             walkId={walk.id}
             stops={draft.lunchStops}
             onChange={(lunchStops) => setDraft((d) => ({ ...d, lunchStops }))}
           />
 
-          {/* Distance + hours — three number inputs side by side. Empty
-              input maps to null (clears the field). Komoot URL, when
-              set, suppresses these clauses in the rendered prose. */}
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          {/* Private — admin-only fields, never rendered publicly:
+              the scratchpad note + the personal "previously hiked"
+              date log that drives the Undiscovered filter. */}
+          <CollapsibleSection title="Private" bodyId={`private-section-${walk.id}`}>
             <div>
-              <Label htmlFor={`km-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                km
+              <Label htmlFor={`priv-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                Private note
+                <span className="ml-1 font-normal italic text-muted-foreground/70">
+                  admin-only
+                </span>
               </Label>
               <Input
-                id={`km-${walk.id}`}
-                type="number"
-                step="0.1"
-                value={draft.distanceKm ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setDraft((d) => ({ ...d, distanceKm: v === "" ? null : Number(v) }))
-                }}
+                id={`priv-${walk.id}`}
+                value={draft.privateNote}
+                onChange={(e) => setDraft((d) => ({ ...d, privateNote: e.target.value }))}
                 className="h-7 text-xs"
               />
             </div>
-            <div>
-              <Label htmlFor={`hrs-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-                hours
-              </Label>
-              <Input
-                id={`hrs-${walk.id}`}
-                type="number"
-                step="0.25"
-                value={draft.hours ?? ""}
-                onChange={(e) => {
-                  const v = e.target.value
-                  setDraft((d) => ({ ...d, hours: v === "" ? null : Number(v) }))
-                }}
-                className="h-7 text-xs"
-              />
-            </div>
-          </div>
-
-          {/* Month chips — 12 buttons in a row. Clicking toggles.
-              Active months get a filled orange fill matching the admin
-              accent; inactive are ghost-outlined. */}
-          <div className="mb-3">
-            <Label className="mb-1.5 block text-xs text-muted-foreground">Best seasons</Label>
-            <div className="flex flex-wrap gap-1">
-              {MONTHS.map((m) => {
-                const active = draft.bestSeasons.includes(m.code)
-                return (
-                  <button
-                    key={m.code}
-                    type="button"
-                    onClick={() => toggleSeason(m.code)}
-                    aria-pressed={active}
-                    title={m.code}
-                    className={
-                      "h-6 w-6 rounded text-[11px] font-medium transition-colors " +
-                      (active
-                        ? "bg-orange-500 text-white hover:bg-orange-600"
-                        : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
-                    }
-                  >
-                    {m.short}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Mud warning — single boolean. When true the build emits
-              "Can be muddy." and suppresses any duplicate free-text. */}
-          <div className="mb-3 flex items-center gap-2">
-            <Checkbox
-              id={`mud-${walk.id}`}
-              checked={draft.mudWarning}
-              onCheckedChange={(v) => setDraft((d) => ({ ...d, mudWarning: v === true }))}
+            <PreviousWalkDatesEditor
+              walkId={walk.id}
+              dates={draft.previousWalkDates}
+              onChange={(previousWalkDates) => setDraft((d) => ({ ...d, previousWalkDates }))}
             />
-            <Label htmlFor={`mud-${walk.id}`} className="cursor-pointer text-xs">
-              Mud warning
-            </Label>
-          </div>
-
-          {/* Komoot tour URL — when set, the build drops the km/hours
-              line because Komoot provides the authoritative figures.
-              "Pull distance" scrapes the tour page for distance +
-              duration and writes them into the draft (Distance / Hours
-              fields elsewhere on the card). */}
-          <div className="mb-3">
-            <Label htmlFor={`komoot-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Komoot URL
-            </Label>
-            <div className="flex items-center gap-1.5">
-              <Input
-                id={`komoot-${walk.id}`}
-                type="url"
-                value={draft.komootUrl}
-                onChange={(e) => {
-                  setDraft((d) => ({ ...d, komootUrl: e.target.value }))
-                  // Clear the previous error as soon as the URL changes
-                  // — otherwise stale messages stick around forever.
-                  if (pullDistanceError) setPullDistanceError(null)
-                }}
-                className="h-7 text-xs"
-              />
-              <button
-                type="button"
-                onClick={async () => {
-                  if (pullingDistance) return
-                  setPullDistanceError(null)
-                  setPullingDistance(true)
-                  try {
-                    const r = await fetch("/api/dev/komoot-distance", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ url: draft.komootUrl }),
-                    })
-                    const j = await r.json()
-                    if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
-                    // Round distance to 2 decimals to match the rest of
-                    // the dataset shape (e.g. 19.09); hours comes back
-                    // already rounded server-side.
-                    setDraft((d) => ({
-                      ...d,
-                      distanceKm: Math.round(j.distanceKm * 100) / 100,
-                      hours: j.hours,
-                    }))
-                  } catch (e) {
-                    setPullDistanceError((e as Error).message)
-                  } finally {
-                    setPullingDistance(false)
-                  }
-                }}
-                disabled={pullingDistance || !draft.komootUrl.trim()}
-                className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
-                title="Fetch distance and duration from the Komoot tour page"
-              >
-                {pullingDistance ? (
-                  <span className="inline-flex items-center gap-1">
-                    {/* Inline SVG spinner — keeps the button width
-                        roughly stable while the request is in flight. */}
-                    <svg
-                      aria-hidden="true"
-                      className="h-3 w-3 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="4" />
-                      <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                    </svg>
-                    Pulling…
-                  </span>
-                ) : (
-                  "Pull distance"
-                )}
-              </button>
-            </div>
-            {pullDistanceError && (
-              <p className="mt-1 text-[11px] text-destructive">
-                {pullDistanceError}
-              </p>
-            )}
-          </div>
-
-          {/* Free-text miscellany — non-mud warnings plus other notes
-              ("MOD closures apply", "Chalk paths can be slippery", etc). */}
-          <div className="mb-3">
-            <Label htmlFor={`misc-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Miscellany
-              <span className="ml-1 font-normal italic text-muted-foreground/70">
-                free text
-              </span>
-            </Label>
-            <Input
-              id={`misc-${walk.id}`}
-              value={draft.miscellany}
-              onChange={(e) => setDraft((d) => ({ ...d, miscellany: e.target.value }))}
-              className="h-7 text-xs"
-            />
-          </div>
-
-          {/* Train tips — booking advice (singles vs returns, off-peak
-              windows etc). Renders in the public prose as its own
-              sentence right after miscellany. */}
-          <div className="mb-3">
-            <Label htmlFor={`tips-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Train tips
-              <span className="ml-1 font-normal italic text-muted-foreground/70">
-                free text
-              </span>
-            </Label>
-            <Input
-              id={`tips-${walk.id}`}
-              value={draft.trainTips}
-              onChange={(e) => setDraft((d) => ({ ...d, trainTips: e.target.value }))}
-              className="h-7 text-xs"
-            />
-          </div>
-
-          {/* Private note — admin-only scratchpad. Never rendered in
-              public prose. Useful for curation TODOs ("distance
-              conflicts between Komoot and SWC", "check after bridge
-              reopens", etc). */}
-          <div className="mb-3">
-            <Label htmlFor={`priv-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
-              Private note
-              <span className="ml-1 font-normal italic text-muted-foreground/70">
-                admin-only
-              </span>
-            </Label>
-            <Input
-              id={`priv-${walk.id}`}
-              value={draft.privateNote}
-              onChange={(e) => setDraft((d) => ({ ...d, privateNote: e.target.value }))}
-              className="h-7 text-xs"
-            />
-          </div>
+          </CollapsibleSection>
 
           {/* Save / delete footer — delete sits on the right and is
               gated behind a ConfirmDialog so a misclick doesn't
@@ -1798,35 +1850,13 @@ function SightsEditor({
   sights: SightDraft[]
   onChange: (next: SightDraft[]) => void
 }) {
-  // Collapsed by default — sights can bloat the card and most edits
-  // happen on the scalar fields above. Clicking the header toggles.
-  const [expanded, setExpanded] = useState(false)
+  // Sights live inside their own CollapsibleSection so the styling
+  // matches the new top-level sections (Key info / Tips / Private).
+  // Title gets a "(N)" badge when sights exist so the admin sees the
+  // row count without expanding.
   return (
-    <div className="mb-3">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        aria-controls={`sights-body-${walkId}`}
-        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
-      >
-        {/* Chevron rotates 0° collapsed / 90° expanded. `inline-block` so
-            the transform applies; matches the arrow iconography used
-            elsewhere in the card. */}
-        <span
-          aria-hidden="true"
-          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
-        >
-          ▸
-        </span>
-        Sights
-        {sights.length > 0 && (
-          <span className="italic text-muted-foreground/70">({sights.length})</span>
-        )}
-      </button>
-      {expanded && (
-      <div id={`sights-body-${walkId}`}>
-      <div className="mt-1 flex flex-col gap-2">
+    <CollapsibleSection title="Sights" bodyId={`sights-body-${walkId}`} count={sights.length}>
+      <div className="flex flex-col gap-2">
         {sights.map((s, i) => (
           <div
             key={i}
@@ -1930,9 +1960,7 @@ function SightsEditor({
           we later wire the first input up to it; not strictly required
           since each row has its own label via placeholder. */}
       <span id={`sights-${walkId}`} className="sr-only" />
-      </div>
-      )}
-    </div>
+    </CollapsibleSection>
   )
 }
 
@@ -1963,31 +1991,12 @@ function LunchStopsEditor({
   stops: LunchDraft[]
   onChange: (next: LunchDraft[]) => void
 }) {
-  // Collapsed by default — same reasoning as SightsEditor above.
-  const [expanded, setExpanded] = useState(false)
+  // Lunch stops live inside their own CollapsibleSection so the
+  // styling matches the new top-level sections. Same pattern as
+  // SightsEditor above.
   return (
-    <div className="mb-3">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        aria-controls={`lunch-body-${walkId}`}
-        className="flex w-full items-center gap-1 text-left text-xs text-muted-foreground hover:text-foreground"
-      >
-        <span
-          aria-hidden="true"
-          className={`inline-block transition-transform ${expanded ? "rotate-90" : ""}`}
-        >
-          ▸
-        </span>
-        Lunch stops
-        {stops.length > 0 && (
-          <span className="italic text-muted-foreground/70">({stops.length})</span>
-        )}
-      </button>
-      {expanded && (
-      <div id={`lunch-body-${walkId}`}>
-      <div className="mt-1 flex flex-col gap-2">
+    <CollapsibleSection title="Lunch stops" bodyId={`lunch-body-${walkId}`} count={stops.length}>
+      <div className="flex flex-col gap-2">
         {stops.map((s, i) => (
           <div
             key={i}
@@ -2158,8 +2167,6 @@ function LunchStopsEditor({
         + Add lunch stop
       </button>
       <span id={`lunch-${walkId}`} className="sr-only" />
-      </div>
-      )}
-    </div>
+    </CollapsibleSection>
   )
 }

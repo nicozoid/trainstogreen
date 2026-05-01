@@ -1,3 +1,4 @@
+import path from "node:path"
 import { NextResponse } from "next/server"
 import { ConflictError, commitMultipleDataFiles } from "@/lib/github-data"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
@@ -72,10 +73,23 @@ export async function commitWalkSave(
   // datasets instead of writing files; the non-null assertion below is
   // safe because of that flag (the script only returns undefined in
   // its CLI/file-write mode).
+  //
+  // overrideWalks: the just-mutated source file hasn't been flushed to
+  // disk yet (the atomic commit happens AFTER this rebuild). Without an
+  // override, buildRamblerNotes would re-read the stale on-disk copy
+  // and produce derived files that lag the source by one save —
+  // visible most obviously on DELETE, where the deleted walk lingers
+  // in station-notes.json until the next save catches up. The Map key
+  // is the absolute path because that's what build-rambler-notes
+  // resolves WALKS_PATH / EXTRA_WALKS_PATHS to via path.join.
+  const overrideWalks = new Map<string, unknown>([
+    [path.resolve(process.cwd(), sourceFile.path), sourceFile.data],
+  ])
   const built = (await buildRamblerNotes({
     dryRun: false,
     flipOnMap: false,
     returnData: true,
+    overrideWalks,
   }))!
 
   await commitMultipleDataFiles(
