@@ -51,5 +51,9 @@ storybook-static
 # Regenerated on every run via scripts/tfl-build-master-queue.mjs.
 .tfl-queue/
 
-# Boundary GeoJSON files (re-downloaded by scripts/fetch-station-areas.mjs)
-data/boundaries/
+# Boundary GeoJSON files. The two below are re-downloaded by
+# scripts/fetch-station-areas.mjs from public URLs, so we don't need to
+# commit them. historic-counties.geojson IS committed because HCBP has no
+# public download URL — see the script header for the attribution licence.
+data/boundaries/national-parks.geojson
+data/boundaries/aonb.geojson
