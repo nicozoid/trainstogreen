@@ -10102,68 +10102,54 @@
         "lunchStops": [
           {
             "name": "Merlins Cave",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Deli on the Green",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Feathers pub",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Crown Coffee",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "Milton's Head",
-            "location": "Chalfont St Giles",
-            "url": null
+            "location": "Chalfont St Giles"
           },
           {
             "name": "White Hart Inn",
-            "location": "Three Households",
-            "url": null
+            "location": "Three Households"
           }
         ],
         "terrain": "Gently rolling wooded hills, open fields, Buckinghamshire countryside, parkland, golf course",
         "sights": [
           {
-            "name": "Bekonscot Model Village and Railway",
-            "url": null
+            "name": "Bekonscot Model Village and Railway"
           },
           {
-            "name": "Parish Church of St Michael and All Angels",
-            "url": null
+            "name": "Parish Church of St Michael and All Angels"
           },
           {
-            "name": "Hodgemoor Woods",
-            "url": null
+            "name": "Hodgemoor Woods"
           },
           {
-            "name": "Milton's Cottage",
-            "url": null
+            "name": "Milton's Cottage"
           },
           {
-            "name": "Parish Church of Chalfont St Giles",
-            "url": null
+            "name": "Parish Church of Chalfont St Giles"
           },
           {
-            "name": "Friends Meeting House",
-            "url": null
+            "name": "Friends Meeting House"
           },
           {
-            "name": "Quaker Burial Ground",
-            "url": null
+            "name": "Quaker Burial Ground"
           },
           {
-            "name": "Mayflower Barn",
-            "url": null
+            "name": "Mayflower Barn"
           }
         ],
         "miscellany": "Can be muddy",
@@ -10181,7 +10167,9 @@
           "pageName": "Beaconsfield Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/beaconsfield-circular/",
           "type": "related"
-        }
+        },
+        "suffix": "via Chalfont St Giles",
+        "updatedAt": "2026-05-01T14:16:22.688Z"
       },
       {
         "role": "shorter",
@@ -13331,7 +13319,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Tring",
         "endPlace": "Wendover",
         "startStation": "TRI",
@@ -13343,47 +13330,37 @@
         "lunchStops": [
           {
             "name": "Oak",
-            "location": "Aston Clinton",
-            "url": null
+            "location": "Aston Clinton"
           }
         ],
         "terrain": "Flat canal towpath, reservoir banks, open arable fields, wooded Chilterns hills, steep descents",
         "sights": [
           {
-            "name": "Tring Reservoirs",
-            "url": null
+            "name": "Tring Reservoirs"
           },
           {
-            "name": "All Saints Church, Buckland",
-            "url": null
+            "name": "All Saints Church, Buckland"
           },
           {
-            "name": "St Mary the Virgin, Drayton Beauchamp",
-            "url": null
+            "name": "St Mary the Virgin, Drayton Beauchamp"
           },
           {
-            "name": "Halton House",
-            "url": null
+            "name": "Halton House"
           },
           {
-            "name": "Wendover Arm Canal",
-            "url": null
+            "name": "Wendover Arm Canal"
           },
           {
-            "name": "Boddington Hill Fort",
-            "url": null
+            "name": "Boddington Hill Fort"
           },
           {
-            "name": "Coombe Hill",
-            "url": null
+            "name": "Coombe Hill"
           },
           {
-            "name": "Go Ape",
-            "url": null
+            "name": "Go Ape"
           },
           {
-            "name": "Rumsey's Chocolaterie",
-            "url": null
+            "name": "Rumsey's Chocolaterie"
           }
         ],
         "miscellany": "Steep chalky descent",
@@ -13400,7 +13377,9 @@
           "pageName": "Tring to Wendover",
           "pageURL": "https://www.walkingclub.org.uk/walk/tring-to-wendover/",
           "type": "related"
-        }
+        },
+        "suffix": "via Aston Clinton",
+        "updatedAt": "2026-05-01T14:27:01.607Z"
       }
     ]
   },
@@ -82475,7 +82454,6 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
         "startPlace": "Shiplake",
         "endPlace": "Henley",
         "startStation": "SHI",
@@ -82487,56 +82465,44 @@
         "lunchStops": [
           {
             "name": "Maltsters Arms",
-            "location": "Rotherfield Greys",
-            "url": null
+            "location": "Rotherfield Greys"
           },
           {
             "name": "Bottle & Glass Inn",
-            "location": "Binfield Heath",
-            "url": null
+            "location": "Binfield Heath"
           }
         ],
         "terrain": "Riverside Thames path, bluebell and beech woods, open agricultural fields, gentle hills, golf course, historic village, market town riverfront",
         "sights": [
           {
-            "name": "Shiplake Lock",
-            "url": null
+            "name": "Shiplake Lock"
           },
           {
-            "name": "Shiplake Church",
-            "url": null
+            "name": "Shiplake Church"
           },
           {
-            "name": "Shiplake College",
-            "url": null
+            "name": "Shiplake College"
           },
           {
-            "name": "St Nicholas Church",
-            "url": null
+            "name": "St Nicholas Church"
           },
           {
-            "name": "Greys Court",
-            "url": null
+            "name": "Greys Court"
           },
           {
-            "name": "Lambridge Wood",
-            "url": null
+            "name": "Lambridge Wood"
           },
           {
-            "name": "Friar Park",
-            "url": null
+            "name": "Friar Park"
           },
           {
-            "name": "Friar Park's lodge house",
-            "url": null
+            "name": "Friar Park's lodge house"
           },
           {
-            "name": "St Mary the Virgin",
-            "url": null
+            "name": "St Mary the Virgin"
           },
           {
-            "name": "Red Lion Hotel",
-            "url": null
+            "name": "Red Lion Hotel"
           }
         ],
         "miscellany": "Can flood after rain",
@@ -82551,14 +82517,15 @@
           "pageURL": "",
           "type": "main"
         },
-        "suffix": "via Shiplake Lock",
+        "suffix": "via Greys Court",
         "komootUrl": "https://www.komoot.com/tour/2920707447",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Shiplake to Henley",
           "pageURL": "https://www.walkingclub.org.uk/walk/shiplake-to-henley/",
           "type": "related"
-        }
+        },
+        "updatedAt": "2026-05-01T14:13:53.286Z"
       },
       {
         "role": "variant",
