@@ -277,6 +277,10 @@ type StationModalProps = {
    *  than just "Birmingham". Different from clusterMemberNames above,
    *  which is for the OVERLAY's own synthetic (cluster header copy). */
   friendClusterMemberNames?: string[]
+  /** Ceremonial county the station sits in (e.g. "Kent", "Surrey") */
+  county?: string
+  /** National park or AONB / National Landscape name (e.g. "South Downs") */
+  protectedArea?: string
   /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
    *  adminMode is true, the title is prefixed with the code — helps
    *  cross-reference the admin RTT status panel and origin-routes.json. */
@@ -768,6 +772,8 @@ export default function StationModal({
   clusterMembers,
   syntheticJourneyMember,
   friendClusterMemberNames,
+  county,
+  protectedArea,
   stationCrs,
   clusterMemberCrsCodes,
   adminMode = false,
@@ -1243,7 +1249,7 @@ export default function StationModal({
           }}
           className="shrink-0 flex items-center justify-between gap-5 px-6 pt-6 pb-2 max-sm:sticky max-sm:top-0 max-sm:z-10 max-sm:cursor-pointer max-sm:bg-popover max-sm:pt-3 max-sm:pb-2"
         >
-          <div className="flex flex-col gap-1 min-w-0">
+          <div className="flex flex-col gap-0 min-w-0">
             <DialogTitle className="text-2xl sm:text-3xl">
               {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
             </DialogTitle>
@@ -1251,6 +1257,17 @@ export default function StationModal({
                 primary or friend (e.g. "Stratford", "Birmingham"). Lists
                 the underlying member stations using the standard "A, B,
                 and C" English serial form. */}
+            {/* County + optional protected area — sits ABOVE the cluster
+                header so the geographic context comes first. Skipped when
+                the county name starts with the station name (e.g. the
+                "London" cluster has county "London"; the "Leicester"
+                cluster has county "Leicestershire" — both would be
+                redundant with the title). */}
+            {county && !county.toLowerCase().startsWith(stationName.toLowerCase()) && (
+              <p className="text-sm text-muted-foreground">
+                {protectedArea ? `${county} | ${protectedArea}` : county}
+              </p>
+            )}
             {clusterMemberNames && clusterMemberNames.length > 0 && (
               <p className="text-sm text-muted-foreground">
                 {`A cluster of ${clusterMemberNames.length} stations: ${
