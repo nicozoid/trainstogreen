@@ -9386,5 +9386,19 @@
         "dateTaken": "2017-11-12 11:24:39"
       }
     ]
+  },
+  "-0.4331815,50.8176931": {
+    "name": "Goring-by-Sea",
+    "approved": [
+      {
+        "id": "39864858702",
+        "title": "Goring-By-Sea Blues",
+        "ownerName": "E_W_Photo",
+        "thumbnailUrl": "https://live.staticflickr.com/4704/39864858702_b8da23c70c.jpg",
+        "largeUrl": "https://live.staticflickr.com/4704/39864858702_b8da23c70c_b.jpg",
+        "flickrUrl": "https://www.flickr.com/photos/133250745@N06/39864858702",
+        "dateTaken": "2018-01-25 08:42:10"
+      }
+    ]
   }
 }
