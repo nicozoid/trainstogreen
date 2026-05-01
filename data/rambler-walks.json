@@ -9893,7 +9893,7 @@
           "type": "main"
         },
         "suffix": "via Chalfont St Giles",
-        "rating": 1,
+        "rating": null,
         "ratingExplanation": "An excess of plain open fields",
         "updatedAt": "2026-04-28T07:50:41.657Z"
       }
@@ -12643,7 +12643,7 @@
         "miscellany": "Can be muddy",
         "id": "prrwndtwite",
         "mudWarning": true,
-        "rating": 2,
+        "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -13080,7 +13080,7 @@
         },
         "updatedAt": "2026-04-27T17:25:23.547Z",
         "suffix": "via Ridgeway",
-        "rating": 4,
+        "rating": null,
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring Circular",
@@ -21113,7 +21113,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/battle-circular/",
           "type": "main"
         },
-        "rating": 4,
+        "rating": null,
         "updatedAt": "2026-04-27T19:15:55.715Z"
       }
     ]
@@ -25933,7 +25933,7 @@
           }
         ],
         "id": "lwsseepoppy",
-        "rating": 4,
+        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes Circular via Glynde and Southease",
@@ -25941,7 +25941,7 @@
           "type": "shorter"
         },
         "suffix": "via Glynde",
-        "updatedAt": "2026-04-27T17:57:48.459Z"
+        "updatedAt": "2026-05-01T14:51:41.138Z"
       },
       {
         "role": "shorter",
@@ -28791,7 +28791,7 @@
         ],
         "miscellany": "Crumbly cliff edges",
         "id": "sefebndunnock",
-        "rating": 4,
+        "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -79768,8 +79768,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "rating": 4,
-        "updatedAt": "2026-04-27T17:41:11.779Z",
+        "updatedAt": "2026-05-01T14:33:09.020Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Hanborough to Charlbury",
@@ -97920,7 +97919,7 @@
           "pageURL": "",
           "type": "variant"
         },
-        "rating": 4,
+        "rating": null,
         "updatedAt": "2026-04-27T17:54:34.310Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
@@ -106392,7 +106391,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "rating": 4,
+        "rating": null,
         "updatedAt": "2026-04-27T22:09:38.796Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
@@ -108561,7 +108560,10 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/balcombe-circular/",
           "type": "similar"
         },
-        "updatedAt": "2026-05-01T08:39:38.560Z"
+        "updatedAt": "2026-05-01T08:39:38.560Z",
+        "previousWalkDates": [
+          "2025-12-16"
+        ]
       }
     ]
   },
@@ -117603,7 +117605,7 @@
           "type": "main"
         },
         "suffix": "via Cranborne Chase Area of Outstanding Natural Beauty",
-        "rating": 4,
+        "rating": null,
         "updatedAt": "2026-04-27T19:02:55.370Z"
       }
     ]
@@ -126135,7 +126137,10 @@
         "ratingExplanation": "Spoiled by a long trek along a busy road near Audley End",
         "komootUrl": "https://www.komoot.com/tour/2921497547",
         "distanceKm": 13.9,
-        "hours": 3.72
+        "hours": 3.72,
+        "previousWalkDates": [
+          "2023-02-11"
+        ]
       }
     ],
     "extracted": true,
@@ -126177,7 +126182,10 @@
         "komootUrl": "https://www.komoot.com/tour/2921483662",
         "suffix": "via Chaldon Way",
         "distanceKm": 15.1,
-        "hours": 4.07
+        "hours": 4.07,
+        "previousWalkDates": [
+          "2021-12-18"
+        ]
       }
     ],
     "extracted": true,
@@ -126220,7 +126228,10 @@
         "komootUrl": "https://www.komoot.com/tour/2919353871",
         "rating": 2,
         "distanceKm": 7.47,
-        "hours": 2.02
+        "hours": 2.02,
+        "previousWalkDates": [
+          "2026-04-29"
+        ]
       }
     ],
     "extracted": true,

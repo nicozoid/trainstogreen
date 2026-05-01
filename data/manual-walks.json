@@ -85,7 +85,10 @@
         "ratingExplanation": "Spoiled by a long trek along a busy road near Audley End",
         "komootUrl": "https://www.komoot.com/tour/2921497547",
         "distanceKm": 13.9,
-        "hours": 3.72
+        "hours": 3.72,
+        "previousWalkDates": [
+          "2023-02-11"
+        ]
       }
     ],
     "extracted": true,
@@ -127,7 +130,10 @@
         "komootUrl": "https://www.komoot.com/tour/2921483662",
         "suffix": "via Chaldon Way",
         "distanceKm": 15.1,
-        "hours": 4.07
+        "hours": 4.07,
+        "previousWalkDates": [
+          "2021-12-18"
+        ]
       }
     ],
     "extracted": true,
@@ -170,7 +176,10 @@
         "komootUrl": "https://www.komoot.com/tour/2919353871",
         "rating": 2,
         "distanceKm": 7.47,
-        "hours": 2.02
+        "hours": 2.02,
+        "previousWalkDates": [
+          "2026-04-29"
+        ]
       }
     ],
     "extracted": true,
