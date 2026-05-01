@@ -44508,8 +44508,7 @@
         "endStation": "BKM",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.7,
-        "hours": 4.38,
+        "distanceKm": 15.3,
         "lunchStops": [
           {
             "name": "Golden Eagle",
@@ -44549,8 +44548,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/berkhamsted-circular/",
           "type": "main"
         },
-        "suffix": "via Hockeridge Woods",
-        "komootUrl": "https://www.komoot.com/tour/2921258404"
+        "suffix": "via Hockeridge Woods"
       },
       {
         "role": "shorter",
