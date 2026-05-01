@@ -106,21 +106,27 @@ type WalkPayload = {
 
 // Walk ordering — automatic, not admin-overridable.
 // Sort keys (ASC — lower value wins):
-//   1. requiresBus     (bus-requiring walks always drop to the BOTTOM;
-//                       they're never published to the public anyway
-//                       so the CMS list keeps the publishable walks
-//                       on top)
-//   2. !komootUrl      (walks with a Komoot route come first)
-//   3. !isMain         (main walks first; non-mains are not
-//                       further sorted among themselves by subtype —
-//                       the SOURCE_TYPES dropdown order no longer
-//                       affects position)
-//   4. ratingTier      (4, 3, 2, 1, unrated — any rating beats unrated)
-//   5. distanceScore   (|distanceKm - IDEAL_LENGTH_KM| — closest to
-//                       ideal first; missing distance sorts last)
-//   6. pageTitle       (deterministic tiebreaker)
+//   1. requiresBus       (bus-requiring walks always drop to the BOTTOM;
+//                         they're never published to the public anyway
+//                         so the CMS list keeps the publishable walks
+//                         on top)
+//   2. !komootUrl        (walks with a Komoot route come first)
+//   3. sectionPriority   (circular → S2S-starting-here → S2S-ending-here;
+//                         groups walks of the same section together
+//                         in the admin list. The public view doesn't
+//                         use this key directly — it's already split
+//                         into three sectioned blocks server-side —
+//                         but the admin's mixed list benefits.)
+//   4. !isMain           (main walks first; non-mains are not
+//                         further sorted among themselves by subtype —
+//                         the SOURCE_TYPES dropdown order no longer
+//                         affects position)
+//   5. ratingTier        (4, 3, 2, 1, unrated — any rating beats unrated)
+//   6. distanceScore     (|distanceKm - IDEAL_LENGTH_KM| — closest to
+//                         ideal first; missing distance sorts last)
+//   7. pageTitle         (deterministic tiebreaker)
 // Keep IDEAL_LENGTH_KM in sync with scripts/build-rambler-notes.mjs.
-const IDEAL_LENGTH_KM = 10
+const IDEAL_LENGTH_KM = 13
 // Mirrors the paragraph order used by scripts/build-rambler-notes.mjs
 // so the admin cards appear in the same order as the rendered prose.
 const RATING_TIERS: Record<string, number> = {
@@ -209,6 +215,18 @@ export async function GET(req: NextRequest) {
       ? Math.abs(km - IDEAL_LENGTH_KM)
       : Number.POSITIVE_INFINITY
 
+  // Section priority — relative to the queried CRS. Circular walks
+  // (same start & end station) come first, then S2S walks where this
+  // station is the start, then S2S walks where this station is the
+  // end. For multi-CRS synthetic queries the sort still runs per
+  // batch in the API; the client merges pre-sorted batches without
+  // re-sorting (acceptable approximation — this is admin-only).
+  const sectionPriority = (w: WalkPayload): number => {
+    if (w.startStation && w.startStation === w.endStation) return 0
+    if (w.startStation === crs) return 1
+    return 2
+  }
+
   out.sort((a, b) => {
     // 1. Bus-requiring walks always sink to the bottom. These can
     //    never be published to the public (the build script filters
@@ -222,20 +240,23 @@ export async function GET(req: NextRequest) {
     const ka = a.komootUrl ? 0 : 1
     const kb = b.komootUrl ? 0 : 1
     if (ka !== kb) return ka - kb
-    // 3. Main walks first. No further type-subtype ordering among
+    // 3. Section priority (circular → starting here → ending here).
+    const sa = sectionPriority(a), sb = sectionPriority(b)
+    if (sa !== sb) return sa - sb
+    // 4. Main walks first. No further type-subtype ordering among
     //    non-mains. source.type is the modern home; fall back to
     //    legacy `role` for older walks.
     const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
     const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
     if (ma !== mb) return ma - mb
-    // 4. Rating tier (4 → 3 → 2 → 1 → unrated).
+    // 5. Rating tier (4 → 3 → 2 → 1 → unrated).
     const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
     if (ta !== tb) return ta - tb
-    // 5. Distance proximity to IDEAL_LENGTH_KM — closest first; missing last.
+    // 6. Distance proximity to IDEAL_LENGTH_KM — closest first; missing last.
     const da = distanceScore(a.distanceKm)
     const db = distanceScore(b.distanceKm)
     if (da !== db) return da - db
-    // 6. Alphabetic pageTitle for deterministic tiebreak.
+    // 7. Alphabetic pageTitle for deterministic tiebreak.
     return a.pageTitle.localeCompare(b.pageTitle)
   })
 

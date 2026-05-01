@@ -11,7 +11,7 @@ const WALKS_FILES = [
   "data/manual-walks.json",
 ]
 
-type WalkVariant = { startStation?: string | null; rating?: number | null }
+type WalkVariant = { startStation?: string | null; endStation?: string | null; rating?: number | null }
 type WalkEntry = { walks?: WalkVariant[] }
 
 // Returns a map of coordKey → derived station rating (1..4). Stations
@@ -83,18 +83,26 @@ export async function GET() {
     for (const entry of Object.values(entries)) {
       if (!Array.isArray(entry.walks)) continue
       for (const v of entry.walks) {
-        const crs = v.startStation
-        if (!crs) continue
-        const tally = byCrs.get(crs) ?? { max: null, sawAnyWalk: false, sawRated1: false }
-        tally.sawAnyWalk = true
-        if (typeof v.rating === "number") {
-          const r = Math.round(v.rating)
-          if (r >= 1 && r <= 4) {
-            tally.max = tally.max == null ? r : Math.max(tally.max, r)
-            if (r === 1) tally.sawRated1 = true
+        // Each walk contributes to BOTH endpoints' tallies. A
+        // rating-1 walk from BCU to LYT signals "below-average walks
+        // on this corridor" for both Brockenhurst and Lymington Town.
+        // Circular walks (start === end) only contribute once via the
+        // dedup below.
+        const endpoints = new Set<string>()
+        if (v.startStation) endpoints.add(v.startStation)
+        if (v.endStation) endpoints.add(v.endStation)
+        for (const crs of endpoints) {
+          const tally = byCrs.get(crs) ?? { max: null, sawAnyWalk: false, sawRated1: false }
+          tally.sawAnyWalk = true
+          if (typeof v.rating === "number") {
+            const r = Math.round(v.rating)
+            if (r >= 1 && r <= 4) {
+              tally.max = tally.max == null ? r : Math.max(tally.max, r)
+              if (r === 1) tally.sawRated1 = true
+            }
           }
+          byCrs.set(crs, tally)
         }
-        byCrs.set(crs, tally)
       }
     }
   }

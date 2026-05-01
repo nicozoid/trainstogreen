@@ -120,7 +120,7 @@ function ratingTierOf(rating) {
 // distance sort key. Tweak to shift the bias (e.g. 13 prefers a
 // full-day hike, 8 a half-day stroll). Keep in sync with
 // IDEAL_LENGTH_KM in app/api/dev/walks-for-station/route.ts.
-const IDEAL_LENGTH_KM = 10
+const IDEAL_LENGTH_KM = 13
 
 // Distance score — |distanceKm - IDEAL_LENGTH_KM|. Closer to ideal
 // sorts higher; walks without a recorded distance fall to the
@@ -135,16 +135,28 @@ function distanceScore(distanceKm) {
 
 // Order ramblerParts at a station:
 //   1. hasKomoot DESC (walks with a Komoot route come first)
+//   2. sectionPriority ASC (circular → S2S-starting → S2S-ending —
+//                           groups paragraphs of the same section
+//                           together within the admin's full prose)
 //   3. isMain DESC (main walks first; non-mains don't get a
 //                   further subtype ordering among themselves)
 //   4. ratingTier ASC (4 on top, then 3, 2, 1, unrated)
 //   5. distanceScore ASC (closest to IDEAL_LENGTH_KM first; missing
 //                         sorts last)
 //   6. pageTitle ASC for stable alphabetic tiebreak
+// The bus key from the unified spec is omitted here because every
+// part already has stationToStation === true (bus walks are filtered
+// upstream at line ~719) — adding it would be a no-op.
 // Mirrors the CMS sort in app/api/dev/walks-for-station/route.ts —
 // keep both in step.
+function sectionPriority(p) {
+  if (p.isCircular) return 0
+  return p.role === "starting" ? 1 : 2
+}
 function compareRamblerParts(a, b) {
   if (a.hasKomoot !== b.hasKomoot) return a.hasKomoot ? -1 : 1
+  const sa = sectionPriority(a), sb = sectionPriority(b)
+  if (sa !== sb) return sa - sb
   if (a.isMain !== b.isMain) return a.isMain ? -1 : 1
   if (a.ratingTier !== b.ratingTier) return a.ratingTier - b.ratingTier
   if (a.distanceScore !== b.distanceScore) return a.distanceScore - b.distanceScore
@@ -764,6 +776,10 @@ function buildRamblerNotes(args) {
           summary,
           ratingTier: ratingTierOf(variant.rating),
           hasKomoot: !!variant.komootUrl,
+          // GPX is an entry-level field, shared by every variant on
+          // the same source page. Tracked per-part so the public-tier
+          // filter (Komoot/GPX > main > all) can short-circuit on it.
+          hasGpx: typeof entry.gpx === "string" && entry.gpx.trim() !== "",
           isMain: sourceType === "main",
           isCircular,
           // Raw source type kept for possible future per-subtype
@@ -818,19 +834,24 @@ function buildRamblerNotes(args) {
   //   file stays clean.
   const changes = { added: 0, updated: 0, cleared: 0, removed: 0 }
 
-  // Apply per-section quota: every main passes; variants fill up to
-  // 3 walks per section (so 0 mains → 3 variants, 1 main → 2, 2 mains
-  // → 1, 3+ mains → 0). Returns the gated subset preserving order.
-  function quotaFilterPerSection(parts) {
-    const mainCount = parts.filter((p) => p.isMain).length
-    const variantQuota = mainCount >= 3 ? 0 : 3 - mainCount
-    let variantsAdded = 0
-    return parts.filter((p) => {
-      if (p.isMain) return true
-      if (variantsAdded >= variantQuota) return false
-      variantsAdded++
-      return true
-    })
+  // Station-wide public tier filter — drastically reduces clutter by
+  // showing only the most curated walks at each station. Cascading:
+  //   Tier 1: any walk with a Komoot URL or GPX → show only those
+  //   Tier 2: else any main walk → show only mains
+  //   Tier 3: else show all (parts already exclude bus walks because
+  //           the build only iterates stationToStation === true)
+  // The chosen tier applies station-wide; circular and S2S sections
+  // share one decision, so a single Komoot circular walk will hide
+  // non-Komoot S2S walks elsewhere on the station. No per-section
+  // quota — every walk in the chosen tier is rendered.
+  function publicTierFilter(parts) {
+    if (parts.some((p) => p.hasKomoot || p.hasGpx)) {
+      return parts.filter((p) => p.hasKomoot || p.hasGpx)
+    }
+    if (parts.some((p) => p.isMain)) {
+      return parts.filter((p) => p.isMain)
+    }
+    return parts
   }
 
   // ── Synthetic aggregation ────────────────────────────────────────
@@ -900,20 +921,19 @@ function buildRamblerNotes(args) {
     // because buildSummary returns null when stationToStation is
     // false). Distinct from the public view's three sectioned blocks.
     const adminWalksAll = ordered.map((p) => p.summary).join("\n\n")
-    // Public sectioning. Each part routes into one of three sections:
+    // Public view — apply the station-wide tier filter first, then
+    // split the survivors into the three section buckets:
     // - circular  (isCircular — same start & end station)
     // - s2s starting here (role === "starting")
     // - s2s ending here   (role === "ending")
-    // Each section applies its own quotaFilterPerSection 3-walks cap.
-    const circularParts = ordered.filter((p) => p.isCircular)
-    const s2sStartingParts = ordered.filter((p) => !p.isCircular && p.role === "starting")
-    const s2sEndingParts = ordered.filter((p) => !p.isCircular && p.role === "ending")
-    const publicWalksCircular = quotaFilterPerSection(circularParts)
-      .map((p) => p.summary).join("\n\n")
-    const publicWalksS2S = quotaFilterPerSection(s2sStartingParts)
-      .map((p) => p.summary).join("\n\n")
-    const publicWalksS2SEnding = quotaFilterPerSection(s2sEndingParts)
-      .map((p) => p.summary).join("\n\n")
+    // Empty sections aren't rendered (handled by photo-overlay).
+    const publicOrdered = publicTierFilter(ordered)
+    const publicCircularParts = publicOrdered.filter((p) => p.isCircular)
+    const publicS2SStartingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "starting")
+    const publicS2SEndingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "ending")
+    const publicWalksCircular = publicCircularParts.map((p) => p.summary).join("\n\n")
+    const publicWalksS2S = publicS2SStartingParts.map((p) => p.summary).join("\n\n")
+    const publicWalksS2SEnding = publicS2SEndingParts.map((p) => p.summary).join("\n\n")
     if (notes[coordKey]) {
       const beforeAdmin = notes[coordKey].adminWalksAll
       notes[coordKey].adminWalksAll = adminWalksAll
