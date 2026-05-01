@@ -292,7 +292,8 @@ function formatLunchStops(stops) {
 // org-level name/URL from sources.json instead. Detected by slug
 // prefix for now (extend the check when we add more book sources).
 function isBookSource(orgSlug) {
-  return typeof orgSlug === "string" && orgSlug.startsWith("rough-guide-")
+  if (typeof orgSlug !== "string") return false
+  return orgSlug.startsWith("rough-guide-") || orgSlug.startsWith("time-out-country-walks-")
 }
 
 function formatSourceClause(variant, entry, sources) {
@@ -751,10 +752,16 @@ function buildRamblerNotes(args) {
     for (const variant of entry.walks) {
       const orgs = []
       const srcOrg = variant.source?.orgSlug
-      if (typeof srcOrg === "string" && srcOrg.trim()) orgs.push(srcOrg.trim())
+      const srcOk = typeof srcOrg === "string" && srcOrg.trim() !== ""
+      if (srcOk) orgs.push(srcOrg.trim())
       const relOrg = variant.relatedSource?.orgSlug
-      if (typeof relOrg === "string" && relOrg.trim()) orgs.push(relOrg.trim())
-      if (orgs.length === 0) continue
+      const relOk = typeof relOrg === "string" && relOrg.trim() !== ""
+      if (relOk) orgs.push(relOrg.trim())
+      // Sentinel "none" — record stations with at least one variant
+      // missing source.orgSlug OR missing relatedSource.orgSlug.
+      // Drives the admin "No source" dropdown option, which surfaces
+      // walks with at least one provenance gap to fill.
+      if (!srcOk || !relOk) orgs.push("none")
       const seen = new Set()
       for (const crs of [variant.startStation, variant.endStation]) {
         if (!crs) continue

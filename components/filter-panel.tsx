@@ -1480,6 +1480,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="off">—</option>
+                {/* "No source" — sentinel value matching the build
+                    script's "none" key. Surfaces stations where ≥1
+                    attached walk has neither source.orgSlug nor
+                    relatedSource.orgSlug populated. Hand-coded above
+                    the registered orgs because there's no entry for
+                    it in sources.json. */}
+                <option value="none">No source</option>
                 {SOURCE_ORGS.map((o) => (
                   <option key={o.slug} value={o.slug}>{o.name}</option>
                 ))}
