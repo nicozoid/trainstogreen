@@ -1006,5 +1006,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.4331815,50.8176931": {
+    "name": "Goring-by-Sea",
+    "custom": {
+      "includeTags": [
+        "goring-by-sea",
+        "england coast path",
+        "highdown hill",
+        "highdown gardens",
+        "ecclesden mill",
+        "lighthouse",
+        "goring",
+        "sea",
+        "worthing",
+        "from",
+        "south east",
+        "komoot",
+        "littlehampton",
+        "angmering",
+        "iron age",
+        "miller's tomb",
+        "rampion wind farm",
+        "rustington convalescent home",
+        "east beach caf",
+        "harbour lights caf"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
