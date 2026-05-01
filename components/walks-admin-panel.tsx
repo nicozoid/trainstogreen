@@ -1374,7 +1374,7 @@ function WalkCard({
           {/* Key info — the everyday-edit fields: title pieces,
               rating, Komoot URL, distance/hours. These are what
               changes most often when curating a walk. */}
-          <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`}>
+          <CollapsibleSection title="Key info" bodyId={`keyinfo-section-${walk.id}`} defaultOpen>
             {/* Rating — Unrated + four tier icons. Active tier lights
                 up; clicking the active tier clears it. */}
             <div className="mb-3">
