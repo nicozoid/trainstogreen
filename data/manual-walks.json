@@ -1045,7 +1045,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:17:35.491Z",
         "komootUrl": "https://www.komoot.com/tour/2618431014",
         "distanceKm": 12.3,
         "hours": 3.4,
@@ -1055,7 +1055,10 @@
         "privateNote": "plenty of places to eat in Goring",
         "previousWalkDates": [
           "2025-10-11"
-        ]
+        ],
+        "uphillMetres": 196.25,
+        "difficulty": "moderate",
+        "name": "Pangbourne to Goring via Streatley Hill"
       }
     ],
     "extracted": true,
