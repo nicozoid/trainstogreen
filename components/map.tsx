@@ -27,6 +27,7 @@ import {
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
+import { resolveCoordKey } from "@/lib/station-registry"
 import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -5515,7 +5516,7 @@ export default function HikeMap() {
             return !!alts && alts.length > 0
           }
           if (primaryFeatureFilter === "private-notes") {
-            const entry = stationNotes[f.properties.coordKey as string]
+            const entry = stationNotes[f.properties["ref:crs"] as string]
             return !!entry?.privateNote?.trim()
           }
           if (primaryFeatureFilter === "sloppy-pics") {
@@ -5550,9 +5551,9 @@ export default function HikeMap() {
             return stationsPotentialMonths.has(f.properties.coordKey as string)
           }
           // "Issues" — admin-flagged stations only. hasIssue is station-global
-          // (set keyed by coordKey alone), so no primary-origin lookup needed.
+          // (set keyed by station ID, no primary-origin lookup needed).
           if (primaryFeatureFilter === "issues") {
-            return issueStations.has(f.properties.coordKey as string)
+            return issueStations.has(f.properties["ref:crs"] as string)
           }
           // "Placemark" — admin-flagged stations whose name-label is forced
           // visible at zoom 8+. Station-global like "Issues", same Set-keyed
@@ -6062,7 +6063,9 @@ export default function HikeMap() {
           // can read a cheap boolean property.
           const coord = f.properties.coordKey as string
           const isDest = coord !== primaryOrigin
-          const hasIssue = isDest && issueStations.has(coord)
+          // issueStations is keyed by station ID post Phase 2b. Real-station
+          // features all have ref:crs (their canonical ID).
+          const hasIssue = isDest && issueStations.has(f.properties["ref:crs"] as string)
           // Admin-only "placemark" flag — same shape as hasIssue, stamped
           // here so label-layer filters can read a cheap `isPlacemark` boolean
           // and gate visibility at zoom 8+ for stations whose rating would
@@ -6277,20 +6280,20 @@ export default function HikeMap() {
   // Keyed by the composite "homeCoord|destCoord" string so the backing
   // file's JSON keys are unambiguous and lookups are O(1).
   const handleToggleIssue = useCallback(async (
-    coordKey: string,
+    stationId: string,
     name: string,
     hasIssue: boolean,
   ) => {
     setIssueStations((prev) => {
       const next = new Set(prev)
-      if (hasIssue) next.add(coordKey); else next.delete(coordKey)
+      if (hasIssue) next.add(stationId); else next.delete(stationId)
       return next
     })
     outbox.enqueue({
       endpoint: "/api/dev/has-issue-station",
       method: "POST",
-      body: { coordKey, name, hasIssue },
-      key: `has-issue:${coordKey}`,
+      body: { stationId, name, hasIssue },
+      key: `has-issue:${stationId}`,
       label: `${hasIssue ? "Flag" : "Clear"} issue on ${name}`,
     })
   }, [])
@@ -10481,9 +10484,9 @@ export default function HikeMap() {
                 protectedAreaType: f?.properties?.protectedAreaType as string | undefined,
               }
             })()}
-            hasIssue={issueStations.has(displayStation.coordKey)}
+            hasIssue={issueStations.has(resolveCoordKey(displayStation.coordKey) ?? "")}
             onToggleIssue={(hasIssue: boolean) => handleToggleIssue(
-              displayStation.coordKey,
+              resolveCoordKey(displayStation.coordKey) ?? "",
               displayStation.name,
               hasIssue,
             )}
@@ -10504,12 +10507,15 @@ export default function HikeMap() {
             onPinPhoto={(photo) => handlePinPhoto(displayStation.coordKey, displayStation.name, photo)}
             onUnpinPhoto={(photoId) => handleUnpinPhoto(displayStation.coordKey, displayStation.name, photoId)}
             onMovePhoto={(photoId, direction) => handleMovePhoto(displayStation.coordKey, displayStation.name, photoId, direction)}
-            publicNote={stationNotes[displayStation.coordKey]?.publicNote ?? ""}
-            privateNote={stationNotes[displayStation.coordKey]?.privateNote ?? ""}
-            adminWalksAll={stationNotes[displayStation.coordKey]?.adminWalksAll ?? ""}
-            publicWalksS2S={stationNotes[displayStation.coordKey]?.publicWalksS2S ?? ""}
-            publicWalksS2SEnding={stationNotes[displayStation.coordKey]?.publicWalksS2SEnding ?? ""}
-            publicWalksCircular={stationNotes[displayStation.coordKey]?.publicWalksCircular ?? ""}
+            // stationNotes is keyed by station ID (CRS or 4-char synthetic) post Phase 2b.
+            // The modal can open for either a real station or a cluster anchor —
+            // resolveCoordKey handles both via the registry.
+            publicNote={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.publicNote ?? ""}
+            privateNote={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.privateNote ?? ""}
+            adminWalksAll={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.adminWalksAll ?? ""}
+            publicWalksS2S={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.publicWalksS2S ?? ""}
+            publicWalksS2SEnding={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.publicWalksS2SEnding ?? ""}
+            publicWalksCircular={stationNotes[resolveCoordKey(displayStation.coordKey) ?? ""]?.publicWalksCircular ?? ""}
             onSaveNotes={(pub, priv) => handleSaveNotes(displayStation.coordKey, displayStation.name, pub, priv)}
             onWalkSaved={refreshStationDerivedData}
             defaultAlgo={

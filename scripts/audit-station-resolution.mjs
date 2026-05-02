@@ -106,9 +106,14 @@ for (const [coord, data] of Object.entries(originRoutes)) {
 }
 
 const notes = JSON.parse(fs.readFileSync(path.join(ROOT, "data/station-notes.json"), "utf8"))
-for (const coord of Object.keys(notes)) {
-  checkCoord("station-notes.json", "key", coord, notes[coord]?.name)
+for (const id of Object.keys(notes)) {
+  // Rekeyed from coordKey to station ID in Phase 2b.
+  checkId("station-notes.json", "key", id, notes[id]?.name)
 }
+
+// Same shape change for has-issue-stations.json (Phase 2b).
+const hasIssue = JSON.parse(fs.readFileSync(path.join(ROOT, "data/has-issue-stations.json"), "utf8"))
+for (const id of hasIssue) checkId("has-issue-stations.json", "entry", id, "")
 
 const months = JSON.parse(fs.readFileSync(path.join(ROOT, "data/station-months.json"), "utf8"))
 for (const id of Object.keys(months)) {

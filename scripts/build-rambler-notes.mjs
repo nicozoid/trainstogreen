@@ -771,9 +771,24 @@ function buildRamblerNotes(args) {
   // snapshot). Deep-cloned because the build mutates `notes` in place
   // (preserves admin-authored publicNote/privateNote, rewrites the
   // prose fields), and we don't want to scribble on the caller's copy.
-  const notes = args?.overrideNotes
+  // station-notes.json is keyed by station ID (CRS or 4-char synthetic)
+  // post Phase 2b. The build pipeline below was written against the
+  // older coordKey-keyed shape, so convert at read-time into a
+  // coord-keyed working copy. We translate back to IDs once at write/
+  // return time. This keeps the internal logic ID-agnostic.
+  const coordToId = buildCoordToId()
+  const idToCoord = new Map([...coordToId.entries()].map(([c, i]) => [i, c]))
+  const notesById = args?.overrideNotes
     ? structuredClone(args.overrideNotes)
     : JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
+  const notes = {}
+  for (const [id, entry] of Object.entries(notesById)) {
+    const coord = idToCoord.get(id)
+    if (coord) notes[coord] = entry
+    // Entries whose ID isn't in the registry are dropped here — same
+    // behavior as the audit script's check. If this ever surfaces in
+    // practice, fix the registry, not the build.
+  }
   const crsIndex = buildCrsIndex()
   // sources.json — organisation registry. Loaded once here and threaded
   // into buildSummary so the relatedSource clause can render
@@ -1176,8 +1191,9 @@ function buildRamblerNotes(args) {
   // empty month sets skipped, months inside each entry in calendar
   // order — diff-friendly. Internally we still aggregate against the
   // coordKey (perStationMonths) to keep the build pipeline ID-agnostic;
-  // ID translation happens here at output time only.
-  const coordToId = buildCoordToId()
+  // ID translation happens here at output time only. Reuses the
+  // coordToId map built earlier when notes were converted from ID-keyed
+  // input to the coord-keyed working copy.
   const monthsRaw = {}
   for (const [coordKey, { name, months }] of perStationMonths.entries()) {
     if (months.size === 0) continue
@@ -1223,18 +1239,32 @@ function buildRamblerNotes(args) {
     Object.keys(bySourceOut).sort().map((k) => [k, bySourceOut[k]]),
   )
 
+  // Convert the working coord-keyed `notes` map back to the ID-keyed
+  // shape that data/station-notes.json now uses on disk (Phase 2b).
+  // Sorted by ID for a stable, diff-friendly output. Coord entries
+  // without a registry ID are dropped — the same drop-on-unresolvable
+  // policy applied at read-time, so this is symmetric.
+  const notesOutRaw = {}
+  for (const [coord, entry] of Object.entries(notes)) {
+    const id = coordToId.get(coord)
+    if (id) notesOutRaw[id] = entry
+  }
+  const notesOut = Object.fromEntries(
+    Object.entries(notesOutRaw).sort(([a], [b]) => a.localeCompare(b)),
+  )
+
   // returnData mode: hand back the computed data instead of writing.
   // Callers (API routes) commit these atomically via writeDataFile so
   // the derived files end up in git alongside the walk file. This is
   // also the only viable path on Vercel, where writeFileSync would
   // throw EROFS.
   if (args.returnData) {
-    return { notes, months: monthsOut, hiked: hikedOut, komoot: komootOut, potentialMonths: potentialMonthsOut, bySource: bySourceSorted }
+    return { notes: notesOut, months: monthsOut, hiked: hikedOut, komoot: komootOut, potentialMonths: potentialMonthsOut, bySource: bySourceSorted }
   }
 
-  writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
+  writeFileSync(NOTES_PATH, JSON.stringify(notesOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
-  console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
+  console.log(`Wrote ${Object.keys(notesOut).length} entries to ${NOTES_PATH}`)
 
   writeFileSync(MONTHS_PATH, JSON.stringify(monthsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
