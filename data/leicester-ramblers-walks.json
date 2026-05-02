@@ -1523,8 +1523,8 @@
         "endStation": "NUN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.9,
-        "hours": null,
+        "distanceKm": 17,
+        "hours": 4.47,
         "lunchStops": [],
         "terrain": "Parks, river, country park, canal",
         "sights": [
@@ -1554,7 +1554,11 @@
           "type": "main"
         },
         "suffix": "via Hartshill Country Park",
-        "komootUrl": "https://www.komoot.com/tour/2925787817"
+        "komootUrl": "https://www.komoot.com/tour/2925787817",
+        "uphillMetres": 145.23,
+        "difficulty": "moderate",
+        "name": "Nuneaton Circular via Hartshill",
+        "updatedAt": "2026-05-02T02:14:53.810Z"
       }
     ],
     "extracted": true,
