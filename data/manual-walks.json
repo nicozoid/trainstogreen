@@ -936,15 +936,18 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:42:21.048Z",
+        "updatedAt": "2026-05-02T02:16:43.568Z",
         "komootUrl": "https://www.komoot.com/tour/849788927",
-        "distanceKm": 13.7,
-        "hours": 2.95,
+        "distanceKm": 14,
+        "hours": 3.03,
         "rating": 3,
         "suffix": "via the Pilgrim's Way",
         "previousWalkDates": [
           "2022-10-23"
-        ]
+        ],
+        "uphillMetres": 186.51,
+        "difficulty": "moderate",
+        "name": "Chilham to Canterbury  via the Pilgrim&#x27;s Way"
       }
     ],
     "extracted": true,
