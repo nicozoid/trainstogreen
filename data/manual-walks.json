@@ -1775,7 +1775,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T10:13:02.894Z",
+        "updatedAt": "2026-05-02T02:18:38.341Z",
         "komootUrl": "https://www.komoot.com/tour/2921498612",
         "rating": 3,
         "suffix": "via Gothambury House",
@@ -1785,7 +1785,10 @@
           "2020-08-22"
         ],
         "distanceKm": 13.2,
-        "hours": 3.5
+        "hours": 3.5,
+        "uphillMetres": 122.58,
+        "difficulty": "moderate",
+        "name": "St Albans Circular via Gorhambury House"
       }
     ],
     "extracted": true,
