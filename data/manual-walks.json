@@ -402,7 +402,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:19:14.029Z",
+        "updatedAt": "2026-05-02T02:18:52.742Z",
         "suffix": "via Ashridge Estate",
         "terrain": "ancient trees, rolling chalk downlands, lush meadows",
         "komootUrl": "https://www.komoot.com/tour/2665054524",
@@ -415,7 +415,10 @@
         ],
         "distanceKm": 13.1,
         "hours": 3.57,
-        "ratingExplanation": "The Ashridge Estate is very beautiful if you appreciate woodland, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely"
+        "ratingExplanation": "The Ashridge Estate is very beautiful if you appreciate woodland, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely",
+        "uphillMetres": 191.54,
+        "difficulty": "moderate",
+        "name": "Tring Circular via the Ashridge Estate"
       }
     ],
     "extracted": true,
