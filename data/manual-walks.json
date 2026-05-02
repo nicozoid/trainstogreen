@@ -1419,7 +1419,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:14.385Z",
         "komootUrl": "https://www.komoot.com/tour/2921494524",
         "rating": 2,
         "suffix": "via Chichester Harbour",
@@ -1428,7 +1428,10 @@
           "2023-07-30"
         ],
         "distanceKm": 11.7,
-        "hours": 2.95
+        "hours": 2.95,
+        "uphillMetres": 18.04,
+        "difficulty": "moderate",
+        "name": "Fishbourne Circular via Chichester Harbour"
       }
     ],
     "extracted": true,
