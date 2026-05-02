@@ -5445,7 +5445,7 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Sunningdale to Windsor",
         "startPlace": "Sunningdale",
         "endPlace": "Windsor & Eton Riverside",
         "startStation": "SNG",
@@ -5534,7 +5534,10 @@
           "pageName": "Sunningdale to Windsor",
           "pageURL": "https://www.walkingclub.org.uk/walk/sunningdale-to-windsor/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 94.58,
+        "difficulty": "moderate",
+        "updatedAt": "2026-05-02T02:20:03.778Z"
       },
       {
         "role": "alternative",
