@@ -556,7 +556,7 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 18.5,
-        "hours": null,
+        "hours": 4.85,
         "lunchStops": [
           {
             "name": "pubs and seating by the church",
@@ -591,7 +591,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925773451"
+        "komootUrl": "https://www.komoot.com/tour/2925773451",
+        "uphillMetres": 151.74,
+        "difficulty": "moderate",
+        "name": "East Midlands Parkway Circular via Gotham",
+        "updatedAt": "2026-05-02T02:13:18.144Z"
       }
     ],
     "extracted": true,
