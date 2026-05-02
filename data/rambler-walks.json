@@ -59739,8 +59739,8 @@
         "endStation": "OTF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 11,
-        "hours": 3.13,
+        "distanceKm": 10.5,
+        "hours": 3,
         "lunchStops": [
           {
             "name": "Rising Sun",
@@ -59803,13 +59803,16 @@
           "type": "main"
         },
         "suffix": "via Romney Street",
-        "updatedAt": "2026-04-30T09:39:02.718Z",
+        "updatedAt": "2026-05-02T02:19:37.931Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Otford Circular via Romney Street",
           "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 230.06,
+        "difficulty": "moderate",
+        "name": "Otford Circular via the Darent Valley"
       },
       {
         "role": "shorter",
