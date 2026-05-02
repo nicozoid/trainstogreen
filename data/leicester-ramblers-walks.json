@@ -633,8 +633,8 @@
         "endStation": "EMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 17.5,
+        "hours": 4.5,
         "lunchStops": [
           {
             "name": "Barton in Fabis farm shop and cafe",
@@ -674,7 +674,11 @@
           "type": "main"
         },
         "suffix": "via Trent Bridge",
-        "komootUrl": "https://www.komoot.com/tour/2925782195"
+        "komootUrl": "https://www.komoot.com/tour/2925782195",
+        "uphillMetres": 82.05,
+        "difficulty": "moderate",
+        "name": "Notting to East Midlands Parkway along the Trent",
+        "updatedAt": "2026-05-02T02:13:24.372Z"
       }
     ],
     "extracted": true,
