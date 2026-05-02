@@ -10097,8 +10097,8 @@
         "endStation": "BCF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 21.1,
-        "hours": 5.57,
+        "distanceKm": 19.2,
+        "hours": 5.05,
         "lunchStops": [
           {
             "name": "Merlins Cave",
@@ -10169,7 +10169,10 @@
           "type": "related"
         },
         "suffix": "via Chalfont St Giles",
-        "updatedAt": "2026-05-01T14:16:22.688Z"
+        "updatedAt": "2026-05-02T02:11:44.765Z",
+        "uphillMetres": 165,
+        "difficulty": "hard",
+        "name": "Beaconsfield Circular via Chalfont St Giles"
       },
       {
         "role": "shorter",
