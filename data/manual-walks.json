@@ -1758,7 +1758,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:14.882Z",
         "komootUrl": "https://www.komoot.com/tour/2921491885",
         "rating": 2,
         "privateNote": "We made it better by extending the the walk to Harlow. but still merely 'okay'",
@@ -1766,7 +1766,10 @@
           "2020-11-22"
         ],
         "distanceKm": 7.69,
-        "hours": 1.95
+        "hours": 1.95,
+        "uphillMetres": 11.23,
+        "difficulty": "easy",
+        "name": "Bishop’s Stortford to Sawbridgworth"
       }
     ],
     "extracted": true,
