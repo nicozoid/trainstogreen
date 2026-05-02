@@ -1149,7 +1149,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:17:51.998Z",
         "komootUrl": "https://www.komoot.com/tour/2794137045",
         "distanceKm": 16.4,
         "hours": 4.73,
@@ -1160,7 +1160,10 @@
         "privateNote": "Ditching 45 minutes into walk",
         "previousWalkDates": [
           "2026-02-27"
-        ]
+        ],
+        "uphillMetres": 385.44,
+        "difficulty": "moderate",
+        "name": "Hassocks Circular via Ditchling Beacon"
       }
     ],
     "extracted": true,
