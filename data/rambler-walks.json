@@ -99674,14 +99674,14 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Liphook to Haslemere via Fernhurst",
         "startPlace": "Liphook",
         "endPlace": "Haslemere",
         "startStation": "LIP",
         "endStation": "HSL",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.7,
+        "distanceKm": 14.9,
         "hours": 4.15,
         "lunchStops": [
           {
@@ -99724,13 +99724,15 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920301093",
-        "updatedAt": "2026-04-30T11:00:41.283Z",
+        "updatedAt": "2026-05-02T02:15:32.924Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Liphook to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/liphook-to-haslemere/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 298.76,
+        "difficulty": "moderate"
       },
       {
         "role": "shorter",
