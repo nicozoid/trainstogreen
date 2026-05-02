@@ -167,6 +167,12 @@ for (const crs of Object.keys(naptanFile.naptan ?? {})) {
 const oyster = JSON.parse(fs.readFileSync(path.join(ROOT, "data/oyster-stations.json"), "utf8"))
 for (const crs of oyster.nrStations ?? []) checkId("oyster-stations.json", "nrStation", crs, "")
 
+// station-interchange-buffers.json — keys are station IDs post Phase 2g.
+const buffersFile = JSON.parse(fs.readFileSync(path.join(ROOT, "data/station-interchange-buffers.json"), "utf8"))
+for (const id of Object.keys(buffersFile.buffers ?? {})) {
+  checkId("station-interchange-buffers.json", "key", id, "")
+}
+
 // ── Report ───────────────────────────────────────────────────────────
 
 if (issues.length === 0) {

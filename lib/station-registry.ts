@@ -164,6 +164,7 @@ const STATION_ALIASES: Record<string, StationId> = {
   "earlswood": "ELD",                  // = Earlswood Surrey (NOT the Birmingham one)
   "newport essex": "NWE",              // = Newport on the West Anglia line
   "haddenham thame parkway": "HDM",    // = Haddenham and Thame Parkway
+  "waterloo": "WAT",                   // = London Waterloo (NOT Liverpool's WLO)
   // "St Margarets" is ambiguous between SMT (Hertfordshire) and SMG
   // (Richmond). Resolved by resolveName() via the optional `region`
   // hint, not by this static map.
