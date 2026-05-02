@@ -6,29 +6,38 @@
 // its label/icon renders); members are real stations that render as
 // satellite diamonds.
 //
-// SHAPE (clusters-data.json):
-//   { CLUSTERS: { "<anchor coord>": { displayName, members[],
+// SHAPE (clusters-data.json) post Phase 2e:
+//   { CLUSTERS: { "<anchor ID>": { displayName, coord, members: [<station IDs>],
 //     isPrimaryOrigin, isFriendOrigin }, … } }
 //
 // A cluster is a cluster first; its `isPrimaryOrigin` /
 // `isFriendOrigin` flags decide whether it's also a selectable origin
 // in the corresponding dropdown. A cluster with both flags false is
 // destination-only — its diamonds still render and clicking opens the
-// modal, but it doesn't appear in either origin dropdown. Flipping a
-// flag promotes the cluster to an origin without any other code
-// changes (the derived maps below pick it up automatically).
+// modal, but it doesn't appear in either origin dropdown.
 //
-// The raw data lives in clusters-data.json so both TypeScript modules
-// (this file, API routes) and plain-Node .mjs scripts (the build
-// pipeline) can read it. Members are listed in declared order (used
-// as the alphabetical-fallback for the cluster header in the overlay,
-// and as the journey-data source when the synthetic is the active
-// primary/friend).
+// Many existing call sites in map.tsx still operate on coordKeys
+// (primaryOrigin is a coordKey at runtime, etc.). To keep those
+// working unchanged, this module exposes the LEGACY coord-keyed
+// versions of every derived map. Phase 3 can swap consumers to the
+// ID-keyed canonical exports below and drop the coord views.
 
 import data from "./clusters-data.json"
+import { getCoordKey } from "@/lib/station-registry"
 
 // ── Cluster registry ─────────────────────────────────────────────────
 
+// On-disk shape (ID-keyed, members are station IDs).
+type RawClusterDef = {
+  displayName: string
+  coord: string
+  members: string[]
+  isPrimaryOrigin: boolean
+  isFriendOrigin: boolean
+}
+
+// Legacy shape — same as the pre-Phase-2e ClusterDef. Members are
+// coordKeys (translated from IDs at module load).
 export type ClusterDef = {
   displayName: string
   members: string[]
@@ -36,19 +45,45 @@ export type ClusterDef = {
   isFriendOrigin: boolean
 }
 
-// The unified registry: every cluster keyed by its anchor coord.
+const RAW_CLUSTERS: Record<string, RawClusterDef> =
+  (data as { CLUSTERS: Record<string, RawClusterDef> }).CLUSTERS
+
+// Translate one member ID list to coordKeys. Drops IDs the registry
+// can't resolve (would only happen with stale data — the audit script
+// catches such drift before it ships).
+function memberIdsToCoords(memberIds: string[]): string[] {
+  const out: string[] = []
+  for (const id of memberIds) {
+    const ck = getCoordKey(id)
+    if (ck) out.push(ck)
+  }
+  return out
+}
+
+// The unified registry: every cluster keyed by anchor COORD (legacy).
 // Iterate this when a code path needs to consider all clusters
 // regardless of selectability (diamond rendering, virtual feature
 // builder, click resolution).
-export const ALL_CLUSTERS: Record<string, ClusterDef> = data.CLUSTERS as Record<string, ClusterDef>
+export const ALL_CLUSTERS: Record<string, ClusterDef> = (() => {
+  const out: Record<string, ClusterDef> = {}
+  for (const def of Object.values(RAW_CLUSTERS)) {
+    out[def.coord] = {
+      displayName: def.displayName,
+      members: memberIdsToCoords(def.members),
+      isPrimaryOrigin: def.isPrimaryOrigin,
+      isFriendOrigin: def.isFriendOrigin,
+    }
+  }
+  return out
+})()
 
-// Helper: build an `{ anchor: members[] }` map from clusters that pass
-// a predicate. Used to derive the legacy primary/friend exports below
-// without duplicating the filter logic.
+// Helper: build an `{ anchorCoord: memberCoords[] }` map from clusters
+// that pass a predicate. Used to derive the legacy primary/friend
+// exports below without duplicating the filter logic.
 function clustersWhere(predicate: (c: ClusterDef) => boolean): Record<string, string[]> {
   const out: Record<string, string[]> = {}
-  for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
-    if (predicate(def)) out[anchor] = def.members
+  for (const [anchorCoord, def] of Object.entries(ALL_CLUSTERS)) {
+    if (predicate(def)) out[anchorCoord] = def.members
   }
   return out
 }
@@ -62,69 +97,47 @@ export const PRIMARY_ORIGIN_CLUSTER: Record<string, string[]> = clustersWhere((c
 export const FRIEND_ORIGIN_CLUSTER: Record<string, string[]> = clustersWhere((c) => c.isFriendOrigin)
 
 // Display names for every cluster (whether or not it's an origin).
-// Used by:
-//   • Server-side build scripts that need a human-readable label
-//     without pulling in client-only modules.
-//   • The map's modal-title fallback when a clicked cluster anchor
-//     isn't registered as a primary/friend origin (i.e. destination-
-//     only clusters like Windsor).
 export const SYNTHETIC_DISPLAY_NAMES: Record<string, string> = (() => {
   const out: Record<string, string> = {}
-  for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
-    out[anchor] = def.displayName
+  for (const [anchorCoord, def] of Object.entries(ALL_CLUSTERS)) {
+    out[anchorCoord] = def.displayName
   }
   return out
 })()
 
 // Every coord that's a member of any synthetic cluster, flattened to
-// a Set for cheap membership tests. Drives:
-//   • The "always render as diamond" layer for cluster members
-//     (regardless of whether their cluster is the active primary/friend
-//     or even an origin at all).
-//   • A matching exclusion filter on the regular station layers, so a
-//     cluster member never double-renders with both a diamond AND a
-//     rating/unrated icon.
+// a Set for cheap membership tests.
 export const ALL_CLUSTER_MEMBER_COORDS: Set<string> = new Set<string>(
   Object.values(ALL_CLUSTERS).flatMap((c) => c.members),
 )
 
 // Reverse lookup: member coordKey → its synthetic anchor coordKey.
-// Used by the click handler to resolve "which synthetic owns this
-// diamond?" without iterating the full cluster map every time.
 export const MEMBER_TO_SYNTHETIC: Record<string, string> = (() => {
   const out: Record<string, string> = {}
-  for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
-    for (const m of def.members) out[m] = anchor
+  for (const [anchorCoord, def] of Object.entries(ALL_CLUSTERS)) {
+    for (const m of def.members) out[m] = anchorCoord
   }
   return out
 })()
 
 // Whether a given anchor is a primary-side or friend-side synthetic.
-// Some rendering paths only mount a layer for one side, so callers
-// need to know which it is. Returns undefined for destination-only
-// clusters (neither primary nor friend) — those rely on the universal
-// cluster-diamond layer and don't need a per-side overlay.
 export const SYNTHETIC_KIND: Record<string, "primary" | "friend" | undefined> = (() => {
   const out: Record<string, "primary" | "friend" | undefined> = {}
-  for (const [anchor, def] of Object.entries(ALL_CLUSTERS)) {
-    if (def.isPrimaryOrigin) out[anchor] = "primary"
-    else if (def.isFriendOrigin) out[anchor] = "friend"
-    // destination-only → omitted; lookup returns undefined naturally
+  for (const [anchorCoord, def] of Object.entries(ALL_CLUSTERS)) {
+    if (def.isPrimaryOrigin) out[anchorCoord] = "primary"
+    else if (def.isFriendOrigin) out[anchorCoord] = "friend"
   }
   return out
 })()
 
 // All synthetic anchor coordKeys (every cluster, regardless of
-// selectability), flat Set for membership tests (e.g. "is this coord
-// a synthetic centroid?").
+// selectability), flat Set for membership tests.
 export const ALL_SYNTHETIC_COORDS: Set<string> = new Set<string>(Object.keys(ALL_CLUSTERS))
 
 // The Central London cluster's anchor coord. Hard-coded because the
 // "London termini are individually selectable as primary" feature is
 // scoped to this one cluster only — every other cluster keeps its
-// "members aren't selectable on their own" rule. Kept in sync with
-// the entry in clusters-data.json. Surfaced as a named constant so
-// the gating sites in components/map.tsx don't bury a magic string.
+// "members aren't selectable on their own" rule.
 export const CENTRAL_LONDON_ANCHOR = "-0.1269,51.5196"
 
 // ── Route ranking ────────────────────────────────────────────────────

@@ -33,34 +33,19 @@ const ROOT = path.resolve(__dirname, "..")
 const stations = JSON.parse(fs.readFileSync(path.join(ROOT, "public/stations.json"), "utf8"))
 const clusters = JSON.parse(fs.readFileSync(path.join(ROOT, "lib/clusters-data.json"), "utf8")).CLUSTERS
 
-const coordKeyToId = new Map()
-const idSet = new Set()
-for (const f of stations.features) {
-  const [lng, lat] = f.geometry.coordinates
-  const coordKey = `${lng},${lat}`
-  const id = f.properties["ref:crs"] || null
-  if (id) {
-    coordKeyToId.set(coordKey, id)
-    idSet.add(id)
-  } else {
-    // Without a ref:crs the registry would synthesise an ID; for the
-    // audit we just track whether the coord exists in stations.json,
-    // so the synthesised value doesn't matter here.
-    coordKeyToId.set(coordKey, null)
-  }
-}
-// Cluster-anchor IDs — same C-prefix synthesis as the registry so the
-// idSet contains every legitimate ID a data file might reference. Keep
-// CLUSTER_ID_OVERRIDES in sync with lib/station-registry.ts.
-const CLUSTER_ID_OVERRIDES = {
-  "-0.1316749,51.4276184": "CSTM", "-1.2001264,53.1527713": "CMSF",
-  "-0.167866,51.3628865": "CCSH", "-0.8848748,51.4337601": "CWNS",
-  "-2.8410923,53.6014878": "CBSC", "-2.4400492,50.7100345": "CDOC",
-  "1.271333,51.9456913": "CHWC", "0.0551433,50.7923582": "CNHV",
-  "-0.8063346,53.0808147": "CNWK", "-4.2725674,55.8391842": "CPOS",
-  "-2.1577202,53.4428532": "CRDS", "-2.2656135,53.4845542": "CSFD",
-  "-2.614673,53.3928419": "CWRG", "-3.4360381,50.6555068": "CLYS",
-  "-5.0602303,50.149592": "CFLM", "0.5624634,51.8723022": "CBRT",
+// Mirror the registry's synthetic-ID rules so the audit knows about
+// every legitimate non-CRS station ID (UEUS, UPAD etc.) that data
+// files might reference. Keep in sync with lib/station-registry.ts.
+function networkPrefix(network) {
+  if (!network || network === "unknown" || network === "None") return "Z"
+  if (network.includes("Elizabeth line")) return "E"
+  if (network.includes("London Overground")) return "O"
+  if (network.includes("Docklands Light Railway")) return "D"
+  if (network.includes("London Underground")) return "U"
+  if (network.includes("Tyne and Wear Metro")) return "M"
+  if (network.includes("Glasgow Subway")) return "G"
+  if (network === "NIR") return "N"
+  return "Z"
 }
 const STOPWORDS = new Set(["the", "of", "and", "at", "on", "in", "for", "to", "upon"])
 function pickLetters(name) {
@@ -73,9 +58,31 @@ function pickLetters(name) {
   if (use.length === 2) return (use[0][0] + use[1].slice(0, 2)).toUpperCase()
   return use[0].slice(0, 3).padEnd(3, "X").toUpperCase()
 }
-for (const [coordKey, def] of Object.entries(clusters)) {
-  const id = CLUSTER_ID_OVERRIDES[coordKey] ?? "C" + pickLetters(def.displayName)
-  coordKeyToId.set(coordKey, id)
+
+const coordKeyToId = new Map()
+const idSet = new Set()
+for (const f of stations.features) {
+  const [lng, lat] = f.geometry.coordinates
+  const coordKey = `${lng},${lat}`
+  const crs = f.properties["ref:crs"]
+  const name = f.properties.name
+  if (crs) {
+    coordKeyToId.set(coordKey, crs)
+    idSet.add(crs)
+  } else if (name) {
+    // Synthetic 4-char ID for non-CRS stations (Underground, DLR etc.).
+    const id = networkPrefix(f.properties.network) + pickLetters(name)
+    coordKeyToId.set(coordKey, id)
+    idSet.add(id)
+  } else {
+    coordKeyToId.set(coordKey, null)
+  }
+}
+// Cluster-anchor IDs — read directly from clusters-data.json keys
+// (Phase 2e shape). Each entry's `coord` field gives the centroid
+// the registry uses for coord ↔ ID translation.
+for (const [id, def] of Object.entries(clusters)) {
+  coordKeyToId.set(def.coord, id)
   idSet.add(id)
 }
 
@@ -139,10 +146,16 @@ for (const file of ["stations-hiked.json", "stations-with-komoot.json", "station
   for (const id of arr) checkId(file, "entry", id, "")
 }
 
-for (const [anchor, def] of Object.entries(clusters)) {
-  checkCoord("clusters-data.json", "anchor-coord", anchor, def.displayName)
+// clusters-data.json — Phase 2e shape: keys are C-prefix synthetic
+// IDs, each entry has a `coord` (centroid coordKey) and members are
+// station IDs.
+for (const [anchorId, def] of Object.entries(clusters)) {
+  checkId("clusters-data.json", "anchor", anchorId, def.displayName)
+  if (!def.coord || !def.coord.includes(",")) {
+    report("clusters-data.json", "missing-coord", anchorId, def.displayName)
+  }
   for (const m of def.members) {
-    checkCoord("clusters-data.json", "member-coord", m, def.displayName)
+    checkId("clusters-data.json", "member", m, def.displayName)
   }
 }
 

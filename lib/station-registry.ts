@@ -104,42 +104,11 @@ const ID_OVERRIDES: Record<string, StationId> = {
   // Coords from public/stations.json. Update if stations.json changes.
 }
 
-// Cluster-anchor ID overrides — same idea, keyed by anchor coordKey.
-// CSTR = Stratford (the more important anchor); other "St…" clusters
-// take longer suffixes. Same for CMAN/Manchester, CCAR/Cardiff, etc.
-const CLUSTER_ID_OVERRIDES: Record<string, StationId> = {
-  // Streatham loses to Stratford for CSTR
-  "-0.1316749,51.4276184": "CSTM",
-  // Mansfield loses to Manchester for CMAN
-  "-1.2001264,53.1527713": "CMSF",
-  // Carshalton loses to Cardiff for CCAR
-  "-0.167866,51.3628865": "CCSH",
-  // Winnersh loses to Windsor for CWIN
-  "-0.8848748,51.4337601": "CWNS",
-  // Burscough loses to Burnley for CBUR
-  "-2.8410923,53.6014878": "CBSC",
-  // Dorchester loses to Dorking for CDOR
-  "-2.4400492,50.7100345": "CDOC",
-  // Harwich loses to Harlow for CHAR
-  "1.271333,51.9456913": "CHWC",
-  // Newhaven and Newark lose to Newbury for CNEW
-  "0.0551433,50.7923582": "CNHV",
-  "-0.8063346,53.0808147": "CNWK",
-  // Pollokshields loses to Pollokshaws for CPOL
-  "-4.2725674,55.8391842": "CPOS",
-  // Reddish loses to Redcar for CRED
-  "-2.1577202,53.4428532": "CRDS",
-  // Salford loses to St Albans for CSAL
-  "-2.2656135,53.4845542": "CSFD",
-  // Warrington loses to Warwick for CWAR
-  "-2.614673,53.3928419": "CWRG",
-  // Lympstone loses to Lymington for CLYM
-  "-3.4360381,50.6555068": "CLYS",
-  // Falmouth loses to Falkirk for CFAL
-  "-5.0602303,50.149592": "CFLM",
-  // Braintree loses to Bradford for CBRA
-  "0.5624634,51.8723022": "CBRT",
-}
+// Cluster-anchor IDs are now stored directly as keys in
+// lib/clusters-data.json (Phase 2e), so the registry no longer
+// computes them. The disambiguation it used to do (CSTM for
+// Streatham vs CSTR for Stratford, etc.) lives in the migration
+// script (scripts/migrate-clusters-data.mjs) instead.
 
 // ── Aliases ──────────────────────────────────────────────────────────
 // Hand-curated overrides used when external data (Rambler walks, CSV
@@ -188,7 +157,7 @@ type RawStation = {
   geometry: { type: "Point"; coordinates: [number, number] }
   properties: { name?: string; "ref:crs"?: string; network?: string;[k: string]: unknown }
 }
-type RawClusters = { CLUSTERS: Record<string, { displayName: string; members: string[]; isPrimaryOrigin: boolean; isFriendOrigin: boolean }> }
+type RawClusters = { CLUSTERS: Record<string, { displayName: string; coord: string; members: string[]; isPrimaryOrigin: boolean; isFriendOrigin: boolean }> }
 
 // Three forward-direction maps. All built once at module load.
 const idToStation = new Map<StationId, StationRecord>()
@@ -268,13 +237,14 @@ function normalizeName(name: string): string {
 }
 
 // Second pass: index every cluster anchor from clusters-data.json.
-// Anchor coordKeys are synthetic centroids, NOT real stations — they
-// don't appear in stations.json and never have CRS codes.
+// Post Phase 2e the JSON is keyed by C-prefix synthetic ID, with
+// each entry carrying its centroid `coord` and an ID-array of
+// `members`. Anchors are synthetic centroids, NOT real stations —
+// they don't appear in stations.json and never have CRS codes.
 {
   const clusters = (clustersData as RawClusters).CLUSTERS
-  for (const [coordKey, def] of Object.entries(clusters)) {
-    const overridden = CLUSTER_ID_OVERRIDES[coordKey]
-    const id = overridden ?? "C" + pickLetters(def.displayName)
+  for (const [id, def] of Object.entries(clusters)) {
+    const coordKey = def.coord
     const [lngStr, latStr] = coordKey.split(",")
     const lng = Number(lngStr)
     const lat = Number(latStr)

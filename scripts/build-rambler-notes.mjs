@@ -206,33 +206,12 @@ function buildCoordToId() {
     const [lng, lat] = f.geometry?.coordinates ?? []
     if (crs && lng != null && lat != null) map.set(`${lng},${lat}`, crs)
   }
-  // Cluster anchors — same pickLetters + override rules as the
-  // registry. Keep CLUSTER_ID_OVERRIDES in sync if the registry's
-  // cluster overrides change.
-  const CLUSTER_ID_OVERRIDES = {
-    "-0.1316749,51.4276184": "CSTM", "-1.2001264,53.1527713": "CMSF",
-    "-0.167866,51.3628865": "CCSH", "-0.8848748,51.4337601": "CWNS",
-    "-2.8410923,53.6014878": "CBSC", "-2.4400492,50.7100345": "CDOC",
-    "1.271333,51.9456913": "CHWC", "0.0551433,50.7923582": "CNHV",
-    "-0.8063346,53.0808147": "CNWK", "-4.2725674,55.8391842": "CPOS",
-    "-2.1577202,53.4428532": "CRDS", "-2.2656135,53.4845542": "CSFD",
-    "-2.614673,53.3928419": "CWRG", "-3.4360381,50.6555068": "CLYS",
-    "-5.0602303,50.149592": "CFLM", "0.5624634,51.8723022": "CBRT",
-  }
-  const STOPWORDS = new Set(["the", "of", "and", "at", "on", "in", "for", "to", "upon"])
-  function pickLetters(name) {
-    const cleaned = name.replace(/\s*\([^)]*\)/g, "").replace(/['']/g, "")
-      .replace(/&/g, " and ").replace(/[.,~/-]/g, " ").trim()
-    const words = cleaned.split(/\s+/).filter(Boolean)
-    const list = words.filter((w) => !STOPWORDS.has(w.toLowerCase()))
-    const use = list.length ? list : words
-    if (use.length >= 3) return (use[0][0] + use[1][0] + use[2][0]).toUpperCase()
-    if (use.length === 2) return (use[0][0] + use[1].slice(0, 2)).toUpperCase()
-    return use[0].slice(0, 3).padEnd(3, "X").toUpperCase()
-  }
+  // Cluster anchors — read directly from clusters-data.json (Phase 2e
+  // shape: keys are C-prefix synthetic IDs, each entry has a `coord`
+  // centroid).
   const clusters = JSON.parse(readFileSync(join(PROJECT_ROOT, "lib/clusters-data.json"), "utf-8")).CLUSTERS
-  for (const [coord, def] of Object.entries(clusters)) {
-    map.set(coord, CLUSTER_ID_OVERRIDES[coord] ?? "C" + pickLetters(def.displayName))
+  for (const [id, def] of Object.entries(clusters)) {
+    map.set(def.coord, id)
   }
   return map
 }
