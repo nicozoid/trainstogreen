@@ -65,7 +65,7 @@ export function FilterPanelDemo() {
   const [friendMaxMinutes, setFriendMaxMinutes] = useState(120)
   const [primaryDirectOnly, setPrimaryDirectOnly] = useState(false)
   const [friendDirectOnly, setFriendDirectOnly] = useState(false)
-  const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
+  const [currentMonthHighlight, setCurrentMonthHighlight] = useState(false)
 
   // Stub maps — every helper accepts an arbitrary key and returns
   // either a sensible default or the key itself. The friend-origin
@@ -142,11 +142,11 @@ export function FilterPanelDemo() {
         onPrimaryFeatureFilterChange={() => {}}
         sourceFilter="off"
         onSourceFilterChange={() => {}}
-        seasonFilter="off"
-        onSeasonFilterChange={() => {}}
-        currentSeason="Spring"
-        currentSeasonHighlight={currentSeasonHighlight}
-        onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
+        monthFilter="off"
+        onMonthFilterChange={() => {}}
+        currentMonthLabel="May"
+        currentMonthHighlight={currentMonthHighlight}
+        onCurrentMonthHighlightChange={setCurrentMonthHighlight}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
         // hideNoTravelTime is admin-only in practice but the prop is

@@ -285,23 +285,25 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
-  onPrimaryFeatureFilterChange: (value: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster") => void
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  onPrimaryFeatureFilterChange: (value: FilterPanelProps["primaryFeatureFilter"]) => void
   /** Admin-only Source filter — keeps only stations with at least one
    *  attached walk whose source.orgSlug or relatedSource.orgSlug
    *  matches. Value is "off" or an orgSlug from data/sources.json. */
   sourceFilter: string
   onSourceFilterChange: (value: string) => void
-  /** Admin-only season filter — hides destinations whose recommended
-   *  seasons don't include the selected one. "off" = no filter. */
-  seasonFilter: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
-  onSeasonFilterChange: (value: "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None") => void
-  /** The calendar-derived current season — labels the public checkbox
-   *  ("Best in Spring", etc) and is what that checkbox filters against. */
-  currentSeason: "Spring" | "Summer" | "Autumn" | "Winter"
-  /** Public "Best in [current-season]" checkbox (visible to all users). */
-  currentSeasonHighlight: boolean
-  onCurrentSeasonHighlightChange: (value: boolean) => void
+  /** Admin-only month filter — hides destinations whose recommended
+   *  months don't include the selected one. "off" = no filter,
+   *  "None" = stations with zero month-flagged walks. */
+  monthFilter: "off" | "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec" | "None"
+  onMonthFilterChange: (value: FilterPanelProps["monthFilter"]) => void
+  /** Display label for the current month — labels the public checkbox
+   *  ("Best in May", etc). Full name reads more naturally than a
+   *  3-letter abbreviation. */
+  currentMonthLabel: string
+  /** Public "Best in {current-month}" checkbox (visible to all users). */
+  currentMonthHighlight: boolean
+  onCurrentMonthHighlightChange: (value: boolean) => void
   /** "Direct trains only" toggle for the friend origin */
   friendDirectOnly: boolean
   onFriendDirectOnlyChange: (value: boolean) => void
@@ -313,7 +315,7 @@ type FilterPanelProps = {
   onHideNoTravelTimeChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, seasonFilter, onSeasonFilterChange, currentSeason, currentSeasonHighlight, onCurrentSeasonHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, monthFilter, onMonthFilterChange, currentMonthLabel, currentMonthHighlight, onCurrentMonthHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1413,7 +1415,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                 id="primary-feature-filter"
                 value={primaryFeatureFilter}
                 onChange={(e) => onPrimaryFeatureFilterChange(
-                  e.target.value as "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster",
+                  e.target.value as FilterPanelProps["primaryFeatureFilter"],
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
@@ -1435,6 +1437,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     URL. Surfaces destinations that still need a
                     Komoot route to be planned. */}
                 <option value="no-komoot">No komoot</option>
+                {/* "Potential month data" — stations with a Komoot route
+                    AND month metadata only on admin-only walks. Surfaces
+                    destinations where the existing admin-only month data
+                    could be promoted to the publicly-visible walk. */}
+                <option value="potential-month-data">Potential month data</option>
                 {/* "Issues" — keeps only stations flagged via the admin
                     issue button. The flag is station-global, so the same
                     set shows regardless of which primary origin is selected. */}
@@ -1494,30 +1501,38 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </div>
           )}
 
-          {/* Admin-only: "Season" filter. Hides destinations whose
-              recommended-seasons metadata doesn't include the selected
-              season. Same style as the Feature dropdown — single-select
+          {/* Admin-only: "Month" filter. Hides destinations whose
+              recommended-months metadata doesn't include the selected
+              month. Same style as the Feature dropdown — single-select
               native <select> sharing the interchange/feature styling. */}
           {adminMode && (
             <div className="mt-1.5 flex items-center gap-[0.4rem]">
-              <Label htmlFor="primary-season-filter" className="cursor-pointer text-xs text-muted-foreground">
-                Season
+              <Label htmlFor="primary-month-filter" className="cursor-pointer text-xs text-muted-foreground">
+                Month
               </Label>
               <select
-                id="primary-season-filter"
-                value={seasonFilter}
-                onChange={(e) => onSeasonFilterChange(
-                  e.target.value as "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None",
+                id="primary-month-filter"
+                value={monthFilter}
+                onChange={(e) => onMonthFilterChange(
+                  e.target.value as FilterPanelProps["monthFilter"],
                 )}
                 className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
               >
                 <option value="off">—</option>
-                <option value="Spring">Spring</option>
-                <option value="Summer">Summer</option>
-                <option value="Autumn">Autumn</option>
-                <option value="Winter">Winter</option>
+                <option value="jan">January</option>
+                <option value="feb">February</option>
+                <option value="mar">March</option>
+                <option value="apr">April</option>
+                <option value="may">May</option>
+                <option value="jun">June</option>
+                <option value="jul">July</option>
+                <option value="aug">August</option>
+                <option value="sep">September</option>
+                <option value="oct">October</option>
+                <option value="nov">November</option>
+                <option value="dec">December</option>
                 {/* "None" = stations with zero month-flagged walks. Useful for
-                    finding destinations that still need seasonality data. */}
+                    finding destinations that still need month data. */}
                 <option value="None">None</option>
               </select>
             </div>
@@ -1675,28 +1690,24 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             ))}
           </div>
 
-          {/* Section divider + the additional filters block. The
-             divider and the season filter inside it are PUBLIC; the
-             trails / counties / hide-no-travel toggles are admin-only.
-             Wrapping all four in one container keeps them visually
-             grouped on the panel — when adminMode is off, only the
-             season toggle remains visible under the divider. */}
-          <div className="mt-4 border-t pt-3">
-            {/* Best-in-{season} toggle — public. Label updates
-                dynamically based on `currentSeason` from map.tsx. */}
-            <div className="flex items-center justify-between">
-              <LabelTip text={`Stations with walks recommended for ${currentSeason}`}>
-                <span className="text-sm font-medium">Best in {currentSeason}</span>
-              </LabelTip>
-              <Checkbox
-                checked={currentSeasonHighlight}
-                onCheckedChange={(checked) => onCurrentSeasonHighlightChange(checked === true)}
-                className="cursor-pointer"
-              />
-            </div>
-
-            {adminMode && (
-              <>
+          {/* Section divider + the additional filters block. ALL of the
+             contents (Best-in-{month} toggle, trails, counties, hide-no-
+             travel) are admin-only — non-admins don't see this block at
+             all, so the divider above it is also gated. */}
+          {adminMode && (
+            <div className="mt-4 border-t pt-3">
+              {/* Best-in-{month} toggle — admin-only. Label updates
+                  dynamically based on `currentMonthLabel` from map.tsx. */}
+              <div className="flex items-center justify-between">
+                <LabelTip text={`Stations with walks recommended for ${currentMonthLabel}`}>
+                  <span className="text-sm font-medium">Best in {currentMonthLabel}</span>
+                </LabelTip>
+                <Checkbox
+                  checked={currentMonthHighlight}
+                  onCheckedChange={(checked) => onCurrentMonthHighlightChange(checked === true)}
+                  className="cursor-pointer"
+                />
+              </div>
               {/* Trails toggle — <div> instead of <label> so tapping the
                  gap on touchscreens doesn't toggle the checkbox.
                  mt-1.5 matches the rating-checkbox row spacing above so
@@ -1741,9 +1752,8 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                   className="cursor-pointer"
                 />
               </div>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

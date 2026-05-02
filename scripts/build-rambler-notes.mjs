@@ -63,12 +63,19 @@ const ALL_CLUSTER_MEMBERS = Object.fromEntries(
 // Organisation registry — slug → { name, url }. Used to render the
 // human-readable "<Org> walk" link text in the relatedSource clause.
 const SOURCES_PATH = join(PROJECT_ROOT, "data", "sources.json")
-// Derived file: per-station season arrays ("Spring" | "Summer" | …) for the
-// season dropdown + "[current-season] highlights" checkbox in the filter
+// Derived file: per-station month-code arrays ("jan" | "feb" | …) for the
+// month dropdown + "[current-month] highlights" checkbox in the filter
 // panel. Purely an output of this script — aggregated from each walk
-// variant's structured `bestSeasons` month codes. No longer editable in
-// the admin UI (used to be, via /api/dev/station-seasons POST).
-const SEASONS_PATH = join(PROJECT_ROOT, "data", "station-seasons.json")
+// variant's structured `bestSeasons` month codes (the field name on the
+// walk record is historical — content is and always was month codes).
+const MONTHS_PATH = join(PROJECT_ROOT, "data", "station-months.json")
+// Derived file: sorted array of coordKeys for stations that have a Komoot
+// route AND have month data on at least one ADMIN-ONLY walk AND no month
+// data on any publicly-visible walk. Drives the admin-only "Potential
+// month data" feature filter — surfaces destinations where the public
+// walks could inherit month metadata that's currently buried on an
+// admin-only variant.
+const POTENTIAL_MONTHS_PATH = join(PROJECT_ROOT, "data", "stations-potential-months.json")
 
 // Derived list of stations where at least one attached walk has a
 // populated `previousWalkDates` array — i.e. we've personally walked
@@ -92,8 +99,8 @@ const STATIONS_BY_SOURCE_PATH = join(PROJECT_ROOT, "data", "stations-by-source.j
 
 // Month codes used in each variant's structured `bestSeasons` field.
 // Order matters — renders in calendar order regardless of how the source
-// data lists them. Also used to map months → high-level seasons when
-// aggregating station-level season metadata for the filter UI.
+// data lists them. Also drives station-level month aggregation for the
+// filter UI (calendar order in the JSON output).
 const MONTH_ORDER = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"]
 // Title-case three-letter abbreviations. Keeps the rendered "Best in …"
 // clause compact — "Best in Oct–Jan" reads faster than "Best in October
@@ -103,14 +110,6 @@ const MONTH_FULL = {
   may: "May", jun: "Jun", jul: "Jul", aug: "Aug",
   sep: "Sep", oct: "Oct", nov: "Nov", dec: "Dec",
 }
-// Calendar-quarter mapping used for deriving per-station season arrays.
-const MONTH_TO_SEASON = {
-  mar: "Spring", apr: "Spring", may: "Spring",
-  jun: "Summer", jul: "Summer", aug: "Summer",
-  sep: "Autumn", oct: "Autumn", nov: "Autumn",
-  dec: "Winter", jan: "Winter", feb: "Winter",
-}
-const SEASON_ORDER = ["Spring", "Summer", "Autumn", "Winter"]
 
 // Rating tier mapping used to sort walks at a station. Lower value =
 // higher in the rendered list. Any explicit rating — including 1
@@ -731,10 +730,10 @@ function buildRamblerNotes(args) {
 
   // coordKey → { name, ramblerParts[] }
   const perStation = new Map()
-  // coordKey → Set<Season>. Accumulated across every attached walk
-  // variant. Written out to data/station-seasons.json at the end —
+  // coordKey → Set<MonthCode>. Accumulated across every attached walk
+  // variant. Written out to data/station-months.json at the end —
   // derived data, never hand-edited.
-  const perStationSeasons = new Map()
+  const perStationMonths = new Map()
   // coordKey → true. Any station whose attached walks include at least
   // one variant with a non-empty `previousWalkDates` array. Written to
   // data/stations-hiked.json as a sorted array; the admin "Undiscovered"
@@ -745,6 +744,12 @@ function buildRamblerNotes(args) {
   // data/stations-with-komoot.json as a sorted array; the admin "Komoot"
   // filter keeps only these.
   const perStationKomoot = new Set()
+  // coordKey → true. Stations matching the "Potential month data"
+  // criteria: has a Komoot route, no month data on publicly-visible
+  // walks, but at least one admin-only variant carries month codes.
+  // Populated in the per-station rendering loop below (after public-
+  // tier filtering). Written to data/stations-potential-months.json.
+  const perStationPotentialMonths = new Set()
   // coordKey → Set<orgSlug>. Aggregated from every variant's
   // source.orgSlug AND relatedSource.orgSlug (both contribute), across
   // ALL walks (including non-s2s). Pivoted into { orgSlug: coordKey[] }
@@ -870,22 +875,14 @@ function buildRamblerNotes(args) {
           // dedup later without a rebuild.
           displayName,
           baseDisplayName,
+          // Structured month codes for this variant. Aggregated into
+          // perStationMonths AFTER publicTierFilter runs (below) so the
+          // month filter only surfaces stations whose PUBLICLY-VISIBLE
+          // walks include the chosen month — admin-only variants hidden
+          // by the public tier (e.g. a non-main, non-Komoot walk at a
+          // station that also has Komoot walks) don't contribute.
+          bestSeasons: Array.isArray(variant.bestSeasons) ? variant.bestSeasons : [],
         })
-
-        // Aggregate this variant's structured bestSeasons into the
-        // station's derived season set. Walks without month codes don't
-        // contribute — they simply don't flow into the seasonality filters.
-        if (Array.isArray(variant.bestSeasons)) {
-          let set = perStationSeasons.get(station.coordKey)
-          if (!set) {
-            set = { name: station.name, seasons: new Set() }
-            perStationSeasons.set(station.coordKey, set)
-          }
-          for (const m of variant.bestSeasons) {
-            const season = MONTH_TO_SEASON[String(m).toLowerCase()]
-            if (season) set.seasons.add(season)
-          }
-        }
 
         // Track stations with at least one personally-walked variant.
         // Any non-empty previousWalkDates flips the station from
@@ -954,7 +951,6 @@ function buildRamblerNotes(args) {
     const seenWalks = new Map()
     let aggregatedHiked = false
     let aggregatedKomoot = false
-    const aggregatedSeasons = new Set()
     for (const memberCoord of memberCoords) {
       const memberBucket = perStation.get(memberCoord)
       if (memberBucket) {
@@ -967,10 +963,6 @@ function buildRamblerNotes(args) {
       }
       if (perStationHiked.has(memberCoord)) aggregatedHiked = true
       if (perStationKomoot.has(memberCoord)) aggregatedKomoot = true
-      const memberSeasons = perStationSeasons.get(memberCoord)
-      if (memberSeasons) {
-        for (const s of memberSeasons.seasons) aggregatedSeasons.add(s)
-      }
     }
     const aggregatedParts = [...seenWalks.values()]
     // Always set a perStation entry for the synthetic, even when
@@ -986,9 +978,10 @@ function buildRamblerNotes(args) {
 
     if (aggregatedHiked) perStationHiked.add(synthCoord)
     if (aggregatedKomoot) perStationKomoot.add(synthCoord)
-    if (aggregatedSeasons.size > 0) {
-      perStationSeasons.set(synthCoord, { name: synthName, seasons: aggregatedSeasons })
-    }
+    // Synthetic months are derived in the per-station rendering loop
+    // below — same path as real stations, so the publicTierFilter is
+    // applied to the synthetic's aggregated parts before months are
+    // collected.
   }
 
   for (const [coordKey, { name, ramblerParts }] of perStation) {
@@ -1011,6 +1004,32 @@ function buildRamblerNotes(args) {
     const publicWalksCircular = publicCircularParts.map((p) => p.summary).join("\n\n")
     const publicWalksS2S = publicS2SStartingParts.map((p) => p.summary).join("\n\n")
     const publicWalksS2SEnding = publicS2SEndingParts.map((p) => p.summary).join("\n\n")
+    // Per-station month aggregation from publicly-visible walks only —
+    // bypasses admin-only variants hidden by publicTierFilter so the
+    // month filter never surfaces a station whose only matching walks
+    // are admin-only. Runs equally for real stations and synthetics
+    // (synthetics have already been merged into perStation above).
+    const publicMonths = new Set()
+    for (const p of publicOrdered) {
+      for (const m of p.bestSeasons ?? []) {
+        const code = String(m).toLowerCase()
+        if (MONTH_FULL[code]) publicMonths.add(code)
+      }
+    }
+    if (publicMonths.size > 0) {
+      perStationMonths.set(coordKey, { name, months: publicMonths })
+    }
+    // "Potential month data" set — stations that fail the public-month
+    // filter but DO have month metadata on an admin-only variant, AND
+    // have a Komoot route. Surfaces destinations where the existing
+    // admin month metadata could be promoted to a public walk to make
+    // the station appear in the public month filter.
+    if (publicMonths.size === 0 && perStationKomoot.has(coordKey)) {
+      const hasAdminMonths = ordered.some((p) =>
+        Array.isArray(p.bestSeasons) && p.bestSeasons.some((m) => MONTH_FULL[String(m).toLowerCase()]),
+      )
+      if (hasAdminMonths) perStationPotentialMonths.add(coordKey)
+    }
     if (notes[coordKey]) {
       const beforeAdmin = notes[coordKey].adminWalksAll
       notes[coordKey].adminWalksAll = adminWalksAll
@@ -1100,14 +1119,14 @@ function buildRamblerNotes(args) {
   // that commit via the GitHub API) can hand them off without touching
   // the filesystem at all — important on Vercel's read-only fs.
 
-  // station-seasons.json: entries sorted by coordKey, empty season sets
-  // skipped, seasons inside each entry in calendar order — diff-friendly.
-  const seasonsOut = {}
-  for (const [coordKey, { name, seasons }] of [...perStationSeasons.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    if (seasons.size === 0) continue
-    seasonsOut[coordKey] = {
+  // station-months.json: entries sorted by coordKey, empty month sets
+  // skipped, months inside each entry in calendar order — diff-friendly.
+  const monthsOut = {}
+  for (const [coordKey, { name, months }] of [...perStationMonths.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    if (months.size === 0) continue
+    monthsOut[coordKey] = {
       name,
-      seasons: SEASON_ORDER.filter((s) => seasons.has(s)),
+      months: MONTH_ORDER.filter((m) => months.has(m)),
     }
   }
 
@@ -1120,6 +1139,11 @@ function buildRamblerNotes(args) {
   // with at least one walk variant carrying a komootUrl. Drives the
   // admin-only "Komoot" map filter.
   const komootOut = [...perStationKomoot].sort()
+
+  // stations-potential-months.json: sorted coordKeys for stations that
+  // have a Komoot route AND month data only on admin-only variants.
+  // Drives the admin-only "Potential month data" feature filter.
+  const potentialMonthsOut = [...perStationPotentialMonths].sort()
 
   // stations-by-source.json: pivot the per-station Set<orgSlug> map
   // into { [orgSlug]: coordKey[] } with each list sorted, so the admin
@@ -1143,16 +1167,16 @@ function buildRamblerNotes(args) {
   // also the only viable path on Vercel, where writeFileSync would
   // throw EROFS.
   if (args.returnData) {
-    return { notes, seasons: seasonsOut, hiked: hikedOut, komoot: komootOut, bySource: bySourceSorted }
+    return { notes, months: monthsOut, hiked: hikedOut, komoot: komootOut, potentialMonths: potentialMonthsOut, bySource: bySourceSorted }
   }
 
   writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
 
-  writeFileSync(SEASONS_PATH, JSON.stringify(seasonsOut, null, 2) + "\n", "utf-8")
+  writeFileSync(MONTHS_PATH, JSON.stringify(monthsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
-  console.log(`Wrote ${Object.keys(seasonsOut).length} entries to ${SEASONS_PATH}`)
+  console.log(`Wrote ${Object.keys(monthsOut).length} entries to ${MONTHS_PATH}`)
 
   writeFileSync(HIKED_PATH, JSON.stringify(hikedOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
@@ -1161,6 +1185,10 @@ function buildRamblerNotes(args) {
   writeFileSync(KOMOOT_PATH, JSON.stringify(komootOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
   console.log(`Wrote ${komootOut.length} entries to ${KOMOOT_PATH}`)
+
+  writeFileSync(POTENTIAL_MONTHS_PATH, JSON.stringify(potentialMonthsOut, null, 2) + "\n", "utf-8")
+  // eslint-disable-next-line no-console
+  console.log(`Wrote ${potentialMonthsOut.length} entries to ${POTENTIAL_MONTHS_PATH}`)
 
   writeFileSync(STATIONS_BY_SOURCE_PATH, JSON.stringify(bySourceSorted, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
