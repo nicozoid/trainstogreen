@@ -1919,7 +1919,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T23:50:16.432Z",
+        "updatedAt": "2026-05-02T02:18:43.569Z",
         "komootUrl": "https://www.komoot.com/tour/2921513301",
         "rating": 4,
         "suffix": "via Old Sarum",
@@ -1928,7 +1928,10 @@
           "2022-04-07"
         ],
         "distanceKm": 16.6,
-        "hours": 4.48
+        "hours": 4.48,
+        "uphillMetres": 229.39,
+        "difficulty": "moderate",
+        "name": "Salisbury to Stonehenge via Old Sarum"
       }
     ],
     "extracted": true,
