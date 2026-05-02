@@ -36,7 +36,11 @@ import buriedStationsList from "@/data/buried-stations.json"
 // service is sparse and event-driven. Coord-keyed, same shape as
 // data/buried-stations.json.
 import excludedPrimariesList from "@/data/excluded-primaries.json"
-import originRoutesData from "@/data/origin-routes.json"
+// origin-routes.json is keyed by station ID on disk (Phase 2a).
+// Use the loader's coord-keyed view so the existing
+// originRoutes[coord] / Object.entries(originRoutes) call sites in
+// this file keep working unchanged.
+import { originRoutesByCoord as originRoutesData } from "@/lib/origin-routes"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
 // Parallel hop matrix: non-terminal primaries (CLJ, future ECR/FPK/etc.)

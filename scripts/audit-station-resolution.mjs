@@ -95,13 +95,19 @@ function checkId(file, kind, ref, context) {
 
 // ── Audit each data file ─────────────────────────────────────────────
 
+// Phase 2a: keys at both levels are now station IDs. The embedded
+// `crs` field on each entry should still match the outer/inner key.
 const originRoutes = JSON.parse(fs.readFileSync(path.join(ROOT, "data/origin-routes.json"), "utf8"))
-for (const [coord, data] of Object.entries(originRoutes)) {
-  checkCoord("origin-routes.json", "origin-coord", coord, data.name)
-  if (data.crs) checkId("origin-routes.json", "origin-crs", data.crs, `origin ${data.name}`)
-  for (const [destCoord, dest] of Object.entries(data.directReachable ?? {})) {
-    checkCoord("origin-routes.json", "destination-coord", destCoord, `from ${data.name} to ${dest.name ?? "?"}`)
-    if (dest.crs) checkId("origin-routes.json", "destination-crs", dest.crs, `from ${data.name} to ${dest.name ?? "?"}`)
+for (const [originId, data] of Object.entries(originRoutes)) {
+  checkId("origin-routes.json", "origin", originId, data.name)
+  if (data.crs && data.crs !== originId) {
+    report("origin-routes.json", "origin-crs-mismatch", `${originId} vs embedded ${data.crs}`, data.name)
+  }
+  for (const [destId, dest] of Object.entries(data.directReachable ?? {})) {
+    checkId("origin-routes.json", "destination", destId, `from ${data.name} to ${dest.name ?? "?"}`)
+    if (dest.crs && dest.crs !== destId) {
+      report("origin-routes.json", "destination-crs-mismatch", `${destId} vs embedded ${dest.crs}`, `from ${data.name}`)
+    }
   }
 }
 
