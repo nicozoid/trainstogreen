@@ -81748,15 +81748,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Oxford Circular via Port Meadow",
         "startPlace": "Oxford",
         "endPlace": "Oxford",
         "startStation": "OXF",
         "endStation": "OXF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.8,
-        "hours": 3.27,
+        "distanceKm": 14.6,
+        "hours": 3.72,
         "lunchStops": [
           {
             "name": "Trout Inn",
@@ -81937,7 +81937,10 @@
           "pageName": "Oxford Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/oxford-circular/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 38.97,
+        "difficulty": "moderate",
+        "updatedAt": "2026-05-02T02:19:43.186Z"
       }
     ]
   },
