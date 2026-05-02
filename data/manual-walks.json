@@ -604,7 +604,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:24:02.601Z",
+        "updatedAt": "2026-05-02T02:16:58.214Z",
         "komootUrl": "https://www.komoot.com/tour/1472764500",
         "distanceKm": 22.2,
         "hours": 6,
@@ -620,7 +620,10 @@
           "jun",
           "jul"
         ],
-        "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape"
+        "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape",
+        "uphillMetres": 298.06,
+        "difficulty": "hard",
+        "name": "Eastbourne to Seaford via Beachy Head"
       }
     ],
     "extracted": true,
