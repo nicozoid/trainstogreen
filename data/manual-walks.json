@@ -980,15 +980,18 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:16:38.107Z",
         "komootUrl": "https://www.komoot.com/tour/849781899",
-        "distanceKm": 20.4,
-        "hours": 4.35,
+        "distanceKm": 20.9,
+        "hours": 4.48,
         "rating": 3,
         "miscellany": "Penultimate section of the Pilgrim's Way to Canterbury",
         "previousWalkDates": [
           "2022-10-22"
-        ]
+        ],
+        "uphillMetres": 214.11,
+        "difficulty": "moderate",
+        "name": "Charing to Chilham via the Pilgrim&#x27;s Way"
       }
     ],
     "extracted": true,
