@@ -1676,8 +1676,8 @@
         "endStation": "ILN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.9,
+        "hours": 4.02,
         "lunchStops": [],
         "terrain": "Canal, industrial towns, disused railway viaduct",
         "sights": [
@@ -1702,7 +1702,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925788454"
+        "komootUrl": "https://www.komoot.com/tour/2925788454",
+        "uphillMetres": 38.43,
+        "difficulty": "moderate",
+        "name": "Long Eaton to Ilkeston via Erewash Valley",
+        "updatedAt": "2026-05-02T02:15:03.448Z"
       }
     ],
     "extracted": true,
