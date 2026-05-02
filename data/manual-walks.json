@@ -677,7 +677,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:19:02.022Z",
         "komootUrl": "https://www.komoot.com/tour/849746255",
         "distanceKm": 12.6,
         "hours": 2.75,
@@ -685,7 +685,10 @@
         "suffix": "via Great Kimble",
         "previousWalkDates": [
           "2022-07-24"
-        ]
+        ],
+        "uphillMetres": 198.58,
+        "difficulty": "moderate",
+        "name": "Wendover Circular via Great Kimble (RG)"
       }
     ],
     "extracted": true,
