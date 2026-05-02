@@ -95426,15 +95426,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Farnham to Godalming",
         "startPlace": "Farnham",
         "endPlace": "Godalming",
         "startStation": "FNH",
         "endStation": "GOD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.4,
-        "hours": 5.18,
+        "distanceKm": 18.9,
+        "hours": 5.03,
         "lunchStops": [
           {
             "name": "Barley Mow",
@@ -95477,7 +95477,10 @@
           "pageName": "Farnham to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/farnham-to-godalming/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 182.54,
+        "difficulty": "hard",
+        "updatedAt": "2026-05-02T02:12:10.835Z"
       }
     ]
   },
