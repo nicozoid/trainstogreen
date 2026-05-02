@@ -1952,7 +1952,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T11:49:12.676Z",
+        "updatedAt": "2026-05-02T02:18:12.504Z",
         "komootUrl": "https://www.komoot.com/tour/2921509210",
         "rating": 2,
         "suffix": "via Roydon Woods",
@@ -1961,7 +1961,10 @@
           "2024-02-03"
         ],
         "distanceKm": 12.6,
-        "hours": 3.28
+        "hours": 3.28,
+        "uphillMetres": 90.8,
+        "difficulty": "moderate",
+        "name": "Lymington to Brockenhurst via Roydon Woods"
       }
     ],
     "extracted": true,
