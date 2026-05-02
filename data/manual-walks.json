@@ -82,7 +82,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T10:10:36.832Z",
+        "updatedAt": "2026-05-02T02:15:43.091Z",
         "rating": 1,
         "suffix": "via Saffron Walden",
         "ratingExplanation": "Spoiled by a long trek along a busy road near Audley End",
@@ -91,7 +91,10 @@
         "hours": 3.72,
         "previousWalkDates": [
           "2023-02-11"
-        ]
+        ],
+        "uphillMetres": 150.31,
+        "difficulty": "moderate",
+        "name": "Newport to Audley End via Saffron Walden"
       }
     ],
     "extracted": true,
