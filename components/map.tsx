@@ -46,6 +46,11 @@ import terminalMatrixData from "@/data/terminal-matrix.json"
 // from terminal-matrix.json to keep provenance clean (terminal-matrix is
 // hand-curated + TfL-fetched; this is purely TfL-fetched per primary).
 import tflHopMatrixData from "@/data/tfl-hop-matrix.json"
+// Deduplicated rail-edge polyline library (~5,500 entries, ~0.8 MB). Replaces
+// the per-journey `polylineCoords` blobs that used to be baked into each
+// routing diff — those were 7+ MB per primary, this serves every primary at
+// runtime via composition. See lib/compose-segment-polyline.ts.
+import railSegmentsData from "@/data/rail-segments.json"
 // Admin-only region labels — counties, national parks, AONBs (National Landscapes).
 // Each entry is { name, category, coord:[lng,lat] }. Hand-edit `coord` to nudge
 // a label to a better position. The list is converted to a Mapbox FeatureCollection
@@ -61,6 +66,15 @@ import { getColors } from "@/lib/tokens"
 import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
+import {
+  buildComposeContext,
+  composeFullJourneyPolyline,
+  resolveStationCoord,
+  type ComposeContext,
+  type RailSegments,
+  type OriginRoutesData,
+  type TerminalMatrixData,
+} from "@/lib/compose-segment-polyline"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { outbox } from "@/lib/admin-outbox"
@@ -2305,6 +2319,10 @@ export default function HikeMap() {
     lng: number
     lat: number
     name: string
+    // CRS code on the underlying station feature — used in admin mode to
+    // prefix the hover label (e.g. "ZFD Farringdon"), matching how the
+    // normal station-label layer behaves under devExcludeActive.
+    crs: string | null
   } | null>(null)
   const [showTrails, setShowTrails] = useState(false)
   // Region labels (counties, parks, AONBs) — controlled by a checkbox in
@@ -6689,7 +6707,15 @@ export default function HikeMap() {
           // coordToName, the station modal title — without each
           // consumer needing to know about the override map.
           const nameOverride = TERMINUS_DISPLAY_OVERRIDES[coordKey]
-          if (nameOverride) extra.name = nameOverride
+          if (nameOverride) {
+            // Stash the un-overridden name so the segment-polyline composer
+            // can resolve Google's leg names (e.g. "London St. Pancras
+            // International") against it. Without this, the override
+            // ("St Pancras") was the only name in baseStations and
+            // composer name lookups fell back to a 2-point straight line.
+            extra.canonicalName = f.properties?.name
+            extra.name = nameOverride
+          }
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
           return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
         })
@@ -6761,36 +6787,72 @@ export default function HikeMap() {
 
   // Decodes the full set of coordinates for the hovered station's journey.
   // Returns the array (not GeoJSON) so the animation can slice it progressively.
-  // Two sources:
+  // Three sources, in priority order:
   //   `polyline`       — encoded string from Google Routes (follows real track)
-  //   `polylineCoords` — pre-decoded [lng,lat][] from RTT synthesis (straight
-  //                      lines between CRS coords; looks jagged)
-  // Prefer the Google-encoded polyline when both are present.
-  type JourneyWithGeom = { polyline?: string; polylineCoords?: [number, number][] }
+  //   `polylineCoords` — pre-decoded [lng,lat][] baked into a routing diff
+  //                      (legacy — most are now stripped, the segment composer
+  //                      below replaces them at runtime)
+  //   composed-from-segments — re-built on demand from data/rail-segments.json
+  //                      (~0.8 MB) plus origin-routes calling-points. Replaces
+  //                      the per-journey polyline blobs that used to inflate
+  //                      routing diffs by 7+ MB each.
+  type JourneyWithGeom = {
+    polyline?: string
+    polylineCoords?: [number, number][]
+    legs?: Array<{
+      vehicleType?: string | null
+      departureStation?: string | null
+      arrivalStation?: string | null
+    }>
+  }
+
+  // ComposeContext is built once per stations load — the lookup tables are
+  // pure functions of stations.features + bundled data files, so memoise on
+  // baseStations identity. Building takes ~5ms for ~3,000 stations.
+  const composeContext = useMemo<ComposeContext | null>(() => {
+    if (!baseStations) return null
+    return buildComposeContext({
+      stations: baseStations,
+      originRoutes: originRoutesData as unknown as OriginRoutesData,
+      segments: railSegmentsData as unknown as RailSegments,
+      terminalMatrix: terminalMatrix as unknown as TerminalMatrixData,
+    })
+  }, [baseStations])
+
   const resolveJourneyCoords = (j: JourneyWithGeom | undefined): [number, number][] | null => {
     if (!j) return null
     if (j.polyline) return decodePolyline(j.polyline)
     if (j.polylineCoords && j.polylineCoords.length > 1) return j.polylineCoords
     return null
   }
-  // Polyline resolver — the primary's journey is already the best source we
-  // have. For Google-fetched primaries it carries an encoded polyline
-  // (real track). For RTT-direct synth journeys at a synthetic primary, the
-  // stations memo has already spliced in a sibling's curvy polyline suffix
-  // (via trimSiblingPolylineToRttRoute), so polylineCoords here contains
-  // that hybrid rather than plain straight lines. For concrete primaries or
-  // RTT-direct journeys with no sibling help available, polylineCoords is
-  // the raw CRS-chain straight lines — still accurate for the route, just
-  // jaggy-looking.
+  // Polyline resolver — checks the journey's own data first (Google-encoded
+  // polyline > pre-decoded polylineCoords) then falls back to composing on
+  // demand from the rail-segment library + the journey's calling-points.
+  // The destCoord arg is the journey's destination — needed by the composer
+  // for resolving change-station name homonyms (Newport Wales vs Essex etc.).
   const preferGooglePolyline = (
     journeys: Record<string, JourneyWithGeom> | undefined,
     originKey: string,
+    destCoord?: [number, number],
   ): [number, number][] | null => {
     if (!journeys) return null
     const primaryJourney = journeys[originKey]
-    if (primaryJourney?.polyline) return decodePolyline(primaryJourney.polyline)
-    if (primaryJourney?.polylineCoords && primaryJourney.polylineCoords.length > 1) {
+    if (!primaryJourney) return null
+    if (primaryJourney.polyline) return decodePolyline(primaryJourney.polyline)
+    if (primaryJourney.polylineCoords && primaryJourney.polylineCoords.length > 1) {
       return primaryJourney.polylineCoords
+    }
+    // Runtime composition fallback. Cheap (~1ms per journey) so we don't
+    // memoise per (primary, dest) — the surrounding useMemos already gate it.
+    if (composeContext && primaryJourney.legs && destCoord) {
+      const primaryCoord = originKey.split(",").map(Number) as [number, number]
+      const composed = composeFullJourneyPolyline(
+        primaryJourney.legs,
+        primaryCoord,
+        destCoord,
+        composeContext,
+      )
+      if (composed && composed.length > 1) return composed
     }
     return null
   }
@@ -6800,9 +6862,10 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
-    return preferGooglePolyline(journeys, primaryOrigin)
+    const destCoord = feature?.geometry?.coordinates as [number, number] | undefined
+    return preferGooglePolyline(journeys, primaryOrigin, destCoord)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hovered, stations, primaryOrigin])
+  }, [hovered, stations, primaryOrigin, composeContext])
 
   // When the Central London synthetic is the active primary AND a journey
   // is being hovered, identify which of the 16 terminus diamonds matches
@@ -6862,9 +6925,10 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
-    return preferGooglePolyline(journeys, friendOrigin)
+    const destCoord = feature?.geometry?.coordinates as [number, number] | undefined
+    return preferGooglePolyline(journeys, friendOrigin, destCoord)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [friendOrigin, hovered, stations])
+  }, [friendOrigin, hovered, stations, composeContext])
 
   // Whether the currently hovered station is the active friend origin —
   // used to show "liberate your friend" instead of travel times in the label
@@ -7576,6 +7640,7 @@ export default function HikeMap() {
         lng,
         lat,
         name: (feature.properties?.name as string | undefined) ?? "",
+        crs: (feature.properties?.["ref:crs"] as string | undefined) ?? null,
       })
       setRadiusPos(null)
       return
@@ -8731,14 +8796,65 @@ export default function HikeMap() {
                   for (let i = 0; i < coords.length; i++) if (keep[i]) out.push(coords[i])
                   return out
                 }
+                // Detection threshold for an intra-polyline straight-line
+                // jump that indicates a homonym mis-attachment. 0.5° ≈ 50km.
+                // Any leg-to-leg gap larger than this means the resolver
+                // had to bridge two stations the rail network doesn't
+                // actually connect — only happens when one of the leg
+                // endpoints resolved to the wrong-homonym station because
+                // the journey was attached to the wrong feature coord at
+                // upstream-fetch time.
+                const HOMONYM_JUMP_TOL_SQ = 0.5 * 0.5
+                // Compose the journey via the same path the runtime uses,
+                // then check for big intra-polyline jumps. Returns true
+                // when the legs compose cleanly (no >50km gaps) — meaning
+                // the journey is consistent. Returns false when there's
+                // a big jump, signalling a homonym mis-attachment that
+                // should be dropped before it gets baked into the diff.
+                const journeyMatchesFeature = (
+                  entry: Record<string, unknown>,
+                  origin: string,
+                  featureCoord: [number, number],
+                ): boolean => {
+                  const legs = entry.legs as Array<{
+                    vehicleType?: string | null
+                    departureStation?: string | null
+                    arrivalStation?: string | null
+                  }> | undefined
+                  if (!Array.isArray(legs) || legs.length === 0) return true
+                  if (!composeContext) return true
+                  const primaryCoord = origin.split(",").map(Number) as [number, number]
+                  const composed = composeFullJourneyPolyline(legs, primaryCoord, featureCoord, composeContext)
+                  if (!composed || composed.length < 2) return true
+                  // (1) Any intra-polyline jump >50km — a homonym mismatch
+                  //     mid-route, the resolver had to bridge two stations
+                  //     the rail network doesn't connect.
+                  for (let i = 1; i < composed.length; i++) {
+                    const dx = composed[i][0] - composed[i - 1][0]
+                    const dy = composed[i][1] - composed[i - 1][1]
+                    if (dx * dx + dy * dy > HOMONYM_JUMP_TOL_SQ) return false
+                  }
+                  // (2) Polyline endpoint not near feature coord — legs end
+                  //     at the wrong-homonym (e.g. GIL Dorset's entry whose
+                  //     last leg resolves to Gillingham Kent via rail
+                  //     reachability). Drop the entry; better no journey
+                  //     than a journey to the wrong region.
+                  const last = composed[composed.length - 1]
+                  const ldx = last[0] - featureCoord[0]
+                  const ldy = last[1] - featureCoord[1]
+                  if (ldx * ldx + ldy * ldy > HOMONYM_JUMP_TOL_SQ) return false
+                  return true
+                }
                 const buildDiff = (rs: StationCollection, bs: StationCollection) => {
                   const baseByCoord: Record<string, StationFeature> = {}
                   for (const f of bs.features) baseByCoord[f.properties.coordKey as string] = f
                   const diff: Record<string, Record<string, unknown>> = {}
+                  let droppedHomonym = 0
                   for (const rf of rs.features) {
                     const coordKey = rf.properties.coordKey as string
                     const bf = baseByCoord[coordKey]
                     if (!bf) continue
+                    const featureCoord = rf.geometry.coordinates as [number, number]
                     const baseProps = bf.properties as Record<string, unknown>
                     const routedProps = rf.properties as Record<string, unknown>
                     const delta: Record<string, unknown> = {}
@@ -8752,11 +8868,23 @@ export default function HikeMap() {
                         for (const origin of Object.keys(rj)) {
                           if (JSON.stringify(rj[origin]) === JSON.stringify(bj[origin])) continue
                           const entry = { ...(rj[origin] as Record<string, unknown>) }
-                          const pc = entry.polylineCoords as [number, number][] | undefined
-                          if (Array.isArray(pc)) {
-                            const simplified = simplifyPolyline(pc, 0.0005)
-                            entry.polylineCoords = simplified.map(roundCoord)
+                          // Drop journeys whose last-leg arrival doesn't
+                          // resolve to anywhere near this feature's coord —
+                          // upstream homonym mis-attachment (the journey is
+                          // actually for the OTHER station of the same name).
+                          // Better to ship no journey than a 280km-straight
+                          // visualisation pretending it's correct.
+                          if (!journeyMatchesFeature(entry, origin, featureCoord)) {
+                            droppedHomonym += 1
+                            continue
                           }
+                          // Drop polylineCoords from the persisted diff —
+                          // the runtime composer rebuilds them from the
+                          // segment library on demand, ~7 MB smaller per
+                          // primary. simplifyPolyline + roundCoord are
+                          // kept in scope only because other diff fields
+                          // might want them; this entry no longer does.
+                          delete entry.polylineCoords
                           addedOrChanged[origin] = entry
                         }
                         if (Object.keys(addedOrChanged).length > 0) delta[k] = addedOrChanged
@@ -8765,6 +8893,10 @@ export default function HikeMap() {
                       delta[k] = routedProps[k]
                     }
                     if (Object.keys(delta).length > 0) diff[coordKey] = delta
+                  }
+                  if (droppedHomonym > 0) {
+                    // eslint-disable-next-line no-console
+                    console.warn(`[buildDiff] dropped ${droppedHomonym} homonym-mismatched journey entries`)
                   }
                   return diff
                 }
@@ -9467,7 +9599,17 @@ export default function HikeMap() {
             data={{
               type: "Feature",
               geometry: { type: "Point", coordinates: [hoveredDiamond.lng, hoveredDiamond.lat] },
-              properties: { coordKey: hoveredDiamond.coordKey, name: hoveredDiamond.name },
+              // In admin mode, prepend the CRS to the displayed label so the
+              // hover state matches the normal station-label convention
+              // (e.g. "ZFD Farringdon" instead of just "Farringdon"). Falls
+              // back to plain name when there's no CRS or admin is off.
+              properties: {
+                coordKey: hoveredDiamond.coordKey,
+                name:
+                  devExcludeActive && hoveredDiamond.crs
+                    ? `${hoveredDiamond.crs} ${hoveredDiamond.name}`
+                    : hoveredDiamond.name,
+              },
             }}
           >
             <Layer

@@ -1,0 +1,2406 @@
+{
+  "generatedAt": "2026-05-02T11:02:24.722Z",
+  "failed": [
+    {
+      "pair": "CTK-BFR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "City Thameslink",
+      "toName": "Blackfriars"
+    },
+    {
+      "pair": "BFR-CTK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Blackfriars",
+      "toName": "City Thameslink"
+    },
+    {
+      "pair": "HPD-SAC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Harpenden",
+      "toName": "St Albans City"
+    },
+    {
+      "pair": "SHR-CTT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Shrewsbury",
+      "toName": "Church Stretton"
+    },
+    {
+      "pair": "CTT-CRV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Church Stretton",
+      "toName": "Craven Arms"
+    },
+    {
+      "pair": "CRV-LUD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Craven Arms",
+      "toName": "Ludlow"
+    },
+    {
+      "pair": "LUD-LEO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ludlow",
+      "toName": "Leominster"
+    },
+    {
+      "pair": "LEO-HFD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Leominster",
+      "toName": "Hereford"
+    },
+    {
+      "pair": "LTN-HPD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Luton Airport Parkway",
+      "toName": "Harpenden"
+    },
+    {
+      "pair": "SAC-RDT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "St Albans City",
+      "toName": "Radlett"
+    },
+    {
+      "pair": "RDT-ELS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Radlett",
+      "toName": "Elstree & Borehamwood"
+    },
+    {
+      "pair": "ELS-MIL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Elstree & Borehamwood",
+      "toName": "Mill Hill Broadway"
+    },
+    {
+      "pair": "CRV-CTT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Craven Arms",
+      "toName": "Church Stretton"
+    },
+    {
+      "pair": "CTT-SHR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Church Stretton",
+      "toName": "Shrewsbury"
+    },
+    {
+      "pair": "THW-JEQ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "The Hawthorns",
+      "toName": "Jewellery Quarter"
+    },
+    {
+      "pair": "LUD-CRV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ludlow",
+      "toName": "Craven Arms"
+    },
+    {
+      "pair": "JEQ-BSW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Jewellery Quarter",
+      "toName": "Birmingham Snow Hill"
+    },
+    {
+      "pair": "LUT-LTN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Luton",
+      "toName": "Luton Airport Parkway"
+    },
+    {
+      "pair": "LIV-LVC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Liverpool Lime Street",
+      "toName": "Liverpool Central"
+    },
+    {
+      "pair": "HFD-LUD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hereford",
+      "toName": "Ludlow"
+    },
+    {
+      "pair": "CRV-BME",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Craven Arms",
+      "toName": "Broome"
+    },
+    {
+      "pair": "LPG-BOR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llanfairpwll",
+      "toName": "Bodorgan"
+    },
+    {
+      "pair": "BME-HPT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Broome",
+      "toName": "Hopton Heath"
+    },
+    {
+      "pair": "HPT-BUK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hopton Heath",
+      "toName": "Bucknell"
+    },
+    {
+      "pair": "RTR-SOO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Rochester",
+      "toName": "Strood"
+    },
+    {
+      "pair": "HFD-LEO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hereford",
+      "toName": "Leominster"
+    },
+    {
+      "pair": "BXB-CHN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Broxbourne",
+      "toName": "Cheshunt"
+    },
+    {
+      "pair": "BUK-KNI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bucknell",
+      "toName": "Knighton"
+    },
+    {
+      "pair": "KNI-KNU",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Knighton",
+      "toName": "Knucklas"
+    },
+    {
+      "pair": "KNU-LGO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Knucklas",
+      "toName": "Llangynllo"
+    },
+    {
+      "pair": "LEO-LUD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Leominster",
+      "toName": "Ludlow"
+    },
+    {
+      "pair": "GNW-DEP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Greenwich",
+      "toName": "Deptford"
+    },
+    {
+      "pair": "LGO-LLT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangynllo",
+      "toName": "Llanbister Road"
+    },
+    {
+      "pair": "LLT-DOL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llanbister Road",
+      "toName": "Dolau"
+    },
+    {
+      "pair": "GDH-ENC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Gordon Hill",
+      "toName": "Enfield Chase"
+    },
+    {
+      "pair": "CMS-CBG",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CMS",
+      "toName": "Cambridge"
+    },
+    {
+      "pair": "DOL-PNY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dolau",
+      "toName": "Pen-y-bont"
+    },
+    {
+      "pair": "PNY-LLO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pen-y-bont",
+      "toName": "Llandrindod"
+    },
+    {
+      "pair": "WLP-NWT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Welshpool",
+      "toName": "Newtown"
+    },
+    {
+      "pair": "FKC-FKW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Folkestone Central",
+      "toName": "Folkestone West"
+    },
+    {
+      "pair": "CBG-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Cambridge",
+      "toName": "CMS"
+    },
+    {
+      "pair": "SHR-WLP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Shrewsbury",
+      "toName": "Welshpool"
+    },
+    {
+      "pair": "WTE-WYT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Whitlocks End",
+      "toName": "Wythall"
+    },
+    {
+      "pair": "NWT-CWS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newtown",
+      "toName": "Caersws"
+    },
+    {
+      "pair": "SHR-LUD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Shrewsbury",
+      "toName": "Ludlow"
+    },
+    {
+      "pair": "LUD-HFD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ludlow",
+      "toName": "Hereford"
+    },
+    {
+      "pair": "CLJ-WNT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Clapham Junction",
+      "toName": "Wandsworth Town"
+    },
+    {
+      "pair": "ELY-PBO",
+      "reason": "no-routes",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "Peterborough"
+    },
+    {
+      "pair": "KIV-KVP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kiveton Bridge",
+      "toName": "Kiveton Park"
+    },
+    {
+      "pair": "WYT-EWD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wythall",
+      "toName": "Earlswood"
+    },
+    {
+      "pair": "WNT-PUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wandsworth Town",
+      "toName": "Putney"
+    },
+    {
+      "pair": "PUT-BNS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Putney",
+      "toName": "Barnes"
+    },
+    {
+      "pair": "ELY-MCH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "March"
+    },
+    {
+      "pair": "BDM-FLT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bedford",
+      "toName": "Flitwick"
+    },
+    {
+      "pair": "FLT-HLN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Flitwick",
+      "toName": "Harlington"
+    },
+    {
+      "pair": "HYM-SLA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Haymarket",
+      "toName": "Slateford"
+    },
+    {
+      "pair": "LLH-PTD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangennech",
+      "toName": "Pontarddulais"
+    },
+    {
+      "pair": "CWS-MCN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Caersws",
+      "toName": "Machynlleth"
+    },
+    {
+      "pair": "NVR-ALT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Navigation Road",
+      "toName": "Altrincham"
+    },
+    {
+      "pair": "HLN-LEA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Harlington",
+      "toName": "Leagrave"
+    },
+    {
+      "pair": "DVY-PHG",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dovey Junction",
+      "toName": "Penhelyg"
+    },
+    {
+      "pair": "LEA-LUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Leagrave",
+      "toName": "Luton"
+    },
+    {
+      "pair": "SLA-KGE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Slateford",
+      "toName": "Kingsknowe"
+    },
+    {
+      "pair": "PSN-BMT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Parson Street",
+      "toName": "Bedminster"
+    },
+    {
+      "pair": "PTF-AMF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pantyffynnon",
+      "toName": "Ammanford"
+    },
+    {
+      "pair": "PHG-AVY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Penhelyg",
+      "toName": "Aberdyfi"
+    },
+    {
+      "pair": "MCH-PBO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "March",
+      "toName": "Peterborough"
+    },
+    {
+      "pair": "ALT-HAL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Altrincham",
+      "toName": "Hale"
+    },
+    {
+      "pair": "AMF-LLI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ammanford",
+      "toName": "Llandybie"
+    },
+    {
+      "pair": "AVY-TYW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Aberdyfi",
+      "toName": "Tywyn"
+    },
+    {
+      "pair": "SAW-HWM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Sawbridgeworth",
+      "toName": "Harlow Mill"
+    },
+    {
+      "pair": "KGE-WTA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kingsknowe",
+      "toName": "Wester Hailes"
+    },
+    {
+      "pair": "BMT-BRI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bedminster",
+      "toName": "Bristol Temple Meads"
+    },
+    {
+      "pair": "TYW-TNF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Tywyn",
+      "toName": "Tonfanau"
+    },
+    {
+      "pair": "PIT-BLA",
+      "reason": "no-routes",
+      "message": null,
+      "fromName": "Pitlochry",
+      "toName": "Blair Atholl"
+    },
+    {
+      "pair": "FFA-LLL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ffairfach",
+      "toName": "Llandeilo"
+    },
+    {
+      "pair": "WLP-SHR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Welshpool",
+      "toName": "Shrewsbury"
+    },
+    {
+      "pair": "AYH-SWO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Aylesham",
+      "toName": "Snowdown"
+    },
+    {
+      "pair": "HWN-BXB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Harlow Town",
+      "toName": "Broxbourne"
+    },
+    {
+      "pair": "CHF-SIE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Church Fenton",
+      "toName": "Sherburn-in-Elmet"
+    },
+    {
+      "pair": "KIN-AVM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kingussie",
+      "toName": "Aviemore"
+    },
+    {
+      "pair": "MCN-CWS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Machynlleth",
+      "toName": "Caersws"
+    },
+    {
+      "pair": "LLW-FRB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llwyngwril",
+      "toName": "Fairbourne"
+    },
+    {
+      "pair": "BIS-SAW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bishop's Stortford",
+      "toName": "Sawbridgeworth"
+    },
+    {
+      "pair": "RGW-LHO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ramsgreave and Wilpshire",
+      "toName": "Langho"
+    },
+    {
+      "pair": "LLG-LNR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangadog",
+      "toName": "Llanwrda"
+    },
+    {
+      "pair": "FRB-MFA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fairbourne",
+      "toName": "Morfa Mawddach"
+    },
+    {
+      "pair": "ELY-CMB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "Cambridge North"
+    },
+    {
+      "pair": "GSD-KSW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Garsdale",
+      "toName": "Kirkby Stephen"
+    },
+    {
+      "pair": "LNR-LLV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llanwrda",
+      "toName": "Llandovery"
+    },
+    {
+      "pair": "CWS-NWT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Caersws",
+      "toName": "Newtown"
+    },
+    {
+      "pair": "MFA-BRM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Morfa Mawddach",
+      "toName": "Barmouth"
+    },
+    {
+      "pair": "PTA-BAJ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Port Talbot Parkway",
+      "toName": "Baglan"
+    },
+    {
+      "pair": "BND-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Brandon",
+      "toName": "Ely"
+    },
+    {
+      "pair": "FRN-TAI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fearn",
+      "toName": "Tain"
+    },
+    {
+      "pair": "HWM-HWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Harlow Mill",
+      "toName": "Harlow Town"
+    },
+    {
+      "pair": "VXH-QRB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Vauxhall",
+      "toName": "Queenstown Road"
+    },
+    {
+      "pair": "CMB-WBC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Cambridge North",
+      "toName": "Waterbeach"
+    },
+    {
+      "pair": "ELY-LTP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "Littleport"
+    },
+    {
+      "pair": "WCL-ADW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "West Calder",
+      "toName": "Addiewell"
+    },
+    {
+      "pair": "NWT-WLP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newtown",
+      "toName": "Welshpool"
+    },
+    {
+      "pair": "BNS-PUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Barnes",
+      "toName": "Putney"
+    },
+    {
+      "pair": "RYN-BXB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Roydon",
+      "toName": "Broxbourne"
+    },
+    {
+      "pair": "SOJ-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Soham",
+      "toName": "Ely"
+    },
+    {
+      "pair": "BAJ-BNF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Baglan",
+      "toName": "Briton Ferry"
+    },
+    {
+      "pair": "TTF-BND",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thetford",
+      "toName": "Brandon"
+    },
+    {
+      "pair": "TTF-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thetford",
+      "toName": "Ely"
+    },
+    {
+      "pair": "MCV-MCO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Manchester Victoria",
+      "toName": "Manchester Oxford Road"
+    },
+    {
+      "pair": "CTW-ACR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Church and Oswaldtwistle",
+      "toName": "Accrington"
+    },
+    {
+      "pair": "AGS-GLC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Argyle Street",
+      "toName": "Glasgow Central"
+    },
+    {
+      "pair": "ELY-MNE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "Manea"
+    },
+    {
+      "pair": "GMB-GMD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Grimsby Town",
+      "toName": "Grimsby Docks"
+    },
+    {
+      "pair": "MRP-THC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Moorthorpe",
+      "toName": "Thurnscoe"
+    },
+    {
+      "pair": "CUA-INH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Culrain",
+      "toName": "Invershin"
+    },
+    {
+      "pair": "LLL-FFA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llandeilo",
+      "toName": "Ffairfach"
+    },
+    {
+      "pair": "WBC-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Waterbeach",
+      "toName": "Ely"
+    },
+    {
+      "pair": "PUT-WNT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Putney",
+      "toName": "Wandsworth Town"
+    },
+    {
+      "pair": "CMS-WLF",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CMS",
+      "toName": "Whittlesford Parkway"
+    },
+    {
+      "pair": "BIS-HWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bishop's Stortford",
+      "toName": "Harlow Town"
+    },
+    {
+      "pair": "BNF-NTH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Briton Ferry",
+      "toName": "Neath"
+    },
+    {
+      "pair": "NTH-SKE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Neath",
+      "toName": "Skewen"
+    },
+    {
+      "pair": "SWN-BTD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Swinton (South Yorkshire)",
+      "toName": "Bolton-upon-Dearne"
+    },
+    {
+      "pair": "WLF-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Whittlesford Parkway",
+      "toName": "CMS"
+    },
+    {
+      "pair": "BEL-MOO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Beauly",
+      "toName": "Muir of Ord"
+    },
+    {
+      "pair": "MOO-CBD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Muir of Ord",
+      "toName": "Conon Bridge"
+    },
+    {
+      "pair": "LLM-GTH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangammarch",
+      "toName": "Garth"
+    },
+    {
+      "pair": "SMO-MDS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "South Merton",
+      "toName": "Morden South"
+    },
+    {
+      "pair": "LTP-DOW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Littleport",
+      "toName": "Downham Market"
+    },
+    {
+      "pair": "RDT-SAC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Radlett",
+      "toName": "St Albans City"
+    },
+    {
+      "pair": "BTO-DPD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Betchworth",
+      "toName": "Dorking Deepdene"
+    },
+    {
+      "pair": "DPD-DKT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dorking Deepdene",
+      "toName": "Dorking West"
+    },
+    {
+      "pair": "KGT-SDF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kilgetty",
+      "toName": "Saundersfoot"
+    },
+    {
+      "pair": "DMH-WSB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dilton Marsh",
+      "toName": "Westbury"
+    },
+    {
+      "pair": "HAV-WBL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Havant",
+      "toName": "Warblington"
+    },
+    {
+      "pair": "BRC-FLD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Breich",
+      "toName": "Fauldhouse"
+    },
+    {
+      "pair": "NLR-LWR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Gogledd Llanrwst / North Llanrwst",
+      "toName": "Llanrwst"
+    },
+    {
+      "pair": "HFE-WAR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hertford East",
+      "toName": "Ware"
+    },
+    {
+      "pair": "MCH-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "March",
+      "toName": "Ely"
+    },
+    {
+      "pair": "CMS-RYS",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CMS",
+      "toName": "Royston"
+    },
+    {
+      "pair": "SKE-LAS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Skewen",
+      "toName": "Llansamlet"
+    },
+    {
+      "pair": "BTD-GOE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bolton-upon-Dearne",
+      "toName": "Goldthorpe"
+    },
+    {
+      "pair": "SWN-MRP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Swinton (South Yorkshire)",
+      "toName": "Moorthorpe"
+    },
+    {
+      "pair": "THC-GOE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thurnscoe",
+      "toName": "Goldthorpe"
+    },
+    {
+      "pair": "MSH-WSA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Mossley Hill",
+      "toName": "West Allerton"
+    },
+    {
+      "pair": "CYT-MLH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Cherry Tree",
+      "toName": "Mill Hill"
+    },
+    {
+      "pair": "HLY-CRF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Holytown",
+      "toName": "Carfin"
+    },
+    {
+      "pair": "KSW-GSD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kirkby Stephen",
+      "toName": "Garsdale"
+    },
+    {
+      "pair": "WAR-SMT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ware",
+      "toName": "St Margarets"
+    },
+    {
+      "pair": "MNE-MCH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Manea",
+      "toName": "March"
+    },
+    {
+      "pair": "FSK-ROL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fiskerton",
+      "toName": "Rolleston"
+    },
+    {
+      "pair": "FGW-FGH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fishguard and Goodwick",
+      "toName": "Fishguard Harbour"
+    },
+    {
+      "pair": "LUD-SHR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ludlow",
+      "toName": "Shrewsbury"
+    },
+    {
+      "pair": "TEN-PNA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Tenby",
+      "toName": "Penally"
+    },
+    {
+      "pair": "WKF-WKK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wakefield Westgate",
+      "toName": "Wakefield Kirkgate"
+    },
+    {
+      "pair": "GOL-DNO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Golspie",
+      "toName": "Dunrobin Castle"
+    },
+    {
+      "pair": "LLI-AMF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llandybie",
+      "toName": "Ammanford"
+    },
+    {
+      "pair": "SSD-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Stansted Airport",
+      "toName": "CMS"
+    },
+    {
+      "pair": "SMT-RYH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "St Margarets",
+      "toName": "Rye House"
+    },
+    {
+      "pair": "MDS-SIH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Morden South",
+      "toName": "St. Helier"
+    },
+    {
+      "pair": "KMP-SUU",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kempton Park",
+      "toName": "Sunbury"
+    },
+    {
+      "pair": "LUT-BDM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Luton",
+      "toName": "Bedford"
+    },
+    {
+      "pair": "GMD-NCE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Grimsby Docks",
+      "toName": "New Clee"
+    },
+    {
+      "pair": "GOE-THC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Goldthorpe",
+      "toName": "Thurnscoe"
+    },
+    {
+      "pair": "MLH-CYT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Mill Hill",
+      "toName": "Cherry Tree"
+    },
+    {
+      "pair": "SOB-NUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Southbourne",
+      "toName": "Nutbourne"
+    },
+    {
+      "pair": "LLO-PNY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llandrindod",
+      "toName": "Pen-y-bont"
+    },
+    {
+      "pair": "RYH-BXB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Rye House",
+      "toName": "Broxbourne"
+    },
+    {
+      "pair": "WWL-CWD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Whitwell",
+      "toName": "Creswell"
+    },
+    {
+      "pair": "DOW-WTG",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Downham Market",
+      "toName": "Watlington"
+    },
+    {
+      "pair": "KBN-SOH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kilburn High Road",
+      "toName": "South Hampstead"
+    },
+    {
+      "pair": "BSK-FLE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Basingstoke",
+      "toName": "Fleet"
+    },
+    {
+      "pair": "FLE-FNB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fleet",
+      "toName": "Farnborough (Main)"
+    },
+    {
+      "pair": "GOE-BTD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Goldthorpe",
+      "toName": "Bolton-upon-Dearne"
+    },
+    {
+      "pair": "PAT-ECC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Patricroft",
+      "toName": "Eccles"
+    },
+    {
+      "pair": "CSM-DNY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Castleton Moor",
+      "toName": "Danby"
+    },
+    {
+      "pair": "CSL-BBK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Codsall",
+      "toName": "Bilbrook"
+    },
+    {
+      "pair": "NWR-KIN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newtonmore",
+      "toName": "Kingussie"
+    },
+    {
+      "pair": "HTW-SHS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hartwood",
+      "toName": "Shotts"
+    },
+    {
+      "pair": "BRA-HMS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Brora",
+      "toName": "Helmsdale"
+    },
+    {
+      "pair": "PNY-DOL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pen-y-bont",
+      "toName": "Dolau"
+    },
+    {
+      "pair": "AMF-PTF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ammanford",
+      "toName": "Pantyffynnon"
+    },
+    {
+      "pair": "KIN-NWR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kingussie",
+      "toName": "Newtonmore"
+    },
+    {
+      "pair": "LHS-FST",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Limehouse",
+      "toName": "Fenchurch Street"
+    },
+    {
+      "pair": "RYS-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Royston",
+      "toName": "CMS"
+    },
+    {
+      "pair": "WNT-CLJ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wandsworth Town",
+      "toName": "Clapham Junction"
+    },
+    {
+      "pair": "MCH-WLE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "March",
+      "toName": "Whittlesea"
+    },
+    {
+      "pair": "THC-MRP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thurnscoe",
+      "toName": "Moorthorpe"
+    },
+    {
+      "pair": "PFR-MRP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pontefract Baghill",
+      "toName": "Moorthorpe"
+    },
+    {
+      "pair": "ECC-DGT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Eccles",
+      "toName": "Deansgate"
+    },
+    {
+      "pair": "SLQ-WLD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "St Leonards Warrior Square",
+      "toName": "West St Leonards"
+    },
+    {
+      "pair": "BDH-HAV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bedhampton",
+      "toName": "Havant"
+    },
+    {
+      "pair": "FLD-BRC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Fauldhouse",
+      "toName": "Breich"
+    },
+    {
+      "pair": "MCO-TRA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Manchester Oxford Road",
+      "toName": "Trafford Park"
+    },
+    {
+      "pair": "LAS-SKE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llansamlet",
+      "toName": "Skewen"
+    },
+    {
+      "pair": "DOL-LLT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dolau",
+      "toName": "Llanbister Road"
+    },
+    {
+      "pair": "DPT-DOC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Devonport",
+      "toName": "Dockyard"
+    },
+    {
+      "pair": "OKN-TFC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Oakengates",
+      "toName": "Telford Central"
+    },
+    {
+      "pair": "LLC-PRH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llandecwyn",
+      "toName": "Penrhyndeudraeth"
+    },
+    {
+      "pair": "KGX-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "London King's Cross",
+      "toName": "CMS"
+    },
+    {
+      "pair": "CMS-SSD",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CMS",
+      "toName": "Stansted Airport"
+    },
+    {
+      "pair": "SWN-MEX",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Swinton (South Yorkshire)",
+      "toName": "Mexborough"
+    },
+    {
+      "pair": "SHC-FEA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Streethouse",
+      "toName": "Featherstone"
+    },
+    {
+      "pair": "NCL-DOT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newcastle",
+      "toName": "Dunston"
+    },
+    {
+      "pair": "MRD-LAP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Morchard Road",
+      "toName": "Lapford"
+    },
+    {
+      "pair": "NUT-BOH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Nutbourne",
+      "toName": "Bosham"
+    },
+    {
+      "pair": "COW-LCG",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Cowdenbeath",
+      "toName": "Lochgelly"
+    },
+    {
+      "pair": "BRC-ADW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Breich",
+      "toName": "Addiewell"
+    },
+    {
+      "pair": "BLA-PIT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Blair Atholl",
+      "toName": "Pitlochry"
+    },
+    {
+      "pair": "TRA-HUP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Trafford Park",
+      "toName": "Humphrey Park"
+    },
+    {
+      "pair": "SKE-NTH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Skewen",
+      "toName": "Neath"
+    },
+    {
+      "pair": "NTH-BNF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Neath",
+      "toName": "Briton Ferry"
+    },
+    {
+      "pair": "LLT-LGO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llanbister Road",
+      "toName": "Llangynllo"
+    },
+    {
+      "pair": "PTF-PTD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pantyffynnon",
+      "toName": "Pontarddulais"
+    },
+    {
+      "pair": "DMP-BSR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dumpton Park",
+      "toName": "Broadstairs"
+    },
+    {
+      "pair": "PRH-MFF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Penrhyndeudraeth",
+      "toName": "Minffordd"
+    },
+    {
+      "pair": "DKT-DPD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dorking West",
+      "toName": "Dorking Deepdene"
+    },
+    {
+      "pair": "HOK-WNF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hook",
+      "toName": "Winchfield"
+    },
+    {
+      "pair": "BTD-SWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bolton-upon-Dearne",
+      "toName": "Swinton (South Yorkshire)"
+    },
+    {
+      "pair": "GTO-FRF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Gorton",
+      "toName": "Fairfield"
+    },
+    {
+      "pair": "MCO-MCV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Manchester Oxford Road",
+      "toName": "Manchester Victoria"
+    },
+    {
+      "pair": "BDM-LUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bedford",
+      "toName": "Luton"
+    },
+    {
+      "pair": "PLW-MAX",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pollokshields West",
+      "toName": "Maxwell Park"
+    },
+    {
+      "pair": "MRY-FLM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Maryport",
+      "toName": "Flimby"
+    },
+    {
+      "pair": "HUP-URM",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Humphrey Park",
+      "toName": "Urmston"
+    },
+    {
+      "pair": "URM-FLI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Urmston",
+      "toName": "Flixton"
+    },
+    {
+      "pair": "HUD-SWT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Huddersfield",
+      "toName": "Slaithwaite"
+    },
+    {
+      "pair": "BNF-BAJ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Briton Ferry",
+      "toName": "Baglan"
+    },
+    {
+      "pair": "LGO-KNU",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangynllo",
+      "toName": "Knucklas"
+    },
+    {
+      "pair": "KEY-SBV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Keyham",
+      "toName": "St Budeaux Victoria Road"
+    },
+    {
+      "pair": "SHT-HWB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Shotton",
+      "toName": "Hawarden Bridge"
+    },
+    {
+      "pair": "SAW-HWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Sawbridgeworth",
+      "toName": "Harlow Town"
+    },
+    {
+      "pair": "WSR-DVN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Woodsmoor",
+      "toName": "Davenport"
+    },
+    {
+      "pair": "STE-SRC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Streatham",
+      "toName": "Streatham Common"
+    },
+    {
+      "pair": "WTG-KLN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Watlington",
+      "toName": "King's Lynn"
+    },
+    {
+      "pair": "MNE-ELY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Manea",
+      "toName": "Ely"
+    },
+    {
+      "pair": "SWG-SOA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Swaythling",
+      "toName": "Southampton Airport Parkway"
+    },
+    {
+      "pair": "NCE-CLE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "New Clee",
+      "toName": "Cleethorpes"
+    },
+    {
+      "pair": "WNF-FLE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Winchfield",
+      "toName": "Fleet"
+    },
+    {
+      "pair": "FNB-BKO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Farnborough (Main)",
+      "toName": "Brookwood"
+    },
+    {
+      "pair": "GMG-MEW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Garth (Bridgend)",
+      "toName": "Maesteg (Ewenny Road)"
+    },
+    {
+      "pair": "CMH-XCB",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Cwmbach",
+      "toName": "XCB"
+    },
+    {
+      "pair": "XCB-ABA",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "XCB",
+      "toName": "Aberdare"
+    },
+    {
+      "pair": "WEA-DRG",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "West Ealing",
+      "toName": "Drayton Green"
+    },
+    {
+      "pair": "BSB-THU",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bleasby",
+      "toName": "Thurgarton"
+    },
+    {
+      "pair": "WAF-PST",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wallyford",
+      "toName": "Prestonpans"
+    },
+    {
+      "pair": "ASB-ADN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ardrossan South Beach",
+      "toName": "Ardrossan Town"
+    },
+    {
+      "pair": "FLM-WKG",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Flimby",
+      "toName": "Workington"
+    },
+    {
+      "pair": "FRS-ABC",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Forsinard",
+      "toName": "ABC"
+    },
+    {
+      "pair": "ABC-SCT",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "ABC",
+      "toName": "Scotscalder"
+    },
+    {
+      "pair": "HYD-TAC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Heyford",
+      "toName": "Tackley"
+    },
+    {
+      "pair": "SWT-MSN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Slaithwaite",
+      "toName": "Marsden"
+    },
+    {
+      "pair": "BAJ-PTA",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Baglan",
+      "toName": "Port Talbot Parkway"
+    },
+    {
+      "pair": "KNU-KNI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Knucklas",
+      "toName": "Knighton"
+    },
+    {
+      "pair": "PTD-LLH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pontarddulais",
+      "toName": "Llangennech"
+    },
+    {
+      "pair": "TNA-GOX",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thornton Abbey",
+      "toName": "Goxhill"
+    },
+    {
+      "pair": "STS-SBF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Saltash",
+      "toName": "St Budeaux Ferry Road"
+    },
+    {
+      "pair": "DPD-BTO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Dorking Deepdene",
+      "toName": "Betchworth"
+    },
+    {
+      "pair": "WLE-PBO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Whittlesea",
+      "toName": "Peterborough"
+    },
+    {
+      "pair": "CMS-KGX",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CMS",
+      "toName": "London King's Cross"
+    },
+    {
+      "pair": "CWD-WWL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Creswell",
+      "toName": "Whitwell"
+    },
+    {
+      "pair": "BND-LAK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Brandon",
+      "toName": "Lakenheath"
+    },
+    {
+      "pair": "RDS-DTN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Reddish South",
+      "toName": "Denton"
+    },
+    {
+      "pair": "MRP-SWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Moorthorpe",
+      "toName": "Swinton (South Yorkshire)"
+    },
+    {
+      "pair": "SHO-WLS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Sholing",
+      "toName": "Woolston"
+    },
+    {
+      "pair": "LAM-PMB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Lamphey",
+      "toName": "Pembroke"
+    },
+    {
+      "pair": "NNG-GRA",
+      "reason": "no-routes",
+      "message": null,
+      "fromName": "Newark Northgate",
+      "toName": "Grantham"
+    },
+    {
+      "pair": "SHL-PWE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Shawlands",
+      "toName": "Pollokshaws East"
+    },
+    {
+      "pair": "HAL-ALT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hale",
+      "toName": "Altrincham"
+    },
+    {
+      "pair": "SED-CMS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Shelford",
+      "toName": "CMS"
+    },
+    {
+      "pair": "URM-CSR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Urmston",
+      "toName": "Chassen Road"
+    },
+    {
+      "pair": "FNW-KSL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Farnworth",
+      "toName": "Kearsley"
+    },
+    {
+      "pair": "HUD-DHN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Huddersfield",
+      "toName": "Deighton"
+    },
+    {
+      "pair": "KNI-BUK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Knighton",
+      "toName": "Bucknell"
+    },
+    {
+      "pair": "HKN-BLW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hucknall",
+      "toName": "Bulwell"
+    },
+    {
+      "pair": "CMR-RNR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Cromer",
+      "toName": "Roughton Road"
+    },
+    {
+      "pair": "KBX-FRI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Kirby Cross",
+      "toName": "Frinton-on-Sea"
+    },
+    {
+      "pair": "NCL-MAS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newcastle",
+      "toName": "Manors"
+    },
+    {
+      "pair": "CDI-OKI",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Crediton",
+      "toName": "OKI"
+    },
+    {
+      "pair": "OKI-OKE",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "OKI",
+      "toName": "Okehampton"
+    },
+    {
+      "pair": "DTN-GUI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Denton",
+      "toName": "Guide Bridge"
+    },
+    {
+      "pair": "RMC-MHS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Rotherham Central",
+      "toName": "Meadowhall Interchange"
+    },
+    {
+      "pair": "GLZ-IRL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Glazebrook",
+      "toName": "Irlam"
+    },
+    {
+      "pair": "FLI-CSR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Flixton",
+      "toName": "Chassen Road"
+    },
+    {
+      "pair": "SLH-RUS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Sleights",
+      "toName": "Ruswarp"
+    },
+    {
+      "pair": "ELY-WBC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ely",
+      "toName": "Waterbeach"
+    },
+    {
+      "pair": "HOK-BSK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hook",
+      "toName": "Basingstoke"
+    },
+    {
+      "pair": "THU-LOW",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Thurgarton",
+      "toName": "Lowdham"
+    },
+    {
+      "pair": "CEH-WTO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Coleshill Parkway",
+      "toName": "Water Orton"
+    },
+    {
+      "pair": "HIT-LUT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hitchin",
+      "toName": "Luton"
+    },
+    {
+      "pair": "PWE-LGS",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Pollokshaws East",
+      "toName": "Langside"
+    },
+    {
+      "pair": "BLH-MTH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bellshill",
+      "toName": "Motherwell"
+    },
+    {
+      "pair": "ALT-NVR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Altrincham",
+      "toName": "Navigation Road"
+    },
+    {
+      "pair": "CSR-FLI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Chassen Road",
+      "toName": "Flixton"
+    },
+    {
+      "pair": "DHN-MIR",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Deighton",
+      "toName": "Mirfield"
+    },
+    {
+      "pair": "GNF-MSL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Greenfield",
+      "toName": "Mossley"
+    },
+    {
+      "pair": "ASD-SRD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ashley Down",
+      "toName": "Stapleton Road"
+    },
+    {
+      "pair": "BUK-HPT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bucknell",
+      "toName": "Hopton Heath"
+    },
+    {
+      "pair": "BRN-HLF",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bearsden",
+      "toName": "Hillfoot"
+    },
+    {
+      "pair": "TAY-CON",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Taynuilt",
+      "toName": "Connel Ferry"
+    },
+    {
+      "pair": "LLH-BYE",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Llangennech",
+      "toName": "Bynea"
+    },
+    {
+      "pair": "BNG-CFS",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Bangor",
+      "toName": "CFS"
+    },
+    {
+      "pair": "CFS-PGR",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CFS",
+      "toName": "PGR"
+    },
+    {
+      "pair": "PGR-DOG",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "PGR",
+      "toName": "DOG"
+    },
+    {
+      "pair": "DOG-MCN",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "DOG",
+      "toName": "Machynlleth"
+    },
+    {
+      "pair": "NHL-BAV",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "New Holland",
+      "toName": "Barrow Haven"
+    },
+    {
+      "pair": "SBF-DPT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "St Budeaux Ferry Road",
+      "toName": "Devonport"
+    },
+    {
+      "pair": "LAP-MRD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Lapford",
+      "toName": "Morchard Road"
+    },
+    {
+      "pair": "MCN-DOG",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Machynlleth",
+      "toName": "DOG"
+    },
+    {
+      "pair": "DOG-PGR",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "DOG",
+      "toName": "PGR"
+    },
+    {
+      "pair": "PGR-CFS",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "PGR",
+      "toName": "CFS"
+    },
+    {
+      "pair": "CFS-BNG",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CFS",
+      "toName": "Bangor"
+    },
+    {
+      "pair": "CRV-KNI",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Craven Arms",
+      "toName": "Knighton"
+    },
+    {
+      "pair": "BIK-BKJ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Birkbeck",
+      "toName": "Beckenham Junction"
+    },
+    {
+      "pair": "SGN-GFD",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "South Greenford",
+      "toName": "Greenford"
+    },
+    {
+      "pair": "GBD-EGN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Gilberdyke",
+      "toName": "Eastrington"
+    },
+    {
+      "pair": "CWE-ALP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Crowle",
+      "toName": "Althorpe"
+    },
+    {
+      "pair": "MBR-SBK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Middlesbrough",
+      "toName": "South Bank"
+    },
+    {
+      "pair": "RUS-WTB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Ruswarp",
+      "toName": "Whitby"
+    },
+    {
+      "pair": "WBC-CMB",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Waterbeach",
+      "toName": "Cambridge North"
+    },
+    {
+      "pair": "PMH-RYP",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Portsmouth Harbour",
+      "toName": "Ryde Pier Head"
+    },
+    {
+      "pair": "ATL-SPN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Attleborough",
+      "toName": "Spooner Row"
+    },
+    {
+      "pair": "IRL-GLZ",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Irlam",
+      "toName": "Glazebrook"
+    },
+    {
+      "pair": "HUD-LCK",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Huddersfield",
+      "toName": "Lockwood"
+    },
+    {
+      "pair": "HUD-BGH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Huddersfield",
+      "toName": "Brighouse"
+    },
+    {
+      "pair": "HPT-BME",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Hopton Heath",
+      "toName": "Broome"
+    },
+    {
+      "pair": "CON-OBN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Connel Ferry",
+      "toName": "Oban"
+    },
+    {
+      "pair": "MTH-BLH",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Motherwell",
+      "toName": "Bellshill"
+    },
+    {
+      "pair": "CRS-WCL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Carstairs",
+      "toName": "West Calder"
+    },
+    {
+      "pair": "CSK-GSL",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Calstock",
+      "toName": "Gunnislake"
+    },
+    {
+      "pair": "BNG-CAP",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Bangor",
+      "toName": "CAP"
+    },
+    {
+      "pair": "CAP-BYC",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "CAP",
+      "toName": "Betws-y-Coed"
+    },
+    {
+      "pair": "WRX-WXC",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Wrexham General",
+      "toName": "Wrexham Central"
+    },
+    {
+      "pair": "LUT-HIT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Luton",
+      "toName": "Hitchin"
+    },
+    {
+      "pair": "SSD-HWN",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Stansted Airport",
+      "toName": "Harlow Town"
+    },
+    {
+      "pair": "YVJ-YVB",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Yeovil Junction",
+      "toName": "YVB"
+    },
+    {
+      "pair": "YVB-YVP",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "YVB",
+      "toName": "Yeovil Pen Mill"
+    },
+    {
+      "pair": "YVP-YVB",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Yeovil Pen Mill",
+      "toName": "YVB"
+    },
+    {
+      "pair": "YVB-YVJ",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "YVB",
+      "toName": "Yeovil Junction"
+    },
+    {
+      "pair": "NRC-NBY",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Newbury Racecourse",
+      "toName": "Newbury"
+    },
+    {
+      "pair": "AYW-AER",
+      "reason": "to-crs-unknown",
+      "message": null,
+      "fromName": "Aberystwyth",
+      "toName": "AER"
+    },
+    {
+      "pair": "AER-CMN",
+      "reason": "from-crs-unknown",
+      "message": null,
+      "fromName": "AER",
+      "toName": "Carmarthen"
+    },
+    {
+      "pair": "KNI-LLO",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Knighton",
+      "toName": "Llandrindod"
+    },
+    {
+      "pair": "BLW-NOT",
+      "reason": "no-rail-leg",
+      "message": null,
+      "fromName": "Bulwell",
+      "toName": "Nottingham"
+    }
+  ]
+}
