@@ -911,7 +911,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:25.823Z",
         "komootUrl": "https://www.komoot.com/tour/251970499",
         "distanceKm": 14.2,
         "hours": 3.77,
@@ -921,7 +921,10 @@
         "miscellany": "Multiple cafés & restaurants in Chiddingstone",
         "previousWalkDates": [
           "2025-07-26"
-        ]
+        ],
+        "uphillMetres": 139.32,
+        "difficulty": "moderate",
+        "name": "Penshurst Circular via Chiddingstone"
       }
     ],
     "extracted": true,
