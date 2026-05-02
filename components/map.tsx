@@ -27,7 +27,7 @@ import {
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
-import { resolveCoordKey, getName as registryGetName } from "@/lib/station-registry"
+import { resolveCoordKey, getCoordKey as registryGetCoordKey, getName as registryGetName } from "@/lib/station-registry"
 import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -8061,9 +8061,12 @@ export default function HikeMap() {
     })
   }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords, isTouchDevice])
 
-  // Deep-link support: when the URL carries `?station=<coordKey>` (used
-  // by the admin rambler-walks page to link station names straight to
-  // their overlay), jump to that station and open its modal on mount.
+  // Deep-link support: when the URL carries `?station=<station-id>`
+  // (used by the admin rambler-walks page to link station names
+  // straight to their overlay), jump to that station and open its
+  // modal on mount. The param holds a canonical station ID (CRS or
+  // 4-char synthetic) post Phase 3 — older bookmarks with coordKey
+  // values no longer resolve.
   // Runs once per (mapReady, stations, route) trio — the `stations`
   // dep also covers routedStations being available. We then strip the
   // param from the URL so a reload doesn't silently re-open it.
@@ -8095,7 +8098,11 @@ export default function HikeMap() {
     // lazily once the memo catches up.
     if (!baseStations) return
     const params = new URLSearchParams(window.location.search)
-    const coordKey = params.get("station")
+    const stationId = params.get("station")
+    if (!stationId) return
+    // Resolve the ID to its coord via the registry, then look up the
+    // feature by coordKey (the property the GeoJSON layer carries).
+    const coordKey = registryGetCoordKey(stationId)
     if (!coordKey) return
     const feature = baseStations.features.find(
       (f) => (f.properties?.coordKey as string | undefined) === coordKey,
