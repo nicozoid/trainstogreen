@@ -1002,8 +1002,8 @@
         "endStation": "LTV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.7,
+        "hours": 4.12,
         "lunchStops": [],
         "terrain": "Golf club, heath, woodland, Heart of England Way",
         "sights": [
@@ -1024,7 +1024,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925785196"
+        "komootUrl": "https://www.komoot.com/tour/2925785196",
+        "uphillMetres": 128.91,
+        "difficulty": "moderate",
+        "name": "Lichfield Circular via Whittington Heath",
+        "updatedAt": "2026-05-02T02:13:49.831Z"
       }
     ],
     "extracted": true,
