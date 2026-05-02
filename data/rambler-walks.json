@@ -82020,15 +82020,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Pangbourne Circular via Cold Harbour",
         "startPlace": "Pangbourne",
         "endPlace": "Pangbourne",
         "startStation": "PAN",
         "endStation": "PAN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.6,
-        "hours": 3.4,
+        "distanceKm": 10.7,
+        "hours": 2.9,
         "lunchStops": [
           {
             "name": "Swan",
@@ -82087,13 +82087,15 @@
         },
         "suffix": "via Church of St John the Baptist",
         "komootUrl": "https://www.komoot.com/tour/2920257524",
-        "updatedAt": "2026-04-30T10:41:22.356Z",
+        "updatedAt": "2026-05-02T02:19:48.544Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Pangbourne Circular",
           "pageURL": "https://www.walkingclub.org.uk/walk/pangbourne-circular/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 155.63,
+        "difficulty": "moderate"
       },
       {
         "role": "shorter",
