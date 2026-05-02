@@ -27,8 +27,8 @@
         "endStation": "EMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 22.5,
-        "hours": null,
+        "distanceKm": 23.6,
+        "hours": 5.97,
         "lunchStops": [
           {
             "name": "refreshments",
@@ -68,7 +68,11 @@
           "type": "main"
         },
         "suffix": "via Nottingham Canal",
-        "komootUrl": "https://www.komoot.com/tour/2925748565"
+        "komootUrl": "https://www.komoot.com/tour/2925748565",
+        "uphillMetres": 39.71,
+        "difficulty": "hard",
+        "name": "Nottingham to East Midlands Parkway",
+        "updatedAt": "2026-05-02T02:12:42.216Z"
       }
     ],
     "extracted": true,
