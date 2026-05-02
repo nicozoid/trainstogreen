@@ -1260,7 +1260,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:09.788Z",
         "komootUrl": "https://www.komoot.com/tour/2921150488",
         "rating": 2,
         "suffix": "via Ouse Valley Viaduct",
@@ -1268,7 +1268,10 @@
           "2021-04-03"
         ],
         "distanceKm": 11.8,
-        "hours": 3.18
+        "hours": 3.18,
+        "uphillMetres": 145.53,
+        "difficulty": "moderate",
+        "name": "Balcome Circular via Ardingly Reservoir"
       }
     ],
     "extracted": true,
