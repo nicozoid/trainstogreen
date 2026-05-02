@@ -1596,8 +1596,8 @@
         "endStation": "SMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.9,
-        "hours": null,
+        "distanceKm": 17.3,
+        "hours": 4.48,
         "lunchStops": [],
         "terrain": "Old railway, Roman road, park grounds, meadows",
         "sights": [
@@ -1634,7 +1634,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925788133"
+        "komootUrl": "https://www.komoot.com/tour/2925788133",
+        "uphillMetres": 97.88,
+        "difficulty": "moderate",
+        "name": "Stamford Circular via Pilsgate",
+        "updatedAt": "2026-05-02T02:14:58.431Z"
       }
     ],
     "extracted": true,
