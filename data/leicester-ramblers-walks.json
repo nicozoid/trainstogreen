@@ -110,8 +110,8 @@
         "endStation": "BWS",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 22.5,
-        "hours": null,
+        "distanceKm": 22.9,
+        "hours": 5.78,
         "lunchStops": [
           {
             "name": "pubs",
@@ -150,7 +150,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925755432"
+        "komootUrl": "https://www.komoot.com/tour/2925755432",
+        "uphillMetres": 47.3,
+        "difficulty": "hard",
+        "name": "East Midlands Parkway to Barrow upon Soar",
+        "updatedAt": "2026-05-02T02:12:48.484Z"
       }
     ],
     "extracted": true,
