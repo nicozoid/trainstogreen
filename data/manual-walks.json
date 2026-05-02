@@ -282,14 +282,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:16:14.728Z",
+        "updatedAt": "2026-05-02T02:18:20.899Z",
         "komootUrl": "https://www.komoot.com/tour/2920345301",
         "rating": 4,
         "previousWalkDates": [
           "2023-05-01"
         ],
         "distanceKm": 28.4,
-        "hours": 7.6
+        "hours": 7.6,
+        "uphillMetres": 355.4,
+        "difficulty": "hard",
+        "name": "Pevensey to Battle"
       }
     ],
     "extracted": true,
