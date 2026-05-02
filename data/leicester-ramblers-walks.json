@@ -67,7 +67,8 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "suffix": "via Nottingham Canal"
+        "suffix": "via Nottingham Canal",
+        "komootUrl": "https://www.komoot.com/tour/2925748565"
       }
     ],
     "extracted": true,
@@ -144,7 +145,8 @@
           "pageName": "East Midlands Parkway to Barrow upon Soar",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925755432"
       }
     ],
     "extracted": true,
@@ -211,7 +213,8 @@
           "pageName": "Barrow upon Soar to Leicester",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925759790"
       }
     ],
     "extracted": true,
@@ -279,7 +282,8 @@
           "pageName": "Market Harborough Circular",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925764901"
       }
     ],
     "extracted": true,
@@ -350,7 +354,8 @@
           "pageName": "Oakham Circular",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925766569"
       }
     ],
     "extracted": true,
@@ -421,7 +426,8 @@
           "pageName": "Syston to Melton Mowbray — A Wreake Valley Ramble",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925768336"
       }
     ],
     "extracted": true,
@@ -482,7 +488,8 @@
           "pageName": "Melton Mowbray to Oakham via Whissendine",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925770787"
       }
     ],
     "extracted": true,
@@ -555,7 +562,8 @@
           "pageName": "East Midlands Parkway Circular",
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925773451"
       }
     ],
     "extracted": true,
