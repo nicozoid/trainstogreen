@@ -790,9 +790,9 @@
         "endStation": "LGE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 18.5,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.67,
         "lunchStops": [],
         "terrain": "Waterways — River Derwent, Derby & Sandiacre Canal, Erewash Canal",
         "sights": [
@@ -817,7 +817,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925784648"
+        "komootUrl": "https://www.komoot.com/tour/2925784648",
+        "uphillMetres": 18.92,
+        "difficulty": "moderate",
+        "name": "Derby to Long Eaton along waterways",
+        "updatedAt": "2026-05-02T02:13:39.266Z"
       }
     ],
     "extracted": true,
