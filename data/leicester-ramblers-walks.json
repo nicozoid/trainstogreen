@@ -1220,8 +1220,8 @@
         "endStation": "ATB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 13.7,
-        "hours": null,
+        "distanceKm": 14.8,
+        "hours": 3.75,
         "lunchStops": [
           {
             "name": "cafe",
@@ -1252,7 +1252,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786815"
+        "komootUrl": "https://www.komoot.com/tour/2925786815",
+        "uphillMetres": 27.59,
+        "difficulty": "moderate",
+        "name": "Attenborough Circular via Nature Reserve",
+        "updatedAt": "2026-05-02T02:14:30.427Z"
       }
     ],
     "extracted": true,
