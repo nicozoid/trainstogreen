@@ -72,16 +72,24 @@ import { AdminEditsDialog } from "@/components/admin-edits-dialog"
 // filter-panel.tsx — code never references them by word.
 type Rating = 1 | 2 | 3 | 4
 
-// Meteorological seasons (Mar/Jun/Sep/Dec boundaries) — used by the
-// "[current season] highlights" checkbox. Matches the month→season mapping
-// in scripts/build-rambler-notes.mjs (where station-seasons.json is
-// now derived). `new Date().getMonth()` returns 0 = January → 11 = December.
-function currentSeason(): "Spring" | "Summer" | "Autumn" | "Winter" {
-  const m = new Date().getMonth()
-  if (m >= 2 && m <= 4) return "Spring"   // Mar–May
-  if (m >= 5 && m <= 7) return "Summer"   // Jun–Aug
-  if (m >= 8 && m <= 10) return "Autumn"  // Sep–Nov
-  return "Winter"                          // Dec, Jan, Feb
+// Calendar order — index matches Date#getMonth() (0 = Jan, 11 = Dec).
+// Used both as the canonical month-code list and to map the current
+// month index to its 3-letter code for the "Best in {month}" public
+// checkbox + admin month dropdown.
+const MONTH_CODES = [
+  "jan", "feb", "mar", "apr", "may", "jun",
+  "jul", "aug", "sep", "oct", "nov", "dec",
+] as const
+type MonthCode = (typeof MONTH_CODES)[number]
+// Display labels for the "Best in {month}" checkbox — full name reads
+// more naturally in a sentence than a 3-letter abbreviation.
+const MONTH_LABELS: Record<MonthCode, string> = {
+  jan: "January", feb: "February", mar: "March", apr: "April",
+  may: "May", jun: "June", jul: "July", aug: "August",
+  sep: "September", oct: "October", nov: "November", dec: "December",
+}
+function currentMonth(): MonthCode {
+  return MONTH_CODES[new Date().getMonth()]
 }
 
 // Only the fields the popup needs — simpler than the old sidebar type
@@ -2246,7 +2254,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
   // Build the Oyster CRS Set with oysterStationsData as the dep — when
   // the JSON hot-reloads in dev the import gives a new array reference,
   // which busts this memo and the downstream filteredStations memo.
@@ -2264,10 +2272,11 @@ export default function HikeMap() {
     [oysterStationsData],
   )
   const [primaryFeatureFilter, setPrimaryFeatureFilter] = useState<FeatureFilter>("off")
-  // Admin-only "Season" dropdown — slice destinations to those recommended
-  // for the chosen season. "off" = no filter. Cleared on admin-off (below).
-  type SeasonFilter = "off" | "Spring" | "Summer" | "Autumn" | "Winter" | "None"
-  const [seasonFilter, setSeasonFilter] = useState<SeasonFilter>("off")
+  // Admin-only "Month" dropdown — slice destinations to those recommended
+  // for the chosen month. "off" = no filter, "None" = stations with zero
+  // month-flagged walks. Cleared on admin-off (below).
+  type MonthFilter = "off" | MonthCode | "None"
+  const [monthFilter, setMonthFilter] = useState<MonthFilter>("off")
   // Admin-only "Source" dropdown — slice destinations to those with at
   // least one attached walk whose source.orgSlug or relatedSource.orgSlug
   // matches the picked org. "off" = no filter. The string value is an
@@ -2278,10 +2287,10 @@ export default function HikeMap() {
   // against the slug picked in the dropdown. Each value's Set is built
   // from the JSON's sorted coordKey[] for O(1) membership lookups.
   const [stationsBySource, setStationsBySource] = useState<Record<string, Set<string>>>({})
-  // Public "[current-season] highlights" checkbox — when on, only stations
-  // recommended for the current season are shown. Coexists with seasonFilter
+  // Public "Best in {current-month}" checkbox — when on, only stations
+  // recommended for the current month are shown. Coexists with monthFilter
   // (both filters applied independently, AND semantics).
-  const [currentSeasonHighlight, setCurrentSeasonHighlight] = useState(false)
+  const [currentMonthHighlight, setCurrentMonthHighlight] = useState(false)
   const [hovered, setHovered] = useState<HoveredStation | null>(null)
   // Cluster-diamond hover — when the user mouses over a cluster member
   // diamond, the SYNTHETIC's pulsing icon is shown via the regular
@@ -2522,14 +2531,13 @@ export default function HikeMap() {
   }
   const [stationNotes, setStationNotes] = useState<Record<string, NotesEntry>>({})
 
-  // Seasons metadata per station. Purely a build output derived from each
-  // walk variant's structured `bestSeasons` field (aggregated in
-  // scripts/build-rambler-notes.mjs). Not editable — the source of truth
-  // is the per-walk data. Used by two filters: the admin "Season" dropdown
-  // and the public "[current season] highlights" checkbox.
-  type Season = "Spring" | "Summer" | "Autumn" | "Winter"
-  type SeasonsEntry = { name: string; seasons: Season[] }
-  const [stationSeasons, setStationSeasons] = useState<Record<string, SeasonsEntry>>({})
+  // Months metadata per station. Purely a build output derived from each
+  // walk variant's structured `bestSeasons` month-code field (aggregated
+  // in scripts/build-rambler-notes.mjs). Not editable — the source of
+  // truth is the per-walk data. Used by two filters: the admin "Month"
+  // dropdown and the public "Best in {current-month}" checkbox.
+  type MonthsEntry = { name: string; months: MonthCode[] }
+  const [stationMonths, setStationMonths] = useState<Record<string, MonthsEntry>>({})
 
   // Set of coordKeys for stations with at least one personally-walked
   // variant. Derived from `previousWalkDates` by the build script and
@@ -2542,6 +2550,13 @@ export default function HikeMap() {
   // as a flat string[]; wrapped in a Set for O(1) lookups in the
   // admin-only "Komoot" feature filter.
   const [stationsWithKomoot, setStationsWithKomoot] = useState<Set<string>>(new Set())
+
+  // Set of coordKeys for stations matching the "Potential month data"
+  // criteria — has Komoot, no public-walk months, but month metadata on
+  // ≥1 admin-only walk. Drives the admin-only feature filter of the
+  // same name, surfacing destinations where existing admin month data
+  // could be promoted to a public walk.
+  const [stationsPotentialMonths, setStationsPotentialMonths] = useState<Set<string>>(new Set())
 
   // Per-station custom Flickr tag config (the "custom" fallback step). Only
   // stations with an entry participate in that step — everything else skips
@@ -2569,15 +2584,18 @@ export default function HikeMap() {
     fetch("/api/dev/station-notes")
       .then((res) => res.json())
       .then((data) => setStationNotes(data))
-    fetch("/api/dev/station-seasons")
+    fetch("/api/dev/station-months")
       .then((res) => res.json())
-      .then((data) => setStationSeasons(data))
+      .then((data) => setStationMonths(data))
     fetch("/api/dev/stations-hiked")
       .then((res) => res.json())
       .then((data: string[]) => setStationsHiked(new Set(data)))
     fetch("/api/dev/stations-with-komoot")
       .then((res) => res.json())
       .then((data: string[]) => setStationsWithKomoot(new Set(data)))
+    fetch("/api/dev/stations-potential-months")
+      .then((res) => res.json())
+      .then((data: string[]) => setStationsPotentialMonths(new Set(data)))
     // Admin-only "Source" filter index. Re-shapes the served
     // { [orgSlug]: coordKey[] } into { [orgSlug]: Set<coordKey> } for
     // O(1) membership lookups inside passesFeatureFilter. Tolerates a
@@ -5546,6 +5564,14 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "no-komoot") {
             return !stationsWithKomoot.has(f.properties.coordKey as string)
           }
+          // "Potential month data" — stations with a Komoot route AND
+          // month metadata only on admin-only walks (none on public
+          // walks). Surfaces destinations where the existing admin
+          // month data could be promoted to a public walk to make the
+          // station appear in the public month filter.
+          if (primaryFeatureFilter === "potential-month-data") {
+            return stationsPotentialMonths.has(f.properties.coordKey as string)
+          }
           // "Issues" — admin-flagged stations only. hasIssue is station-global
           // (set keyed by coordKey alone), so no primary-origin lookup needed.
           if (primaryFeatureFilter === "issues") {
@@ -5583,7 +5609,7 @@ export default function HikeMap() {
         // default true; re-enabled on admin exit). When hidden, none
         // of the rest of the chain matters for these stations. When
         // shown, fall through to the remaining filters (feature,
-        // season, rating). The time sliders + direct-only + interchange
+        // month, rating). The time sliders + direct-only + interchange
         // filters can't act on them so skipping past those is correct.
         // The Feature dropdown's "No travel times" option lives in
         // passesFeatureFilter() below — that gates this branch on a
@@ -5651,26 +5677,25 @@ export default function HikeMap() {
           const set = stationsBySource[sourceFilter]
           if (!set || !set.has(f.properties.coordKey as string)) return false
         }
-        // Season filters. Two independent filters both look up this
-        // station's recommended seasons in stationSeasons:
-        //   • seasonFilter (admin dropdown) — hides stations whose seasons
+        // Month filters. Two independent filters both look up this
+        // station's recommended months in stationMonths:
+        //   • monthFilter (admin dropdown) — hides stations whose months
         //     don't include the selected value.
         //     Special case: "None" INVERTS the match — keeps only stations
         //     with zero month-flagged walks (missing entry OR empty array),
-        //     useful for finding destinations that still need seasonality
-        //     data.
-        //   • currentSeasonHighlight (public checkbox) — hides stations
-        //     whose seasons don't include the current calendar season.
+        //     useful for finding destinations that still need month data.
+        //   • currentMonthHighlight (public checkbox) — hides stations
+        //     whose months don't include the current calendar month.
         // AND semantics — both apply when both are active.
-        if (seasonFilter !== "off" || currentSeasonHighlight) {
-          const entry = stationSeasons[f.properties.coordKey as string]
-          const seasons = entry?.seasons ?? []
-          if (seasonFilter === "None") {
-            if (seasons.length > 0) return false
-          } else if (seasonFilter !== "off" && !seasons.includes(seasonFilter)) {
+        if (monthFilter !== "off" || currentMonthHighlight) {
+          const entry = stationMonths[f.properties.coordKey as string]
+          const months = entry?.months ?? []
+          if (monthFilter === "None") {
+            if (months.length > 0) return false
+          } else if (monthFilter !== "off" && !months.includes(monthFilter)) {
             return false
           }
-          if (currentSeasonHighlight && !seasons.includes(currentSeason())) return false
+          if (currentMonthHighlight && !months.includes(currentMonth())) return false
         }
         // When friend mode is active, also require the station to be reachable
         // from the friend's origin within the friend's max travel time
@@ -5689,7 +5714,7 @@ export default function HikeMap() {
         return true
       }),
     }
-  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, sourceFilter, stationsBySource, stationNotes, curations, interchangeLookups, friendDirectOnly, seasonFilter, currentSeasonHighlight, stationSeasons, stationsHiked, stationsWithKomoot, OYSTER_NR_CRS, issueStations, placemarkStations])
+  }, [stations, maxMinutes, minMinutes, friendOrigin, friendMaxMinutes, hideNoTravelTime, primaryOrigin, primaryDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, sourceFilter, stationsBySource, stationNotes, curations, interchangeLookups, friendDirectOnly, monthFilter, currentMonthHighlight, stationMonths, stationsHiked, stationsWithKomoot, stationsPotentialMonths, OYSTER_NR_CRS, issueStations, placemarkStations])
 
   // Further filter by search query when 3+ characters are typed.
   // We keep this separate from filteredStations so the travel-time filter is unaffected.
@@ -6141,8 +6166,8 @@ export default function HikeMap() {
       friendDirectOnly,
       primaryInterchangeFilter,
       primaryFeatureFilter,
-      seasonFilter,
-      currentSeasonHighlight,
+      monthFilter,
+      currentMonthHighlight,
       searchQuery,
     })
     // First time we see a signature — record it and skip. The pill
@@ -6190,7 +6215,7 @@ export default function HikeMap() {
       setFilterNotif((prev) => (prev ? { ...prev, visible: false } : null))
       filterNotifTimerRef.current = null
     }, 1300)
-  }, [stationsForMap, primaryOrigin, friendOrigin, visibleRatings, maxMinutes, minMinutes, friendMaxMinutes, primaryDirectOnly, friendDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, seasonFilter, currentSeasonHighlight, searchQuery])
+  }, [stationsForMap, primaryOrigin, friendOrigin, visibleRatings, maxMinutes, minMinutes, friendMaxMinutes, primaryDirectOnly, friendDirectOnly, primaryInterchangeFilter, primaryFeatureFilter, monthFilter, currentMonthHighlight, searchQuery])
 
   // Single effect handles both enter and leave animations when filters change.
   // newlyRemovedRatings (a memo) keeps leaving features visible synchronously —
@@ -6543,19 +6568,19 @@ export default function HikeMap() {
     })
   }, [])
 
-  // Refresh stationNotes + stationSeasons after a structured walk edit.
+  // Refresh stationNotes + stationMonths after a structured walk edit.
   // The PATCH /api/dev/walk/[id] route re-runs the build server-side,
   // so we just need to pull the regenerated data back into the client
   // state — the overlay's ramblerNote prop will then update with the
   // new prose. Fire-and-forget, no optimistic update (the build
   // derives both files so there's no straightforward single-key patch).
   const refreshStationDerivedData = useCallback(async () => {
-    const [notes, seasons] = await Promise.all([
+    const [notes, months] = await Promise.all([
       fetch("/api/dev/station-notes").then((r) => r.json()),
-      fetch("/api/dev/station-seasons").then((r) => r.json()),
+      fetch("/api/dev/station-months").then((r) => r.json()),
     ])
     setStationNotes(notes)
-    setStationSeasons(seasons)
+    setStationMonths(months)
   }, [])
 
   // Save / clear per-station custom Flickr tag config. Pass custom=null to
@@ -8295,7 +8320,7 @@ export default function HikeMap() {
           setPrimaryInterchangeFilter("off")
           setPrimaryFeatureFilter("off")
           setSourceFilter("off")
-          setSeasonFilter("off")
+          setMonthFilter("off")
           setMaxMinutes(600)
           setMinMinutes(0)
           setFriendMaxMinutes(600)
@@ -8376,11 +8401,11 @@ export default function HikeMap() {
         onPrimaryFeatureFilterChange={setPrimaryFeatureFilter}
         sourceFilter={sourceFilter}
         onSourceFilterChange={setSourceFilter}
-        seasonFilter={seasonFilter}
-        onSeasonFilterChange={setSeasonFilter}
-        currentSeason={currentSeason()}
-        currentSeasonHighlight={currentSeasonHighlight}
-        onCurrentSeasonHighlightChange={setCurrentSeasonHighlight}
+        monthFilter={monthFilter}
+        onMonthFilterChange={setMonthFilter}
+        currentMonthLabel={MONTH_LABELS[currentMonth()]}
+        currentMonthHighlight={currentMonthHighlight}
+        onCurrentMonthHighlightChange={setCurrentMonthHighlight}
         friendDirectOnly={friendDirectOnly}
         onFriendDirectOnlyChange={setFriendDirectOnly}
         hideNoTravelTime={hideNoTravelTime}
@@ -8501,10 +8526,10 @@ export default function HikeMap() {
                 setPrimaryInterchangeFilter("off")
                 setPrimaryFeatureFilter("off")
                 setSourceFilter("off")
-                // Admin-only season dropdown — clear its selection on
+                // Admin-only month dropdown — clear its selection on
                 // admin-off so a returning non-admin doesn't see a
                 // filtered map with no visible control.
-                setSeasonFilter("off")
+                setMonthFilter("off")
                 if (maxMinutes > 150) setMaxMinutes(150)
               }
             }}

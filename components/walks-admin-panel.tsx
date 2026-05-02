@@ -1104,6 +1104,11 @@ function WalkCard({
           const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
           const neutralChip = `${chipBase} bg-muted text-muted-foreground`
           const destructiveChip = `${chipBase} bg-destructive/10 text-destructive`
+          // Month chip — distinct hue keeps the seasonality tags
+          // visually separable from the neutral structural tags
+          // (km, GPX, TO1/TO2, variant types) when several render
+          // side-by-side.
+          const monthChip = `${chipBase} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300`
           // Komoot-branded chip: lime/yellow-green echoes Komoot's own brand
           // colour (~#86c440) so the chip is instantly recognisable. Hard-coded
           // Tailwind palette rather than a theme token because it's tied to an
@@ -1118,7 +1123,7 @@ function WalkCard({
                   bus
                 </span>
               )}
-              {isVariant && <span className={destructiveChip} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {isVariant && <span className={neutralChip} title={`Source type: ${walkType}`}>{walkType}</span>}
               {walk.komootUrl && <span className={komootChip} title="Has a Komoot tour URL">komoot</span>}
               {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (
@@ -1130,6 +1135,9 @@ function WalkCard({
                 <span key={tag} className={neutralChip} title={`Time Out ${tag.startsWith("TO1:") ? "Book 1" : "Book 2"}, Walk ${tag.split(":")[1]}`}>
                   {tag}
                 </span>
+              ))}
+              {(walk.bestSeasons ?? []).length > 0 && (walk.bestSeasons as string[]).map((m: string) => (
+                <span key={m} className={monthChip}>{m.charAt(0).toUpperCase() + m.slice(1)}</span>
               ))}
             </>
           )
@@ -1641,17 +1649,17 @@ function WalkCard({
 
           {/* Tips — descriptive prose pieces that flavour the public
               summary: rating-flourish caveat, terrain tags, best
-              seasons chips, mud warning, free-text miscellany, train
+              months chips, mud warning, free-text miscellany, train
               tips. Less frequently edited than Key info. */}
           <CollapsibleSection title="Tips" bodyId={`tips-section-${walk.id}`}>
-            {/* Best seasons + Mud warning — paired on one row. Seasons
+            {/* Best months + Mud warning — paired on one row. Months
                 takes the remaining space (flex-1) so the 12 month
                 chips can wrap; Mud warning's checkbox tucks to the
                 right at its natural width. items-end keeps the mud
                 checkbox aligned with the chip row, not the label. */}
             <div className="mb-3 flex items-end gap-3">
               <div className="flex-1">
-                <Label className="mb-1.5 block text-xs text-muted-foreground">Best seasons</Label>
+                <Label className="mb-1.5 block text-xs text-muted-foreground">Best months</Label>
                 <div className="flex flex-wrap gap-1">
                   {MONTHS.map((m) => {
                     const active = draft.bestSeasons.includes(m.code)
