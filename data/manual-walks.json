@@ -338,7 +338,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:07.815Z",
+        "updatedAt": "2026-05-02T02:17:30.594Z",
         "suffix": "via Shere & the Surrey Hills",
         "terrain": "woods, quaint village, hilly",
         "komootUrl": "https://www.komoot.com/tour/2920217304",
@@ -349,7 +349,10 @@
           "2026-02-01"
         ],
         "distanceKm": 10.2,
-        "hours": 2.85
+        "hours": 2.85,
+        "uphillMetres": 178.17,
+        "difficulty": "moderate",
+        "name": "Gomshall Circular via Shere"
       }
     ],
     "extracted": true,
