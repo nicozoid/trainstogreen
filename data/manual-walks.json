@@ -181,14 +181,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-29T21:21:39.818Z",
+        "updatedAt": "2026-05-02T02:16:53.774Z",
         "komootUrl": "https://www.komoot.com/tour/2919353871",
         "rating": 2,
         "distanceKm": 7.47,
         "hours": 2.02,
         "previousWalkDates": [
           "2026-04-29"
-        ]
+        ],
+        "uphillMetres": 100.86,
+        "difficulty": "moderate",
+        "name": "Crowborough Circular via Hornshurst Wood"
       }
     ],
     "extracted": true,
