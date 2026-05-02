@@ -99923,7 +99923,7 @@
           "type": "main"
         },
         "ratingExplanation": "Epic scenery sadly ruined by the constant drone of the M25",
-        "updatedAt": "2026-04-25T00:01:56.350Z",
+        "updatedAt": "2026-05-02T02:19:22.110Z",
         "privateNote": "many cafes",
         "komootUrl": "https://www.komoot.com/tour/2863296429",
         "relatedSource": {
@@ -99934,7 +99934,10 @@
         },
         "previousWalkDates": [
           "2026-04-05"
-        ]
+        ],
+        "uphillMetres": 235.38,
+        "difficulty": "moderate",
+        "name": "Merstham to Tattenham Corner"
       },
       {
         "role": "variant",
