@@ -134,11 +134,6 @@
     "publicWalksCircular": "",
     "publicWalksS2SEnding": ""
   },
-  "-0.09193,51.51586": {
-    "name": "City of London",
-    "publicNote": "If you stand at the Guildhall — where the historic ‘City of London’ is still governed — you’re within 20 minutes walk of seven London terminals: Cannon Street, Fenchurch Street, Liverpool Street, Moorgate, Blackfriars, London Bridge, and Farringdon (well, Farringdon isn’t a terminal, but it is the best-connected station in Greater London).\nBy default, Trains to Green assumes you’ll start your journey at one of these stations. Switch to your preferred home station in the filter menu.",
-    "privateNote": ""
-  },
   "-0.0997037,51.3329352": {
     "name": "Riddlesdown",
     "publicNote": "",

@@ -25,6 +25,7 @@ import londonTerminalsData from "@/data/london-terminals.json"
 // Used here to gate the "no National Rail ticket needed" hint at the
 // bottom of the train-info block.
 import oysterStationsData from "@/data/oyster-stations.json"
+import { getStation } from "@/lib/station-registry"
 import { PROTECTED_AREA_INFO, protectedAreaLabel } from "@/lib/protected-areas"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
@@ -247,7 +248,8 @@ type StationModalProps = {
    *  triggers the origin-specific Flickr search algorithm (smaller radius). */
   isPrimaryOrigin?: boolean
   /** When true, the station name represents a PLACE rather than a specific
-   *  station (e.g. "City of London"). Suppresses the " Station" title suffix. */
+   *  station (e.g. the "London" cluster anchor, the synthetic Stratford
+   *  anchor). Suppresses the " Station" title suffix. */
   isSynthetic?: boolean
   /** Display names of the synthetic cluster's member stations, in declared
    *  order. When set (i.e. the modal is open for a synthetic primary or
@@ -421,29 +423,29 @@ function highlightTermini(
 const GHOST_STATIONS = new Set(["FIN", "PSW"])
 const GHOST_STATION_MESSAGE = "Ghost station — minimal service on weekends."
 
-// Z-prefix CRS codes that ARE real National Rail stations despite
-// looking like our Underground/DLR convention. These are interchanges
-// where OSM kept the Z-prefix tag even though the station also has NR
-// service (Thameslink at Farringdon, Elizabeth line at Whitechapel,
-// etc.). Without this allowlist, they'd be falsely flagged "Not a
-// National Rail Station". Extend if a future origin-routes fetch
-// surfaces another Z-prefix CRS in real RTT data.
-const NR_Z_PREFIX_CRS = new Set(["ZFD", "ZLW", "ZEL", "ZCW", "ZTU"])
+// "Not a National Rail station" check — drives the photo-overlay's
+// badge text. Asks the registry: any synthetic ID (4-char) is non-NR
+// by definition. The 5 real ATOC CRS that happen to start with Z
+// (ZFD, ZLW, ZEL, ZCW, ZTU) are stored as non-synthetic in the
+// registry, so they correctly classify as NR.
 function isNonNrStation(crs: string | undefined): boolean {
   if (!crs) return true
-  if (!crs.startsWith("Z")) return false
-  return !NR_Z_PREFIX_CRS.has(crs)
+  const station = getStation(crs)
+  return !station || station.isSynthetic
 }
 
-// Oyster CRS lookup. Combines the curated NR allowlist with the
-// "Z-prefix → Oyster" rule (covers Underground / DLR / most Elizabeth
-// line entries OSM tagged with Z*). Module-scope so the Set is built
-// once at import time, not per render.
+// "Is this station inside the TfL Oyster fare zone?" — combines two
+// signals: the curated list of NR stations within Oyster (Watford
+// Junction etc., from data/oyster-stations.json) plus the registry's
+// network tag (any Underground / DLR / Overground / Elizabeth line
+// station counts). Module-scope Set so the lookup is O(1) per call.
 const OYSTER_CRS_SET = new Set(oysterStationsData.nrStations as string[])
+const TFL_OYSTER_NETWORK_RE = /London Underground|Docklands Light Railway|London Overground|Elizabeth line/
 function isInOysterZone(crs: string | undefined): boolean {
   if (!crs) return false
-  if (crs.startsWith("Z")) return true
-  return OYSTER_CRS_SET.has(crs)
+  if (OYSTER_CRS_SET.has(crs)) return true
+  const station = getStation(crs)
+  return !!station?.network && TFL_OYSTER_NETWORK_RE.test(station.network)
 }
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
@@ -1534,7 +1536,7 @@ export default function StationModal({
                     //     why there's no time. Detected by either no CRS
                     //     (e.g. DLR features) OR a Z-prefix code (this
                     //     codebase's convention for Underground/DLR
-                    //     stations: ZHM Hampstead, ZTH Tower Hill, etc).
+                    //     stations: UHAA Hampstead, UTHI Tower Hill, etc).
                     //   - Ghost stations (FIN, PSW): dedicated "minimal
                     //     service on weekends" message; quoting a time would
                     //     mislead.

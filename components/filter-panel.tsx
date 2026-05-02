@@ -206,7 +206,7 @@ type FilterPanelProps = {
   onPrimaryOriginChange: (origin: string) => void
   /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
   originDisplayName: (name: string) => string
-  /** Optional extra-short "super-shorthand" used on mobile only (e.g. "Charing Cross" → "Charing X", "City of London" → "City"). Falls back to originDisplayName when not provided. */
+  /** Optional extra-short "super-shorthand" used on mobile only (e.g. "Charing Cross" → "Charing X", "Liverpool Street" → "Liverpool St"). Falls back to originDisplayName when not provided. */
   originMobileDisplayName?: (name: string) => string | undefined
   /** Maps a canonical name to a longer label for dropdown menu items (e.g. "Kings Cross St Pancras" → "Kings X, St Pancras, Euston") */
   originMenuName: (name: string) => string

@@ -322,10 +322,10 @@ type OriginDef = {
   adminOnly?: boolean
   /**
    * True when the primary's coord doesn't correspond to a real train station
-   * — e.g. "City of London" lives at Guildhall so the hexagon can sit at the
-   * geographic centre of its cluster. Triggers modal-title/lookup differences
-   * so the overlay shows "City of London" (no "Station" suffix, no
-   * stations-collection lookup).
+   * — e.g. the "London" cluster anchor sits at the British Museum so the
+   * hexagon centres on its members rather than pinning to one terminus.
+   * Triggers modal-title/lookup differences so the overlay shows the
+   * displayName (no "Station" suffix, no stations-collection lookup).
    */
   isSynthetic?: boolean
 }
@@ -424,19 +424,6 @@ const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
   .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
   .sort(byDisplayName)
 
-// Coord-key migrations: when a previously-standalone primary moves to a new
-// synthetic anchor coord, redirect stored picks (in primaryOrigin AND recents)
-// so users coming back with stale localStorage don't end up with duplicates
-// or get reset to the default.
-const COORD_MIGRATIONS: Record<string, string> = {
-  // Old Stratford (SRA) standalone primary → new synthetic midpoint
-  "-0.0035472,51.541289": "-0.0061483,51.5430422",
-  // Kings Cross used to redirect to the Central London synthetic here.
-  // Removed now that individual Central London termini are selectable as
-  // primaries — a stored "-0.1239491,51.530609" should resolve as
-  // Kings Cross, not get silently rewritten to the cluster on reload.
-}
-
 // Seeded recents for the primary dropdown — coords pre-populated as if
 // the user had recently searched for and picked each one. Merged with
 // the actual user recents at render time (user picks float to the top,
@@ -444,7 +431,6 @@ const COORD_MIGRATIONS: Record<string, string> = {
 // geographic spread, and population catchment.
 const DEFAULT_RECENT_PRIMARIES: string[] = [
   "-0.1705184,51.4644589",   // Clapham Junction (CLJ)
-  "-0.0035472,51.541289",    // Stratford (SRA)
   "-0.2435041,51.5321956",   // Willesden Junction (WIJ)
   "-0.0746988,51.3971695",   // Norwood Junction (NWD)
   "-0.1064144,51.5648345",   // Finsbury Park (FPK)
@@ -1676,9 +1662,10 @@ export default function HikeMap() {
   // Persisted across visits via localStorage — see lib/use-persisted-state.ts.
   // Each filter setting lives under its own "ttg:*" key so adding/removing
   // fields later doesn't require migrations.
-  // Primary origin is a "lng,lat" coord key. Default is the City of London
-  // mega-cluster (synthetic coord at Guildhall) — gives new users broad
-  // access to the City's 7 terminals without needing to pick one manually.
+  // Primary origin is a "lng,lat" coord key. Default is the "London"
+  // mega-cluster (synthetic coord at the British Museum) — gives new
+  // users broad access to all 15 London termini without needing to
+  // pick one manually.
   // Users with the old name string in localStorage get translated below via migrateOriginKey.
   const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1269,51.5196")
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
@@ -1708,10 +1695,6 @@ export default function HikeMap() {
   // from localStorage asynchronously via its own effect.
   useEffect(() => {
     if (!primaryOrigin) return
-    if (COORD_MIGRATIONS[primaryOrigin]) {
-      setPrimaryOriginRaw(COORD_MIGRATIONS[primaryOrigin])
-      return
-    }
     if (!primaryOrigin.includes(",")) {
       setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1269,51.5196"))
     } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
@@ -1721,17 +1704,11 @@ export default function HikeMap() {
   }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
 
   // Recents-list cleanup: any synthetic primary anchor that ends up in the
-  // recents list (e.g. Stratford, which used to be seeded as a recent before
-  // it was promoted to a synthetic primary in the top group) gets removed,
-  // since synthetic primaries already have a permanent slot in the dropdown
-  // and shouldn't appear twice. Also strips legacy coords that would migrate
-  // to a synthetic — without this, users with the old SRA coord in localStorage
-  // see Stratford twice (once as the synthetic, once as the unmigrated recent).
+  // recents list gets removed, since synthetic primaries already have a
+  // permanent slot in the dropdown and shouldn't appear twice.
   useEffect(() => {
     const cleaned = recentCustomPrimaries.filter((c) => {
       if (PRIMARY_ORIGINS[c]?.isSynthetic) return false
-      const migrated = COORD_MIGRATIONS[c]
-      if (migrated && PRIMARY_ORIGINS[migrated]?.isSynthetic) return false
       return true
     })
     if (cleaned.length !== recentCustomPrimaries.length) {
@@ -5590,15 +5567,18 @@ export default function HikeMap() {
           if (primaryFeatureFilter === "no-travel-data") {
             return mins == null
           }
-          // "Oyster" — TfL fare-area stations. Includes Underground / DLR /
-          // Elizabeth (any Z-prefix CRS) plus the curated NR list in
-          // data/oyster-stations.json. Pulls in even no-RTT-data stations
-          // (Underground, DLR), so the auto-time-slider-open in the
-          // dropdown handler is what makes them visible on the map.
+          // "Oyster" — TfL fare-area stations. Includes anything tagged
+          // with an Oyster-zone network (Underground / DLR / Overground /
+          // Elizabeth line) plus the curated NR list in
+          // data/oyster-stations.json (Watford Junction etc.). Pulls in
+          // even no-RTT-data stations (Underground, DLR), so the auto-
+          // time-slider-open in the dropdown handler is what makes them
+          // visible on the map.
           if (primaryFeatureFilter === "oyster") {
             const crs = f.properties["ref:crs"] as string | undefined
-            if (!crs) return false
-            return crs.startsWith("Z") || OYSTER_NR_CRS.has(crs)
+            if (crs && OYSTER_NR_CRS.has(crs)) return true
+            const network = f.properties.network as string | undefined
+            return !!network && /London Underground|Docklands Light Railway|London Overground|Elizabeth line/.test(network)
           }
           return true
         }
@@ -7901,9 +7881,10 @@ export default function HikeMap() {
       // Special case: the London hexagon's hovered form has coordKey "london"
       // (set by the source at the hexagon's origin coords). For a real-station
       // primary we resolve to that station's feature and let the normal modal
-      // flow run. For a synthetic primary (e.g. City of London at Guildhall
-      // with no station feature) we short-circuit and open the modal here,
-      // using the primary's displayName — no "Station" suffix, no lookup.
+      // flow run. For a synthetic primary (e.g. the "London" cluster anchor,
+      // which has no station feature of its own) we short-circuit and open
+      // the modal here, using the primary's displayName — no "Station"
+      // suffix, no lookup.
       if (hoveredCoordKey === "london") {
         const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
         if (primaryDef?.isSynthetic) {
@@ -7968,8 +7949,9 @@ export default function HikeMap() {
         setBannerVisible(true)
         return
       }
-      // Synthetic primaries (e.g. City of London) have no real station feature
-      // to substitute — open the modal directly with the displayName as the
+      // Synthetic primaries (e.g. the "London" cluster anchor, the
+      // synthetic Stratford anchor) have no real station feature to
+      // substitute — open the modal directly with the displayName as the
       // title (the StationModal will suppress its " Station" suffix via the
       // isSynthetic prop). Real-station primaries fall through to the feature-
       // substitution path below and take the normal modal flow.
