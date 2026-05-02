@@ -45674,15 +45674,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Garston to St Albans via Moor Mill",
         "startPlace": "Garston",
         "endPlace": "St Albans City",
         "startStation": "GSN",
         "endStation": "SAC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.2,
-        "hours": 3.65,
+        "distanceKm": 12.4,
+        "hours": 3.2,
         "lunchStops": [
           {
             "name": "Moor Mill",
@@ -45769,13 +45769,15 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920312228",
-        "updatedAt": "2026-04-30T11:03:59.423Z",
+        "updatedAt": "2026-05-02T02:12:19.690Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Garston to St Albans",
           "pageURL": "https://www.walkingclub.org.uk/walk/garston-to-st-albans/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 64.73,
+        "difficulty": "moderate"
       },
       {
         "role": "alternative",
