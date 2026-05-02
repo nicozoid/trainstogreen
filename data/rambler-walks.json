@@ -79922,8 +79922,8 @@
         "endStation": "HOT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.8,
-        "hours": 4.75,
+        "distanceKm": 24.5,
+        "hours": 6.55,
         "lunchStops": [
           {
             "name": "Stag & Huntsman",
@@ -79975,7 +79975,11 @@
           "pageName": "Henley Circular via Great Wood",
           "pageURL": "https://www.walkingclub.org.uk/walk/henley-circular-via-great-wood/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 313.04,
+        "difficulty": "hard",
+        "name": "Henley Circular via Hambleden",
+        "updatedAt": "2026-05-02T02:12:35.996Z"
       },
       {
         "role": "variant",
