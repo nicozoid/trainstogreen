@@ -123,11 +123,14 @@ for (const id of Object.keys(months)) {
   checkId("station-months.json", "key", id, months[id]?.name)
 }
 
+// Phase 2d files — all rekeyed from coordKey to station ID.
 const sources = JSON.parse(fs.readFileSync(path.join(ROOT, "data/stations-by-source.json"), "utf8"))
 for (const [src, arr] of Object.entries(sources)) {
-  for (const coord of arr) {
-    checkCoord("stations-by-source.json", `source:${src}`, coord, src)
-  }
+  for (const id of arr) checkId("stations-by-source.json", `source:${src}`, id, src)
+}
+for (const file of ["stations-hiked.json", "stations-with-komoot.json", "stations-potential-months.json", "placemark-stations.json"]) {
+  const arr = JSON.parse(fs.readFileSync(path.join(ROOT, "data", file), "utf8"))
+  for (const id of arr) checkId(file, "entry", id, "")
 }
 
 for (const [anchor, def] of Object.entries(clusters)) {

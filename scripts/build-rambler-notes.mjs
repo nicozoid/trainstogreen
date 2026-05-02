@@ -1208,30 +1208,38 @@ function buildRamblerNotes(args) {
     Object.entries(monthsRaw).sort(([a], [b]) => a.localeCompare(b)),
   )
 
-  // stations-hiked.json: sorted array of coordKeys for stations whose
+  // Coord → ID translation helper for the array-shaped outputs that
+  // were rekeyed in Phase 2d. Drops anything not in the registry —
+  // matches the audit's "every reference must resolve" expectation.
+  const coordsToIds = (coords) =>
+    [...coords].map((c) => coordToId.get(c)).filter((x) => x !== undefined).sort()
+
+  // stations-hiked.json: sorted array of station IDs for stations whose
   // attached walks include at least one variant with a non-empty
   // previousWalkDates. The admin "Undiscovered" filter hides these.
-  const hikedOut = [...perStationHiked].sort()
+  const hikedOut = coordsToIds(perStationHiked)
 
-  // stations-with-komoot.json: sorted array of coordKeys for stations
+  // stations-with-komoot.json: sorted array of station IDs for stations
   // with at least one walk variant carrying a komootUrl. Drives the
   // admin-only "Komoot" map filter.
-  const komootOut = [...perStationKomoot].sort()
+  const komootOut = coordsToIds(perStationKomoot)
 
-  // stations-potential-months.json: sorted coordKeys for stations that
+  // stations-potential-months.json: sorted station IDs for stations that
   // have a Komoot route AND month data only on admin-only variants.
   // Drives the admin-only "Potential month data" feature filter.
-  const potentialMonthsOut = [...perStationPotentialMonths].sort()
+  const potentialMonthsOut = coordsToIds(perStationPotentialMonths)
 
   // stations-by-source.json: pivot the per-station Set<orgSlug> map
-  // into { [orgSlug]: coordKey[] } with each list sorted, so the admin
+  // into { [orgSlug]: stationId[] } with each list sorted, so the admin
   // "Source" filter can answer "stations with ≥1 walk from org X" via
   // a single Set lookup keyed by the dropdown selection.
   const bySourceOut = {}
   for (const [coordKey, orgs] of perStationSourceOrgs) {
+    const id = coordToId.get(coordKey)
+    if (!id) continue
     for (const org of orgs) {
       if (!bySourceOut[org]) bySourceOut[org] = []
-      bySourceOut[org].push(coordKey)
+      bySourceOut[org].push(id)
     }
   }
   for (const org of Object.keys(bySourceOut)) bySourceOut[org].sort()

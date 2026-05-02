@@ -5530,17 +5530,17 @@ export default function HikeMap() {
             return approvedCount === 0
           }
           if (primaryFeatureFilter === "undiscovered") {
-            return !stationsHiked.has(f.properties.coordKey as string)
+            return !stationsHiked.has(f.properties["ref:crs"] as string)
           }
           if (primaryFeatureFilter === "komoot") {
-            return stationsWithKomoot.has(f.properties.coordKey as string)
+            return stationsWithKomoot.has(f.properties["ref:crs"] as string)
           }
           // "No komoot" — inverse of "komoot": only stations that
           // DON'T have any attached walk with a Komoot URL. Note this
           // includes stations with no attached walks at all; the rating
           // filter still applies to gate that further if needed.
           if (primaryFeatureFilter === "no-komoot") {
-            return !stationsWithKomoot.has(f.properties.coordKey as string)
+            return !stationsWithKomoot.has(f.properties["ref:crs"] as string)
           }
           // "Potential month data" — stations with a Komoot route AND
           // month metadata only on admin-only walks (none on public
@@ -5548,7 +5548,7 @@ export default function HikeMap() {
           // month data could be promoted to a public walk to make the
           // station appear in the public month filter.
           if (primaryFeatureFilter === "potential-month-data") {
-            return stationsPotentialMonths.has(f.properties.coordKey as string)
+            return stationsPotentialMonths.has(f.properties["ref:crs"] as string)
           }
           // "Issues" — admin-flagged stations only. hasIssue is station-global
           // (set keyed by station ID, no primary-origin lookup needed).
@@ -5559,7 +5559,7 @@ export default function HikeMap() {
           // visible at zoom 8+. Station-global like "Issues", same Set-keyed
           // lookup pattern. Lets the admin audit the placemark set in one shot.
           if (primaryFeatureFilter === "placemark") {
-            return placemarkStations.has(f.properties.coordKey as string)
+            return placemarkStations.has(f.properties["ref:crs"] as string)
           }
           // "No travel data" — destinations with no journey-time data
           // (londonMinutes is null). Only effective when the time sliders
@@ -5656,7 +5656,7 @@ export default function HikeMap() {
         // Set.has lookup.
         if (sourceFilter !== "off") {
           const set = stationsBySource[sourceFilter]
-          if (!set || !set.has(f.properties.coordKey as string)) return false
+          if (!set || !set.has(f.properties["ref:crs"] as string)) return false
         }
         // Month filters. Two independent filters both look up this
         // station's recommended months in stationMonths:
@@ -5773,7 +5773,7 @@ export default function HikeMap() {
           f.properties.isBuried &&
           !r &&
           !activeOrigins.has(coordKey) &&
-          !placemarkStations.has(coordKey)
+          !placemarkStations.has(f.properties["ref:crs"] as string)
         ) {
           extra.isBuriedHidden = 1
         }
@@ -6063,14 +6063,16 @@ export default function HikeMap() {
           // can read a cheap boolean property.
           const coord = f.properties.coordKey as string
           const isDest = coord !== primaryOrigin
-          // issueStations is keyed by station ID post Phase 2b. Real-station
-          // features all have ref:crs (their canonical ID).
-          const hasIssue = isDest && issueStations.has(f.properties["ref:crs"] as string)
+          // issueStations + placemarkStations are keyed by station ID post
+          // Phase 2b/2d. Real-station features all have ref:crs (their
+          // canonical ID), so the lookup is direct.
+          const stationId = f.properties["ref:crs"] as string | undefined
+          const hasIssue = isDest && !!stationId && issueStations.has(stationId)
           // Admin-only "placemark" flag — same shape as hasIssue, stamped
           // here so label-layer filters can read a cheap `isPlacemark` boolean
           // and gate visibility at zoom 8+ for stations whose rating would
           // otherwise hide them until zoom 9+ (rating 2) or 10+ (unrated).
-          const isPlacemark = placemarkStations.has(coord)
+          const isPlacemark = !!stationId && placemarkStations.has(stationId)
           let base: typeof f.properties = f.properties
           if (hasIssue) base = { ...base, hasIssue: 1 }
           if (isPlacemark) base = { ...base, isPlacemark: 1 }
@@ -6302,20 +6304,20 @@ export default function HikeMap() {
   // Same shape as handleToggleIssue — local Set update + outbox-queued POST so
   // the map updates instantly and the GitHub commit happens in the background.
   const handleTogglePlacemark = useCallback(async (
-    coordKey: string,
+    stationId: string,
     name: string,
     isPlacemark: boolean,
   ) => {
     setPlacemarkStations((prev) => {
       const next = new Set(prev)
-      if (isPlacemark) next.add(coordKey); else next.delete(coordKey)
+      if (isPlacemark) next.add(stationId); else next.delete(stationId)
       return next
     })
     outbox.enqueue({
       endpoint: "/api/dev/toggle-placemark",
       method: "POST",
-      body: { coordKey, name, isPlacemark },
-      key: `placemark:${coordKey}`,
+      body: { stationId, name, isPlacemark },
+      key: `placemark:${stationId}`,
       label: `${isPlacemark ? "Mark" : "Unmark"} placemark on ${name}`,
     })
   }, [])
@@ -10490,9 +10492,9 @@ export default function HikeMap() {
               displayStation.name,
               hasIssue,
             )}
-            isPlacemark={placemarkStations.has(displayStation.coordKey)}
+            isPlacemark={placemarkStations.has(resolveCoordKey(displayStation.coordKey) ?? "")}
             onTogglePlacemark={(isPlacemark: boolean) => handleTogglePlacemark(
-              displayStation.coordKey,
+              resolveCoordKey(displayStation.coordKey) ?? "",
               displayStation.name,
               isPlacemark,
             )}
