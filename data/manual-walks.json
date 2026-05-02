@@ -1532,7 +1532,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:57.984Z",
         "komootUrl": "https://www.komoot.com/tour/2921496591",
         "rating": 2,
         "suffix": "via Combe Gibbet",
@@ -1540,7 +1540,10 @@
           "2022-01-03"
         ],
         "distanceKm": 16.4,
-        "hours": 4.5
+        "hours": 4.5,
+        "uphillMetres": 250.91,
+        "difficulty": "moderate",
+        "name": "Kintbury Circular via Combe Gibbet"
       }
     ],
     "extracted": true,
