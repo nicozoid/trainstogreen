@@ -1655,7 +1655,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:15:55.859Z",
         "komootUrl": "https://www.komoot.com/tour/2921490975",
         "rating": 1,
         "suffix": "via the Misbourne Valley",
@@ -1664,7 +1664,10 @@
           "2020-11-29"
         ],
         "distanceKm": 15,
-        "hours": 4.03
+        "hours": 4.03,
+        "uphillMetres": 183.48,
+        "difficulty": "moderate",
+        "name": "Amersham Circular via the Misbourne Valley"
       }
     ],
     "extracted": true,
