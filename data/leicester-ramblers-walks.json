@@ -337,8 +337,8 @@
         "endStation": "OKM",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 19.1,
+        "hours": 5,
         "lunchStops": [],
         "terrain": "Villages, churches, views across the Vale of Catmose",
         "sights": [
@@ -371,7 +371,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925766569"
+        "komootUrl": "https://www.komoot.com/tour/2925766569",
+        "uphillMetres": 156.14,
+        "difficulty": "moderate",
+        "name": "Oakham Circular",
+        "updatedAt": "2026-05-02T02:13:03.271Z"
       }
     ],
     "extracted": true,
