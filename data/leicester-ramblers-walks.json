@@ -641,7 +641,8 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "suffix": "via Trent Bridge"
+        "suffix": "via Trent Bridge",
+        "komootUrl": "https://www.komoot.com/tour/2925782195"
       }
     ],
     "extracted": true,
