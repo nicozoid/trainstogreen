@@ -229,7 +229,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T00:00:00.000Z",
+        "updatedAt": "2026-05-02T02:17:07.028Z",
         "komootUrl": "https://www.komoot.com/tour/2913988093",
         "rating": 3,
         "mudWarning": false,
@@ -237,7 +237,10 @@
         "hours": 4.63,
         "previousWalkDates": [
           "2025-04-27"
-        ]
+        ],
+        "uphillMetres": 377.44,
+        "difficulty": "moderate",
+        "name": "Folkestone Circular via Castle Hill"
       }
     ],
     "extracted": true,
