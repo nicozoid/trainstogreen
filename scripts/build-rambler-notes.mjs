@@ -721,7 +721,15 @@ function loadAllWalks(overrideWalks) {
 
 function buildRamblerNotes(args) {
   const walks = loadAllWalks(args?.overrideWalks)
-  const notes = JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
+  // overrideNotes: same rationale as overrideWalks — the API-route
+  // caller already has a fresh copy of station-notes.json (fetched
+  // from GitHub on serverless, where the local fs is the deploy-time
+  // snapshot). Deep-cloned because the build mutates `notes` in place
+  // (preserves admin-authored publicNote/privateNote, rewrites the
+  // prose fields), and we don't want to scribble on the caller's copy.
+  const notes = args?.overrideNotes
+    ? structuredClone(args.overrideNotes)
+    : JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
   const crsIndex = buildCrsIndex()
   // sources.json — organisation registry. Loaded once here and threaded
   // into buildSummary so the relatedSource clause can render
