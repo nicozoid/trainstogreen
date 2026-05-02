@@ -1470,7 +1470,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:23.865Z",
         "komootUrl": "https://www.komoot.com/tour/2921496141",
         "rating": 3,
         "suffix": "via Watt's Chapel",
@@ -1478,7 +1478,10 @@
           "2021-05-01"
         ],
         "distanceKm": 13.1,
-        "hours": 3.5
+        "hours": 3.5,
+        "uphillMetres": 145.02,
+        "difficulty": "moderate",
+        "name": "Guildford Circular via Watt’s Chapel"
       }
     ],
     "extracted": true,
