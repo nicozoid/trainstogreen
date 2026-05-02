@@ -1376,14 +1376,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:19.271Z",
         "komootUrl": "https://www.komoot.com/tour/2921495389",
         "rating": 2,
         "previousWalkDates": [
           "2022-06-18"
         ],
         "distanceKm": 19.1,
-        "hours": 5.27
+        "hours": 5.27,
+        "uphillMetres": 313.43,
+        "difficulty": "hard",
+        "name": "Goring-by-Sea to Worthing"
       }
     ],
     "extracted": true,
