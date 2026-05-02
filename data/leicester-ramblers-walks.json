@@ -1477,7 +1477,8 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "suffix": "via Hartshill Country Park"
+        "suffix": "via Hartshill Country Park",
+        "komootUrl": "https://www.komoot.com/tour/2925787817"
       }
     ],
     "extracted": true,
