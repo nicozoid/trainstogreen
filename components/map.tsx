@@ -2128,19 +2128,22 @@ export default function HikeMap() {
             journeys: Record<string, unknown>
           }
           if (!payload?.journeys) return
-          // Merge into baseStations: for each feature whose coordKey
+          // Merge into baseStations: for each feature whose station ID
           // appears in the loaded journeys map, add an entry under
-          // f.properties.journeys[originCoord]. Everything else in the
-          // app already reads journeys[origin] so no other code needs
-          // to change.
+          // f.properties.journeys[originCoord]. Post Phase 4 the
+          // journey file is keyed by station ID at the destination
+          // level, so we look up via f.properties["ref:crs"] (the
+          // canonical ID after Phase 1). The OUTER `originCoord` keying
+          // on f.properties.journeys is preserved — every other consumer
+          // in this file still reads journeys[<coord>].
           setBaseStations((prev) => {
             if (!prev) return prev
-            const perCoord = payload.journeys
+            const perId = payload.journeys
             return {
               ...prev,
               features: prev.features.map((f) => {
-                const coordKey = f.properties.coordKey as string
-                const entry = perCoord[coordKey]
+                const id = f.properties["ref:crs"] as string | undefined
+                const entry = id ? perId[id] : undefined
                 if (!entry) return f
                 const existingJourneys = (f.properties as Record<string, unknown>).journeys as Record<string, unknown> | undefined
                 return {

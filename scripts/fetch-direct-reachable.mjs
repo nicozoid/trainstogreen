@@ -441,10 +441,12 @@ function takeBetter(existing, candidate) {
 }
 
 // Seed with any pre-existing entry from origin-routes.json for this origin.
+// Post Phase 2a the file is keyed by station ID; both outer and inner
+// keys are IDs (CRS for real stations, 4-char synthetic for non-CRS).
 const current = existsSync(ROUTES_PATH) ? JSON.parse(readFileSync(ROUTES_PATH, "utf8")) : {}
-const existingEntry = current[originStation.coord]
+const existingEntry = current[originCrs]
 if (existingEntry?.directReachable) {
-  for (const [coord, entry] of Object.entries(existingEntry.directReachable)) {
+  for (const [id, entry] of Object.entries(existingEntry.directReachable)) {
     // Rehydrate observations[] from the serialised parallel arrays so the
     // union in takeBetter keeps services seen on prior fetch runs. Old
     // entries that pre-date the schema have no arrays — degrade to empty
@@ -456,13 +458,15 @@ if (existingEntry?.directReachable) {
       depMin: depArr[i],
       durationMin: durArr[i],
     }))
-    merged.set(coord, { ...entry, observations })
+    merged.set(id, { ...entry, observations })
   }
 }
-// Then fold each date's per-CRS map in.
+// Then fold each date's per-CRS map in. The map's records carry their
+// own `crs` field — we key the merged output by CRS to match the
+// ID-keyed shape on disk.
 for (const { map } of perDateMaps) {
   for (const rec of map.values()) {
-    const key = rec.coord
+    const key = rec.crs
     merged.set(key, takeBetter(merged.get(key), rec))
   }
 }
@@ -487,20 +491,22 @@ const v2FetchedDates = Array.from(new Set([...prevV2Dates, ...newDates])).sort()
 
 // ---------------------------------------------------------------------------
 // Write back — directReachable sorted by minMinutes ascending for scanability.
+// Outer key is the origin's CRS (Phase 2a/4); inner keys are
+// destination CRS codes.
 // ---------------------------------------------------------------------------
-current[originStation.coord] = {
+current[originCrs] = {
   name: originStation.name,
   crs: originCrs,
   directReachable: Object.fromEntries(
     [...merged.entries()]
       .sort((a, b) => a[1].minMinutes - b[1].minMinutes)
-      .map(([coord, r]) => {
+      .map(([id, r]) => {
         // Sort observations by departure time for stable diffs and to let the
         // app do "first service ≥ T" searches with linear scan (or binary).
         const sortedObs = (r.observations ?? [])
           .slice()
           .sort((a, b) => a.depMin - b.depMin)
-        return [coord, {
+        return [id, {
           name: r.name,
           crs: r.crs,
           minMinutes: r.minMinutes,

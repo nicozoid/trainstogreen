@@ -59,22 +59,17 @@ const inBox = (lat, lng) =>
   lat > BBOX.latMin && lat < BBOX.latMax && lng > BBOX.lngMin && lng < BBOX.lngMax
 
 const stations = JSON.parse(readFileSync(STATIONS_PATH, "utf-8"))
+// origin-routes.json + tfl-hop-matrix.json are both keyed by station
+// ID (CRS or 4-char synthetic) post Phase 2. Outer + inner keys are
+// IDs throughout.
 const originRoutes = JSON.parse(readFileSync(ORIGIN_ROUTES_PATH, "utf-8"))
 const hopMatrix = (() => {
   try { return JSON.parse(readFileSync(HOP_MATRIX_PATH, "utf-8")) }
   catch { return {} }
 })()
 
-// Done = stations whose name appears as a top-level key in tfl-hop-matrix.
-const doneNames = new Set(Object.keys(hopMatrix))
-
-// Index origin-routes by both coord and CRS so we can pull priority
-// data when RTT exists (and gracefully degrade when it doesn't).
-const originRoutesByCoord = originRoutes
-const originRoutesByCrs = {}
-for (const [coord, entry] of Object.entries(originRoutes)) {
-  if (entry?.crs) originRoutesByCrs[entry.crs] = { coord, ...entry }
-}
+// Done = stations whose CRS appears as a top-level key in tfl-hop-matrix.
+const doneCrs = new Set(Object.keys(hopMatrix))
 
 // Priority score: bigger = higher priority. Components:
 //   terminal_hubs   = number of central termini whose directReachable
@@ -84,13 +79,13 @@ for (const [coord, entry] of Object.entries(originRoutes)) {
 // Stations without RTT data return zero/zero — they sort to the
 // bottom of the queue, fetched after everything we have priority
 // data for.
-function priorityFor(coord) {
-  const entry = originRoutesByCoord[coord]
+function priorityFor(crs) {
+  const entry = originRoutes[crs]
   if (!entry) return { terminalHubs: 0, directDests: 0, hasRtt: false }
   let terminalHubs = 0
-  for (const [, originEntry] of Object.entries(originRoutes)) {
-    if (!TERMINI_CRS.has(originEntry?.crs ?? "")) continue
-    if (originEntry.directReachable?.[coord]?.minMinutes != null) terminalHubs++
+  for (const terminusCrs of TERMINI_CRS) {
+    const terminusEntry = originRoutes[terminusCrs]
+    if (terminusEntry?.directReachable?.[crs]?.minMinutes != null) terminalHubs++
   }
   const directDests = Object.keys(entry.directReachable ?? {}).length
   return { terminalHubs, directDests, hasRtt: true }
@@ -126,19 +121,16 @@ for (const f of stations.features ?? []) {
   if (!Number.isFinite(lng) || !Number.isFinite(lat) || !inBox(lat, lng)) {
     stats.skipped_outside_bbox++; continue
   }
-  // Hop matrix is keyed by name. Check both the OSM name and (if RTT
-  // is present) the origin-routes name — they usually agree but not
-  // always (Bath vs Bath Spa, etc.).
-  const osmName = f.properties.name
-  const rttEntry = originRoutesByCrs[crs]
-  const rttName = rttEntry?.name
-  if (doneNames.has(osmName) || (rttName && doneNames.has(rttName))) {
+  // Hop matrix is now keyed by CRS — single check.
+  if (doneCrs.has(crs)) {
     stats.skipped_done++; continue
   }
-  const coord = `${lng},${lat}`
-  const { terminalHubs, directDests, hasRtt } = priorityFor(coord)
-  // Use the RTT name when available (matches the existing matrix-keying
-  // convention so re-fetches dedupe cleanly); fall back to OSM name.
+  const osmName = f.properties.name
+  const rttEntry = originRoutes[crs]
+  const rttName = rttEntry?.name
+  const { terminalHubs, directDests, hasRtt } = priorityFor(crs)
+  // Use the RTT name when available so the queue label matches what
+  // the user sees in the app; fall back to OSM name otherwise.
   const queueName = rttName ?? osmName
   queue.push({ crs, name: queueName, terminalHubs, directDests, hasRtt })
   if (hasRtt) stats.eligible_with_rtt++
