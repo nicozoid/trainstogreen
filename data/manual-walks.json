@@ -453,7 +453,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:11:52.167Z",
+        "updatedAt": "2026-05-02T02:17:40.048Z",
         "suffix": "via Blenheim Palace Park",
         "komootUrl": "https://www.komoot.com/tour/2920249192",
         "rating": 4,
@@ -462,7 +462,10 @@
         ],
         "distanceKm": 12.4,
         "hours": 3.27,
-        "ratingExplanation": "It's an easy walk from the station to the beautiful, vast (and free) grounds of the finest example of English baroque architecture. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that"
+        "ratingExplanation": "It's an easy walk from the station to the beautiful, vast (and free) grounds of the finest example of English baroque architecture. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that",
+        "uphillMetres": 113.37,
+        "difficulty": "moderate",
+        "name": "Hanborough Circular via Blenheim Palace"
       }
     ],
     "extracted": true,
