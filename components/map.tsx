@@ -63,7 +63,7 @@ import regionLabelsData from "@/data/region-labels.json"
 import oysterStationsData from "@/data/oyster-stations.json"
 import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
-import { usePersistedState } from "@/lib/use-persisted-state"
+import { usePersistedState, type Serializer } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
@@ -428,6 +428,29 @@ const PINNED_FRIENDS: string[] = []
 const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
   .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
   .sort(byDisplayName)
+
+// localStorage serializers (Phase 3b) — internal state is a coordKey
+// (back-compat with the rest of map.tsx), but on disk we persist
+// station IDs (CRS or 4-char synthetic) so what hits localStorage
+// matches the new canonical identifier scheme. Legacy coord values
+// still load — we detect the comma and pass them through verbatim —
+// so users with pre-Phase-3b storage don't lose their picks. The next
+// write puts an ID in storage, completing the migration in place.
+const originIdSerializer: Serializer<string> = {
+  toStorage: (coord) => resolveCoordKey(coord) ?? coord,
+  fromStorage: (raw) => {
+    const s = raw as string
+    if (s.includes(",")) return s
+    return registryGetCoordKey(s) ?? s
+  },
+}
+const originArrayIdSerializer: Serializer<string[]> = {
+  toStorage: (coords) => coords.map((c) => resolveCoordKey(c) ?? c),
+  fromStorage: (raw) => (raw as string[]).map((s) => {
+    if (s.includes(",")) return s
+    return registryGetCoordKey(s) ?? s
+  }),
+}
 
 // Seeded recents for the primary dropdown — coords pre-populated as if
 // the user had recently searched for and picked each one. Merged with
@@ -1693,7 +1716,11 @@ export default function HikeMap() {
   // users broad access to all 15 London termini without needing to
   // pick one manually.
   // Users with the old name string in localStorage get translated below via migrateOriginKey.
-  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState("ttg:primaryOrigin", "-0.1269,51.5196")
+  const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState(
+    "ttg:primaryOrigin",
+    "-0.1269,51.5196",
+    originIdSerializer,
+  )
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
   // pick items beneath the main origin list so they can hop back easily.
@@ -1703,6 +1730,7 @@ export default function HikeMap() {
   const [recentCustomPrimaries, setRecentCustomPrimaries] = usePersistedState<string[]>(
     "ttg:recentCustomPrimaries",
     [],
+    originArrayIdSerializer,
   )
   // Mirror of recentCustomPrimaries on the friend side — coord keys the
   // user has previously picked as a friend's home. Merged with
@@ -1711,6 +1739,7 @@ export default function HikeMap() {
   const [recentCustomFriends, setRecentCustomFriends] = usePersistedState<string[]>(
     "ttg:recentCustomFriends",
     [],
+    originArrayIdSerializer,
   )
   // One-shot localStorage migration: name → coord key, and reset if the stored
   // coord isn't a current primary option (e.g. we removed the Liverpool Street

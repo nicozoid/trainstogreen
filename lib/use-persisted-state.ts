@@ -14,7 +14,7 @@
 
 import { useEffect, useState } from "react"
 
-type Serializer<T> = {
+export type Serializer<T> = {
   toStorage: (value: T) => unknown
   fromStorage: (raw: unknown) => T
 }
