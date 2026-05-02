@@ -1150,8 +1150,8 @@
         "endStation": "BIN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.9,
-        "hours": null,
+        "distanceKm": 12.8,
+        "hours": 3.25,
         "lunchStops": [
           {
             "name": "Cafe Velo",
@@ -1178,7 +1178,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786627"
+        "komootUrl": "https://www.komoot.com/tour/2925786627",
+        "uphillMetres": 31.59,
+        "difficulty": "moderate",
+        "name": "Bingham Circular via Screveton",
+        "updatedAt": "2026-05-02T02:14:25.431Z"
       }
     ],
     "extracted": true,
