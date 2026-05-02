@@ -552,7 +552,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:28:20.384Z",
+        "updatedAt": "2026-05-02T02:16:00.480Z",
         "komootUrl": "https://www.komoot.com/tour/2498061103",
         "distanceKm": 11.9,
         "hours": 3.07,
@@ -562,7 +562,10 @@
         "previousWalkDates": [
           "2022-04-30",
           "2025-08-17"
-        ]
+        ],
+        "uphillMetres": 56.64,
+        "difficulty": "moderate",
+        "name": "Amberley to Arundel along the Arun"
       }
     ],
     "extracted": true,
