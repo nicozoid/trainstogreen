@@ -95856,15 +95856,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Gomshall to Guildford",
         "startPlace": "Gomshall",
         "endPlace": "Guildford",
         "startStation": "GOM",
         "endStation": "GLD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16,
-        "hours": 4.2,
+        "distanceKm": 15.6,
+        "hours": 4.12,
         "lunchStops": [
           {
             "name": "William IV",
@@ -95932,7 +95932,10 @@
           "pageName": "Gomshall to Guildford",
           "pageURL": "https://www.walkingclub.org.uk/walk/gomshall-to-guildford/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 116.38,
+        "difficulty": "moderate",
+        "updatedAt": "2026-05-02T02:12:25.015Z"
       },
       {
         "role": "shorter",
