@@ -1036,5 +1036,18 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.104555,51.519964": {
+    "name": "Farringdon",
+    "custom": {
+      "includeTags": [
+        "farringdon",
+        "trains",
+        "green"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
