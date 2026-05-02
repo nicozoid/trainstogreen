@@ -1346,7 +1346,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T09:47:03.431Z",
+        "updatedAt": "2026-05-02T02:18:06.867Z",
         "komootUrl": "https://www.komoot.com/tour/2921497025",
         "rating": 4,
         "suffix": "via Mt Caburn, Glynde & Firle",
@@ -1355,7 +1355,10 @@
           "2021-10-17"
         ],
         "distanceKm": 16,
-        "hours": 4.62
+        "hours": 4.62,
+        "uphillMetres": 382.37,
+        "difficulty": "moderate",
+        "name": "Lewes to Southease via Mt Caburn"
       }
     ],
     "extracted": true,
