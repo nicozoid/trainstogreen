@@ -131,7 +131,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:15:47.916Z",
         "rating": 1,
         "komootUrl": "https://www.komoot.com/tour/2921483662",
         "suffix": "via Chaldon Way",
@@ -139,7 +139,10 @@
         "hours": 4.07,
         "previousWalkDates": [
           "2021-12-18"
-        ]
+        ],
+        "uphillMetres": 187.4,
+        "difficulty": "moderate",
+        "name": "Coulsdon to Redhill via the Chaldon Way"
       }
     ],
     "extracted": true,
