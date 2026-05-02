@@ -49567,8 +49567,8 @@
         "endStation": "SEV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 15.5,
-        "hours": 4.27,
+        "distanceKm": 15.9,
+        "hours": 4.35,
         "lunchStops": [
           {
             "name": "National Trust café",
@@ -49612,7 +49612,7 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2902569123",
-        "updatedAt": "2026-04-24T23:59:41.943Z",
+        "updatedAt": "2026-05-02T02:11:50.153Z",
         "rating": 4,
         "suffix": "via Igtham Mote",
         "relatedSource": {
@@ -49623,7 +49623,10 @@
         },
         "previousWalkDates": [
           "2025-05-25"
-        ]
+        ],
+        "uphillMetres": 253.8,
+        "difficulty": "moderate",
+        "name": "Borough Green to Sevenoaks via Ightham Mote"
       }
     ],
     "resolved": true,
