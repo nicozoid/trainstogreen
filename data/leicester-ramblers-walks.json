@@ -1379,8 +1379,8 @@
         "endStation": "LBO",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.8,
+        "hours": 4.07,
         "lunchStops": [],
         "terrain": "Canal, footpaths, roadside footpath",
         "sights": [
@@ -1405,7 +1405,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925787180"
+        "komootUrl": "https://www.komoot.com/tour/2925787180",
+        "uphillMetres": 79.93,
+        "difficulty": "moderate",
+        "name": "Loughborough Circular via Walton on the Wolds",
+        "updatedAt": "2026-05-02T02:14:42.220Z"
       }
     ],
     "extracted": true,
