@@ -104167,15 +104167,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Wanborough to Godalming via Compton",
         "startPlace": "Wanborough",
         "endPlace": "Godalming",
         "startStation": "WAN",
         "endStation": "GOD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 11.6,
-        "hours": 3.12,
+        "distanceKm": 12,
+        "hours": 3.25,
         "lunchStops": [
           {
             "name": "Withies Inn",
@@ -104234,7 +104234,10 @@
           "pageName": "Wanborough to Godalming",
           "pageURL": "https://www.walkingclub.org.uk/walk/wanborough-to-godalming/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 153.52,
+        "difficulty": "moderate",
+        "updatedAt": "2026-05-02T02:20:16.427Z"
       },
       {
         "role": "longer",
