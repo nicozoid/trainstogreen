@@ -58466,15 +58466,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Leigh to Tunbridge Wells via Penshurst Place",
         "startPlace": "Leigh (Kent)",
         "endPlace": "Tunbridge Wells",
         "startStation": "LIH",
         "endStation": "TBW",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.2,
-        "hours": 4.42,
+        "distanceKm": 15.7,
+        "hours": 4.23,
         "lunchStops": [
           {
             "name": "Spotted Dog",
@@ -58536,7 +58536,10 @@
           "pageName": "Leigh to Tunbridge Wells",
           "pageURL": "https://www.walkingclub.org.uk/walk/leigh-to-tunbridge-wells/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 228.06,
+        "difficulty": "moderate",
+        "updatedAt": "2026-05-02T02:15:27.119Z"
       }
     ],
     "resolved": true,
