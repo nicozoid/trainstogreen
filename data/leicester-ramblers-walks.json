@@ -932,8 +932,8 @@
         "endStation": "FSK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.9,
-        "hours": null,
+        "distanceKm": 13.3,
+        "hours": 3.42,
         "lunchStops": [
           {
             "name": "pubs and cafes",
@@ -964,7 +964,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925785026"
+        "komootUrl": "https://www.komoot.com/tour/2925785026",
+        "uphillMetres": 61.75,
+        "difficulty": "moderate",
+        "name": "Fiskerton Circular via Southwell",
+        "updatedAt": "2026-05-02T02:13:55.706Z"
       }
     ],
     "extracted": true,
