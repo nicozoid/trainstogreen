@@ -26,6 +26,22 @@ const DIFFICULTY_RE = /\\?"grade\\?"\s*:\s*\\?"(EASY|MODERATE|HARD|DIFFICULT|EXP
 const OG_TITLE_RE = /<meta\s+(?:property|name)="og:title"\s+content="([^"]+)"/i
 const OG_TITLE_ALT_RE = /<meta\s+content="([^"]+)"\s+(?:property|name)="og:title"/i
 
+// Decode the HTML entities komoot embeds in og:title attribute values
+// (&#x27; → ', &amp; → &, etc.). Without this we'd persist literal
+// "&#x27;" in the walk's name field and it would render as "&#x27;"
+// in the public prose. &amp; is decoded LAST so we don't double-decode
+// "&amp;quot;" into a literal quote.
+function decodeHtmlEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+}
+
 export async function POST(req: NextRequest) {
   let body: { url?: string }
   try {
@@ -100,9 +116,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Tour name — from og:title, stripping the " | hike | Komoot" suffix.
+  // Decode HTML entities first so apostrophes etc. land as actual
+  // characters, not literal "&#x27;" in the walk's name field.
   const titleMatch = OG_TITLE_RE.exec(html) || OG_TITLE_ALT_RE.exec(html)
   const name = titleMatch
-    ? titleMatch[1].replace(/\s*\|.*$/, "").trim()
+    ? decodeHtmlEntities(titleMatch[1]).replace(/\s*\|.*$/, "").trim()
     : null
 
   return NextResponse.json({ distanceKm, hours, uphillMetres, difficulty, name })
