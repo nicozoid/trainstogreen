@@ -173,6 +173,19 @@ for (const id of Object.keys(buffersFile.buffers ?? {})) {
   checkId("station-interchange-buffers.json", "key", id, "")
 }
 
+// terminal-matrix.json + tfl-hop-matrix.json — outer + inner keys are
+// station IDs post Phase 2f. Both files have the same shape:
+//   { fromId: { toId: { minutes, polyline, vehicleType, ... } } }
+for (const file of ["terminal-matrix.json", "tfl-hop-matrix.json"]) {
+  const matrix = JSON.parse(fs.readFileSync(path.join(ROOT, "data", file), "utf8"))
+  for (const [outerId, inner] of Object.entries(matrix)) {
+    checkId(file, "outer", outerId, "")
+    for (const innerId of Object.keys(inner)) {
+      checkId(file, `${outerId} → inner`, innerId, "")
+    }
+  }
+}
+
 // ── Report ───────────────────────────────────────────────────────────
 
 if (issues.length === 0) {

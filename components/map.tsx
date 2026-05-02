@@ -27,7 +27,7 @@ import {
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
-import { resolveCoordKey } from "@/lib/station-registry"
+import { resolveCoordKey, getName as registryGetName } from "@/lib/station-registry"
 import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -768,13 +768,34 @@ const originRoutes = originRoutesData as OriginRoutes
 const londonTerminals = londonTerminalsData as Terminal[]
 // Merged matrix: terminal-matrix entries take precedence for terminal-keyed
 // rows (the 15 termini), tfl-hop-matrix adds parallel rows for non-terminal
-// primaries like Clapham Junction. Same shape as terminal-matrix —
-// stitchJourney's lookup `matrix[newOrigin.name][mainlineTerminal]`
-// resolves both cases without any code change.
-const terminalMatrix: TerminalMatrix = {
-  ...(tflHopMatrixData as TerminalMatrix),
-  ...(terminalMatrixData as TerminalMatrix),
+// primaries like Clapham Junction.
+//
+// The on-disk shape post Phase 2f is keyed by station ID (CRS or 4-char
+// synthetic) at both the outer and inner level. Many runtime consumers
+// (stitch-journey + the journey-composition paths in this file) still
+// do `matrix[matchTerminal(name)]` lookups, so we translate the IDs back
+// to names at load-time to keep that surface stable. Future work
+// (Phase 3+) can swap consumers over to ID-based access and drop this
+// translation.
+function buildNameKeyedMatrix(): TerminalMatrix {
+  const merged: Record<string, Record<string, unknown>> = {
+    ...(tflHopMatrixData as Record<string, Record<string, unknown>>),
+    ...(terminalMatrixData as Record<string, Record<string, unknown>>),
+  }
+  const out: Record<string, Record<string, unknown>> = {}
+  for (const [outerId, inner] of Object.entries(merged)) {
+    const outerName = registryGetName(outerId)
+    if (!outerName) continue   // unknown ID — drop the row
+    const innerOut: Record<string, unknown> = {}
+    for (const [innerId, hop] of Object.entries(inner)) {
+      const innerName = registryGetName(innerId)
+      if (innerName) innerOut[innerName] = hop
+    }
+    out[outerName] = innerOut
+  }
+  return out as TerminalMatrix
 }
+const terminalMatrix: TerminalMatrix = buildNameKeyedMatrix()
 
 // ---------------------------------------------------------------------------
 // Option 2 — hybrid splice
