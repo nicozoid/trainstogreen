@@ -192,8 +192,8 @@
         "endStation": "LEI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 19.5,
+        "hours": 4.92,
         "lunchStops": [],
         "terrain": "Flat, on decent paths",
         "sights": [
@@ -222,7 +222,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925759790"
+        "komootUrl": "https://www.komoot.com/tour/2925759790",
+        "uphillMetres": 44.02,
+        "difficulty": "moderate",
+        "name": "Barrow upon Soar to Leicester",
+        "updatedAt": "2026-05-02T02:12:53.852Z"
       }
     ],
     "extracted": true,
