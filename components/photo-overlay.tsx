@@ -1395,7 +1395,7 @@ export default function StationModal({
                 // Scottish modern council areas are wholesale 1996 creations
                 // with little name-overlap with the historic counties.
                 countyPortion = <>{historicLink}{" | "}{makeModernLink(pipeModernUrl)}</>
-              } else if (namesShareRoot(displayCounty, displayHistoricCounty)) {
+              } else if (namesShareRoot(displayCounty, displayHistoricCounty ?? "")) {
                 // England/Wales, names share a root (e.g. "Westmorland" historic
                 // ↔ "Westmorland and Furness" modern). Showing both is noise;
                 // the historic name is the canonical short form, and we don't
