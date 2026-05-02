@@ -11555,8 +11555,8 @@
         "endStation": "AMR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.8,
-        "hours": 5.32,
+        "distanceKm": 17.8,
+        "hours": 4.78,
         "lunchStops": [
           {
             "name": "Squirrel",
@@ -11622,13 +11622,16 @@
         },
         "suffix": "via Penn Wood",
         "komootUrl": "https://www.komoot.com/tour/2920274295",
-        "updatedAt": "2026-05-01T11:58:04.718Z",
+        "updatedAt": "2026-05-02T02:12:30.771Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Great Missenden to Amersham",
           "pageURL": "https://www.walkingclub.org.uk/walk/great-missenden-to-amersham/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 224.27,
+        "difficulty": "moderate",
+        "name": "Great Missenden to Amersham via Penn Wood"
       },
       {
         "role": "shorter",
