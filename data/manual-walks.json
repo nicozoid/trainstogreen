@@ -1635,7 +1635,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:18:30.547Z",
         "komootUrl": "https://www.komoot.com/tour/2921497906",
         "rating": 2,
         "suffix": "via Lacey Green & Ninn Wood",
@@ -1643,7 +1643,10 @@
           "2022-02-19"
         ],
         "distanceKm": 15.8,
-        "hours": 4.37
+        "hours": 4.37,
+        "uphillMetres": 280.79,
+        "difficulty": "moderate",
+        "name": "Princes Risborough Circular via Ninn Wood"
       }
     ],
     "extracted": true,
