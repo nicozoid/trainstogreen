@@ -1890,8 +1890,8 @@
         "endStation": "LBO",
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 18.9,
+        "hours": 4.9,
         "lunchStops": [],
         "terrain": "Country park, villages, hall grounds, river",
         "sights": [
@@ -1920,7 +1920,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925789233"
+        "komootUrl": "https://www.komoot.com/tour/2925789233",
+        "uphillMetres": 116.3,
+        "difficulty": "moderate",
+        "name": "Ruddington to Loughborough via Bunny]",
+        "updatedAt": "2026-05-02T02:15:17.363Z"
       }
     ],
     "extracted": true,
