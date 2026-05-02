@@ -1294,9 +1294,9 @@
         "endStation": "FSK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 16.1,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.05,
         "lunchStops": [
           {
             "name": "pubs",
@@ -1337,7 +1337,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786946"
+        "komootUrl": "https://www.komoot.com/tour/2925786946",
+        "uphillMetres": 18.8,
+        "difficulty": "moderate",
+        "name": "Burton Joyce to Fiskerton",
+        "updatedAt": "2026-05-02T02:14:37.475Z"
       }
     ],
     "extracted": true,
