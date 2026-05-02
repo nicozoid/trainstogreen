@@ -41457,15 +41457,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Netley to Botley via Hamble Ferry",
         "startPlace": "Netley",
         "endPlace": "Botley",
         "startStation": "NTL",
         "endStation": "BOE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.8,
-        "hours": 4.58,
+        "distanceKm": 17,
+        "hours": 4.35,
         "lunchStops": [
           {
             "name": "Harper's Steakhouse (The Navigator)",
@@ -41521,13 +41521,15 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2920240122",
-        "updatedAt": "2026-04-30T10:31:03.792Z",
+        "updatedAt": "2026-05-02T02:19:32.336Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Netley to Botley",
           "pageURL": "https://www.walkingclub.org.uk/walk/netley-to-botley/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 70.78,
+        "difficulty": "moderate"
       },
       {
         "role": "alternative",
