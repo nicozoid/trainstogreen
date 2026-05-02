@@ -1808,7 +1808,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:31.035Z",
         "komootUrl": "https://www.komoot.com/tour/2921492459",
         "rating": 2,
         "suffix": "via Granchester",
@@ -1817,7 +1817,10 @@
           "2021-05-15"
         ],
         "distanceKm": 12.6,
-        "hours": 3.2
+        "hours": 3.2,
+        "uphillMetres": 41.28,
+        "difficulty": "moderate",
+        "name": "Cambridge Circular via Grantchester"
       }
     ],
     "extracted": true,
