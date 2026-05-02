@@ -100518,7 +100518,7 @@
         "endStation": "HSL",
         "requiresBus": false,
         "stationToStation": true,
-        "hours": 4.45,
+        "hours": 4.58,
         "lunchStops": [
           {
             "name": "Three Horseshoes",
@@ -100556,16 +100556,19 @@
           "pageURL": "",
           "type": "main"
         },
-        "distanceKm": 16.4,
+        "distanceKm": 16.8,
         "rating": 3,
-        "updatedAt": "2026-04-30T09:54:07.758Z",
+        "updatedAt": "2026-05-02T02:19:26.933Z",
         "suffix": "via Grave of an Unknown Sailor",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Milford to Haslemere",
           "pageURL": "https://www.walkingclub.org.uk/walk/milford-to-haslemere/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 276.7,
+        "difficulty": "moderate",
+        "name": "Milford to Haslemere via the Devil&#x27;s Punch Bowl"
       },
       {
         "role": "variant",
