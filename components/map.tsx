@@ -5668,7 +5668,7 @@ export default function HikeMap() {
         //     whose months don't include the current calendar month.
         // AND semantics — both apply when both are active.
         if (monthFilter !== "off" || currentMonthHighlight) {
-          const entry = stationMonths[f.properties.coordKey as string]
+          const entry = stationMonths[f.properties["ref:crs"] as string]
           const months = entry?.months ?? []
           if (monthFilter === "None") {
             if (months.length > 0) return false

@@ -1,441 +1,5 @@
 {
-  "-0.0045745,51.2578327": {
-    "name": "Oxted",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.0068029,51.1761001": {
-    "name": "Lingfield",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.0778344,51.3085512": {
-    "name": "Upper Warlingham",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.0783882,51.2822065": {
-    "name": "Caterham",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.0997037,51.3329352": {
-    "name": "Riddlesdown",
-    "months": [
-      "mar",
-      "apr",
-      "may",
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.100844,51.3247757": {
-    "name": "Kenley",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1207209,50.9643606": {
-    "name": "Wivelsfield",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1322636,51.2267445": {
-    "name": "Nutfield",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1485149,51.651366": {
-    "name": "Cockfosters",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.170908,51.2274825": {
-    "name": "Earlswood",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1791837,51.6307163": {
-    "name": "Totteridge & Whetstone",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.187051,51.8670421": {
-    "name": "Knebworth",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1924714,52.3288086": {
-    "name": "Huntingdon",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1938826,51.650399": {
-    "name": "High Barnet",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.1979884,51.8123115": {
-    "name": "Welwyn",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2038429,51.8008507": {
-    "name": "Welwyn Garden City",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2052107,51.4220252": {
-    "name": "Wimbledon",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.2099994,51.4161361": {
-    "name": "Wimbledon",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.2153478,51.4609339": {
-    "name": "Putney",
-    "months": [
-      "jan",
-      "feb",
-      "dec"
-    ]
-  },
-  "-0.223247,51.4921603": {
-    "name": "Hammersmith (District and Piccadilly lines)",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2469075,51.4693977": {
-    "name": "Barnes",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2526332,51.4720123": {
-    "name": "Barnes Bridge",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2546948,51.4951314": {
-    "name": "Turnham Green",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2681753,51.4811465": {
-    "name": "Chiswick",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.2840843,51.4123109": {
-    "name": "Norbiton",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.3004127,51.4632072": {
-    "name": "Richmond",
-    "months": [
-      "jan",
-      "feb",
-      "dec"
-    ]
-  },
-  "-0.3018196,51.4129328": {
-    "name": "Kingston",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.320874,51.1811282": {
-    "name": "Holmwood",
-    "months": [
-      "may",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.3241359,51.2411653": {
-    "name": "Dorking",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.3296073,51.0930387": {
-    "name": "Warnham",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.3319931,51.23876": {
-    "name": "Dorking",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.3361686,51.1515691": {
-    "name": "Ockley",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.3398503,51.2363548": {
-    "name": "Dorking West",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.4200621,51.2912974": {
-    "name": "Effingham Junction",
-    "months": [
-      "apr",
-      "may",
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.4352969,51.2795154": {
-    "name": "Horsley",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.4495061,51.0151333": {
-    "name": "Billingshurst",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.5029086,51.432328": {
-    "name": "Staines",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.5183913,51.6542186": {
-    "name": "Chorleywood",
-    "months": [
-      "mar",
-      "apr"
-    ]
-  },
-  "-0.5409049,51.507818": {
-    "name": "Langley",
-    "months": [
-      "jun",
-      "jul",
-      "aug"
-    ]
-  },
-  "-0.5549256,51.5887853": {
-    "name": "Gerrards Cross",
-    "months": [
-      "nov"
-    ]
-  },
-  "-0.5611671,51.6681019": {
-    "name": "Chalfont & Latimer",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.5630828,51.763646": {
-    "name": "Berkhamsted",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.6043738,51.1971446": {
-    "name": "Farncombe",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-0.6053949,51.4866279": {
-    "name": "Windsor and Eton Riverside",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.6073643,51.6740875": {
-    "name": "Amersham",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.6079794,51.4849512": {
-    "name": "Windsor",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.6105638,51.4832744": {
-    "name": "Windsor and Eton Central",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.6110784,51.705012": {
-    "name": "Chesham",
-    "months": [
-      "mar",
-      "apr"
-    ]
-  },
-  "-0.6332427,51.3921459": {
-    "name": "Sunningdale",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.6368939,51.163179": {
-    "name": "Milford",
-    "months": [
-      "jul",
-      "aug"
-    ]
-  },
-  "-0.6459792,51.1331013": {
-    "name": "Witley",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.7092458,51.7033896": {
-    "name": "Great Missenden",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.710798,51.5769144": {
-    "name": "Bourne End",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.7129145,51.2497298": {
-    "name": "Ash",
-    "months": [
-      "apr",
-      "may",
-      "aug"
-    ]
-  },
-  "-0.7171858,51.2611317": {
-    "name": "Ash",
-    "months": [
-      "apr",
-      "may",
-      "jun",
-      "jul",
-      "aug"
-    ]
-  },
-  "-0.7194871,51.0887757": {
-    "name": "Haslemere",
-    "months": [
-      "jul",
-      "aug"
-    ]
-  },
-  "-0.7214571,51.2725337": {
+  "AHV": {
     "name": "Ash Vale",
     "months": [
       "jun",
@@ -443,67 +7,188 @@
       "aug"
     ]
   },
-  "-0.7222499,51.5573685": {
-    "name": "Cookham",
+  "AMR": {
+    "name": "Amersham",
     "months": [
       "sep",
       "oct",
       "nov"
     ]
   },
-  "-0.722846,51.5183532": {
-    "name": "Maidenhead",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.8085107,51.7522425": {
-    "name": "Little Kimble",
-    "months": [
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.8253668,51.6758974": {
-    "name": "Saunderton",
-    "months": [
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.8293176,51.7358193": {
-    "name": "Monks Risborough",
-    "months": [
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "-0.8824136,51.5111653": {
-    "name": "Shiplake",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.899422,51.5338451": {
-    "name": "Henley-on-Thames",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "-0.957274,50.8924696": {
-    "name": "Rowlands Castle",
+  "APD": {
+    "name": "Appledore",
     "months": [
       "mar",
       "apr",
       "may"
     ]
   },
-  "-1.1586983,51.5704082": {
+  "ASH": {
+    "name": "Ash",
+    "months": [
+      "apr",
+      "may",
+      "aug"
+    ]
+  },
+  "ATH": {
+    "name": "Atherstone",
+    "months": [
+      "apr"
+    ]
+  },
+  "BEF": {
+    "name": "Benfleet",
+    "months": [
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct"
+    ]
+  },
+  "BER": {
+    "name": "Bearley",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "BIG": {
+    "name": "Billingshurst",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "BIP": {
+    "name": "Bishopstone",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "BKM": {
+    "name": "Berkhamsted",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "BKS": {
+    "name": "Bekesbourne",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "BNE": {
+    "name": "Bourne End",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "BNI": {
+    "name": "Barnes Bridge",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "BRY": {
+    "name": "Barry",
+    "months": [
+      "jun",
+      "jul",
+      "aug"
+    ]
+  },
+  "BXD": {
+    "name": "Buxted",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "CASH": {
+    "name": "Ash",
+    "months": [
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug"
+    ]
+  },
+  "CAT": {
+    "name": "Caterham",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CBAR": {
+    "name": "Barnes",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CBY": {
+    "name": "Charlbury",
+    "months": [
+      "apr",
+      "jun",
+      "jul",
+      "aug",
+      "sep"
+    ]
+  },
+  "CDOR": {
+    "name": "Dorking",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "CFO": {
+    "name": "Chalfont & Latimer",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "CHI": {
+    "name": "Chingford",
+    "months": [
+      "apr",
+      "may",
+      "oct",
+      "nov"
+    ]
+  },
+  "CHK": {
+    "name": "Chiswick",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CHO": {
     "name": "Cholsey",
     "months": [
       "mar",
@@ -515,17 +200,82 @@
       "nov"
     ]
   },
-  "-1.4897686,51.8723271": {
-    "name": "Charlbury",
+  "CLT": {
+    "name": "Clacton-on-Sea",
     "months": [
-      "apr",
       "jun",
       "jul",
-      "aug",
-      "sep"
+      "aug"
     ]
   },
-  "-1.5153161,53.3275706": {
+  "CLW": {
+    "name": "Chorleywood",
+    "months": [
+      "mar",
+      "apr"
+    ]
+  },
+  "COO": {
+    "name": "Cookham",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "CUX": {
+    "name": "Cuxton",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "CWEL": {
+    "name": "Welwyn",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CWIM": {
+    "name": "Wimbledon",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "CWIN": {
+    "name": "Windsor",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "DEA": {
+    "name": "Deal",
+    "months": [
+      "may",
+      "jun"
+    ]
+  },
+  "DKG": {
+    "name": "Dorking",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "DKT": {
+    "name": "Dorking West",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "DOR": {
     "name": "Dore and Totley",
     "months": [
       "mar",
@@ -533,45 +283,14 @@
       "may"
     ]
   },
-  "-1.5522587,52.5784071": {
-    "name": "Atherstone",
+  "DVP": {
+    "name": "Dover Priory",
     "months": [
-      "apr"
+      "may",
+      "jun"
     ]
   },
-  "-1.628532,51.9024116": {
-    "name": "Kingham",
-    "months": [
-      "apr",
-      "jun",
-      "jul",
-      "aug"
-    ]
-  },
-  "-1.6729068,52.2952126": {
-    "name": "Hatton",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-1.7002657,51.9921819": {
-    "name": "Moreton-in-Marsh",
-    "months": [
-      "jun",
-      "aug"
-    ]
-  },
-  "-1.7498157,52.2449168": {
-    "name": "Bearley",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "-1.8208401,52.3247544": {
+  "DZY": {
     "name": "Danzey",
     "months": [
       "mar",
@@ -579,8 +298,79 @@
       "may"
     ]
   },
-  "-1.8446544,52.3590972": {
-    "name": "The Lakes",
+  "EBN": {
+    "name": "Eastbourne",
+    "months": [
+      "may",
+      "jun",
+      "jul"
+    ]
+  },
+  "EFF": {
+    "name": "Effingham Junction",
+    "months": [
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "ELD": {
+    "name": "Earlswood",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "ETC": {
+    "name": "Etchingham",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "EWD": {
+    "name": "Earlswood",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "FNC": {
+    "name": "Farncombe",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "FRT": {
+    "name": "Frant",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "GER": {
+    "name": "Gerrards Cross",
+    "months": [
+      "nov"
+    ]
+  },
+  "GMN": {
+    "name": "Great Missenden",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "GRV": {
+    "name": "Gravesend",
     "months": [
       "mar",
       "apr",
@@ -590,23 +380,152 @@
       "nov"
     ]
   },
-  "-1.8614034,52.3665989": {
-    "name": "Earlswood",
+  "HCN": {
+    "name": "Headcorn",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "HGM": {
+    "name": "Higham",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "HLM": {
+    "name": "Holmwood",
+    "months": [
+      "may",
+      "oct",
+      "nov"
+    ]
+  },
+  "HMT": {
+    "name": "Ham Street",
     "months": [
       "mar",
       "apr",
       "may"
     ]
   },
-  "-3.2848689,51.3969039": {
-    "name": "Barry",
+  "HOT": {
+    "name": "Henley-on-Thames",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "HRM": {
+    "name": "Harrietsham",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "HSL": {
+    "name": "Haslemere",
+    "months": [
+      "jul",
+      "aug"
+    ]
+  },
+  "HSY": {
+    "name": "Horsley",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "HTN": {
+    "name": "Hatton",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "HUN": {
+    "name": "Huntingdon",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "KBW": {
+    "name": "Knebworth",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "KCK": {
+    "name": "Knockholt",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "KGM": {
+    "name": "Kingham",
+    "months": [
+      "apr",
+      "jun",
+      "jul",
+      "aug"
+    ]
+  },
+  "KLY": {
+    "name": "Kenley",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "KNG": {
+    "name": "Kingston",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "LFD": {
+    "name": "Lingfield",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "LNY": {
+    "name": "Langley",
     "months": [
       "jun",
       "jul",
       "aug"
     ]
   },
-  "-3.4814284,51.4096499": {
+  "LTK": {
+    "name": "Little Kimble",
+    "months": [
+      "oct",
+      "nov"
+    ]
+  },
+  "LWM": {
     "name": "Llantwit Major",
     "months": [
       "jun",
@@ -614,7 +533,59 @@
       "aug"
     ]
   },
-  "-3.9964221,50.7323333": {
+  "MAI": {
+    "name": "Maidenhead",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "MIM": {
+    "name": "Moreton-in-Marsh",
+    "months": [
+      "jun",
+      "aug"
+    ]
+  },
+  "MLF": {
+    "name": "Milford",
+    "months": [
+      "jul",
+      "aug"
+    ]
+  },
+  "MRS": {
+    "name": "Monks Risborough",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "NBT": {
+    "name": "Norbiton",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "NFA": {
+    "name": "North Fambridge",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "NUF": {
+    "name": "Nutfield",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "OKE": {
     "name": "Okehampton",
     "months": [
       "mar",
@@ -625,7 +596,250 @@
       "aug"
     ]
   },
-  "0.0086166,51.5688027": {
+  "OLY": {
+    "name": "Ockley",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "OXT": {
+    "name": "Oxted",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "PFL": {
+    "name": "Purfleet",
+    "months": [
+      "jan",
+      "feb",
+      "sep",
+      "oct",
+      "nov",
+      "dec"
+    ]
+  },
+  "PLC": {
+    "name": "Pluckley",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "PUT": {
+    "name": "Putney",
+    "months": [
+      "jan",
+      "feb",
+      "dec"
+    ]
+  },
+  "RBR": {
+    "name": "Robertsbridge",
+    "months": [
+      "apr",
+      "oct",
+      "nov"
+    ]
+  },
+  "RDD": {
+    "name": "Riddlesdown",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "RLN": {
+    "name": "Rowlands Castle",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "RMD": {
+    "name": "Richmond",
+    "months": [
+      "jan",
+      "feb",
+      "dec"
+    ]
+  },
+  "RNM": {
+    "name": "Rainham",
+    "months": [
+      "jan",
+      "feb",
+      "sep",
+      "oct",
+      "nov",
+      "dec"
+    ]
+  },
+  "SDG": {
+    "name": "Sandling",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "jul",
+      "aug",
+      "sep"
+    ]
+  },
+  "SDR": {
+    "name": "Saunderton",
+    "months": [
+      "oct",
+      "nov"
+    ]
+  },
+  "SEF": {
+    "name": "Seaford",
+    "months": [
+      "may",
+      "jun",
+      "jul"
+    ]
+  },
+  "SHI": {
+    "name": "Shiplake",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "SNG": {
+    "name": "Sunningdale",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "SNS": {
+    "name": "Staines",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "SOF": {
+    "name": "South Woodham Ferrers",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "SOG": {
+    "name": "Stonegate",
+    "months": [
+      "apr",
+      "oct",
+      "nov"
+    ]
+  },
+  "SOR": {
+    "name": "Sole Street",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "SPU": {
+    "name": "Staplehurst",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "STU": {
+    "name": "Sturry",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "TLK": {
+    "name": "The Lakes",
+    "months": [
+      "mar",
+      "apr",
+      "may",
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "UCHE": {
+    "name": "Chesham",
+    "months": [
+      "mar",
+      "apr"
+    ]
+  },
+  "UCK": {
+    "name": "Uckfield",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "UCOC": {
+    "name": "Cockfosters",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "UEPP": {
+    "name": "Epping",
+    "months": [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "dec"
+    ]
+  },
+  "UHAE": {
+    "name": "Hammersmith (District and Piccadilly lines)",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "UHBA": {
+    "name": "High Barnet",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "UHOR": {
+    "name": "Hornchurch",
+    "months": [
+      "jan",
+      "feb",
+      "sep",
+      "oct",
+      "nov",
+      "dec"
+    ]
+  },
+  "ULEY": {
     "name": "Leytonstone",
     "months": [
       "apr",
@@ -634,16 +848,7 @@
       "nov"
     ]
   },
-  "0.009471,51.6325345": {
-    "name": "Chingford",
-    "months": [
-      "apr",
-      "may",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.0553234,51.6412266": {
+  "ULOU": {
     "name": "Loughton",
     "months": [
       "jan",
@@ -656,111 +861,22 @@
       "dec"
     ]
   },
-  "0.0826201,50.7799859": {
-    "name": "Bishopstone",
-    "months": [
-      "mar",
-      "apr",
-      "may",
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.0966299,50.9687382": {
-    "name": "Uckfield",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.1000064,50.7729203": {
-    "name": "Seaford",
-    "months": [
-      "may",
-      "jun",
-      "jul"
-    ]
-  },
-  "0.1139888,51.6936318": {
-    "name": "Epping",
-    "months": [
-      "jan",
-      "feb",
-      "mar",
-      "apr",
-      "may",
-      "dec"
-    ]
-  },
-  "0.1308295,51.3457689": {
-    "name": "Knockholt",
-    "months": [
-      "mar",
-      "apr",
-      "may",
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.1313783,50.9901183": {
-    "name": "Buxted",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.1906219,51.5167202": {
-    "name": "Rainham",
-    "months": [
-      "jan",
-      "feb",
-      "sep",
-      "oct",
-      "nov",
-      "dec"
-    ]
-  },
-  "0.2181092,51.5538747": {
-    "name": "Hornchurch",
-    "months": [
-      "jan",
-      "feb",
-      "sep",
-      "oct",
-      "nov",
-      "dec"
-    ]
-  },
-  "0.2369945,51.4810858": {
-    "name": "Purfleet",
-    "months": [
-      "jan",
-      "feb",
-      "sep",
-      "oct",
-      "nov",
-      "dec"
-    ]
-  },
-  "0.2815355,50.7696435": {
-    "name": "Eastbourne",
-    "months": [
-      "may",
-      "jun",
-      "jul"
-    ]
-  },
-  "0.2943374,51.1040897": {
-    "name": "Frant",
+  "UTWH": {
+    "name": "Totteridge & Whetstone",
     "months": [
       "mar",
       "apr",
       "may"
     ]
   },
-  "0.3130406,51.0733883": {
+  "UWL": {
+    "name": "Upper Warlingham",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "WAD": {
     "name": "Wadhurst",
     "months": [
       "mar",
@@ -771,187 +887,45 @@
       "nov"
     ]
   },
-  "0.363387,51.0201404": {
-    "name": "Stonegate",
-    "months": [
-      "apr",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.3668306,51.4413627": {
-    "name": "Gravesend",
+  "WGC": {
+    "name": "Welwyn Garden City",
     "months": [
       "mar",
       "apr",
-      "may",
+      "may"
+    ]
+  },
+  "WIM": {
+    "name": "Wimbledon",
+    "months": [
       "sep",
       "oct",
       "nov"
     ]
   },
-  "0.3781687,51.383247": {
-    "name": "Sole Street",
+  "WNC": {
+    "name": "Windsor and Eton Central",
     "months": [
       "apr",
       "may"
     ]
   },
-  "0.4121616,51.2266654": {
-    "name": "Yalding",
+  "WNH": {
+    "name": "Warnham",
     "months": [
       "mar",
       "apr",
       "may"
     ]
   },
-  "0.4423838,51.0106562": {
-    "name": "Etchingham",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "0.461982,51.373911": {
-    "name": "Cuxton",
+  "WNR": {
+    "name": "Windsor and Eton Riverside",
     "months": [
       "apr",
       "may"
     ]
   },
-  "0.4660183,51.426953": {
-    "name": "Higham",
-    "months": [
-      "mar",
-      "apr",
-      "may",
-      "sep",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.4686815,50.9855542": {
-    "name": "Robertsbridge",
-    "months": [
-      "apr",
-      "oct",
-      "nov"
-    ]
-  },
-  "0.5504987,51.1715258": {
-    "name": "Staplehurst",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.5616239,51.5441005": {
-    "name": "Benfleet",
-    "months": [
-      "may",
-      "jun",
-      "jul",
-      "aug",
-      "sep",
-      "oct"
-    ]
-  },
-  "0.6060545,51.6494076": {
-    "name": "South Woodham Ferrers",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.6273669,51.1656292": {
-    "name": "Headcorn",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.6726551,51.2449353": {
-    "name": "Harrietsham",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.6817622,51.6486316": {
-    "name": "North Fambridge",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.7465822,51.1564849": {
-    "name": "Pluckley",
-    "months": [
-      "apr",
-      "may"
-    ]
-  },
-  "0.8165763,51.0332869": {
-    "name": "Appledore",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "0.8545851,51.0681986": {
-    "name": "Ham Street",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "0.9296702,51.1855902": {
-    "name": "Wye",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "1.0660027,51.0904998": {
-    "name": "Sandling",
-    "months": [
-      "mar",
-      "apr",
-      "may",
-      "jul",
-      "aug",
-      "sep"
-    ]
-  },
-  "1.1222644,51.300986": {
-    "name": "Sturry",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "1.1372301,51.2614031": {
-    "name": "Bekesbourne",
-    "months": [
-      "mar",
-      "apr",
-      "may"
-    ]
-  },
-  "1.1543273,51.7945324": {
-    "name": "Clacton-on-Sea",
-    "months": [
-      "jun",
-      "jul",
-      "aug"
-    ]
-  },
-  "1.2678629,51.8462158": {
+  "WON": {
     "name": "Walton-on-the-Naze",
     "months": [
       "jun",
@@ -959,18 +933,44 @@
       "aug"
     ]
   },
-  "1.3048692,51.1259357": {
-    "name": "Dover Priory",
+  "WTY": {
+    "name": "Witley",
     "months": [
-      "may",
-      "jun"
+      "sep",
+      "oct",
+      "nov"
     ]
   },
-  "1.3986457,51.2231068": {
-    "name": "Deal",
+  "WVF": {
+    "name": "Wivelsfield",
     "months": [
-      "may",
-      "jun"
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "WYE": {
+    "name": "Wye",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "YAL": {
+    "name": "Yalding",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "ZTU": {
+    "name": "Turnham Green",
+    "months": [
+      "mar",
+      "apr",
+      "may"
     ]
   }
 }
