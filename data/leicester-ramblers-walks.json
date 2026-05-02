@@ -1822,8 +1822,8 @@
         "endStation": "KET",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 18.4,
+        "hours": 4.87,
         "lunchStops": [],
         "terrain": "Villages, countryside",
         "sights": [
@@ -1848,7 +1848,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925789056"
+        "komootUrl": "https://www.komoot.com/tour/2925789056",
+        "uphillMetres": 192.96,
+        "difficulty": "moderate",
+        "name": "Kettering Circular via Pytchley",
+        "updatedAt": "2026-05-02T02:15:12.410Z"
       }
     ],
     "extracted": true,
