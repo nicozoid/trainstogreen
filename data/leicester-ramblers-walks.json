@@ -1070,41 +1070,33 @@
         "endStation": "DBY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 18.8,
+        "hours": 4.9,
         "lunchStops": [],
         "terrain": "Parks, river, heritage trail",
         "sights": [
           {
-            "name": "Derby Cathedral",
-            "url": null
+            "name": "Derby Cathedral"
           },
           {
-            "name": "Markeaton Park",
-            "url": null
+            "name": "Markeaton Park"
           },
           {
-            "name": "Allestree Park",
-            "url": null
+            "name": "Allestree Park"
           },
           {
-            "name": "Darley Abbey",
-            "url": null
+            "name": "Darley Abbey"
           },
           {
-            "name": "Bonnie Prince Charlie Walk",
-            "url": null
+            "name": "Bonnie Prince Charlie Walk"
           },
           {
-            "name": "Big Wood",
-            "url": null
+            "name": "Big Wood"
           },
           {
-            "name": "River Derwent Heritage Trail",
-            "url": null
+            "name": "River Derwent Heritage Trail"
           }
         ],
-        "miscellany": "",
         "id": "dbydbyjellyfish",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -1112,7 +1104,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786424"
+        "komootUrl": "https://www.komoot.com/tour/2925786424",
+        "uphillMetres": 143.12,
+        "difficulty": "moderate",
+        "name": "Derby Circular via Darley Abbey",
+        "updatedAt": "2026-05-02T02:21:19.623Z"
       }
     ],
     "extracted": true,
