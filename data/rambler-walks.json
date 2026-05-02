@@ -1047,15 +1047,15 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Bow Brickhill to Woburn Sands",
         "startPlace": "Bow Brickhill",
         "endPlace": "Woburn Sands",
         "startStation": "BWB",
         "endStation": "WOB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 21.1,
-        "hours": 5.6,
+        "distanceKm": 19.2,
+        "hours": 5.17,
         "lunchStops": [
           {
             "name": "Bell Inn",
@@ -1124,7 +1124,10 @@
           "pageName": "Bow Brickhill to Woburn Sands",
           "pageURL": "https://www.walkingclub.org.uk/walk/bow-brickhill-to-woburn-sands/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 232.83,
+        "difficulty": "hard",
+        "updatedAt": "2026-05-02T02:11:55.353Z"
       },
       {
         "role": "shorter",
