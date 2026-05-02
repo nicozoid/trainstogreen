@@ -1219,7 +1219,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:48.862Z",
         "komootUrl": "https://www.komoot.com/tour/2921492991",
         "rating": 2,
         "suffix": "via Down House",
@@ -1227,7 +1227,10 @@
           "2020-12-20"
         ],
         "distanceKm": 15.6,
-        "hours": 4.3
+        "hours": 4.3,
+        "uphillMetres": 270.61,
+        "difficulty": "moderate",
+        "name": "Chelsfield Circular via Down House"
       }
     ],
     "extracted": true,
