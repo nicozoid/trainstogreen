@@ -762,17 +762,20 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:48.137Z",
         "komootUrl": "https://www.komoot.com/tour/693628580",
-        "distanceKm": 23,
-        "hours": 6.17,
+        "distanceKm": 23.6,
+        "hours": 6.37,
         "rating": 3,
         "suffix": "via Groombridge",
         "terrain": "escarpments",
         "privateNote": "took a while to get out of the suburbs of Tunbridge, but it was worth",
         "previousWalkDates": [
           "2023-05-27"
-        ]
+        ],
+        "uphillMetres": 301.33,
+        "difficulty": "hard",
+        "name": "Tunbridge Wells Circular via Groombridge"
       }
     ],
     "extracted": true,
