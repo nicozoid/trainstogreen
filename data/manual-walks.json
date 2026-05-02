@@ -2054,5 +2054,331 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-alfalfowl": {
+    "slug": "manual-alfalfowl",
+    "title": "Manual ALF Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "ALF",
+        "endStation": "ALF",
+        "stationToStation": true,
+        "distanceKm": 6.5,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "90% footpaths, 10% country Roads, undulating countryside",
+        "sights": [],
+        "miscellany": "",
+        "id": "alfalfowl",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Alfreton to South Wingfield",
+          "pageURL": "https://www.visitambervalley.com/media/1101/alfreton-to-southwingfield-amber-valley-routeways-leaflet.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblpoak": {
+    "slug": "manual-blpblpoak",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 11,
+        "lunchStops": [],
+        "terrain": "Hilly countryside with steep climbs",
+        "sights": [],
+        "id": "blpblpoak",
+        "suffix": "via Blackbrook",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Belper - Blackbrook",
+          "pageURL": "https://www.visitambervalley.com/media/1102/belper-blackbrook-walking.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:41:20.771Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblpash": {
+    "slug": "manual-blpblpash",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 11.6,
+        "lunchStops": [],
+        "terrain": "Hilly countryside with several steep climbs",
+        "sights": [],
+        "id": "blpblpash",
+        "suffix": "via Kilburn",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Belper to Kilburn",
+          "pageURL": "https://www.visitambervalley.com/media/1103/11-belper-to-kilburn.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:41:01.941Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-dfidfibirch": {
+    "slug": "manual-dfidfibirch",
+    "title": "Manual DFI Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "DFI",
+        "endStation": "DFI",
+        "stationToStation": true,
+        "distanceKm": 12.8,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Undulating countryside with several steep climbs",
+        "sights": [],
+        "miscellany": "",
+        "id": "dfidfibirch",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Duffield",
+          "pageURL": "https://www.visitambervalley.com/media/1106/10-duffield.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-lgmlgmwren": {
+    "slug": "manual-lgmlgmwren",
+    "title": "Manual LGM Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "LGM",
+        "endStation": "LGM",
+        "stationToStation": true,
+        "distanceKm": 7.7,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "35% hard surfaced 35%. Made up level surfaces 30% fields/countryside. Flat with one significant rising section",
+        "sights": [],
+        "miscellany": "",
+        "id": "lgmlgmwren",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Langley Mill",
+          "pageURL": "https://www.visitambervalley.com/media/1114/13-langley-mill.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-cmfcmfheron": {
+    "slug": "manual-cmfcmfheron",
+    "title": "Manual CMF Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "CMF",
+        "endStation": "CMF",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "The trail begins at Cromford Wharf, walking time of approximately 20 minutes with the option to extend.",
+        "id": "cmfcmfheron",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "The Cromford Canal",
+          "pageURL": "https://www.visitambervalley.com/media/1120/the-cromford-canal.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-wtscmfrobin": {
+    "slug": "manual-wtscmfrobin",
+    "title": "Manual WTS to CMF",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "WTS",
+        "endStation": "CMF",
+        "stationToStation": true,
+        "distanceKm": 9.7,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford.",
+        "id": "wtscmfrobin",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Florence Nightingale Trail",
+          "pageURL": "https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblphazel": {
+    "slug": "manual-blpblphazel",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 3.2,
+        "lunchStops": [],
+        "sights": [],
+        "id": "blpblphazel",
+        "suffix": "— Strutt heritage walk",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "The Strutt Walk and Drive",
+          "pageURL": "https://www.visitambervalley.com/media/1118/the-strutt-walk-and-drive.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:40:46.188Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
