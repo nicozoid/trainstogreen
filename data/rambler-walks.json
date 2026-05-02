@@ -32799,8 +32799,8 @@
         "endStation": "SUY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 13.4,
-        "hours": 3.58,
+        "distanceKm": 16,
+        "hours": 4.22,
         "lunchStops": [
           {
             "name": "Fox",
@@ -32846,13 +32846,16 @@
         },
         "suffix": "via Loshes Woodland",
         "komootUrl": "https://www.komoot.com/tour/2920318605",
-        "updatedAt": "2026-05-01T12:28:00.229Z",
+        "updatedAt": "2026-05-02T02:12:04.657Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bures to Sudbury",
           "pageURL": "https://www.walkingclub.org.uk/walk/bures-to-sudbury/",
           "type": "related"
-        }
+        },
+        "uphillMetres": 144.56,
+        "difficulty": "moderate",
+        "name": "Bures to Sudbury via Lamarsh"
       },
       {
         "role": "shorter",
