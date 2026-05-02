@@ -1334,9 +1334,13 @@ export default function StationModal({
 
               // The historic county of Durham is conventionally written
                // "County Durham" — the bare "Durham" form is the modern usage.
-              const displayHistoricCounty = historicCounty === "Durham"
+              // Empty-string fallback narrows the type for the comparison
+              // helpers below (namesShareRoot, etc.) — the value is only
+              // consumed inside the `historicDiffers` branches, which already
+              // guard on historicCounty being non-empty.
+              const displayHistoricCounty: string = historicCounty === "Durham"
                 ? "County Durham"
-                : historicCounty
+                : historicCounty ?? ""
 
               // All English & Welsh historic county names. Used to detect when
               // a station's MODERN county itself looks like a historic county
