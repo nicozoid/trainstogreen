@@ -61109,7 +61109,10 @@
           "type": "similar"
         },
         "komootUrl": "https://www.komoot.com/tour/2797333523",
-        "updatedAt": "2026-04-30T12:49:40.800Z"
+        "updatedAt": "2026-05-02T02:19:53.412Z",
+        "uphillMetres": 121.81,
+        "difficulty": "moderate",
+        "name": "Ramsgate to Margate"
       },
       {
         "role": "variant",
