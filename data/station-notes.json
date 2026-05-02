@@ -1835,7 +1835,7 @@
     "name": "Duffield",
     "publicNote": "",
     "privateNote": "",
-    "adminWalksAll": "**[Duffield to Derby via Drum Hill](https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html)**: Repurposed railway track along the Great Northern Greenway. Sights: Great Northern Greenway, Horsley Carr, and Morley. 16 km. 160 m uphill. 4.5 hours. Moderate. [GPX file](https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx). **[Komoot route →](https://www.komoot.com/tour/2925790185)**",
+    "adminWalksAll": "**[Duffield to Derby via Drum Hill](https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html)**: Repurposed railway track along the Great Northern Greenway. Sights: Great Northern Greenway, Horsley Carr, and Morley. 16 km. 160 m uphill. 4.5 hours. Moderate. [GPX file](https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx). **[Komoot route →](https://www.komoot.com/tour/2925790185)**\n\n**[Duffield Circular](https://www.visitambervalley.com/media/1106/10-duffield.pdf)**: Undulating countryside with several steep climbs. 12 km.",
     "publicWalksS2S": "**[Duffield to Derby via Drum Hill](https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html)**: Repurposed railway track along the Great Northern Greenway. Sights: Great Northern Greenway, Horsley Carr, and Morley. 16 km. 160 m uphill. 4.5 hours. Moderate. [GPX file](https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx). **[Komoot route →](https://www.komoot.com/tour/2925790185)**",
     "publicWalksS2SEnding": "",
     "publicWalksCircular": ""
@@ -5020,6 +5020,51 @@
     "adminWalksAll": "**Epsom to Ewell West**: A shorter variant of [Chessington to Cheam](https://www.walkingclub.org.uk/walk/chessington-to-cheam/). Ashtead Common, open heathland, woodland, and riverside meadows. Sights: Ashtead Common, [Hogsmill Local Nature Reserve](https://www.epsom-ewell.gov.uk/sites/default/files/documents/residents/venues-open-space-hire/parks-playgrounds/local-nature-reserves/Hogsmill%20Local%20Nature%20Reserve%20information%20June%202016_0.pdf), [St. Mary The Virgin](https://historicengland.org.uk/listing/the-list/list-entry/1277324), and Ewell Spring. Lunch at the [Spring Tavern](https://www.springtavern.co.uk/) in Ewell, the [Famous Green Man](https://www.famousgreenman.com/) in Ewell, the [Ewell Tap & Bottle Shop](https://www.ewelltap.co.uk) in Ewell, or the [Coffee Shop](http://www.bournehall.org/visit-us/coffee-shop) in Ewell. 13 km.",
     "publicWalksS2S": "",
     "publicWalksS2SEnding": "**Epsom to Ewell West**: A shorter variant of [Chessington to Cheam](https://www.walkingclub.org.uk/walk/chessington-to-cheam/). Ashtead Common, open heathland, woodland, and riverside meadows. Sights: Ashtead Common, [Hogsmill Local Nature Reserve](https://www.epsom-ewell.gov.uk/sites/default/files/documents/residents/venues-open-space-hire/parks-playgrounds/local-nature-reserves/Hogsmill%20Local%20Nature%20Reserve%20information%20June%202016_0.pdf), [St. Mary The Virgin](https://historicengland.org.uk/listing/the-list/list-entry/1277324), and Ewell Spring. Lunch at the [Spring Tavern](https://www.springtavern.co.uk/) in Ewell, the [Famous Green Man](https://www.famousgreenman.com/) in Ewell, the [Ewell Tap & Bottle Shop](https://www.ewelltap.co.uk) in Ewell, or the [Coffee Shop](http://www.bournehall.org/visit-us/coffee-shop) in Ewell. 13 km.",
+    "publicWalksCircular": ""
+  },
+  "-1.3698401,53.1010582": {
+    "name": "Alfreton",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**[Alfreton Circular](https://www.visitambervalley.com/media/1101/alfreton-to-southwingfield-amber-valley-routeways-leaflet.pdf)**: 90% footpaths, 10% country Roads, and undulating countryside. 6 km.",
+    "publicWalksS2S": "",
+    "publicWalksS2SEnding": "",
+    "publicWalksCircular": "**[Alfreton Circular](https://www.visitambervalley.com/media/1101/alfreton-to-southwingfield-amber-valley-routeways-leaflet.pdf)**: 90% footpaths, 10% country Roads, and undulating countryside. 6 km."
+  },
+  "-1.4825631,53.0242729": {
+    "name": "Belper",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**[Belper Circular via Kilburn](https://www.visitambervalley.com/media/1103/11-belper-to-kilburn.pdf)**: Hilly countryside with several steep climbs. 11 km.\n\n**[Belper Circular via Blackbrook](https://www.visitambervalley.com/media/1102/belper-blackbrook-walking.pdf)**: Hilly countryside with steep climbs. 11 km.\n\n**[Belper Circular — Strutt heritage walk](https://www.visitambervalley.com/media/1118/the-strutt-walk-and-drive.pdf)**: 3 km.",
+    "publicWalksS2S": "",
+    "publicWalksS2SEnding": "",
+    "publicWalksCircular": "**[Belper Circular via Kilburn](https://www.visitambervalley.com/media/1103/11-belper-to-kilburn.pdf)**: Hilly countryside with several steep climbs. 11 km.\n\n**[Belper Circular via Blackbrook](https://www.visitambervalley.com/media/1102/belper-blackbrook-walking.pdf)**: Hilly countryside with steep climbs. 11 km.\n\n**[Belper Circular — Strutt heritage walk](https://www.visitambervalley.com/media/1118/the-strutt-walk-and-drive.pdf)**: 3 km."
+  },
+  "-1.3311974,53.018474": {
+    "name": "Langley Mill",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**[Langley Mill Circular](https://www.visitambervalley.com/media/1114/13-langley-mill.pdf)**: 35% hard surfaced 35%. Made up level surfaces 30% fields/countryside. Flat with one significant rising section. 7 km.",
+    "publicWalksS2S": "",
+    "publicWalksS2SEnding": "",
+    "publicWalksCircular": "**[Langley Mill Circular](https://www.visitambervalley.com/media/1114/13-langley-mill.pdf)**: 35% hard surfaced 35%. Made up level surfaces 30% fields/countryside. Flat with one significant rising section. 7 km."
+  },
+  "-1.5490661,53.1129115": {
+    "name": "Cromford",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**[Cromford Circular](https://www.visitambervalley.com/media/1120/the-cromford-canal.pdf)**: The trail begins at Cromford Wharf, walking time of approximately 20 minutes with the option to extend.\n\n**[Whatstandwell to Cromford](https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf)**: The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford. 9 km.",
+    "publicWalksS2S": "",
+    "publicWalksS2SEnding": "**[Whatstandwell to Cromford](https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf)**: The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford. 9 km.",
+    "publicWalksCircular": "**[Cromford Circular](https://www.visitambervalley.com/media/1120/the-cromford-canal.pdf)**: The trail begins at Cromford Wharf, walking time of approximately 20 minutes with the option to extend."
+  },
+  "-1.5042939,53.0834695": {
+    "name": "Whatstandwell",
+    "publicNote": "",
+    "privateNote": "",
+    "adminWalksAll": "**[Whatstandwell to Cromford](https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf)**: The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford. 9 km.",
+    "publicWalksS2S": "**[Whatstandwell to Cromford](https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf)**: The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford. 9 km.",
+    "publicWalksS2SEnding": "",
     "publicWalksCircular": ""
   }
 }
