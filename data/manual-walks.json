@@ -34,7 +34,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-25T00:00:13.654Z",
+        "updatedAt": "2026-05-02T02:15:38.189Z",
         "komootUrl": "https://www.komoot.com/tour/2902544251",
         "distanceKm": 12.7,
         "hours": 3.28,
@@ -43,7 +43,10 @@
         "suffix": "via Roman Silchester",
         "previousWalkDates": [
           "2025-05-17"
-        ]
+        ],
+        "uphillMetres": 78.04,
+        "difficulty": "moderate",
+        "name": "Mortimer to Bramley via Roman Silchester"
       }
     ],
     "extracted": true,
