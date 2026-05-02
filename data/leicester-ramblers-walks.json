@@ -859,8 +859,8 @@
         "endStation": "ATH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 17,
+        "hours": 4.38,
         "lunchStops": [],
         "terrain": "Canal, villages",
         "sights": [
@@ -890,7 +890,11 @@
           "type": "main"
         },
         "suffix": "via Coventry Canal",
-        "komootUrl": "https://www.komoot.com/tour/2925784899"
+        "komootUrl": "https://www.komoot.com/tour/2925784899",
+        "uphillMetres": 77.55,
+        "difficulty": "moderate",
+        "name": "Atherstone Circular via Sheepy Magna",
+        "updatedAt": "2026-05-02T02:13:44.918Z"
       }
     ],
     "extracted": true,
