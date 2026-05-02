@@ -721,7 +721,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:57.165Z",
         "komootUrl": "https://www.komoot.com/tour/251949858",
         "distanceKm": 19,
         "hours": 4.78,
@@ -729,7 +729,10 @@
         "terrain": "quaint village",
         "previousWalkDates": [
           "2024-08-03"
-        ]
+        ],
+        "uphillMetres": 25.23,
+        "difficulty": "moderate",
+        "name": "Waterbeach to Ely"
       }
     ],
     "extracted": true,
