@@ -874,14 +874,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:19:17.615Z",
         "komootUrl": "https://www.komoot.com/tour/693693647",
-        "distanceKm": 17.6,
-        "hours": 3.85,
+        "distanceKm": 18.4,
+        "hours": 4.08,
         "rating": 3,
         "previousWalkDates": [
           "2024-06-29"
-        ]
+        ],
+        "uphillMetres": 328.46,
+        "difficulty": "moderate",
+        "name": "Winchelsea to Hastings"
       }
     ],
     "extracted": true,
