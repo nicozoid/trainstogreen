@@ -716,8 +716,8 @@
         "endStation": "ATH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 20.1,
-        "hours": null,
+        "distanceKm": 20.7,
+        "hours": 5.55,
         "lunchStops": [
           {
             "name": "Church End Brewery",
@@ -748,7 +748,11 @@
           "type": "main"
         },
         "suffix": "via Hartshill Country Park",
-        "komootUrl": "https://www.komoot.com/tour/2925784524"
+        "komootUrl": "https://www.komoot.com/tour/2925784524",
+        "uphillMetres": 299.21,
+        "difficulty": "hard",
+        "name": "Atherstone Circular via Bluebell Woodland",
+        "updatedAt": "2026-05-02T02:13:34.389Z"
       }
     ],
     "extracted": true,
