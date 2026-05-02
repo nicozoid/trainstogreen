@@ -735,6 +735,7 @@
     "name": "Seaford",
     "seasons": [
       "Spring",
+      "Summer",
       "Autumn"
     ]
   },
@@ -811,6 +812,13 @@
     "seasons": [
       "Spring",
       "Autumn"
+    ]
+  },
+  "0.2815355,50.7696435": {
+    "name": "Eastbourne",
+    "seasons": [
+      "Spring",
+      "Summer"
     ]
   },
   "0.2943374,51.1040897": {

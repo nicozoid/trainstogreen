@@ -253,7 +253,13 @@
         "endStation": "BAT",
         "stationToStation": true,
         "lunchStops": [],
-        "sights": [],
+        "sights": [
+          {
+            "name": "Battle Abbey",
+            "url": "https://www.english-heritage.org.uk/visit/places/1066-battle-of-hastings-abbey-and-battlefield/",
+            "description": "the site of the Battle of Hastings, upon which William the Conqeuror built his mighty Battle Abbey in papally-imposed contrition for the blood he had shed"
+          }
+        ],
         "id": "pevbatfox",
         "source": {
           "orgSlug": "rough-guide-walks-london-south-east-3rd",
@@ -261,7 +267,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:07.298Z",
+        "updatedAt": "2026-05-02T00:16:14.728Z",
         "komootUrl": "https://www.komoot.com/tour/2920345301",
         "rating": 4,
         "previousWalkDates": [
@@ -375,11 +381,11 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:08.482Z",
+        "updatedAt": "2026-05-02T00:19:14.029Z",
         "suffix": "via Ashridge Estate",
         "terrain": "ancient trees, rolling chalk downlands, lush meadows",
         "komootUrl": "https://www.komoot.com/tour/2665054524",
-        "miscellany": "Marked trails can be excessively busy",
+        "miscellany": "Main paths can be very busy on weekends so take the minor paths to avoid the crowds",
         "rating": 4,
         "mudWarning": true,
         "previousWalkDates": [
@@ -387,7 +393,8 @@
           "2025-11-02"
         ],
         "distanceKm": 13.1,
-        "hours": 3.57
+        "hours": 3.57,
+        "ratingExplanation": "The Ashridge Estate is very beautiful if you appreciate woodland, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely"
       }
     ],
     "extracted": true,
@@ -428,7 +435,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:09.140Z",
+        "updatedAt": "2026-05-02T00:11:52.167Z",
         "suffix": "via Blenheim Palace Park",
         "komootUrl": "https://www.komoot.com/tour/2920249192",
         "rating": 4,
@@ -436,7 +443,8 @@
           "2024-01-01"
         ],
         "distanceKm": 12.4,
-        "hours": 3.27
+        "hours": 3.27,
+        "ratingExplanation": "It's an easy walk from the station to the beautiful, vast (and free) grounds of the finest example of English baroque architecture. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that"
       }
     ],
     "extracted": true,
@@ -535,12 +543,12 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T00:28:20.384Z",
         "komootUrl": "https://www.komoot.com/tour/2498061103",
         "distanceKm": 11.9,
         "hours": 3.07,
         "rating": 4,
-        "terrain": "woods, flowers, fields, hedgegrowth",
+        "terrain": "woods, flowers, fields, hedgegrowth, castle",
         "privateNote": "took 2.5 hours to reach burpham",
         "previousWalkDates": [
           "2022-04-30",
@@ -581,17 +589,23 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T00:24:02.601Z",
         "komootUrl": "https://www.komoot.com/tour/1472764500",
         "distanceKm": 22.2,
         "hours": 6,
         "rating": 4,
         "suffix": "via Beachy Head",
-        "terrain": "sea, escarpments",
-        "miscellany": "alt. 18km: Birling Gap & back",
+        "terrain": "immense white chalk cliffs, sea, marshes, meadows, beachfront",
+        "miscellany": "Best on sunny high summer days when the chalk is gleaming. Seven Sisters extremely busy on Summer weekends/bank holidays",
         "previousWalkDates": [
           "2024-03-18"
-        ]
+        ],
+        "bestSeasons": [
+          "may",
+          "jun",
+          "jul"
+        ],
+        "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape"
       }
     ],
     "extracted": true,
@@ -1867,6 +1881,55 @@
         ],
         "distanceKm": 12.6,
         "hours": 3.28
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-pbrpbrhare": {
+    "slug": "manual-pbrpbrhare",
+    "title": "Manual PBR Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "Potters Bar Circular via Gobions Wood",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "PBR",
+        "endStation": "PBR",
+        "stationToStation": true,
+        "distanceKm": 8.61,
+        "hours": 2.27,
+        "lunchStops": [],
+        "sights": [
+          {
+            "name": "Gobions Wood",
+            "url": "https://www.hertswildlifetrust.org.uk/nature-reserves/gobions-wood"
+          }
+        ],
+        "id": "pbrpbrhare",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T00:41:46.145Z",
+        "komootUrl": "https://www.komoot.com/tour/2925781855",
+        "rating": 1,
+        "ratingExplanation": "Almost worthy because of the great and tranquil beauty of Gobions Wood, and it being only 20m from Kings Cross on a quick train. Unfortunately the surrounding fields and busy commuter roads that make up the bulk of the area don’t have enough going for them to put this on the recommendation list",
+        "uphillMetres": 68.05,
+        "difficulty": "moderate"
       }
     ],
     "extracted": true,
