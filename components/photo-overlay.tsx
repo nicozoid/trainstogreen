@@ -1314,16 +1314,23 @@ export default function StationModal({
               const linkClass =
                 "underline decoration-muted-foreground/50 hover:decoration-muted-foreground"
 
-              let modernUrl: string | null
-              if (country === "Scotland") {
-                modernUrl =
-                  "https://en.wikipedia.org/wiki/Local_Government_etc._(Scotland)_Act_1994"
-              } else if (country === "England" || country === "Wales") {
-                modernUrl =
-                  "https://abcounties.com/counties/county-confusion/"
-              } else {
-                modernUrl = null
-              }
+              // The modern-county link target depends on BOTH the country and
+              // which separator we're rendering. The "or" form (E/W only)
+              // points at a piece specifically about the historic↔modern name
+              // confusion. The "|" form points at country-specific overviews
+              // of how the modern administrative scheme is defined.
+              const orModernUrl =
+                country === "England" || country === "Wales"
+                  ? "https://abcounties.com/counties/county-confusion/"
+                  : null
+              const pipeModernUrl =
+                country === "England"
+                  ? "https://en.wikipedia.org/wiki/Ceremonial_counties_of_England#Definition"
+                  : country === "Wales"
+                    ? "https://en.wikipedia.org/wiki/Principal_areas_of_Wales#List_of_principal_areas_in_1994_act"
+                    : country === "Scotland"
+                      ? "https://en.wikipedia.org/wiki/Local_government_in_Scotland#Map_of_council_areas"
+                      : null
 
               // The historic county of Durham is conventionally written
                // "County Durham" — the bare "Durham" form is the modern usage.
@@ -1331,20 +1338,83 @@ export default function StationModal({
                 ? "County Durham"
                 : historicCounty
 
-              const countyPortion = historicDiffers ? (
-                <>
-                  <a href={HISTORIC_INFO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                    {displayHistoricCounty}
+              // All English & Welsh historic county names. Used to detect when
+              // a station's MODERN county itself looks like a historic county
+              // name elsewhere — that's the most confusing case (e.g. a station
+              // historically in Berkshire that's now in modern Oxfordshire,
+              // since "Oxfordshire" is also a historic county).
+              const ENGLISH_WELSH_HISTORIC_COUNTIES = [
+                "Bedfordshire", "Berkshire", "Buckinghamshire", "Cambridgeshire",
+                "Cheshire", "Cornwall", "Cumberland", "Derbyshire", "Devon",
+                "Dorset", "Durham", "Essex", "Gloucestershire", "Hampshire",
+                "Herefordshire", "Hertfordshire", "Huntingdonshire", "Kent",
+                "Lancashire", "Leicestershire", "Lincolnshire", "Middlesex",
+                "Norfolk", "Northamptonshire", "Northumberland", "Nottinghamshire",
+                "Oxfordshire", "Rutland", "Shropshire", "Somerset", "Staffordshire",
+                "Suffolk", "Surrey", "Sussex", "Warwickshire", "Westmorland",
+                "Wiltshire", "Worcestershire", "Yorkshire",
+                "Anglesey", "Brecknockshire", "Caernarfonshire", "Cardiganshire",
+                "Carmarthenshire", "Denbighshire", "Flintshire", "Glamorgan",
+                "Merionethshire", "Monmouthshire", "Montgomeryshire",
+                "Pembrokeshire", "Radnorshire",
+              ]
+
+              // Two names "share a root" if one contains the other after
+              // stripping a trailing "shire". Catches "Westmorland and Furness"
+              // ↔ "Westmorland" and "Argyll and Bute" ↔ "Argyllshire".
+              const namesShareRoot = (a: string, b: string) => {
+                const strip = (s: string) => s.replace(/shire$/i, "").toLowerCase().trim()
+                const sa = strip(a)
+                const sb = strip(b)
+                return sa === sb || sa.includes(sb) || sb.includes(sa)
+              }
+              const modernSharesRootWithAnyHistoric = (modern: string) =>
+                ENGLISH_WELSH_HISTORIC_COUNTIES.some((h) => namesShareRoot(modern, h))
+
+              // Reusable link fragments — same styling for every branch below.
+              const historicLink = (
+                <a href={HISTORIC_INFO_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {displayHistoricCounty}
+                </a>
+              )
+              const makeModernLink = (url: string | null) =>
+                url ? (
+                  <a href={url} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                    {displayCounty}
                   </a>
-                  {" (or "}
-                  {modernUrl ? (
-                    <a href={modernUrl} target="_blank" rel="noopener noreferrer" className={linkClass}>
-                      {displayCounty}
-                    </a>
-                  ) : displayCounty}
-                  {")"}
-                </>
-              ) : displayCounty
+                ) : displayCounty
+
+              let countyPortion: React.ReactNode
+              if (!historicDiffers) {
+                // Historic and modern are equivalent (after Sussex/Yorkshire/Durham
+                // normalisation) — just show the modern name on its own.
+                countyPortion = displayCounty
+              } else if (country === "Scotland") {
+                // Scotland: always pipe-separated, both names linked. The "or"
+                // form would imply one might be confused for the other, but
+                // Scottish modern council areas are wholesale 1996 creations
+                // with little name-overlap with the historic counties.
+                countyPortion = <>{historicLink}{" | "}{makeModernLink(pipeModernUrl)}</>
+              } else if (namesShareRoot(displayCounty, displayHistoricCounty)) {
+                // England/Wales, names share a root (e.g. "Westmorland" historic
+                // ↔ "Westmorland and Furness" modern). Showing both is noise;
+                // the historic name is the canonical short form, and we don't
+                // link it because there's nothing surprising to explain.
+                countyPortion = displayHistoricCounty
+              } else if (modernSharesRootWithAnyHistoric(displayCounty)) {
+                // England/Wales, modern county name itself collides with a
+                // (different) historic county elsewhere — e.g. station was
+                // historically Berkshire but is now in modern Oxfordshire,
+                // and "Oxfordshire" is also a historic county. The "or" form
+                // signals the ambiguity directly.
+                countyPortion = <>{historicLink}{" (or "}{makeModernLink(orModernUrl)}{")"}</>
+              } else {
+                // England/Wales, modern name is unrelated to any historic
+                // county (Greater London, Greater Manchester, Cardiff, …).
+                // The two names are clearly different schemes, so a pipe
+                // separator is enough — no risk of confusion.
+                countyPortion = <>{historicLink}{" | "}{makeModernLink(pipeModernUrl)}</>
+              }
 
               if (protectedArea && protectedAreaType) {
                 const info = PROTECTED_AREA_INFO[protectedArea]
