@@ -66,6 +66,7 @@ import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
+import { composePolylineForJourney, isHighQualityComposition } from "@/lib/journey-composer"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { outbox } from "@/lib/admin-outbox"
 import { AdminEditsDialog } from "@/components/admin-edits-dialog"
@@ -7368,13 +7369,24 @@ export default function HikeMap() {
   // RTT-direct journeys with no sibling help available, polylineCoords is
   // the raw CRS-chain straight lines — still accurate for the route, just
   // jaggy-looking.
+  //
+  // Phase 2 hybrid: when no encoded Google polyline is present, try the
+  // rail-segment composer. If it resolves every edge to a real segment
+  // (isHighQualityComposition), use its track-following output; otherwise
+  // fall through to the existing polylineCoords. Encoded polylines always
+  // win — they're already real. The composer never overrides them.
   const preferGooglePolyline = (
     journeys: Record<string, JourneyWithGeom> | undefined,
     originKey: string,
+    destId: string | undefined,
   ): [number, number][] | null => {
     if (!journeys) return null
     const primaryJourney = journeys[originKey]
     if (primaryJourney?.polyline) return decodePolyline(primaryJourney.polyline)
+    if (destId) {
+      const composed = composePolylineForJourney(originKey, destId)
+      if (composed && isHighQualityComposition(composed)) return composed.coords
+    }
     if (primaryJourney?.polylineCoords && primaryJourney.polylineCoords.length > 1) {
       return primaryJourney.polylineCoords
     }
@@ -7386,7 +7398,8 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
-    return preferGooglePolyline(journeys, primaryOrigin)
+    const destId = feature?.properties?.id as string | undefined
+    return preferGooglePolyline(journeys, primaryOrigin, destId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hovered, stations, primaryOrigin])
 
@@ -7448,7 +7461,8 @@ export default function HikeMap() {
       (f) => `${f.geometry.coordinates[0]},${f.geometry.coordinates[1]}` === hovered.coordKey
     )
     const journeys = feature?.properties?.journeys as Record<string, JourneyWithGeom> | undefined
-    return preferGooglePolyline(journeys, friendOrigin)
+    const destId = feature?.properties?.id as string | undefined
+    return preferGooglePolyline(journeys, friendOrigin, destId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [friendOrigin, hovered, stations])
 
