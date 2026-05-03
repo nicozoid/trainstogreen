@@ -38,6 +38,21 @@ export type StationRecord = {
   network: string | null    // OSM `network` tag, or null for cluster anchors
   isSynthetic: boolean      // true = id is synthetic (4 chars), not real CRS
   isClusterAnchor: boolean  // true = synthetic centroid, not a real station
+  // Optional UI display overrides — used by getOriginDisplay() in lib/
+  // origin-display.ts when this station is selected as a primary or
+  // friend origin. For real stations, sourced from optional GeoJSON
+  // properties on public/stations.json. For cluster anchors, sourced
+  // from the matching fields on the ClusterDef in lib/clusters-data.json.
+  //
+  // displayName is a curated short friendly name (e.g. "Southampton"
+  // for SOU whose OSM name is "Southampton Central"). Absent → fall
+  // back to `name`. The other three are progressively-more-specific
+  // overrides used in narrower UI contexts; each falls back to
+  // displayName at consumption time.
+  displayName?: string
+  mobileDisplayName?: string
+  menuName?: string
+  overlayName?: string
 }
 
 // ── Synthetic ID generation ──────────────────────────────────────────
@@ -168,7 +183,17 @@ type RawStation = {
   geometry: { type: "Point"; coordinates: [number, number] }
   properties: { name?: string; "ref:crs"?: string; network?: string;[k: string]: unknown }
 }
-type RawClusters = { CLUSTERS: Record<string, { displayName: string; coord: string; members: string[]; isPrimaryOrigin: boolean; isFriendOrigin: boolean }> }
+type RawCluster = {
+  displayName: string
+  coord: string
+  members: string[]
+  isPrimaryOrigin: boolean
+  isFriendOrigin: boolean
+  menuName?: string
+  mobileDisplayName?: string
+  overlayName?: string
+}
+type RawClusters = { CLUSTERS: Record<string, RawCluster> }
 
 // Three forward-direction maps. All built once at module load.
 const idToStation = new Map<StationId, StationRecord>()
@@ -229,6 +254,20 @@ function normalizeName(name: string): string {
     // discriminator since it matches the user-visible distinction.
     const isSynthetic = id.length === 4
 
+    // Optional UI display overrides — read from the GeoJSON properties
+    // so per-station shorthand ("Charing X" for Charing Cross, etc.)
+    // lives next to the station's other identity data. Absent properties
+    // simply leave the field undefined; the consumer falls back to name.
+    const props = f.properties as Record<string, unknown>
+    const displayName =
+      typeof props.displayName === "string" ? props.displayName : undefined
+    const mobileDisplayName =
+      typeof props.mobileDisplayName === "string" ? props.mobileDisplayName : undefined
+    const menuName =
+      typeof props.menuName === "string" ? props.menuName : undefined
+    const overlayName =
+      typeof props.overlayName === "string" ? props.overlayName : undefined
+
     const record: StationRecord = {
       id,
       name,
@@ -237,6 +276,10 @@ function normalizeName(name: string): string {
       network,
       isSynthetic,
       isClusterAnchor: false,
+      displayName,
+      mobileDisplayName,
+      menuName,
+      overlayName,
     }
     // First-write-wins on ID collisions — the audit script catches
     // these before they cause silent overwrites in production data.
@@ -289,6 +332,12 @@ function normalizeName(name: string): string {
       network: null,
       isSynthetic: true,
       isClusterAnchor: true,
+      // Cluster overrides — same fields as on real stations, just sourced
+      // from the cluster def in clusters-data.json instead of GeoJSON
+      // properties. Absent overrides fall back to displayName/name.
+      mobileDisplayName: def.mobileDisplayName,
+      menuName: def.menuName,
+      overlayName: def.overlayName,
     }
     if (!idToStation.has(id)) idToStation.set(id, record)
     coordKeyToId.set(coordKey, id)

@@ -213,9 +213,6 @@ type FilterPanelProps = {
   /** Pinned primary coords — always rendered at the top of the dropdown,
    *  always present, never evicted. Counted against the cap. */
   pinnedPrimaries: string[]
-  /** Admin-only primary entries — rendered as a separate group below the
-   *  pinned items when adminMode is on. NOT counted against the cap. */
-  adminOnlyPrimaries: string[]
   /** Switch the primary origin */
   onPrimaryOriginChange: (origin: string) => void
   /** Maps a canonical station name to a shorter display name for the trigger (e.g. "Birmingham New Street" → "Birmingham") */
@@ -267,8 +264,6 @@ type FilterPanelProps = {
     displayLabel: string
     hasData: boolean
   }[]
-  /** All available friend origin options */
-  friendOrigins: string[]
   /** Switch the friend origin (without deactivating) */
   onFriendOriginChange: (origin: string) => void
   friendMaxMinutes: number
@@ -329,7 +324,7 @@ type FilterPanelProps = {
   onHideNoTravelTimeChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, onSoloRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, monthFilter, onMonthFilterChange, currentMonthLabel, currentMonthHighlight, onCurrentMonthHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, onSoloRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, monthFilter, onMonthFilterChange, currentMonthLabel, currentMonthHighlight, onCurrentMonthHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1145,28 +1140,6 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         )
                       })
                     })()}
-
-                    {/* Admin-only primaries — separate group below
-                        the cap-counted section. Only rendered when
-                        adminMode is on and there's at least one
-                        entry. Not capped (admin tooling). */}
-                    {adminOnlyPrimaries.length > 0 && (
-                      <>
-                        <DropdownMenuSeparator />
-                        {adminOnlyPrimaries.map((origin) => (
-                          <DropdownMenuItem
-                            key={origin}
-                            onSelect={() => onPrimaryOriginChange(origin)}
-                            className={cn(
-                              "whitespace-normal leading-tight cursor-pointer",
-                              origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
-                            )}
-                          >
-                            {originMenuName(origin)}
-                          </DropdownMenuItem>
-                        ))}
-                      </>
-                    )}
 
                     {/* Search input + matches. Stations without full
                         RTT/TfL coverage still appear in matches but render
