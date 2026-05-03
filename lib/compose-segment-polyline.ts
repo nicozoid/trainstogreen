@@ -89,6 +89,72 @@ function getCoord(
 // edge entirely. Callers typically want the straight-line fallback because
 // "polyline with a few straight bits" still renders correctly; only when
 // auditing coverage do you care whether the real edge is present.
+
+// BFS through the segment library treating it as a directed rail graph
+// (nodes = stations, edges = segments). Returns a CRS sequence src → ...
+// → dst that the caller can feed back into composeFromCallingPoints, OR
+// null if no path exists within `maxHops`.
+//
+// Used as a last-resort fallback when origin-routes has no calling-
+// points entry for a leg (e.g. Paddington → Shipton: a direct GWR
+// service the routing pass never sampled). The segment library still
+// covers the underlying track because the segments came from
+// per-origin Routes API fetches that DID call there as intermediates,
+// so we can stitch them into a multi-hop polyline that follows real
+// rail without ever asking origin-routes.
+//
+// `maxHops` caps search depth — keeps a graph search bounded for
+// pathological cases (disconnected sub-graphs, cycles). Default 12 is
+// generous enough for any UK rail journey.
+export function findPathInSegments(
+  src: string,
+  dst: string,
+  segments: RailSegments,
+  maxHops = 12,
+): string[] | null {
+  if (src === dst) return null
+  // Build adjacency once per call (cheap: ~5k segments, single pass).
+  // Memoising globally would tie module state to a specific segments
+  // object; the per-call cost is negligible for the use case.
+  const adj = new Map<string, string[]>()
+  for (const key of Object.keys(segments)) {
+    const dash = key.indexOf("-")
+    if (dash < 0) continue
+    const a = key.slice(0, dash)
+    const b = key.slice(dash + 1)
+    const list = adj.get(a)
+    if (list) list.push(b)
+    else adj.set(a, [b])
+  }
+  if (!adj.has(src)) return null
+  // Standard BFS — first time we visit a node sets its parent for
+  // path reconstruction. Stop as soon as `dst` is reached.
+  const parent = new Map<string, string | null>()
+  parent.set(src, null)
+  const queue: { node: string; depth: number }[] = [{ node: src, depth: 0 }]
+  while (queue.length > 0) {
+    const { node, depth } = queue.shift()!
+    if (node === dst) {
+      const path: string[] = []
+      let n: string | null = node
+      while (n != null) {
+        path.push(n)
+        n = parent.get(n) ?? null
+      }
+      return path.reverse()
+    }
+    if (depth >= maxHops) continue
+    const next = adj.get(node)
+    if (!next) continue
+    for (const nx of next) {
+      if (parent.has(nx)) continue
+      parent.set(nx, node)
+      queue.push({ node: nx, depth: depth + 1 })
+    }
+  }
+  return null
+}
+
 export function composeFromCallingPoints(
   callingPoints: string[],
   options: ComposeOptions,
