@@ -68,9 +68,7 @@ export function FilterPanelDemo() {
   const [currentMonthHighlight, setCurrentMonthHighlight] = useState(false)
 
   // Stub maps — every helper accepts an arbitrary key and returns
-  // either a sensible default or the key itself. The friend-origin
-  // list is intentionally tiny so the demo doesn't blow up vertically.
-  const FRIEND_ORIGINS = ["Reading", "Brighton", "Cambridge"]
+  // either a sensible default or the key itself.
   const ORIGIN_NAMES: Record<string, string> = {
     "Charing Cross": "Charing Cross",
     Reading: "Reading",
@@ -118,7 +116,6 @@ export function FilterPanelDemo() {
         // Pinned primary origins — we list a couple of central
         // London options.
         pinnedPrimaries={["Charing Cross"]}
-        adminOnlyPrimaries={[]}
         onPrimaryOriginChange={setPrimaryOrigin}
         originDisplayName={(key) => ORIGIN_NAMES[key] ?? key}
         originMenuName={(key) => ORIGIN_NAMES[key] ?? key}
@@ -130,7 +127,6 @@ export function FilterPanelDemo() {
         pinnedFriends={[]}
         recentFriends={[]}
         searchableFriendStations={[]}
-        friendOrigins={FRIEND_ORIGINS}
         onFriendOriginChange={setFriendOrigin}
         friendMaxMinutes={friendMaxMinutes}
         onFriendMaxMinutesChange={setFriendMaxMinutes}
