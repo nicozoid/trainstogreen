@@ -1,11 +1,12 @@
 // Per-station interchange buffer lookup. Replaces the previous flat
 // 3-min / 5-min constants with values from data/station-interchange-buffers.json,
-// so journeys through bigger interchanges (CLJ, Reading, KX) get realistic
+// so journeys through bigger interchanges (CLJ, RDG, KGX) get realistic
 // transfer times.
 //
-// Lookup is name-based with light normalisation — "London Kings Cross",
-// "King's Cross" and "Kings Cross" all resolve to the same entry. Stations
-// not in the data file fall through to the `default` value.
+// Data file is keyed by station ID (CRS or 4-char synthetic) post Phase 2g.
+// The PUBLIC API stays name-based — many callers pass names from RTT/TfL
+// hop results where they don't have a CRS handy. We resolve name → ID
+// via the registry's resolveName() at call time.
 //
 // Caller responsibility: pass the INTERCHANGE station's name (where the
 // transfer happens), not the journey's start. For a CLJ → VIC → KGX →
@@ -13,33 +14,12 @@
 // 2) and KGX (between leg 2 and 3).
 
 import buffersData from "@/data/station-interchange-buffers.json"
+import { resolveName } from "@/lib/station-registry"
 
 type BuffersFile = { default: number; buffers: Record<string, number> }
 const file = buffersData as unknown as BuffersFile
 const DEFAULT_BUFFER = file.default
 const buffers = file.buffers
-
-// Lightly normalise a station name so common API-supplied variants map
-// to the same key as the canonical entry. Mirrors the cleanup the
-// terminal matcher does, but kept self-contained here so this module
-// can run without depending on the london-terminals data structures.
-function normalise(name: string): string {
-  return name
-    .replace(/^London\s+/i, "")
-    .replace(/\s+(Rail\s+)?Station$/i, "")
-    .replace(/\s+International$/i, "")
-    .replace(/['\u2019]/g, "")
-    .replace(/\./g, "")
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
-// Build a normalised lookup table once at module load. Iterating over
-// the JSON's keys lets future entries flow in without further code.
-const lookup: Record<string, number> = {}
-for (const [name, mins] of Object.entries(buffers)) {
-  lookup[normalise(name)] = mins
-}
 
 /**
  * Returns the interchange buffer (in minutes) to use AT this station.
@@ -50,7 +30,9 @@ for (const [name, mins] of Object.entries(buffers)) {
  */
 export function interchangeBufferFor(stationName: string | undefined): number {
   if (!stationName) return DEFAULT_BUFFER
-  return lookup[normalise(stationName)] ?? DEFAULT_BUFFER
+  const id = resolveName(stationName)
+  if (!id) return DEFAULT_BUFFER
+  return buffers[id] ?? DEFAULT_BUFFER
 }
 
 /**

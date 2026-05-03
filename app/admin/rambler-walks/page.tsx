@@ -253,7 +253,7 @@ export default function RamblerWalksAdminPage() {
 
   // Split a notes string into text + <a> segments. Matched station names
   // become links that open the station overlay on the main map via the
-  // ?station=<coordKey> URL param (handler lives in components/map.tsx).
+  // ?station=<station-id> URL param (handler lives in components/map.tsx).
   // Returns a flat list of React children suitable for {...} interpolation.
   const renderNotes = useCallback(
     (text: string): React.ReactNode[] => {
@@ -270,11 +270,12 @@ export default function RamblerWalksAdminPage() {
         if (match.index > lastIdx) parts.push(text.slice(lastIdx, match.index))
         const name = match[0]
         const coord = nameToCoord.get(name)
-        if (coord) {
+        const id = coord ? coordToCrs?.get(coord) : undefined
+        if (id) {
           parts.push(
             <a
               key={`${match.index}-${name}`}
-              href={`/?station=${encodeURIComponent(coord)}&admin=1`}
+              href={`/?station=${encodeURIComponent(id)}&admin=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="underline hover:text-foreground"
@@ -636,7 +637,7 @@ export default function RamblerWalksAdminPage() {
                         return (
                           <a
                             key={coord}
-                            href={`/?station=${encodeURIComponent(coord)}&admin=1`}
+                            href={`/?station=${encodeURIComponent(crs)}&admin=1`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="underline hover:text-foreground"

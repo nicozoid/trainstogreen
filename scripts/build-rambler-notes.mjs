@@ -193,6 +193,29 @@ function buildCrsIndex() {
   return map
 }
 
+// coordKey → station ID (CRS for real stations, C-prefix synthetic
+// for cluster anchors). Mirrors lib/station-registry.ts's coord→id
+// logic so this Node script doesn't need the TS module. Used at
+// output time to convert internally-coord-keyed maps into the
+// ID-keyed JSON files the runtime now expects.
+function buildCoordToId() {
+  const stations = JSON.parse(readFileSync(STATIONS_PATH, "utf-8"))
+  const map = new Map()
+  for (const f of stations.features) {
+    const crs = f.properties?.["ref:crs"]
+    const [lng, lat] = f.geometry?.coordinates ?? []
+    if (crs && lng != null && lat != null) map.set(`${lng},${lat}`, crs)
+  }
+  // Cluster anchors — read directly from clusters-data.json (Phase 2e
+  // shape: keys are C-prefix synthetic IDs, each entry has a `coord`
+  // centroid).
+  const clusters = JSON.parse(readFileSync(join(PROJECT_ROOT, "lib/clusters-data.json"), "utf-8")).CLUSTERS
+  for (const [id, def] of Object.entries(clusters)) {
+    map.set(def.coord, id)
+  }
+  return map
+}
+
 // ── Formatting helpers ────────────────────────────────────────────────────
 
 // Terrain is stored as a single comma-separated string where each
@@ -727,9 +750,24 @@ function buildRamblerNotes(args) {
   // snapshot). Deep-cloned because the build mutates `notes` in place
   // (preserves admin-authored publicNote/privateNote, rewrites the
   // prose fields), and we don't want to scribble on the caller's copy.
-  const notes = args?.overrideNotes
+  // station-notes.json is keyed by station ID (CRS or 4-char synthetic)
+  // post Phase 2b. The build pipeline below was written against the
+  // older coordKey-keyed shape, so convert at read-time into a
+  // coord-keyed working copy. We translate back to IDs once at write/
+  // return time. This keeps the internal logic ID-agnostic.
+  const coordToId = buildCoordToId()
+  const idToCoord = new Map([...coordToId.entries()].map(([c, i]) => [i, c]))
+  const notesById = args?.overrideNotes
     ? structuredClone(args.overrideNotes)
     : JSON.parse(readFileSync(NOTES_PATH, "utf-8"))
+  const notes = {}
+  for (const [id, entry] of Object.entries(notesById)) {
+    const coord = idToCoord.get(id)
+    if (coord) notes[coord] = entry
+    // Entries whose ID isn't in the registry are dropped here — same
+    // behavior as the audit script's check. If this ever surfaces in
+    // practice, fix the registry, not the build.
+  }
   const crsIndex = buildCrsIndex()
   // sources.json — organisation registry. Loaded once here and threaded
   // into buildSummary so the relatedSource clause can render
@@ -1127,46 +1165,79 @@ function buildRamblerNotes(args) {
   // that commit via the GitHub API) can hand them off without touching
   // the filesystem at all — important on Vercel's read-only fs.
 
-  // station-months.json: entries sorted by coordKey, empty month sets
-  // skipped, months inside each entry in calendar order — diff-friendly.
-  const monthsOut = {}
-  for (const [coordKey, { name, months }] of [...perStationMonths.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+  // station-months.json: entries keyed by station ID (CRS for real
+  // stations, C-prefix synthetic for cluster anchors), sorted by ID,
+  // empty month sets skipped, months inside each entry in calendar
+  // order — diff-friendly. Internally we still aggregate against the
+  // coordKey (perStationMonths) to keep the build pipeline ID-agnostic;
+  // ID translation happens here at output time only. Reuses the
+  // coordToId map built earlier when notes were converted from ID-keyed
+  // input to the coord-keyed working copy.
+  const monthsRaw = {}
+  for (const [coordKey, { name, months }] of perStationMonths.entries()) {
     if (months.size === 0) continue
-    monthsOut[coordKey] = {
+    const id = coordToId.get(coordKey)
+    if (!id) continue   // station not in registry — skip rather than emit an unresolvable key
+    monthsRaw[id] = {
       name,
       months: MONTH_ORDER.filter((m) => months.has(m)),
     }
   }
+  const monthsOut = Object.fromEntries(
+    Object.entries(monthsRaw).sort(([a], [b]) => a.localeCompare(b)),
+  )
 
-  // stations-hiked.json: sorted array of coordKeys for stations whose
+  // Coord → ID translation helper for the array-shaped outputs that
+  // were rekeyed in Phase 2d. Drops anything not in the registry —
+  // matches the audit's "every reference must resolve" expectation.
+  const coordsToIds = (coords) =>
+    [...coords].map((c) => coordToId.get(c)).filter((x) => x !== undefined).sort()
+
+  // stations-hiked.json: sorted array of station IDs for stations whose
   // attached walks include at least one variant with a non-empty
   // previousWalkDates. The admin "Undiscovered" filter hides these.
-  const hikedOut = [...perStationHiked].sort()
+  const hikedOut = coordsToIds(perStationHiked)
 
-  // stations-with-komoot.json: sorted array of coordKeys for stations
+  // stations-with-komoot.json: sorted array of station IDs for stations
   // with at least one walk variant carrying a komootUrl. Drives the
   // admin-only "Komoot" map filter.
-  const komootOut = [...perStationKomoot].sort()
+  const komootOut = coordsToIds(perStationKomoot)
 
-  // stations-potential-months.json: sorted coordKeys for stations that
+  // stations-potential-months.json: sorted station IDs for stations that
   // have a Komoot route AND month data only on admin-only variants.
   // Drives the admin-only "Potential month data" feature filter.
-  const potentialMonthsOut = [...perStationPotentialMonths].sort()
+  const potentialMonthsOut = coordsToIds(perStationPotentialMonths)
 
   // stations-by-source.json: pivot the per-station Set<orgSlug> map
-  // into { [orgSlug]: coordKey[] } with each list sorted, so the admin
+  // into { [orgSlug]: stationId[] } with each list sorted, so the admin
   // "Source" filter can answer "stations with ≥1 walk from org X" via
   // a single Set lookup keyed by the dropdown selection.
   const bySourceOut = {}
   for (const [coordKey, orgs] of perStationSourceOrgs) {
+    const id = coordToId.get(coordKey)
+    if (!id) continue
     for (const org of orgs) {
       if (!bySourceOut[org]) bySourceOut[org] = []
-      bySourceOut[org].push(coordKey)
+      bySourceOut[org].push(id)
     }
   }
   for (const org of Object.keys(bySourceOut)) bySourceOut[org].sort()
   const bySourceSorted = Object.fromEntries(
     Object.keys(bySourceOut).sort().map((k) => [k, bySourceOut[k]]),
+  )
+
+  // Convert the working coord-keyed `notes` map back to the ID-keyed
+  // shape that data/station-notes.json now uses on disk (Phase 2b).
+  // Sorted by ID for a stable, diff-friendly output. Coord entries
+  // without a registry ID are dropped — the same drop-on-unresolvable
+  // policy applied at read-time, so this is symmetric.
+  const notesOutRaw = {}
+  for (const [coord, entry] of Object.entries(notes)) {
+    const id = coordToId.get(coord)
+    if (id) notesOutRaw[id] = entry
+  }
+  const notesOut = Object.fromEntries(
+    Object.entries(notesOutRaw).sort(([a], [b]) => a.localeCompare(b)),
   )
 
   // returnData mode: hand back the computed data instead of writing.
@@ -1175,12 +1246,12 @@ function buildRamblerNotes(args) {
   // also the only viable path on Vercel, where writeFileSync would
   // throw EROFS.
   if (args.returnData) {
-    return { notes, months: monthsOut, hiked: hikedOut, komoot: komootOut, potentialMonths: potentialMonthsOut, bySource: bySourceSorted }
+    return { notes: notesOut, months: monthsOut, hiked: hikedOut, komoot: komootOut, potentialMonths: potentialMonthsOut, bySource: bySourceSorted }
   }
 
-  writeFileSync(NOTES_PATH, JSON.stringify(notes, null, 2) + "\n", "utf-8")
+  writeFileSync(NOTES_PATH, JSON.stringify(notesOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console
-  console.log(`Wrote ${Object.keys(notes).length} entries to ${NOTES_PATH}`)
+  console.log(`Wrote ${Object.keys(notesOut).length} entries to ${NOTES_PATH}`)
 
   writeFileSync(MONTHS_PATH, JSON.stringify(monthsOut, null, 2) + "\n", "utf-8")
   // eslint-disable-next-line no-console

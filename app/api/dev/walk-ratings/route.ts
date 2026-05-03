@@ -213,10 +213,14 @@ export async function GET() {
   // chosen for the cluster can differ from any individual member's
   // tier — e.g. one member with only mains + another member with one
   // Komoot walk → the cluster is tier 1 (Komoot only).
-  const coordToCrs = new Map<string, string>()
-  for (const [crs, ck] of crsToCoord) coordToCrs.set(ck, crs)
+  //
+  // ALL_CLUSTERS is ID-keyed (Phase 3c): each member is a station ID.
+  // 3-char IDs ARE the CRS code; 4-char synthetic IDs (Underground/DLR/
+  // etc.) have no walks and are skipped via the byCrs lookup miss.
+  // The output map stays coord-keyed so the client can index directly
+  // by feature.coordKey.
 
-  for (const [synthCoord, def] of Object.entries(ALL_CLUSTERS)) {
+  for (const def of Object.values(ALL_CLUSTERS)) {
     // Dedup by walkId across members. When a walk has both endpoints
     // inside the cluster (e.g. a Charing Cross → Waterloo walk on the
     // Central London cluster), it appears twice — once via the start
@@ -226,10 +230,8 @@ export async function GET() {
     // the cluster reach 4; a walk only ending in the cluster doesn't.
     const seenWalks = new Map<string, Attachment>()
     const unkeyed: Attachment[] = []
-    for (const memberCoord of def.members) {
-      const memberCrs = coordToCrs.get(memberCoord)
-      if (!memberCrs) continue
-      const memberAttachments = byCrs.get(memberCrs)
+    for (const memberId of def.members) {
+      const memberAttachments = byCrs.get(memberId)
       if (!memberAttachments) continue
       for (const a of memberAttachments) {
         if (!a.walkId) { unkeyed.push(a); continue }
@@ -242,7 +244,7 @@ export async function GET() {
     const aggregated = [...seenWalks.values(), ...unkeyed]
     const visible = publicTierFilter(aggregated)
     const rating = deriveRating(visible)
-    if (rating != null) out[synthCoord] = rating
+    if (rating != null) out[def.coord] = rating
   }
 
   return NextResponse.json(out)

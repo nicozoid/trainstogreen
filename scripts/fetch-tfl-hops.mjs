@@ -59,6 +59,42 @@ const hopMatrix = existsSync(HOPS_PATH)
 const originRoutes = JSON.parse(readFileSync(ORIGIN_ROUTES_PATH, "utf-8"))
 const naptanCache = JSON.parse(readFileSync(NAPTAN_CACHE_PATH, "utf-8"))
 
+// Terminal name → CRS lookup (Phase 4 — tfl-hop-matrix.json is now
+// keyed by station ID at both levels). Mirrors the resolver in
+// fetch-terminal-matrix.mjs.
+const NAME_OVERRIDES = {
+  "waterloo": "WAT",
+}
+const stationsForTerminalIds = JSON.parse(readFileSync(STATIONS_PATH, "utf-8"))
+function normalizeTerminalName(name) {
+  return name.toLowerCase()
+    .replace(/^london\s+/i, "")
+    .replace(/\s+(rail\s+)?station$/i, "")
+    .replace(/\s+international$/i, "")
+    .replace(/['']/g, "")
+    .replace(/[.,&-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+const terminalNameToId = new Map()
+for (const f of stationsForTerminalIds.features) {
+  const crs = f.properties?.["ref:crs"]
+  const name = f.properties?.name
+  if (!crs || !name) continue
+  const n = normalizeTerminalName(name)
+  const existing = terminalNameToId.get(n)
+  if (!existing || (crs.length === 3 && existing.length === 4)) terminalNameToId.set(n, crs)
+}
+function terminalToCrs(t) {
+  const direct = NAME_OVERRIDES[normalizeTerminalName(t.name)] ?? terminalNameToId.get(normalizeTerminalName(t.name))
+  if (direct) return direct
+  for (const alias of t.aliases ?? []) {
+    const id = NAME_OVERRIDES[normalizeTerminalName(alias)] ?? terminalNameToId.get(normalizeTerminalName(alias))
+    if (id) return id
+  }
+  throw new Error(`could not resolve terminal "${t.name}" to a CRS`)
+}
+
 // ---------------------------------------------------------------------------
 // Resolve primary CRS → name + NaPTAN
 // ---------------------------------------------------------------------------
@@ -333,7 +369,9 @@ async function fetchHop(fromNaptan, toName, toNaptan) {
 
 const primaryNaptan = await resolveNaptanForCrs(PRIMARY_CRS, PRIMARY_NAME)
 
-if (!hopMatrix[PRIMARY_NAME]) hopMatrix[PRIMARY_NAME] = {}
+// Outer key is the primary's CRS (Phase 4). Inner keys are terminal
+// CRS codes resolved per-terminal below.
+if (!hopMatrix[PRIMARY_CRS]) hopMatrix[PRIMARY_CRS] = {}
 
 let fetched = 0
 let skipped = 0
@@ -348,15 +386,16 @@ for (const t of terminals) {
     failed++
     continue
   }
-  if (!RECOMPUTE && hopMatrix[PRIMARY_NAME][t.name]) {
+  const toId = terminalToCrs(t)
+  if (!RECOMPUTE && hopMatrix[PRIMARY_CRS][toId]) {
     skipped++
     continue
   }
   try {
     const entry = await fetchHop(primaryNaptan, t.name, naptan)
-    hopMatrix[PRIMARY_NAME][t.name] = entry
+    hopMatrix[PRIMARY_CRS][toId] = entry
     fetched++
-    console.log(`  ${PRIMARY_NAME} -> ${t.name}: ${entry.minutes}min ${entry.vehicleType}`)
+    console.log(`  ${PRIMARY_CRS} (${PRIMARY_NAME}) -> ${toId} (${t.name}): ${entry.minutes}min ${entry.vehicleType}`)
     writeFileSync(HOPS_PATH, JSON.stringify(hopMatrix, null, 2))
     // Pace at ~40 calls/min — under TfL's 50-req/min anonymous cap.
     await new Promise(r => setTimeout(r, 1500))

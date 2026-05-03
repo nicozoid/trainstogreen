@@ -96,55 +96,72 @@ function callingPointsToCoords(crsList) {
   return out.length > 1 ? out : undefined
 }
 
-// Resolve origin coord — either from --origin-coord directly or by scanning
-// origin-routes for a CRS match.
-let originCoord = ORIGIN_COORD_FLAG
-if (!originCoord && ORIGIN_CRS_FLAG) {
-  const found = Object.entries(originRoutes).find(
-    ([, v]) => v.crs === ORIGIN_CRS_FLAG,
-  )
-  if (!found) {
-    console.error(`Error: no origin-routes entry with CRS=${ORIGIN_CRS_FLAG}`)
-    process.exit(1)
+// Resolve origin ID. Post Phase 2a/4 origin-routes is keyed by station
+// ID directly, so the simplest path is --origin-crs. The legacy
+// --origin-coord flag still works: if the value has a comma we look
+// up the matching station via stations.json.
+let originId = ORIGIN_CRS_FLAG
+if (!originId && ORIGIN_COORD_FLAG) {
+  if (ORIGIN_COORD_FLAG.includes(",")) {
+    const f = stations.features.find((g) => {
+      const [lng, lat] = g.geometry.coordinates
+      return `${lng},${lat}` === ORIGIN_COORD_FLAG
+    })
+    originId = f?.properties?.["ref:crs"]
+    if (!originId) {
+      console.error(`Error: --origin-coord ${ORIGIN_COORD_FLAG} doesn't match a station with a CRS`)
+      process.exit(1)
+    }
+  } else {
+    // Already an ID
+    originId = ORIGIN_COORD_FLAG
   }
-  originCoord = found[0]
 }
 
-const originEntry = originRoutes[originCoord]
+const originEntry = originRoutes[originId]
 if (!originEntry) {
-  console.error(`Error: no origin-routes entry at coord ${originCoord}`)
+  console.error(`Error: no origin-routes entry for ${originId}`)
   console.error("Run scripts/fetch-direct-reachable.mjs for that origin first.")
   process.exit(1)
 }
 
 const originName = originEntry.name
 const originCrs = originEntry.crs
-console.log(`Building friend journeys from ${originName} (${originCrs}) at ${originCoord}`)
+console.log(`Building friend journeys from ${originName} (${originCrs})`)
 console.log(`Direct destinations from anchor: ${Object.keys(originEntry.directReachable).length}`)
 
-// Resolve cluster member coords (if any). Each cluster member's
+// Resolve cluster member IDs (if any). Each cluster member's
 // directReachable is also treated as 0-change for the parent — covers the
 // Birmingham case where BMO/BSW reach Olton directly but BHM doesn't.
-const clusterCoords = []
+const clusterIds = []
 if (CLUSTER_COORDS_FLAG) {
   for (const c of CLUSTER_COORDS_FLAG.split(";").map((s) => s.trim()).filter(Boolean)) {
-    clusterCoords.push(c)
+    if (c.includes(",")) {
+      const f = stations.features.find((g) => {
+        const [lng, lat] = g.geometry.coordinates
+        return `${lng},${lat}` === c
+      })
+      const id = f?.properties?.["ref:crs"]
+      if (!id) { console.error(`Error: --cluster-coords ${c} doesn't match a station with a CRS`); process.exit(1) }
+      clusterIds.push(id)
+    } else {
+      clusterIds.push(c)
+    }
   }
 }
 if (CLUSTER_CRS_FLAG) {
   for (const crs of CLUSTER_CRS_FLAG.split(",").map((s) => s.trim()).filter(Boolean)) {
-    const found = Object.entries(originRoutes).find(([, v]) => v.crs === crs)
-    if (!found) {
+    if (!originRoutes[crs]) {
       console.error(`Error: no origin-routes entry with cluster CRS=${crs}`)
       process.exit(1)
     }
-    clusterCoords.push(found[0])
+    clusterIds.push(crs)
   }
 }
 
-const directOriginCoords = [originCoord, ...clusterCoords]
-if (clusterCoords.length > 0) {
-  console.log(`Cluster members: ${clusterCoords.length} (${clusterCoords.map((c) => originRoutes[c]?.crs ?? "?").join(", ")})`)
+const directOriginIds = [originId, ...clusterIds]
+if (clusterIds.length > 0) {
+  console.log(`Cluster members: ${clusterIds.length} (${clusterIds.join(", ")})`)
 }
 
 // ---------------------------------------------------------------------------
@@ -156,12 +173,12 @@ if (clusterCoords.length > 0) {
 // ---------------------------------------------------------------------------
 const journeys = {}
 
-for (const directCoord of directOriginCoords) {
+for (const directCoord of directOriginIds) {
   const entry = originRoutes[directCoord]
   if (!entry?.directReachable) continue
   const sourceName = entry.name
   for (const [destCoord, dr] of Object.entries(entry.directReachable)) {
-    if (directOriginCoords.includes(destCoord)) continue // skip self & sibling cluster members
+    if (directOriginIds.includes(destCoord)) continue // skip self & sibling cluster members
     const stopCount = Math.max(0, (dr.fastestCallingPoints?.length ?? 2) - 2)
     const existing = journeys[destCoord]
     if (existing && existing.durationMinutes <= dr.minMinutes) continue
@@ -197,13 +214,13 @@ const seenJunctions = new Set()
 // Iterate over every cluster member as a potential "start" for the
 // 1-change leg. Same dedupe rules as before — fastest total wins, and
 // 0-change always beats 1-change on tie.
-for (const startCoord of directOriginCoords) {
+for (const startCoord of directOriginIds) {
   const startEntry = originRoutes[startCoord]
   if (!startEntry?.directReachable) continue
   const startName = startEntry.name
 
   for (const [junctionCoord, junctionLeg] of Object.entries(startEntry.directReachable)) {
-    if (directOriginCoords.includes(junctionCoord)) continue
+    if (directOriginIds.includes(junctionCoord)) continue
     const junctionEntry = originRoutes[junctionCoord]
     if (!junctionEntry?.directReachable) continue
     if (!seenJunctions.has(junctionCoord)) {
@@ -215,7 +232,7 @@ for (const startCoord of directOriginCoords) {
     const junctionName = junctionEntry.name
 
     for (const [destCoord, jd] of Object.entries(junctionEntry.directReachable)) {
-      if (directOriginCoords.includes(destCoord) || destCoord === junctionCoord) continue
+      if (directOriginIds.includes(destCoord) || destCoord === junctionCoord) continue
       const totalMinutes = startToJunctionMins + INTERCHANGE_PENALTY + jd.minMinutes
       const existing = journeys[destCoord]
       if (existing && existing.changes === 0) continue
@@ -274,7 +291,7 @@ console.log(`  1-change: ${finalChange1Count}`)
 // Write
 // ---------------------------------------------------------------------------
 const payload = {
-  origin: originCoord,
+  origin: originId,
   journeys,
 }
 

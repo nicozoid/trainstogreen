@@ -138,13 +138,15 @@ async function cleanupOnResolve(slug: string) {
   const { data: notes, sha: notesSha } =
     await readDataFile<Record<string, StationNote>>(STATION_NOTES_PATH)
 
-  // Coords whose privateNote no longer has ANY rambler-walk issue block
-  // after this cleanup — candidates for has-issue unflagging.
+  // Stations whose privateNote no longer has ANY rambler-walk issue block
+  // after this cleanup — candidates for has-issue unflagging. Both
+  // station-notes.json and has-issue-stations.json are keyed by station
+  // ID (CRS or 4-char synthetic) post Phase 2b.
   const unflagCandidates: string[] = []
   let notesChanged = false
 
-  for (const coord of Object.keys(notes)) {
-    const entry = notes[coord]
+  for (const stationId of Object.keys(notes)) {
+    const entry = notes[stationId]
     const pn = entry?.privateNote
     if (!pn || !pn.includes(linePrefix)) continue
 
@@ -168,7 +170,7 @@ async function cleanupOnResolve(slug: string) {
     if (newPn !== pn) {
       entry.privateNote = newPn
       notesChanged = true
-      if (!newPn.includes(BLOCK_START)) unflagCandidates.push(coord)
+      if (!newPn.includes(BLOCK_START)) unflagCandidates.push(stationId)
     }
   }
 

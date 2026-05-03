@@ -31,6 +31,7 @@ const RECOMPUTE = process.argv.includes("--recompute")
 
 const TERMINALS_PATH = "data/london-terminals.json"
 const MATRIX_PATH = "data/terminal-matrix.json"
+const STATIONS_PATH = "public/stations.json"
 
 const terminals = JSON.parse(readFileSync(TERMINALS_PATH, "utf-8"))
 
@@ -38,6 +39,49 @@ const terminals = JSON.parse(readFileSync(TERMINALS_PATH, "utf-8"))
 const matrix = existsSync(MATRIX_PATH)
   ? JSON.parse(readFileSync(MATRIX_PATH, "utf-8"))
   : {}
+
+// Resolve each terminal name to its CRS so we can write the matrix in
+// the ID-keyed shape Phase 2f introduced. Tries an exact match against
+// stations.json first, then falls back through the terminal's
+// `aliases` list. Disambiguation overrides handle the few names that
+// match multiple real stations (e.g. "Waterloo" → London's WAT not
+// Liverpool's WLO).
+const NAME_OVERRIDES = {
+  "waterloo": "WAT",
+}
+const stations = JSON.parse(readFileSync(STATIONS_PATH, "utf-8"))
+function normalize(name) {
+  return name.toLowerCase()
+    .replace(/^london\s+/i, "")
+    .replace(/\s+(rail\s+)?station$/i, "")
+    .replace(/\s+international$/i, "")
+    .replace(/['']/g, "")
+    .replace(/[.,&-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+const nameToId = new Map()
+for (const f of stations.features) {
+  const crs = f.properties?.["ref:crs"]
+  const name = f.properties?.name
+  if (!crs || !name) continue
+  const n = normalize(name)
+  const existing = nameToId.get(n)
+  if (!existing || (crs.length === 3 && existing.length === 4)) nameToId.set(n, crs)
+}
+function nameToCrs(name) {
+  const n = normalize(name)
+  return NAME_OVERRIDES[n] ?? nameToId.get(n)
+}
+function terminalToId(t) {
+  const id = nameToCrs(t.name)
+  if (id) return id
+  for (const alias of t.aliases ?? []) {
+    const aliasId = nameToCrs(alias)
+    if (aliasId) return aliasId
+  }
+  throw new Error(`could not resolve terminal "${t.name}" to a CRS`)
+}
 
 // ---------------------------------------------------------------------------
 // Terminal name → NaPTAN rail station ID
@@ -217,18 +261,20 @@ let skipped = 0
 let failed = 0
 
 for (const from of terminals) {
-  if (!matrix[from.name]) matrix[from.name] = {}
+  const fromId = terminalToId(from)
+  if (!matrix[fromId]) matrix[fromId] = {}
   for (const to of terminals) {
     if (from.name === to.name) continue
-    if (!RECOMPUTE && matrix[from.name][to.name]) {
+    const toId = terminalToId(to)
+    if (!RECOMPUTE && matrix[fromId][toId]) {
       skipped++
       continue
     }
     try {
       const entry = await fetchPair(from, to)
-      matrix[from.name][to.name] = entry
+      matrix[fromId][toId] = entry
       fetched++
-      console.log(`  ${from.name} -> ${to.name}: ${entry.minutes}min ${entry.vehicleType}`)
+      console.log(`  ${fromId} (${from.name}) -> ${toId} (${to.name}): ${entry.minutes}min ${entry.vehicleType}`)
       // Persist after each successful fetch so an interruption keeps progress.
       writeFileSync(MATRIX_PATH, JSON.stringify(matrix, null, 2))
       // Light pacing to stay well under TfL's unauthenticated rate limits.

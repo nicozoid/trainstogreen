@@ -18,6 +18,7 @@ import { readFile, readdir, stat } from "node:fs/promises"
 import { join } from "node:path"
 import { exec } from "node:child_process"
 import { promisify } from "node:util"
+import { getCoordKey as registryGetCoordKey } from "@/lib/station-registry"
 
 const execAsync = promisify(exec)
 
@@ -200,7 +201,13 @@ export async function GET() {
     // that dropped the field doesn't regress the panel.
     const logCompleted = await parseOrchestratorLogs()
     const stations: StationSummary[] = []
-    for (const [coord, station] of Object.entries(data)) {
+    // Post Phase 2a, origin-routes.json is keyed by station ID. The
+    // panel still wants a real coord on each row (it buckets London
+    // termini by coord), so we look up the station's coord via the
+    // registry. Keys we can't resolve (drift in the registry) fall
+    // back to the raw key so the panel still renders something.
+    for (const [id, station] of Object.entries(data)) {
+      const coord = registryGetCoordKey(id) ?? id
       const dr = station.directReachable ?? {}
       // Only count directReachable entries backed by V2-schema
       // observations. Any legacy entry that slipped past the prune (or
