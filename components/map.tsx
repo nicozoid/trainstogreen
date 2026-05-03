@@ -346,34 +346,21 @@ type OriginDef = {
 //  - All other origins (CHX, LST+MOG, City cluster, MYB, PAD, VIC, WAT, WAE):
 //    hybrid — RTT direct times for destinations on their own lines, stitched
 //    via terminal-matrix + existing KX/Farringdon journeys for everywhere else.
-const PRIMARY_ORIGINS: Record<string, OriginDef> = {
-  // Farringdon and Stratford are deliberately ABSENT from PRIMARY_ORIGINS.
-  // They're non-termini that happen to have full per-station Google Routes
-  // data (because they're our stitcher sources) — but from a user's point
-  // of view they deserve no special treatment vs any other intermediate
-  // London NR station. If someone wants either as a primary, they can
-  // search for it via the "Other stations" field; it then lives in the
-  // recents list like any other custom pick.
-  // London synthetic mega-cluster — primary coord sits at the British
-  // Museum in Bloomsbury. Originally at the Charles I statue in
-  // Trafalgar Square, but that's 300m from Charing Cross and the
-  // "London" hexagon + terminus diamond were visually fighting each
-  // other for attention at mid-zoom levels. British Museum is centrally-
-  // located, far enough from every NR terminus that there's no overlap,
-  // and reads as a universally-recognised "middle of London" anchor.
-  // The cluster members below are what drive direct-reachable +
-  // stitching lookups (the coord of the synthetic itself is not in
-  // origin-routes.json — it's just a map-label anchor).
-  // canonicalName "London" matches the entry we'll add to londonTerminals
-  // later if we want to treat the whole cluster as a stitch source; for now
-  // it's just a label.
-  "CLON":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", overlayName: "London termini", isSynthetic: true },
-  // Stratford synthetic — anchor at the midpoint between SRA and SFA so
-  // the cluster reads as a balanced pair on the map (not pinned to one
-  // station). The synthetic coord isn't in origin-routes.json, but the
-  // diff merge below mirrors the first cluster member's journey data
-  // under this anchor key so primary-side filters still resolve.
-  "CSTR": { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford", isSynthetic: true },
+//
+// Synth-cluster primaries (CLON, CSTR) live in lib/clusters-data.json so
+// cluster topology and per-cluster display info stay together. They're
+// hydrated into PRIMARY_ORIGINS at module init below — every existing
+// PRIMARY_ORIGINS[id] read keeps working unchanged. Phase 3 of the
+// origin-architecture refactor will move the single-station overrides
+// out as well and delete this constant entirely.
+//
+// Farringdon and Stratford as STATIONS are deliberately absent — they're
+// non-termini that happen to have full per-station Google Routes data
+// (because they're our stitcher sources), but from a user's point of view
+// they deserve no special treatment vs any other intermediate London NR
+// station. Search via the "Other stations" field puts them in recents
+// like any other custom pick.
+const PRIMARY_ORIGINS_BASE: Record<string, OriginDef> = {
   "CHX": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
   "MYB":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
   "PAD":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
@@ -398,6 +385,32 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   "FST": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
   "BFR": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
   "LBG": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
+}
+
+// Hydrate every cluster flagged isPrimaryOrigin in clusters-data.json into
+// the OriginDef shape so they slot transparently into PRIMARY_ORIGINS. The
+// CLON anchor's coord (British Museum, Bloomsbury) and CSTR's anchor (SRA/SFA
+// midpoint) live in lib/clusters-data.json — see git log for the rationale.
+// Defaults: any optional cluster display field falls back to displayName.
+const PRIMARY_ORIGINS_FROM_CLUSTERS: Record<string, OriginDef> = Object.fromEntries(
+  Object.entries(ALL_CLUSTERS)
+    .filter(([, c]) => c.isPrimaryOrigin)
+    .map(([id, c]): [string, OriginDef] => [id, {
+      canonicalName: c.displayName,
+      displayName: c.displayName,
+      menuName: c.menuName ?? c.displayName,
+      mobileDisplayName: c.mobileDisplayName,
+      overlayName: c.overlayName,
+      isSynthetic: true,
+    }]),
+)
+
+// Cluster-anchor entries first (preserves the previous CLON-then-CSTR-then-
+// terminals iteration order — a few downstream sites iterate Object.keys
+// for synthetic-first rendering and rely on this).
+const PRIMARY_ORIGINS: Record<string, OriginDef> = {
+  ...PRIMARY_ORIGINS_FROM_CLUSTERS,
+  ...PRIMARY_ORIGINS_BASE,
 }
 
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
@@ -2367,7 +2380,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "hiked" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
   // Build the Oyster CRS Set with oysterStationsData as the dep — when
   // the JSON hot-reloads in dev the import gives a new array reference,
   // which busts this memo and the downstream filteredStations memo.
@@ -6112,6 +6125,12 @@ export default function HikeMap() {
           }
           if (primaryFeatureFilter === "undiscovered") {
             return !fid || !stationsHiked.has(fid)
+          }
+          // "Hiked" — inverse of "Undiscovered": only stations with ≥1
+          // walk we've personally logged in previousWalkDates. Same
+          // stationsHiked Set, opposite test.
+          if (primaryFeatureFilter === "hiked") {
+            return !!fid && stationsHiked.has(fid)
           }
           if (primaryFeatureFilter === "komoot") {
             return !!fid && stationsWithKomoot.has(fid)
