@@ -29,6 +29,7 @@ const dryRun = process.argv.includes("--dry-run")
 type Journey = {
   polyline?: string
   polylineCoords?: [number, number][]
+  legs?: { vehicleType?: string; departureStation?: string; arrivalStation?: string }[]
   [k: string]: unknown
 }
 type Diff = Record<
@@ -71,7 +72,7 @@ for (const rel of files) {
         const originId = originCoord.includes(",")
           ? (resolveCoordKey(originCoord) ?? originCoord)
           : originCoord
-        const composed = composePolylineForJourney(originId, destId)
+        const composed = composePolylineForJourney(originId, destId, journey.legs)
         if (composed && isHighQualityComposition(composed)) {
           delete journey.polylineCoords
           stripped += 1

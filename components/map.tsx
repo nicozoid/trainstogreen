@@ -7353,7 +7353,11 @@ export default function HikeMap() {
   //   `polylineCoords` — pre-decoded [lng,lat][] from RTT synthesis (straight
   //                      lines between CRS coords; looks jagged)
   // Prefer the Google-encoded polyline when both are present.
-  type JourneyWithGeom = { polyline?: string; polylineCoords?: [number, number][] }
+  type JourneyWithGeom = {
+    polyline?: string
+    polylineCoords?: [number, number][]
+    legs?: { vehicleType?: string; departureStation?: string; arrivalStation?: string }[]
+  }
   const resolveJourneyCoords = (j: JourneyWithGeom | undefined): [number, number][] | null => {
     if (!j) return null
     if (j.polyline) return decodePolyline(j.polyline)
@@ -7384,7 +7388,7 @@ export default function HikeMap() {
     const primaryJourney = journeys[originKey]
     if (primaryJourney?.polyline) return decodePolyline(primaryJourney.polyline)
     if (destId) {
-      const composed = composePolylineForJourney(originKey, destId)
+      const composed = composePolylineForJourney(originKey, destId, primaryJourney?.legs)
       if (composed && isHighQualityComposition(composed)) return composed.coords
     }
     if (primaryJourney?.polylineCoords && primaryJourney.polylineCoords.length > 1) {

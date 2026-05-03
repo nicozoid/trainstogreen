@@ -12,6 +12,7 @@ import segmentsData from "@/data/rail-segments.json"
 import clustersData from "@/lib/clusters-data.json"
 import { originRoutesById } from "@/lib/origin-routes"
 import stationsData from "../public/stations.json"
+import { resolveName, getStation } from "./station-registry"
 import {
   composeFromCallingPoints,
   type RailSegments,
@@ -63,48 +64,147 @@ export type ComposedPolyline = {
   edgesMissing: number
 }
 
-// Compose a rail-following polyline for one direct journey, from a
-// primary origin to a destination, both addressed by the canonical
-// station ID (Phase 2a/3c). Looks up the journey's calling-points
-// sequence in origin-routes.json and walks it through the segment
-// library.
-//
-// Returns null when no calling-points sequence is available — the
-// caller is expected to fall back to its existing polyline source.
-export function composePolylineForJourney(
+// One leg of a multi-leg journey, as it appears on JourneyInfo.legs at
+// runtime + in the routing-diff JSON files. Names are the human-readable
+// strings the routing pass produces; we resolve them through the
+// station registry to CRS codes for segment lookups.
+export type JourneyLeg = {
+  vehicleType?: string
+  departureStation?: string
+  arrivalStation?: string
+}
+
+// Try a direct (origin → dest) calling-points lookup, expanding cluster
+// anchors on both sides. Returns the calling-points sequence + the
+// (origin, dest) IDs that actually matched, or null.
+function tryDirectCallingPoints(
   originId: string,
   destId: string,
-): ComposedPolyline | null {
-  // Both origin and destination IDs can be cluster anchors (CLON for
-  // Central London, CNWK for Newark, …). The hover layer surfaces the
-  // cluster's virtual feature rather than its bare NR member, so a
-  // direct originRoutes lookup on a cluster ID returns nothing. Expand
-  // each side into a candidate list ([id, ...members]), then try every
-  // pair until one resolves to a calling-points sequence in
-  // origin-routes. First hit wins.
+): string[] | null {
   const originCandidates = [originId, ...(clusterMembers.get(originId) ?? [])]
   const destCandidates = [destId, ...(clusterMembers.get(destId) ?? [])]
-  let cp: string[] | undefined
-  outer: for (const o of originCandidates) {
+  for (const o of originCandidates) {
     const reach = originRoutesById[o]?.directReachable
     if (!reach) continue
     for (const d of destCandidates) {
       const candidate = reach[d]?.fastestCallingPoints
-      if (Array.isArray(candidate) && candidate.length >= 2) {
-        cp = candidate
-        break outer
+      if (Array.isArray(candidate) && candidate.length >= 2) return candidate
+    }
+  }
+  return null
+}
+
+// Compose a polyline from a journey's legs[] when the direct lookup
+// can't bridge origin to destination in one hop (e.g. CLON → BEU
+// requires changing at Southampton). Each rail leg's calling points
+// are looked up in origin-routes — origin-routes covers 344 origins,
+// not just London terminals, so most non-London hubs (Southampton,
+// Birmingham, Doncaster, …) have data we can use.
+//
+// Per-leg behaviour:
+//   - HEAVY_RAIL: resolve dep/arr names → CRS via the registry, look
+//     up calling points, compose via the segment library.
+//   - non-rail (SUBWAY, WALK, OTHER, …): emit a 2-point straight line
+//     between the dep/arr station coords. Counts as a fallback edge
+//     since the segment library has no data for tube/walk hops, but
+//     they're typically short and visually fine.
+//
+// Each leg's coords get concatenated; duplicate join points (last point
+// of leg N == first point of leg N+1) are dropped. Edge tallies are
+// summed across legs so isHighQualityComposition's majority rule still
+// applies.
+function composeFromLegs(legs: JourneyLeg[]): ComposedPolyline | null {
+  const out: [number, number][] = []
+  let totalResolved = 0
+  let totalFallback = 0
+  let totalMissing = 0
+
+  for (const leg of legs) {
+    const depName = leg.departureStation
+    const arrName = leg.arrivalStation
+    if (!depName || !arrName) continue
+    const depId = resolveName(depName)
+    const arrId = resolveName(arrName)
+    let legCoords: [number, number][] = []
+
+    if (leg.vehicleType === "HEAVY_RAIL" && depId && arrId) {
+      const cp = tryDirectCallingPoints(depId, arrId)
+      if (cp && cp.length >= 2) {
+        const result = composeFromCallingPoints(cp, { segments, crsToCoord })
+        legCoords = result.coords
+        totalResolved += result.edgesResolved
+        totalFallback += result.edgesFallback
+        totalMissing += result.edgesMissing
+      }
+    }
+
+    // Fallback to a 2-point straight line between station coords. Used
+    // for non-rail legs and rail legs where origin-routes has no data.
+    if (legCoords.length < 2) {
+      const depCoord = depId ? getStation(depId)?.coord : null
+      const arrCoord = arrId ? getStation(arrId)?.coord : null
+      if (depCoord && arrCoord) {
+        legCoords = [depCoord, arrCoord]
+        totalFallback += 1
+      } else {
+        // Can't even draw a straight line; skip the leg but count it
+        // as missing so the quality gate is honest about coverage.
+        totalMissing += 1
+        continue
+      }
+    }
+
+    // Concatenate, dropping the duplicate join point when this is not
+    // the first leg.
+    const skipFirst = out.length > 0
+    for (let k = skipFirst ? 1 : 0; k < legCoords.length; k++) {
+      out.push(legCoords[k])
+    }
+  }
+
+  if (out.length < 2) return null
+  return {
+    coords: out,
+    edgesResolved: totalResolved,
+    edgesFallback: totalFallback,
+    edgesMissing: totalMissing,
+  }
+}
+
+// Compose a rail-following polyline for one journey, from primary
+// origin to destination (both addressed by canonical station ID).
+//
+// Resolution order:
+//   1. Try a direct (origin → dest) calling-points lookup, expanding
+//      cluster anchors on both sides. Single-leg journeys + cluster-
+//      destination journeys land here.
+//   2. If that fails AND legs are provided, compose leg-by-leg via
+//      origin-routes. Each rail leg's dep/arr names are resolved to
+//      CRS and composed independently, then concatenated. Catches
+//      multi-leg journeys (CLON → SOU → BEU and similar — the bulk
+//      of 2-leg failures from the strict-gate audit).
+//
+// Returns null when neither path produces a usable result — the caller
+// is expected to fall back to its existing polyline source.
+export function composePolylineForJourney(
+  originId: string,
+  destId: string,
+  legs?: JourneyLeg[],
+): ComposedPolyline | null {
+  const cp = tryDirectCallingPoints(originId, destId)
+  if (cp) {
+    const result = composeFromCallingPoints(cp, { segments, crsToCoord })
+    if (result.coords.length >= 2) {
+      return {
+        coords: result.coords,
+        edgesResolved: result.edgesResolved,
+        edgesFallback: result.edgesFallback,
+        edgesMissing: result.edgesMissing,
       }
     }
   }
-  if (!Array.isArray(cp) || cp.length < 2) return null
-  const result = composeFromCallingPoints(cp, { segments, crsToCoord })
-  if (result.coords.length < 2) return null
-  return {
-    coords: result.coords,
-    edgesResolved: result.edgesResolved,
-    edgesFallback: result.edgesFallback,
-    edgesMissing: result.edgesMissing,
-  }
+  if (legs && legs.length > 0) return composeFromLegs(legs)
+  return null
 }
 
 // Quality gate for the hybrid rule. Accept the composer's polyline as

@@ -44,6 +44,7 @@ function stripComposerCapablePolylines(payload: unknown): {
       const journey = j as {
         polyline?: string
         polylineCoords?: [number, number][]
+        legs?: { vehicleType?: string; departureStation?: string; arrivalStation?: string }[]
       }
       // Encoded Google polyline always wins — leave alone.
       if (journey.polyline) continue
@@ -54,7 +55,7 @@ function stripComposerCapablePolylines(payload: unknown): {
         const originId = originCoord.includes(",")
           ? (resolveCoordKey(originCoord) ?? originCoord)
           : originCoord
-        const composed = composePolylineForJourney(originId, destId)
+        const composed = composePolylineForJourney(originId, destId, journey.legs)
         if (composed && isHighQualityComposition(composed)) {
           delete journey.polylineCoords
           stripped += 1
