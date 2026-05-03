@@ -107,6 +107,8 @@ export function FilterPanelDemo() {
             return next
           })
         }}
+        // Solo a rating — collapse the visible set to just this key.
+        onSoloRating={(key: string) => setVisibleRatings(new Set([key]))}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         // Public mode — no admin toggles render.
