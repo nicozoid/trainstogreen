@@ -562,12 +562,16 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     const disabledContains: typeof searchableStations = []
     for (const s of searchableStations) {
       const n = normalise(s.name)
-      // CRS prefix match (e.g. "swl" → Swale) counts as a starts-with
-      // hit so typing the code surfaces the station at the top of the
-      // list, same as typing the start of its name. CRS codes have no
-      // punctuation so we don't need to run them through normalise().
+      // Code prefix match. Real NR stations match on `crs` (e.g.
+      // "swl" → Swale). Non-NR stations and cluster anchors don't
+      // have a CRS but their canonical station ID lives in `coord`
+      // post Phase 3c — match that too so typing "umyl" finds
+      // Marylebone Underground, "cbic" finds the Bicester cluster,
+      // "clon" finds Central London, etc. Codes have no punctuation
+      // so we don't need to run them through normalise().
       const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
-      const startsMatch = crsMatch || n.startsWith(q)
+      const idMatch = s.coord.toLowerCase().startsWith(q)
+      const startsMatch = crsMatch || idMatch || n.startsWith(q)
       const containsMatch = !startsMatch && n.includes(q)
       if (!startsMatch && !containsMatch) continue
       const bucket = s.hasData
@@ -615,8 +619,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     for (const s of searchableFriendStations) {
       const n = normalise(s.name)
       const labelN = normalise(s.displayLabel)
+      // Same code-match rule as the primary search: crs for real NR
+      // stations, canonical station ID (in `coord`) for non-NR /
+      // cluster anchors. Lets the user type "cbir" → Birmingham,
+      // "clon" → Central London friend, etc.
       const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
-      const startsMatch = crsMatch || n.startsWith(q) || labelN.startsWith(q)
+      const idMatch = s.coord.toLowerCase().startsWith(q)
+      const startsMatch = crsMatch || idMatch || n.startsWith(q) || labelN.startsWith(q)
       const containsMatch = !startsMatch && (n.includes(q) || labelN.includes(q))
       if (!startsMatch && !containsMatch) continue
       const bucket = s.hasData

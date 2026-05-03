@@ -59,23 +59,60 @@ function pickLetters(name) {
   return use[0].slice(0, 3).padEnd(3, "X").toUpperCase()
 }
 
+// Mirror the registry's ID_OVERRIDES so the audit knows which coord-
+// keyed manual disambiguations it should expect. Keep this in sync
+// with lib/station-registry.ts:ID_OVERRIDES.
+const ID_OVERRIDES_PATH = path.join(ROOT, "lib/station-registry.ts")
+const ID_OVERRIDES = (() => {
+  // Parse just the ID_OVERRIDES literal out of the registry source so
+  // the audit can re-run without a TS/JS bridge. Tolerant of missing
+  // entries.
+  const src = fs.readFileSync(ID_OVERRIDES_PATH, "utf8")
+  const m = src.match(/const ID_OVERRIDES:[^=]*=\s*\{([^}]*)\}/s)
+  if (!m) return {}
+  const body = m[1]
+  const out = {}
+  for (const line of body.split("\n")) {
+    const entry = line.match(/"([^"]+)"\s*:\s*"([^"]+)"/)
+    if (entry) out[entry[1]] = entry[2]
+  }
+  return out
+})()
+
 const coordKeyToId = new Map()
 const idSet = new Set()
+// Track which stations resolve to each id so we can flag collisions
+// among rendered features (NR + Underground + DLR, no tourism). Keyed
+// by id → array of { coord, name, network }.
+const idToRenderedStations = new Map()
+function isMapRendered(f) {
+  const crs = f.properties["ref:crs"]
+  const network = f.properties.network
+  if (!(crs != null || network === "London Underground" || network === "Docklands Light Railway")) return false
+  if (f.properties.usage === "tourism") return false
+  return true
+}
 for (const f of stations.features) {
   const [lng, lat] = f.geometry.coordinates
   const coordKey = `${lng},${lat}`
   const crs = f.properties["ref:crs"]
   const name = f.properties.name
+  let id = null
   if (crs) {
-    coordKeyToId.set(coordKey, crs)
-    idSet.add(crs)
+    id = crs
   } else if (name) {
     // Synthetic 4-char ID for non-CRS stations (Underground, DLR etc.).
-    const id = networkPrefix(f.properties.network) + pickLetters(name)
-    coordKeyToId.set(coordKey, id)
+    // ID_OVERRIDES wins over the auto-generated id when the coord is
+    // listed (manual disambiguation for collisions).
+    id = ID_OVERRIDES[coordKey] ?? networkPrefix(f.properties.network) + pickLetters(name)
+  }
+  coordKeyToId.set(coordKey, id)
+  if (id) {
     idSet.add(id)
-  } else {
-    coordKeyToId.set(coordKey, null)
+    if (isMapRendered(f)) {
+      if (!idToRenderedStations.has(id)) idToRenderedStations.set(id, [])
+      idToRenderedStations.get(id).push({ coord: coordKey, name: name ?? "(no name)", network: f.properties.network })
+    }
   }
 }
 // Cluster-anchor IDs — read directly from clusters-data.json keys
@@ -202,6 +239,22 @@ for (const file of ["terminal-matrix.json", "tfl-hop-matrix.json"]) {
     for (const innerId of Object.keys(inner)) {
       checkId(file, `${outerId} → inner`, innerId, "")
     }
+  }
+}
+
+// ── ID collisions among rendered features ────────────────────────────
+// Two distinct stations resolving to the same ID is a real bug — the
+// runtime's find-by-id lookups (Phase 3c) only return the first hit,
+// silently breaking the second station's routing / cluster membership /
+// click handling. Beckton-style duplicates (same CRS + same name at
+// near-identical coords) are NOT flagged — they're the same physical
+// station tagged twice in OSM.
+for (const [id, list] of idToRenderedStations) {
+  if (list.length <= 1) continue
+  const distinctNames = new Set(list.map((s) => s.name))
+  if (distinctNames.size === 1) continue   // OSM-duplicate, harmless
+  for (const s of list) {
+    report("stations.json", `id-collision:${id}`, `${s.name} @ ${s.coord}`, `network=${s.network}`)
   }
 }
 

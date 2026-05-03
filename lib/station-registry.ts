@@ -96,12 +96,22 @@ function pickLetters(name: string): string {
 // Manual ID overrides for collisions the deterministic algorithm can't
 // resolve. Keyed by coordKey so we can pin a specific station without
 // risking a name-match clash. The "winner" of each collision keeps the
-// natural ID; the other gets a tweaked one. Add to this map ONLY when
-// the audit script flags a real collision.
+// natural ID (typically the OSM-assigned ref:crs); the other gets a
+// tweaked one. Add to this map ONLY when the audit script flags a
+// real collision (`id-collision:` entries from
+// scripts/audit-station-resolution.mjs). Coords from public/stations.json
+// — update if stations.json changes.
 const ID_OVERRIDES: Record<string, StationId> = {
-  // ── Tyne & Wear Metro ────────────────────────────────────────────
-  // MMON natural winner: Monument (interchange). Monkseaton renames.
-  // Coords from public/stations.json. Update if stations.json changes.
+  // ── London Underground collisions ────────────────────────────────
+  // In each pair, the left coord is the no-CRS station whose auto-
+  // generated id matches another Underground station's OSM-assigned
+  // ref:crs. Override letters are mnemonic from the station name.
+  "-0.1990432,51.4340563": "UWMP",  // Wimbledon Park (vs UWPA Wembley Park)
+  "-0.1787546,51.5185075": "UPCH",  // Paddington Circle/H&C entrance (vs UPAD Paddington Underground)
+  "-0.2066142,51.4457751": "UFLD",  // Southfields (vs USOU Southgate)
+  "-0.1899646,51.5468194": "UWHP",  // West Hampstead (vs UWHA West Harrow)
+  "-0.1635046,51.5222363": "UMYL",  // Marylebone (Underground) (vs UMAR Marble Arch)
+  "-0.054752,51.5272449":  "UBET",  // Bethnal Green (vs UBGR Bounds Green)
 }
 
 // Cluster-anchor IDs are now stored directly as keys in

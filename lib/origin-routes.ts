@@ -1,14 +1,10 @@
-// Loader + coord-keyed view of data/origin-routes.json.
-//
-// On disk (post Phase 2a) the file is keyed by station ID at both
-// the outer level and inside each entry's directReachable. Many
-// runtime consumers in components/map.tsx still iterate by coordKey,
-// so this module also exposes a coord-keyed view built once at
-// import time. Future phases can swap consumers to the ID-keyed
-// canonical export and drop the coord-keyed wrapper.
+// Loader for data/origin-routes.json. Post Phase 2a the file is keyed
+// by station ID (CRS or 4-char synthetic) at both the outer level and
+// inside each entry's directReachable. Phase 3c finished the runtime
+// migration in components/map.tsx, so this module now exports only the
+// canonical ID-keyed view.
 
 import data from "@/data/origin-routes.json"
-import { getCoordKey } from "@/lib/station-registry"
 
 export type DirectReachable = {
   name: string
@@ -38,24 +34,24 @@ export type OriginEntry = {
 
 export type OriginRoutes = Record<string, OriginEntry>
 
-// Canonical (preferred) — keyed by station ID at every level.
 export const originRoutesById = data as unknown as OriginRoutes
 
-// Legacy view — keyed by coordKey at every level. Built once at
-// module load by translating IDs back to coords via the registry.
-// Dropped entries: any ID that isn't in the registry. In practice
-// this should be empty (audit-station-resolution.mjs catches drift).
-export const originRoutesByCoord: OriginRoutes = (() => {
-  const out: OriginRoutes = {}
-  for (const [outerId, entry] of Object.entries(originRoutesById)) {
-    const outerCoord = getCoordKey(outerId)
-    if (!outerCoord) continue
-    const dr: Record<string, DirectReachable> = {}
-    for (const [innerId, dest] of Object.entries(entry.directReachable ?? {})) {
-      const innerCoord = getCoordKey(innerId)
-      if (innerCoord) dr[innerCoord] = dest
+// Every destination ID that appears in ANY primary's directReachable
+// list. Used by the no-data message branching in photo-overlay to
+// distinguish "we have NO journey data for this station anywhere"
+// (likely a sparse Saturday-morning service or beyond fetch coverage)
+// from "we have data elsewhere but not from your active primary"
+// (try a different home). Computed once at module load.
+export const ALL_RTT_DESTINATIONS: ReadonlySet<string> = (() => {
+  const out = new Set<string>()
+  for (const entry of Object.values(originRoutesById)) {
+    for (const destId of Object.keys(entry.directReachable ?? {})) {
+      out.add(destId)
     }
-    out[outerCoord] = { ...entry, directReachable: dr }
+    // Origins themselves count as "reachable" — RTT-fetched primaries
+    // know their own data even if no other primary lists them as a
+    // destination.
   }
+  for (const originId of Object.keys(originRoutesById)) out.add(originId)
   return out
 })()

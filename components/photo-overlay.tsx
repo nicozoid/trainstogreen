@@ -26,6 +26,7 @@ import londonTerminalsData from "@/data/london-terminals.json"
 // bottom of the train-info block.
 import oysterStationsData from "@/data/oyster-stations.json"
 import { getStation } from "@/lib/station-registry"
+import { ALL_RTT_DESTINATIONS } from "@/lib/origin-routes"
 import { PROTECTED_AREA_INFO, protectedAreaLabel } from "@/lib/protected-areas"
 
 // Calls our server-side proxy at /api/flickr/photos instead of Flickr directly.
@@ -300,10 +301,18 @@ type StationModalProps = {
   protectedArea?: string
   /** "national_park" or "national_landscape" — drives the type suffix */
   protectedAreaType?: string
-  /** Admin-only: 3-letter CRS code (e.g. "CLJ"). When present AND
-   *  adminMode is true, the title is prefixed with the code — helps
-   *  cross-reference the admin RTT status panel and origin-routes.json. */
+  /** Admin-only: canonical station ID (3-char CRS for real NR like
+   *  "CLJ", 4-char synthetic for non-NR like "UMYL", or a C-prefix
+   *  cluster anchor like "CLON"). When present AND adminMode is
+   *  true, the title is prefixed with the ID — helps cross-reference
+   *  the admin RTT status panel + origin-routes.json. */
   stationCrs?: string
+  /** Real 3-char CRS to default the WalksAdminPanel's "new walk"
+   *  picker to. For real NR stations this matches stationCrs; for
+   *  cluster anchors it's the first member's CRS (so admins can
+   *  still create walks on a sensible underlying station). Undefined
+   *  for non-NR standalone stations — the panel doesn't mount. */
+  walkDefaultCrs?: string
   /** Admin-only: extra CRS codes for cluster members. Synthetic
    *  overlays pass their members' CRS codes here so the
    *  WalksAdminPanel fetches and displays every member's walks in
@@ -432,6 +441,79 @@ function isNonNrStation(crs: string | undefined): boolean {
   if (!crs) return true
   const station = getStation(crs)
   return !station || station.isSynthetic
+}
+
+// Returns a station-specific message explaining WHY there's no travel
+// time for this destination. Used in admin mode beneath the title to
+// give the admin a clear "this is expected" hint instead of the
+// generic "outside our coverage" line. Returns null when there's
+// nothing distinctive to say (caller falls back to the generic copy).
+//
+// Detection precedence:
+//   1. Synthetic / non-NR station network — surface the network name
+//      so the admin can see "Underground", "DLR", "Tyne & Wear Metro"
+//      etc. and understand the data is structurally absent.
+//   2. Stations with a non-NR network field even though they have a
+//      CRS (DART shuttles like LPD Luton DART Parkway).
+//   3. Curated GHOST_STATIONS list — Finstock, Polesworth: minimal
+//      weekend service.
+//   4. Real NR stations not in any primary's RTT directReachable set
+//      AND not covered as an origin themselves — likely a parliamentary
+//      / sparse-Saturday-service station that just hasn't surfaced in
+//      our Saturday-morning fetch window.
+//   5. Real NR stations that ARE in the RTT data somewhere but didn't
+//      compose for the active primary — lets the admin try a different
+//      home or know to backfill that primary's RTT data.
+function noDataReasonFor(stationId: string | undefined): string | null {
+  if (!stationId) return null
+  const station = getStation(stationId)
+  if (!station) return null
+  // Cluster anchors handle their own "no member reachable" case
+  // upstream — the synth feature builder skips cluster anchors with
+  // no usable member journey, so the modal shouldn't even mount with
+  // null minutes. Bail to avoid surfacing a misleading "not on NR"
+  // line for the cluster as a whole.
+  if (station.isClusterAnchor) return null
+  const network = station.network ?? ""
+  // Off-NR networks first — covers Underground, DLR, Overground (no
+  // RTT), Elizabeth-only entries, Tyne & Wear Metro, Glasgow Subway,
+  // DART, NIR, and the heritage / unknown bucket. Most of these never
+  // had RTT data and never will under the current pipeline.
+  const nonNrNetworkLabel = nonNrNetworkLabelFor(network)
+  if (nonNrNetworkLabel) {
+    return `${nonNrNetworkLabel} — outside our National Rail journey data.`
+  }
+  if (GHOST_STATIONS.has(stationId)) return GHOST_STATION_MESSAGE
+  // Real NR but absent from RTT entirely → likely sparse / parliamentary.
+  if (!ALL_RTT_DESTINATIONS.has(stationId)) {
+    return "No Saturday-morning service found in our RTT fetch window — likely a sparse / request-stop station."
+  }
+  // Real NR with data elsewhere but not composable from the active
+  // primary on this run.
+  return "Not reachable from your active home origin in our journey data — try a different primary."
+}
+
+// Maps a registry network string to a friendly non-NR label, or
+// returns null when the network IS a National Rail flavour.
+// Multi-network strings (e.g. "London Underground;Elizabeth line")
+// still classify as non-NR if NONE of the segments include "National
+// Rail" — Elizabeth-line-only entrances don't carry NR service.
+function nonNrNetworkLabelFor(network: string): string | null {
+  if (!network || network === "unknown" || network === "None") {
+    return "Heritage or non-mainline station"
+  }
+  if (/National Rail/.test(network)) return null
+  if (/London Underground/.test(network)) return "London Underground"
+  if (/Docklands Light Railway/.test(network)) return "Docklands Light Railway"
+  if (/London Overground/.test(network)) return "London Overground"
+  if (/Elizabeth line/.test(network)) return "Elizabeth line"
+  if (/Tyne and Wear Metro/.test(network)) return "Tyne & Wear Metro"
+  if (/Glasgow Subway/.test(network)) return "Glasgow Subway"
+  if (/DART/.test(network)) return "Luton DART shuttle"
+  if (/NIR/.test(network)) return "Northern Ireland Railways"
+  // Catch-all for anything else: just surface the raw network so the
+  // admin can see what OSM tagged it as.
+  return network
 }
 
 // "Is this station inside the TfL Oyster fare zone?" — combines two
@@ -798,6 +880,7 @@ export default function StationModal({
   protectedArea,
   protectedAreaType,
   stationCrs,
+  walkDefaultCrs,
   clusterMemberCrsCodes,
   adminMode = false,
   isLondonHome = false,
@@ -1274,7 +1357,7 @@ export default function StationModal({
         >
           <div className="flex flex-col gap-0.5 min-w-0">
             <DialogTitle className="text-2xl sm:text-3xl">
-              {adminMode ? (isSynthetic ? "SYNTH " : (stationCrs ? `${stationCrs} ` : "")) : ""}{stationName}{isSynthetic ? "" : " Station"}
+              {adminMode && stationCrs ? `${stationCrs} ` : ""}{stationName}{isSynthetic ? "" : " Station"}
             </DialogTitle>
             {/* Cluster header — only when the modal is open for a synthetic
                 primary or friend (e.g. "Stratford", "Birmingham"). Lists
@@ -1544,13 +1627,12 @@ export default function StationModal({
                     //     real stations whose journey data hasn't been
                     //     fetched yet — usually because they're beyond our
                     //     Saturday-morning RTT coverage from this origin.
-                    : (adminMode && isNonNrStation(stationCrs))
-                      ? "Not a National Rail Station: no RTT data."
+                    : adminMode
+                      ? (noDataReasonFor(stationCrs)
+                        ?? "No travel times — destination outside our journey-data coverage from this origin.")
                       : (stationCrs && GHOST_STATIONS.has(stationCrs))
                         ? GHOST_STATION_MESSAGE
-                        : adminMode
-                          ? "No travel times — destination outside our journey-data coverage from this origin."
-                          : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                        : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
                   isLondonHome,
                   // extraBold home origin when friend mode is on, so
                   // the home/friend sentences visually distinguish.
@@ -2021,9 +2103,15 @@ export default function StationModal({
               seasons, free-text miscellany, train tips). Saving a card
               rewrites the source JSON and re-runs the build, so the
               prose above refreshes on the next station-notes fetch. */}
-          {devMode && stationCrs && (
+          {devMode && walkDefaultCrs && (
+            // Gate on the dedicated walk-default CRS so the panel only
+            // mounts when there's a real 3-char NR target. For real NR
+            // stations walkDefaultCrs === stationCrs; for cluster
+            // anchors it's the first member's CRS so admins can edit
+            // walks via the cluster overlay; for non-NR standalone
+            // stations it's undefined and the panel stays unmounted.
             <WalksAdminPanel
-              stationCrs={stationCrs}
+              stationCrs={walkDefaultCrs}
               extraCrsCodes={clusterMemberCrsCodes}
               onSaved={onWalkSaved}
             />

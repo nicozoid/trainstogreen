@@ -19,15 +19,16 @@ import {
   PRIMARY_ORIGIN_CLUSTER,
   FRIEND_ORIGIN_CLUSTER,
   ALL_CLUSTERS,
-  ALL_CLUSTER_MEMBER_COORDS,
+  ALL_CLUSTER_MEMBER_IDS,
   MEMBER_TO_SYNTHETIC,
-  ALL_SYNTHETIC_COORDS,
+  ALL_SYNTHETIC_IDS,
+  SYNTHETIC_COORDS,
   SYNTHETIC_DISPLAY_NAMES,
   CENTRAL_LONDON_ANCHOR,
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
-import { resolveCoordKey, getCoordKey as registryGetCoordKey, getName as registryGetName } from "@/lib/station-registry"
+import { resolveCoordKey, resolveName as registryResolveName, getCoordKey as registryGetCoordKey, getName as registryGetName } from "@/lib/station-registry"
 import buriedStationsList from "@/data/buried-stations.json"
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
@@ -36,11 +37,9 @@ import buriedStationsList from "@/data/buried-stations.json"
 // service is sparse and event-driven. Coord-keyed, same shape as
 // data/buried-stations.json.
 import excludedPrimariesList from "@/data/excluded-primaries.json"
-// origin-routes.json is keyed by station ID on disk (Phase 2a).
-// Use the loader's coord-keyed view so the existing
-// originRoutes[coord] / Object.entries(originRoutes) call sites in
-// this file keep working unchanged.
-import { originRoutesByCoord as originRoutesData } from "@/lib/origin-routes"
+// origin-routes.json is keyed by station ID on disk (Phase 2a) and
+// every consumer in this file iterates / looks up by ID post Phase 3c.
+import { originRoutesById as originRoutesData } from "@/lib/origin-routes"
 import londonTerminalsData from "@/data/london-terminals.json"
 import terminalMatrixData from "@/data/terminal-matrix.json"
 // Parallel hop matrix: non-terminal primaries (CLJ, future ECR/FPK/etc.)
@@ -63,7 +62,7 @@ import regionLabelsData from "@/data/region-labels.json"
 import oysterStationsData from "@/data/oyster-stations.json"
 import { cn } from "@/lib/utils"
 import { getColors } from "@/lib/tokens"
-import { usePersistedState, type Serializer } from "@/lib/use-persisted-state"
+import { usePersistedState } from "@/lib/use-persisted-state"
 import { getEffectiveJourney } from "@/lib/effective-journey"
 import { stitchJourney, matchTerminal, type Terminal, type TerminalMatrix } from "@/lib/stitch-journey"
 import { interchangeBufferFor } from "@/lib/interchange-buffers"
@@ -103,9 +102,13 @@ type SelectedStation = {
   lng: number
   lat: number
   minutes: number
-  // "lng,lat" string used as the unique rating key — two stations with the same name
-  // (e.g. Newport Essex vs Newport Wales) get distinct ratings this way
+  // "lng,lat" string — kept for places that still index by it (rating
+  // map, stationNotes, etc. all coord-keyed at rest).
   coordKey: string
+  // Canonical station ID (CRS or 4-char synthetic). Compare against
+  // primaryOrigin / friendOrigin via this field — both are IDs post
+  // Phase 3c.
+  id: string
   flickrCount: number | null
   // Screen-space pixel position of the icon at click time — used to animate
   // the modal growing from / shrinking to this point
@@ -363,37 +366,37 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
   // canonicalName "London" matches the entry we'll add to londonTerminals
   // later if we want to treat the whole cluster as a stitch source; for now
   // it's just a label.
-  "-0.1269,51.5196":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", overlayName: "London termini", isSynthetic: true },
+  "CLON":       { canonicalName: "London",                  displayName: "London",           menuName: "Central London", mobileDisplayName: "London", overlayName: "London termini", isSynthetic: true },
   // Stratford synthetic — anchor at the midpoint between SRA and SFA so
   // the cluster reads as a balanced pair on the map (not pinned to one
   // station). The synthetic coord isn't in origin-routes.json, but the
   // diff merge below mirrors the first cluster member's journey data
   // under this anchor key so primary-side filters still resolve.
-  "-0.0061483,51.5430422": { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford", isSynthetic: true },
-  "-0.1236888,51.5074975": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
-  "-0.163592,51.5243712":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
-  "-0.177317,51.5170952":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
-  "-0.1445802,51.4947328": { canonicalName: "Victoria",                displayName: "Victoria",         menuName: "Victoria" },
+  "CSTR": { canonicalName: "Stratford",                displayName: "Stratford",        menuName: "Stratford", isSynthetic: true },
+  "CHX": { canonicalName: "Charing Cross",          displayName: "Charing Cross",    menuName: "Charing Cross", mobileDisplayName: "Charing X" },
+  "MYB":  { canonicalName: "Marylebone",              displayName: "Marylebone",       menuName: "Marylebone" },
+  "PAD":  { canonicalName: "Paddington",              displayName: "Paddington",       menuName: "Paddington" },
+  "VIC": { canonicalName: "Victoria",                displayName: "Victoria",         menuName: "Victoria" },
   // Waterloo primary — standalone. Waterloo East is reachable via the
   // Central London synthetic; users wanting WAT specifically still get
   // it as their own primary here, but its old WAE cluster mapping is
   // gone.
-  "-0.112801,51.5028379":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo" },
+  "WAT":  { canonicalName: "Waterloo",                displayName: "Waterloo",         menuName: "Waterloo" },
   // Remaining standalone termini — each has RTT direct-reachable data
   // (see data/origin-routes.json) and matches a london-terminals.json entry
   // by canonicalName or alias, so stitching works too.
-  "-0.0890625,51.5182516": { canonicalName: "Moorgate",                 displayName: "Moorgate",         menuName: "Moorgate" },
-  "-0.0814269,51.5182105": { canonicalName: "Liverpool Street",         displayName: "Liverpool Street", menuName: "Liverpool Street", mobileDisplayName: "Liverpool St" },
+  "MOG": { canonicalName: "Moorgate",                 displayName: "Moorgate",         menuName: "Moorgate" },
+  "LST": { canonicalName: "Liverpool Street",         displayName: "Liverpool Street", menuName: "Liverpool Street", mobileDisplayName: "Liverpool St" },
   // Cannon Street — a real weekend terminus. An earlier RTT fetch landed on
   // a Saturday with limited service and recorded zero direct hiking
   // destinations, which got CST demoted to adminOnly. Confirmed on a later
   // Saturday (25 July) that direct services do run from CST (e.g. to
   // Gravesend), so restored as a public primary. A future multi-date RTT
   // merge will pick up the missing direct services permanently.
-  "-0.0906046,51.5106685": { canonicalName: "Cannon Street",            displayName: "Cannon Street",    menuName: "Cannon Street", mobileDisplayName: "Cannon St" },
-  "-0.0774191,51.5113281": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
-  "-0.1032417,51.5104871": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
-  "-0.0851473,51.5048764": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
+  "CST": { canonicalName: "Cannon Street",            displayName: "Cannon Street",    menuName: "Cannon Street", mobileDisplayName: "Cannon St" },
+  "FST": { canonicalName: "Fenchurch Street",         displayName: "Fenchurch Street", menuName: "Fenchurch Street", mobileDisplayName: "Fenchurch St" },
+  "BFR": { canonicalName: "Blackfriars",              displayName: "Blackfriars",      menuName: "Blackfriars" },
+  "LBG": { canonicalName: "London Bridge",            displayName: "London Bridge",    menuName: "London Bridge" },
 }
 
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
@@ -408,7 +411,7 @@ const PRIMARY_ORIGINS: Record<string, OriginDef> = {
 // Central London is the canonical default primary and must always sort to
 // the top of any synthetic-primary list it appears in — even if a future
 // synthetic (e.g. "Birmingham") would otherwise alphabetise before it.
-const CENTRAL_LONDON_COORD = "-0.1269,51.5196"
+const CENTRAL_LONDON_COORD = "CLON"
 const byDisplayName = (a: string, b: string) => {
   if (a === CENTRAL_LONDON_COORD) return -1
   if (b === CENTRAL_LONDON_COORD) return 1
@@ -429,51 +432,28 @@ const ADMIN_ONLY_PRIMARIES: string[] = Object.keys(PRIMARY_ORIGINS)
   .filter((k) => PRIMARY_ORIGINS[k]?.adminOnly)
   .sort(byDisplayName)
 
-// localStorage serializers (Phase 3b) — internal state is a coordKey
-// (back-compat with the rest of map.tsx), but on disk we persist
-// station IDs (CRS or 4-char synthetic) so what hits localStorage
-// matches the new canonical identifier scheme. Legacy coord values
-// still load — we detect the comma and pass them through verbatim —
-// so users with pre-Phase-3b storage don't lose their picks. The next
-// write puts an ID in storage, completing the migration in place.
-const originIdSerializer: Serializer<string> = {
-  toStorage: (coord) => resolveCoordKey(coord) ?? coord,
-  fromStorage: (raw) => {
-    const s = raw as string
-    if (s.includes(",")) return s
-    return registryGetCoordKey(s) ?? s
-  },
-}
-const originArrayIdSerializer: Serializer<string[]> = {
-  toStorage: (coords) => coords.map((c) => resolveCoordKey(c) ?? c),
-  fromStorage: (raw) => (raw as string[]).map((s) => {
-    if (s.includes(",")) return s
-    return registryGetCoordKey(s) ?? s
-  }),
-}
-
-// Seeded recents for the primary dropdown — coords pre-populated as if
+// Seeded recents for the primary dropdown — IDs pre-populated as if
 // the user had recently searched for and picked each one. Merged with
 // the actual user recents at render time (user picks float to the top,
 // defaults below — deduped). Picked for major-interchange status,
 // geographic spread, and population catchment.
 const DEFAULT_RECENT_PRIMARIES: string[] = [
-  "-0.1705184,51.4644589",   // Clapham Junction (CLJ)
-  "-0.2435041,51.5321956",   // Willesden Junction (WIJ)
-  "-0.0746988,51.3971695",   // Norwood Junction (NWD)
-  "-0.1064144,51.5648345",   // Finsbury Park (FPK)
-  "-0.0599442,51.588123",    // Tottenham Hale (TOM)
-  "-0.3004067,51.5149803",   // Ealing Broadway (EAL)
-  "0.0232808,51.549251",     // Forest Gate (FOG)
-  "-0.0927317,51.3758448",   // East Croydon (ECR)
-  "0.2191164,51.4474203",    // Dartford (DFD)
-  "0.0887195,51.3736037",    // Orpington (ORP)
-  "-0.3004127,51.4632072",   // Richmond (RMD)
-  "-0.3961114,51.6639446",   // Watford Junction (WFJ)
-  "-0.3276687,51.7504966",   // St Albans City (SAC)
-  "0.1826107,51.5747271",    // Romford (RMF)
-  "-0.4191564,51.5029246",   // Hayes and Harlington (HAY)
-  "-0.104555,51.519964",     // Farringdon (ZFD)
+  "CLJ",   // Clapham Junction (CLJ)
+  "WIJ",   // Willesden Junction (WIJ)
+  "NWD",   // Norwood Junction (NWD)
+  "FPK",   // Finsbury Park (FPK)
+  "TOM",    // Tottenham Hale (TOM)
+  "EAL",   // Ealing Broadway (EAL)
+  "FOG",     // Forest Gate (FOG)
+  "ECR",   // East Croydon (ECR)
+  "DFD",    // Dartford (DFD)
+  "ORP",    // Orpington (ORP)
+  "RMD",   // Richmond (RMD)
+  "WFJ",   // Watford Junction (WFJ)
+  "SAC",   // St Albans City (SAC)
+  "RMF",    // Romford (RMF)
+  "HAY",   // Hayes and Harlington (HAY)
+  "ZFD",     // Farringdon (ZFD)
 ]
 // DEFAULT_RECENT_FRIENDS is declared after FRIEND_ORIGINS below (it's
 // just Object.keys(FRIEND_ORIGINS)) — keeping it close to the source
@@ -488,7 +468,7 @@ const DEFAULT_RECENT_PRIMARIES: string[] = [
 // preference: when any other cluster member would have been the RTT winner
 // but is on the same Thameslink through-service as Farringdon, override back
 // to Farringdon as the departure point.
-const FARRINGDON_COORD = "-0.104555,51.519964"
+const FARRINGDON_COORD = "ZFD"
 const FARRINGDON_CRS = "ZFD"
 
 // Display-name overrides for Central London cluster members whose OSM
@@ -506,9 +486,9 @@ const FARRINGDON_CRS = "ZFD"
 // (search dropdown, primary square, regular destination label,
 // coordToName, recents lookup) reads the cleaner short form.
 const TERMINUS_DISPLAY_OVERRIDES: Record<string, string> = {
-  "-0.1230224,51.5323954": "Kings Cross",       // KGX National Rail
-  "-0.1270027,51.5327196": "St Pancras",        // STP main concourse
-  "-0.1276185,51.5322106": "St Pancras",        // STP HS1 concourse
+  "KGX": "Kings Cross",       // KGX National Rail
+  "STP": "St Pancras",        // STP main concourse
+  "SPL": "St Pancras",        // STP HS1 concourse
 }
 
 // Same-station alias coords inside the Central London cluster — both
@@ -520,7 +500,7 @@ const TERMINUS_DISPLAY_OVERRIDES: Record<string, string> = {
 // two "St Pancras" rows side by side (filter-panel.tsx dedupes by
 // primaryCoord, so both rows must share the same primaryCoord to fold).
 const TERMINUS_COORD_ALIASES: Record<string, string> = {
-  "-0.1276185,51.5322106": "-0.1270027,51.5327196",
+  "SPL": "STP",
 }
 
 // Compute the set of coord keys that "belong" to a given primary — the primary
@@ -556,12 +536,12 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   // cluster reads as a balanced trio. Friend journeys are RTT-derived
   // (scripts/build-friend-journeys-from-rtt.mjs), so coverage matches the
   // primary side rather than the older Google Routes set.
-  "-1.8967682,52.4801267": { canonicalName: "Birmingham",          displayName: "Birmingham", menuName: "Birmingham", isSynthetic: true },
+  "CBIR": { canonicalName: "Birmingham",          displayName: "Birmingham", menuName: "Birmingham", isSynthetic: true },
   // Manchester synthetic — anchor at the centroid of MAN/MCV/MCO. Same
   // RTT-derived journey-file approach as Birmingham; no Google Routes
   // spend was needed thanks to the BMO/BSW + queue junction fetches.
-  "-2.2383003,53.4796574": { canonicalName: "Manchester",          displayName: "Manchester", menuName: "Manchester", isSynthetic: true },
-  "-1.1449555,52.9473037": { canonicalName: "Nottingham",          displayName: "Nottingham", menuName: "Nottingham" },
+  "CMAN": { canonicalName: "Manchester",          displayName: "Manchester", menuName: "Manchester", isSynthetic: true },
+  "NOT": { canonicalName: "Nottingham",          displayName: "Nottingham", menuName: "Nottingham" },
   // Tier 2 — UK city friends, RTT-derived journeys built via
   // scripts/build-friend-journeys-from-rtt.mjs and stored under
   // public/journeys/<slug>.json. Cities with multiple central
@@ -572,49 +552,49 @@ const FRIEND_ORIGINS: Record<string, OriginDef> = {
   // The synthetic coord sits at the geographic mean of the cluster
   // members so the principal station can render as a normal diamond
   // alongside its siblings instead of doubling as the synthetic square.
-  "-3.2048968,55.9485428":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
-  "-4.2547767,55.8604359":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
-  "-3.1749991,51.4787758":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
-  "-2.5804029,51.4490991":  { canonicalName: "Bristol",       displayName: "Bristol",        menuName: "Bristol" },
-  "-2.3567189,51.3776019":  { canonicalName: "Bath",          displayName: "Bath",           menuName: "Bath" },
-  "-1.2699542,51.7534512":  { canonicalName: "Oxford",        displayName: "Oxford",         menuName: "Oxford" },
-  "0.1377154,52.1941089":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
-  "-0.1407393,50.8288602":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
-  "-1.548621,53.794414":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
-  "-2.9831014,53.4056107":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
+  "CEDI":  { canonicalName: "Edinburgh",     displayName: "Edinburgh",      menuName: "Edinburgh", isSynthetic: true },
+  "CGLA":  { canonicalName: "Glasgow",       displayName: "Glasgow",        menuName: "Glasgow", isSynthetic: true },
+  "CCAR":  { canonicalName: "Cardiff",       displayName: "Cardiff",        menuName: "Cardiff", isSynthetic: true },
+  "BRI":  { canonicalName: "Bristol",       displayName: "Bristol",        menuName: "Bristol" },
+  "BTH":  { canonicalName: "Bath",          displayName: "Bath",           menuName: "Bath" },
+  "OXF":  { canonicalName: "Oxford",        displayName: "Oxford",         menuName: "Oxford" },
+  "CBG":   { canonicalName: "Cambridge",     displayName: "Cambridge",      menuName: "Cambridge" },
+  "BTN":  { canonicalName: "Brighton",      displayName: "Brighton",       menuName: "Brighton" },
+  "LDS":    { canonicalName: "Leeds",         displayName: "Leeds",          menuName: "Leeds" },
+  "CLIV":  { canonicalName: "Liverpool",     displayName: "Liverpool",      menuName: "Liverpool", isSynthetic: true },
   // Reading — single-station anchor. Useful as a friend for the
   // M4-corridor commuter belt; not part of the central-Bristol/Cardiff
   // mega-cluster.
-  "-0.9723182,51.4592197":  { canonicalName: "Reading",       displayName: "Reading",        menuName: "Reading" },
-  "-1.616046,54.9683364":   { canonicalName: "Newcastle",     displayName: "Newcastle",      menuName: "Newcastle" },
-  "-1.4621381,53.3783713":  { canonicalName: "Sheffield",     displayName: "Sheffield",      menuName: "Sheffield" },
-  "-1.0937301,53.9577037":  { canonicalName: "York",          displayName: "York",           menuName: "York" },
-  "-1.1236065,52.6321088":  { canonicalName: "Leicester",     displayName: "Leicester",      menuName: "Leicester" },
-  "-1.5135474,52.400739":   { canonicalName: "Coventry",      displayName: "Coventry",       menuName: "Coventry" },
-  "-1.462612,52.9165243":   { canonicalName: "Derby",         displayName: "Derby",          menuName: "Derby" },
-  "-2.1810781,53.0079887":  { canonicalName: "Stoke-on-Trent",displayName: "Stoke-on-Trent", menuName: "Stoke-on-Trent", mobileDisplayName: "Stoke" },
-  "-2.120242,52.5879884":   { canonicalName: "Wolverhampton", displayName: "Wolverhampton",  menuName: "Wolverhampton",  mobileDisplayName: "Wolves" },
-  "-4.1433925,50.3780967":  { canonicalName: "Plymouth",      displayName: "Plymouth",       menuName: "Plymouth" },
-  "-3.5435703,50.7292155":  { canonicalName: "Exeter",        displayName: "Exeter",         menuName: "Exeter" },
-  "-1.4142289,50.9074977":  { canonicalName: "Southampton",   displayName: "Southampton",    menuName: "Southampton",    mobileDisplayName: "S'hampton" },
-  "-1.0997297,50.7974525":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
-  "1.3076876,52.626307":    { canonicalName: "Norwich",       displayName: "Norwich",        menuName: "Norwich" },
-  "1.1447878,52.0504188":   { canonicalName: "Ipswich",       displayName: "Ipswich",        menuName: "Ipswich" },
-  "-0.2503162,52.5746038":  { canonicalName: "Peterborough",  displayName: "Peterborough",   menuName: "Peterborough",   mobileDisplayName: "P'borough" },
-  "-1.1399149,53.5219538":  { canonicalName: "Doncaster",     displayName: "Doncaster",      menuName: "Doncaster" },
-  "-0.3475977,53.7438351":  { canonicalName: "Hull",          displayName: "Hull",           menuName: "Hull" },
-  "-2.0976346,57.1426487":  { canonicalName: "Aberdeen",      displayName: "Aberdeen",       menuName: "Aberdeen" },
-  "-4.2227142,57.4802331":  { canonicalName: "Inverness",     displayName: "Inverness",      menuName: "Inverness" },
-  "-3.9403729,51.6256789":  { canonicalName: "Swansea",       displayName: "Swansea",        menuName: "Swansea" },
-  "-0.7748261,52.0342006":  { canonicalName: "Milton Keynes", displayName: "Milton Keynes",  menuName: "Milton Keynes",  mobileDisplayName: "Milton K" },
-  "-0.9069697,52.2373719":  { canonicalName: "Northampton",   displayName: "Northampton",    menuName: "Northampton",    mobileDisplayName: "N'hampton" },
-  "-2.4326364,53.0889629":  { canonicalName: "Crewe",         displayName: "Crewe",          menuName: "Crewe" },
-  "-2.7071573,53.7552898":  { canonicalName: "Preston",       displayName: "Preston",        menuName: "Preston" },
-  "-2.807799,54.0488361":   { canonicalName: "Lancaster",     displayName: "Lancaster",      menuName: "Lancaster" },
-  "-2.9330473,54.8902575":  { canonicalName: "Carlisle",      displayName: "Carlisle",       menuName: "Carlisle" },
+  "RDG":  { canonicalName: "Reading",       displayName: "Reading",        menuName: "Reading" },
+  "NCL":   { canonicalName: "Newcastle",     displayName: "Newcastle",      menuName: "Newcastle" },
+  "SHF":  { canonicalName: "Sheffield",     displayName: "Sheffield",      menuName: "Sheffield" },
+  "YRK":  { canonicalName: "York",          displayName: "York",           menuName: "York" },
+  "LEI":  { canonicalName: "Leicester",     displayName: "Leicester",      menuName: "Leicester" },
+  "COV":   { canonicalName: "Coventry",      displayName: "Coventry",       menuName: "Coventry" },
+  "DBY":   { canonicalName: "Derby",         displayName: "Derby",          menuName: "Derby" },
+  "SOT":  { canonicalName: "Stoke-on-Trent",displayName: "Stoke-on-Trent", menuName: "Stoke-on-Trent", mobileDisplayName: "Stoke" },
+  "WVH":   { canonicalName: "Wolverhampton", displayName: "Wolverhampton",  menuName: "Wolverhampton",  mobileDisplayName: "Wolves" },
+  "PLY":  { canonicalName: "Plymouth",      displayName: "Plymouth",       menuName: "Plymouth" },
+  "EXD":  { canonicalName: "Exeter",        displayName: "Exeter",         menuName: "Exeter" },
+  "SOU":  { canonicalName: "Southampton",   displayName: "Southampton",    menuName: "Southampton",    mobileDisplayName: "S'hampton" },
+  "CPOR":  { canonicalName: "Portsmouth",    displayName: "Portsmouth",     menuName: "Portsmouth",     mobileDisplayName: "P'mouth", isSynthetic: true },
+  "NRW":    { canonicalName: "Norwich",       displayName: "Norwich",        menuName: "Norwich" },
+  "IPS":   { canonicalName: "Ipswich",       displayName: "Ipswich",        menuName: "Ipswich" },
+  "PBO":  { canonicalName: "Peterborough",  displayName: "Peterborough",   menuName: "Peterborough",   mobileDisplayName: "P'borough" },
+  "DON":  { canonicalName: "Doncaster",     displayName: "Doncaster",      menuName: "Doncaster" },
+  "HUL":  { canonicalName: "Hull",          displayName: "Hull",           menuName: "Hull" },
+  "ABD":  { canonicalName: "Aberdeen",      displayName: "Aberdeen",       menuName: "Aberdeen" },
+  "INV":  { canonicalName: "Inverness",     displayName: "Inverness",      menuName: "Inverness" },
+  "SWA":  { canonicalName: "Swansea",       displayName: "Swansea",        menuName: "Swansea" },
+  "MKC":  { canonicalName: "Milton Keynes", displayName: "Milton Keynes",  menuName: "Milton Keynes",  mobileDisplayName: "Milton K" },
+  "NMP":  { canonicalName: "Northampton",   displayName: "Northampton",    menuName: "Northampton",    mobileDisplayName: "N'hampton" },
+  "CRE":  { canonicalName: "Crewe",         displayName: "Crewe",          menuName: "Crewe" },
+  "PRE":  { canonicalName: "Preston",       displayName: "Preston",        menuName: "Preston" },
+  "LAN":   { canonicalName: "Lancaster",     displayName: "Lancaster",      menuName: "Lancaster" },
+  "CAR":  { canonicalName: "Carlisle",      displayName: "Carlisle",       menuName: "Carlisle" },
 }
 
-// FRIEND_ORIGIN_CLUSTER + ALL_CLUSTER_MEMBER_COORDS now live in
+// FRIEND_ORIGIN_CLUSTER + ALL_CLUSTER_MEMBER_IDS now live in
 // lib/clusters.ts (see import at the top of this file).
 
 // Flat arrays of keys for filter-panel's "list of origins to render" props.
@@ -645,26 +625,26 @@ const FRIEND_SLUGS: Record<string, string> = (() => {
 // or the single-station coord for everywhere else). Other friends still
 // exist in FRIEND_ORIGINS for searchability — they're just not seeded.
 const DEFAULT_RECENT_FRIENDS: string[] = [
-  "-1.8967682,52.4801267",   // Birmingham (BHM·BMO·BSW cluster)
-  "-0.9723182,51.4592197",   // Reading
-  "-0.1407393,50.8288602",   // Brighton
-  "-1.1236065,52.6321088",   // Leicester
-  "-2.2383003,53.4796574",   // Manchester (MAN·MCV·MCO cluster)
-  "-1.5135474,52.400739",    // Coventry
-  "-2.5804029,51.4490991",   // Bristol (Temple Meads only — not a cluster)
-  "-1.1449555,52.9473037",   // Nottingham
-  "-1.548621,53.794414",     // Leeds
-  "-1.4142289,50.9074977",   // Southampton (Central only — not a cluster)
-  "-3.1749991,51.4787758",   // Cardiff (CDF·CDQ cluster, centroid anchor)
-  "-2.9831014,53.4056107",   // Liverpool (LIV·LVC·LVJ cluster, centroid anchor)
-  "-1.4621381,53.3783713",   // Sheffield
-  "-1.2699542,51.7534512",   // Oxford
-  "-1.0997297,50.7974525",   // Portsmouth (PMS·PMH cluster, centroid anchor)
-  "0.1377154,52.1941089",    // Cambridge
-  "-0.7748261,52.0342006",   // Milton Keynes
-  "-4.2547767,55.8604359",   // Glasgow (GLC·GLQ cluster, centroid anchor)
-  "-1.462612,52.9165243",    // Derby
-  "-3.2048968,55.9485428",   // Edinburgh (EDB·HYM cluster, centroid anchor)
+  "CBIR",   // Birmingham (BHM·BMO·BSW cluster)
+  "RDG",   // Reading
+  "BTN",   // Brighton
+  "LEI",   // Leicester
+  "CMAN",   // Manchester (MAN·MCV·MCO cluster)
+  "COV",    // Coventry
+  "BRI",   // Bristol (Temple Meads only — not a cluster)
+  "NOT",   // Nottingham
+  "LDS",     // Leeds
+  "SOU",   // Southampton (Central only — not a cluster)
+  "CCAR",   // Cardiff (CDF·CDQ cluster, centroid anchor)
+  "CLIV",   // Liverpool (LIV·LVC·LVJ cluster, centroid anchor)
+  "SHF",   // Sheffield
+  "OXF",   // Oxford
+  "CPOR",   // Portsmouth (PMS·PMH cluster, centroid anchor)
+  "CBG",    // Cambridge
+  "MKC",   // Milton Keynes
+  "CGLA",   // Glasgow (GLC·GLQ cluster, centroid anchor)
+  "DBY",    // Derby
+  "CEDI",   // Edinburgh (EDB·HYM cluster, centroid anchor)
 ]
 
 // Resolve the effective journey from a friend origin to a destination,
@@ -810,12 +790,26 @@ function buildNameKeyedMatrix(): TerminalMatrix {
     ...(terminalMatrixData as Record<string, Record<string, unknown>>),
   }
   const out: Record<string, Record<string, unknown>> = {}
+  // Consumers (tryComposeViaPrimaryHop, stitchJourney's matrix lookup,
+  // hasFullDataAtCoord's tflHopNames check) all index by the CANONICAL
+  // terminal name — "St Pancras", "Kings Cross", "Liverpool Street" —
+  // matching londonTerminals.json. registryGetName returns the raw OSM
+  // name ("London St. Pancras International") which doesn't collide
+  // with the canonical form, so we run it through matchTerminal first.
+  // For non-terminal stations matchTerminal returns null and we keep
+  // the raw name (those rows aren't queried by the canonical-name
+  // consumers anyway, but stay accessible by their OSM name).
+  function canonical(id: string): string | undefined {
+    const raw = registryGetName(id)
+    if (!raw) return undefined
+    return matchTerminal(raw, londonTerminalsData as Terminal[]) ?? raw
+  }
   for (const [outerId, inner] of Object.entries(merged)) {
-    const outerName = registryGetName(outerId)
+    const outerName = canonical(outerId)
     if (!outerName) continue   // unknown ID — drop the row
     const innerOut: Record<string, unknown> = {}
     for (const [innerId, hop] of Object.entries(inner)) {
-      const innerName = registryGetName(innerId)
+      const innerName = canonical(innerId)
       if (innerName) innerOut[innerName] = hop
     }
     out[outerName] = innerOut
@@ -1286,8 +1280,11 @@ function tryComposeViaTerminal(
       // the stitched journey's own polylineCoords. Without this the hover
       // polyline for composed journeys showed nothing for routes like
       // CLJ→Marlow via Waterloo+Paddington.
+      // hub.pCoord is a station ID post Phase 3c (origin-routes is
+      // ID-keyed); resolve to a real coord before parsing into lng/lat.
       const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
-      const { lng: hLng, lat: hLat } = parseCoordKey(hub.pCoord)
+      const hubCoord = registryGetCoordKey(hub.pCoord) ?? ""
+      const { lng: hLng, lat: hLat } = parseCoordKey(hubCoord)
       let polylineCoords: [number, number][] = [[cLng, cLat], [hLng, hLat]]
       if (T.name !== hubCanonical) {
         const hop = terminalMatrix[hubCanonical]?.[T.name]
@@ -1339,8 +1336,8 @@ const WALKING_HOPS: Record<string, Record<string, { minutes: number }>> = {
   // Unlocks CLJ→YAL class journeys: CLJ→WAT (rail) → walk → WAE →
   // Paddock Wood (rail) → Yalding (branch rail). Both sides are in
   // origin-routes.json (WAE has its own RTT-fetched entry).
-  "-0.112801,51.5028379":   { "-0.1082027,51.5042171": { minutes: 5 } },  // WAT → WAE
-  "-0.1082027,51.5042171":  { "-0.112801,51.5028379":  { minutes: 5 } },  // WAE → WAT
+  "WAT":   { "WAE": { minutes: 5 } },  // WAT → WAE
+  "WAE":  { "WAT":  { minutes: 5 } },  // WAE → WAT
 }
 
 /**
@@ -1397,10 +1394,16 @@ function tryComposeViaWalkingDoubleHub(
           bufH3 + h3ToD.minMinutes
         if (best != null && total >= best.mins) continue
         const h3Name = h3Routes.name ?? ""
+        // h1.pCoord / h2Coord / h3Coord / destCoordKey are station IDs
+        // post Phase 3c (origin-routes + the dest arg is a feature id).
+        // Resolve each to its real coord via the registry before
+        // parseCoordKey, otherwise the polyline becomes NaN-laced and
+        // the hover-line either vanishes or collapses to a straight
+        // origin→dest segment.
         const { lng: cLng, lat: cLat } = parseCoordKey(customCoord)
-        const { lng: h1Lng, lat: h1Lat } = parseCoordKey(h1.pCoord)
-        const { lng: h2Lng, lat: h2Lat } = parseCoordKey(h2Coord)
-        const { lng: h3Lng, lat: h3Lat } = parseCoordKey(h3Coord)
+        const { lng: h1Lng, lat: h1Lat } = parseCoordKey(registryGetCoordKey(h1.pCoord) ?? "")
+        const { lng: h2Lng, lat: h2Lat } = parseCoordKey(registryGetCoordKey(h2Coord) ?? "")
+        const { lng: h3Lng, lat: h3Lat } = parseCoordKey(registryGetCoordKey(h3Coord) ?? "")
         // Polyline: home → H1 → H2 (walking segment, straight line) +
         // H2→H3 calling-points + H3→D calling-points.
         // Polyline approximated as straight segments between the
@@ -1411,7 +1414,7 @@ function tryComposeViaWalkingDoubleHub(
         // are acceptable for this edge case — the user-visible
         // improvement (a hover-polyline at all rather than none) is
         // the main thing.
-        const { lng: dLng, lat: dLat } = parseCoordKey(destCoordKey)
+        const { lng: dLng, lat: dLat } = parseCoordKey(registryGetCoordKey(destCoordKey) ?? "")
         const polylineCoords: [number, number][] = [
           [cLng, cLat],
           [h1Lng, h1Lat],
@@ -1718,8 +1721,7 @@ export default function HikeMap() {
   // Users with the old name string in localStorage get translated below via migrateOriginKey.
   const [primaryOrigin, setPrimaryOriginRaw] = usePersistedState(
     "ttg:primaryOrigin",
-    "-0.1269,51.5196",
-    originIdSerializer,
+    "CLON",
   )
   // Phase 2: admin-mode-only list of custom-primary coord keys the user has
   // previously selected via the dropdown's search bar. Surfaces them as quick-
@@ -1730,7 +1732,6 @@ export default function HikeMap() {
   const [recentCustomPrimaries, setRecentCustomPrimaries] = usePersistedState<string[]>(
     "ttg:recentCustomPrimaries",
     [],
-    originArrayIdSerializer,
   )
   // Mirror of recentCustomPrimaries on the friend side — coord keys the
   // user has previously picked as a friend's home. Merged with
@@ -1739,37 +1740,65 @@ export default function HikeMap() {
   const [recentCustomFriends, setRecentCustomFriends] = usePersistedState<string[]>(
     "ttg:recentCustomFriends",
     [],
-    originArrayIdSerializer,
   )
-  // One-shot localStorage migration: name → coord key, and reset if the stored
-  // coord isn't a current primary option (e.g. we removed the Liverpool Street
-  // standalone primary — users who had LST selected should fall back to default).
-  // A custom-primary coord (from the search bar) is also valid: recognised by
-  // being present in recentCustomPrimaries, which persists independently.
-  // useEffect (rather than useState lazy init) because usePersistedState hydrates
-  // from localStorage asynchronously via its own effect.
+  // One-shot localStorage migration. Three cases the stored value can be in:
+  //   1. A canonical station ID (current shape) — leave alone.
+  //   2. A legacy coordKey "lng,lat" (pre-Phase-3c) — forward-translate
+  //      via resolveCoordKey. Phase 3a/3b wrote IDs to storage but
+  //      readers translated them back to coords, so users who upgraded
+  //      mid-flight can hold either form.
+  //   3. A legacy canonical name (pre-Phase-2 era) — match against
+  //      PRIMARY_ORIGINS by canonicalName via migrateOriginKey.
+  // Anything that fails all three resets to "CLON" (Central London).
+  // Custom-primary IDs from the search bar count as valid even when
+  // they're not in PRIMARY_ORIGINS, recognised via recentCustomPrimaries.
+  // useEffect (rather than useState lazy init) because usePersistedState
+  // hydrates from localStorage asynchronously via its own effect.
   useEffect(() => {
     if (!primaryOrigin) return
-    if (!primaryOrigin.includes(",")) {
-      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "-0.1269,51.5196"))
+    if (primaryOrigin.includes(",")) {
+      // Legacy coord — forward-translate to ID.
+      setPrimaryOriginRaw(resolveCoordKey(primaryOrigin) ?? "CLON")
     } else if (!PRIMARY_ORIGINS[primaryOrigin] && !recentCustomPrimaries.includes(primaryOrigin)) {
-      // Stored coord isn't a valid primary anymore — reset to default.
-      setPrimaryOriginRaw("-0.1269,51.5196")
+      // Either an old name string OR an ID we no longer recognise.
+      // migrateOriginKey covers the name-string case via canonicalName
+      // matching; if neither matches, it returns "CLON".
+      setPrimaryOriginRaw(migrateOriginKey(primaryOrigin, PRIMARY_ORIGINS, "CLON"))
     }
   }, [primaryOrigin, setPrimaryOriginRaw, recentCustomPrimaries])
 
-  // Recents-list cleanup: any synthetic primary anchor that ends up in the
-  // recents list gets removed, since synthetic primaries already have a
-  // permanent slot in the dropdown and shouldn't appear twice.
+  // Recents-list cleanup. Forward-translates legacy coord entries (same
+  // reasoning as the primaryOrigin effect above) AND removes synthetic
+  // primary anchors, since synthetic primaries already have a permanent
+  // slot in the dropdown and shouldn't appear twice.
   useEffect(() => {
-    const cleaned = recentCustomPrimaries.filter((c) => {
-      if (PRIMARY_ORIGINS[c]?.isSynthetic) return false
-      return true
-    })
-    if (cleaned.length !== recentCustomPrimaries.length) {
-      setRecentCustomPrimaries(cleaned)
+    const cleaned: string[] = []
+    let changed = false
+    for (const c of recentCustomPrimaries) {
+      const id = c.includes(",") ? resolveCoordKey(c) : c
+      if (!id) { changed = true; continue }
+      if (id !== c) changed = true
+      if (PRIMARY_ORIGINS[id]?.isSynthetic) { changed = true; continue }
+      cleaned.push(id)
     }
+    if (changed) setRecentCustomPrimaries(cleaned)
   }, [recentCustomPrimaries, setRecentCustomPrimaries])
+
+  // Friend recents: forward-translate legacy coord entries to IDs.
+  // No synthetic-anchor exclusion here — friend synthetic anchors aren't
+  // permanent dropdown slots, they live in DEFAULT_RECENT_FRIENDS like
+  // any other seed, so the recents list can hold them.
+  useEffect(() => {
+    const cleaned: string[] = []
+    let changed = false
+    for (const c of recentCustomFriends) {
+      const id = c.includes(",") ? resolveCoordKey(c) : c
+      if (!id) { changed = true; continue }
+      if (id !== c) changed = true
+      cleaned.push(id)
+    }
+    if (changed) setRecentCustomFriends(cleaned)
+  }, [recentCustomFriends, setRecentCustomFriends])
   // useTransition lets us defer the heavy stations-recompute that happens
   // when primaryOrigin changes. startTransition wraps the state setter;
   // React paints the dropdown close + loading spinner IMMEDIATELY (those
@@ -2060,7 +2089,13 @@ export default function HikeMap() {
   // resumes its normal behaviour. Friend-side is intentionally NOT mirrored
   // here — friends keep redirecting to the Central London anchor for now.
   const isLondonTerminusActive = MEMBER_TO_SYNTHETIC[primaryOrigin] === CENTRAL_LONDON_ANCHOR
-  const originCoords = parseCoordKey(primaryOrigin)
+  // Render-time anchor coord for the primary origin. primaryOrigin is
+  // an ID post Phase 3c; resolve through the registry to get the
+  // lng/lat for layers that draw at the primary's position.
+  const originCoords = useMemo(() => {
+    const ck = registryGetCoordKey(primaryOrigin)
+    return ck ? parseCoordKey(ck) : { lng: 0, lat: 0 }
+  }, [primaryOrigin])
   // Ref keeps theme accessible inside the style.load callback (which is a stale
   // closure from handleMapLoad). Without this, registerIcons would always see
   // whatever theme was active when the map first loaded.
@@ -2185,6 +2220,25 @@ export default function HikeMap() {
   useEffect(() => {
     if (primaryOrigin) ensureOriginLoaded(primaryOrigin)
   }, [primaryOrigin, ensureOriginLoaded])
+  // Always pre-load a handful of polyline-rich source journeys —
+  // Farringdon (ZFD) for southern + central + Thameslink lines,
+  // Birmingham (BHM) for the WCML / Midlands corridor. The routing
+  // memo's deriveRichPolyline trims these into the active primary's
+  // hover polyline, turning straight CRS-chain segments into real-
+  // track curves. Without these pre-loads, distant destinations like
+  // Dudley Port (DDP, BHM-area) and Sudbury (SUY, off the Stratford
+  // line) drew only origin→dest straight lines.
+  //
+  // Depends on baseStations because ensureOriginLoaded merges into
+  // the baseStations features — firing before baseStations is set
+  // would land in setBaseStations((prev) => prev === null) and the
+  // merge silently no-ops, losing the data forever (the second call
+  // is a no-op because loadedOriginsRef has already cached the id).
+  useEffect(() => {
+    if (!baseStations) return
+    ensureOriginLoaded("ZFD")
+    ensureOriginLoaded("BHM")
+  }, [baseStations, ensureOriginLoaded])
   // Precomputed routing diffs — loaded from `/routing/<slug>.json`
   // files keyed by primary slug. Shape per entry:
   //     { [coordKey]: { ...routing-added-or-changed-fields } }
@@ -2207,12 +2261,12 @@ export default function HikeMap() {
   // and don't benefit from a precomputed routing diff — see the
   // explanatory note above buildDiff in the regen handler for why.
   const PRIMARY_SLUG: Record<string, string> = {
-    "-0.1269,51.5196":       "central-london",
-    "-0.0035472,51.541289":  "stratford",
+    "CLON":       "central-london",
+    "SRA":  "stratford",
     // Synthetic Stratford midpoint anchor — uses the same routing diff
     // as the SRA primary above; the diff merge in routedStations mirrors
     // SRA's journey data under this synthetic key so filters resolve.
-    "-0.0061483,51.5430422": "stratford",
+    "CSTR": "stratford",
   }
   // Lazy-fetch the precomputed routing diff for the currently active
   // primary. Fires on mount (for the default home) and whenever the
@@ -2230,9 +2284,32 @@ export default function HikeMap() {
     fetch(`/routing/${slug}.json`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data: Record<string, Record<string, unknown>> | null) => {
-        if (data && typeof data === "object") {
-          setPrecomputedRoutingByPrimary((prev) => ({ ...prev, [slug]: data }))
+        if (!data || typeof data !== "object") return
+        // The on-disk file is still keyed by destination coordKey at
+        // the outer level AND by primary coordKey inside each entry's
+        // `journeys` map (it was generated pre Phase 3c). Translate
+        // every inner journey key forward to a station ID so the
+        // runtime — which now reads f.properties.journeys[primaryId]
+        // — finds the entry. The outer destination keying stays
+        // coord-based to match the diff merge below, which still
+        // looks up by f.properties.coordKey.
+        const translated: Record<string, Record<string, unknown>> = {}
+        for (const [destCoord, delta] of Object.entries(data)) {
+          const next: Record<string, unknown> = { ...delta }
+          const journeys = (delta as { journeys?: Record<string, unknown> }).journeys
+          if (journeys) {
+            const remappedJourneys: Record<string, unknown> = {}
+            for (const [primaryCoord, entry] of Object.entries(journeys)) {
+              const id = primaryCoord.includes(",")
+                ? (resolveCoordKey(primaryCoord) ?? primaryCoord)
+                : primaryCoord
+              remappedJourneys[id] = entry
+            }
+            next.journeys = remappedJourneys
+          }
+          translated[destCoord] = next
         }
+        setPrecomputedRoutingByPrimary((prev) => ({ ...prev, [slug]: translated }))
       })
       .catch(() => { /* swallow — fall through to live compute */ })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2337,6 +2414,9 @@ export default function HikeMap() {
   // `hovered` so the two animations always start/stop together.
   const [hoveredDiamond, setHoveredDiamond] = useState<{
     coordKey: string
+    // Canonical station ID — used to prefix the diamond label in admin
+    // mode (matches the regular hover label's "TRI Tring" treatment).
+    id?: string
     lng: number
     lat: number
     name: string
@@ -2462,18 +2542,18 @@ export default function HikeMap() {
   const ORIGIN_SLUGS: Record<string, string> = {
     // Primary-side journey files (same shape as friend files, just
     // generated for primaries we want fully precomputed).
-    "-0.104555,51.519964": "farringdon",
-    "-0.1239491,51.530609": "kings-cross",
-    "-0.0035472,51.541289": "stratford",
-    "-1.1449555,52.9473037": "nottingham",
-    "-1.898694,52.4776459": "birmingham",
+    "ZFD": "farringdon",
+    "UKCR": "kings-cross",
+    "SRA": "stratford",
+    "NOT": "nottingham",
+    "BHM": "birmingham",
     // Cluster-anchor coords for Stratford / Birmingham / Manchester —
     // ensureOriginLoaded stamps the loaded journeys under whatever
     // origin coord we pass in, so passing the synthetic coord makes
     // journeys[syntheticAnchor] resolve directly without any fallback.
-    "-0.0061483,51.5430422": "stratford",
-    "-1.8967682,52.4801267": "birmingham",
-    "-2.2383003,53.4796574": "manchester",
+    "CSTR": "stratford",
+    "CBIR": "birmingham",
+    "CMAN": "manchester",
     // Every other friend in FRIEND_ORIGINS — its anchor coord maps to
     // the slug derived from its canonicalName. Without this, picking
     // Leicester (or any of the 35 other tier-2 friends) would leave the
@@ -2761,16 +2841,17 @@ export default function HikeMap() {
     // as primaries (direct destinations from their own lines render)
     // but custom-primary composition into central London breaks, so
     // we render them as 'Coming soon' disabled rows in search.
-    const dataCoords = new Set(Object.keys(originRoutesData))
+    const dataIds = new Set(Object.keys(originRoutesData))
     const TERMINI_CRS = new Set([
       "KGX","STP","EUS","CHX","VIC","WAT","WAE","MYB","PAD",
       "MOG","LST","CST","FST","BFR","LBG",
     ])
     const tflHopNames = new Set(Object.keys(terminalMatrix))
-    const originRoutesByCoord = originRoutesData as Record<string, { crs?: string; name?: string }>
-    const hasFullDataAtCoord = (c: string): boolean => {
-      if (!dataCoords.has(c)) return false
-      const entry = originRoutesByCoord[c]
+    // origin-routes is ID-keyed post Phase 2a; the data lookup is by
+    // station ID throughout post Phase 3c.
+    const hasFullData = (id: string): boolean => {
+      if (!dataIds.has(id)) return false
+      const entry = (originRoutesData as Record<string, { crs?: string; name?: string }>)[id]
       if (!entry?.crs) return false
       if (TERMINI_CRS.has(entry.crs)) return true
       return tflHopNames.has(entry.name ?? "")
@@ -2797,34 +2878,38 @@ export default function HikeMap() {
       // invisible to search before this was widened.
       if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
       const coord = `${lng},${lat}`
+      // For real NR stations, the CRS IS the canonical station ID.
+      const id = crs
       if (excludedPrimariesSet.has(coord)) continue
       const stationName = f.properties.name as string
-      // Resolve to the parent cluster primary if this coord is a cluster
-      // member. clusterMemberToPrimary now INCLUDES synthetic clusters,
-      // so a search for "Kings Cross" lands on the Central London
-      // synthetic — the cluster routing covers it correctly, whereas
-      // KGX as a standalone custom primary had degraded coverage.
-      const primaryCoord = clusterMemberToPrimary[coord] ?? coord
+      // Resolve to the parent cluster primary if this station is a
+      // cluster member. clusterMemberToPrimary is keyed by member ID
+      // (post Phase 3c) and returns the anchor ID.
+      const primaryAnchor = clusterMemberToPrimary[id] ?? id
       // Cluster-membership is read from ALL_CLUSTERS so destination-
       // only clusters (Windsor, Maidstone…) collapse member rows under
       // the cluster's displayName, just like primary-side clusters do.
       // Falls back to PRIMARY_ORIGINS' menuName when present (preserves
       // the "Central London" wording for the London cluster).
-      const hasCluster = !!ALL_CLUSTERS[primaryCoord]
+      const hasCluster = !!ALL_CLUSTERS[primaryAnchor]
       const displayLabel = hasCluster
-        ? (PRIMARY_ORIGINS[primaryCoord]?.menuName
-          ?? ALL_CLUSTERS[primaryCoord]?.displayName
+        ? (PRIMARY_ORIGINS[primaryAnchor]?.menuName
+          ?? ALL_CLUSTERS[primaryAnchor]?.displayName
           ?? stationName)
         : stationName
-      // Check primaryCoord first so cluster members (St Pancras, Waterloo
+      // Check primaryAnchor first so cluster members (St Pancras, Waterloo
       // East, etc.) inherit their parent's data status — picking St Pancras
       // redirects to the KX primary, which has data.
-      const hasData = hasFullDataAtCoord(primaryCoord) || hasFullDataAtCoord(coord)
+      const hasData = hasFullData(primaryAnchor) || hasFullData(id)
       out.push({
-        coord,
+        // SearchableStation.coord stays in the type for back-compat
+        // with the filter-panel prop shape, but its value is now a
+        // canonical station ID. All consumers compare it against
+        // primaryOrigin / friendOrigin (also IDs).
+        coord: id,
         name: stationName,
         crs,
-        primaryCoord,
+        primaryCoord: primaryAnchor,
         displayLabel,
         hasData,
       })
@@ -2842,16 +2927,16 @@ export default function HikeMap() {
     // bbox filter above, which is critical for clusters like Maidstone
     // and Folkestone whose member coords sit east of the bbox.
     const seenAnchors = new Set<string>()
-    for (const [coord, def] of Object.entries(PRIMARY_ORIGINS)) {
+    for (const [anchorId, def] of Object.entries(PRIMARY_ORIGINS)) {
       if (!def?.isSynthetic) continue
       if (def.adminOnly) continue
-      seenAnchors.add(coord)
-      const label = def.menuName ?? def.canonicalName ?? coord
+      seenAnchors.add(anchorId)
+      const label = def.menuName ?? def.canonicalName ?? anchorId
       out.push({
-        coord,
+        coord: anchorId,
         name: label,           // searchable via "central london" / "stratford"
         crs: "",
-        primaryCoord: coord,
+        primaryCoord: anchorId,
         displayLabel: label,
         // Synthetics in PRIMARY_ORIGINS are fully usable as primaries —
         // the cluster covers routing via terminal-matrix even if the
@@ -2859,13 +2944,13 @@ export default function HikeMap() {
         hasData: true,
       })
     }
-    for (const [coord, def] of Object.entries(ALL_CLUSTERS)) {
-      if (seenAnchors.has(coord)) continue
+    for (const [anchorId, def] of Object.entries(ALL_CLUSTERS)) {
+      if (seenAnchors.has(anchorId)) continue
       out.push({
-        coord,
+        coord: anchorId,
         name: def.displayName, // searchable via "windsor" / "maidstone"
         crs: "",
-        primaryCoord: coord,
+        primaryCoord: anchorId,
         displayLabel: def.displayName,
         // Destination-only clusters can't act as primaries yet — render
         // disabled so the user knows the cluster exists but isn't
@@ -2875,9 +2960,12 @@ export default function HikeMap() {
     }
     return out
   }, [baseStations, excludedPrimariesSet, clusterMemberToPrimary])
-  // Coord → display name lookup — used to render the recents list in the
-  // filter-panel dropdown, and to show the custom primary's name in the
-  // trigger / map label. Same source data as searchableStations.
+  // Origin-id → display-name lookup. Used to render the recents list
+  // in the filter-panel dropdown, and to show the custom primary's
+  // name in the trigger / map label. Keyed by station ID so callers
+  // looking up via primaryOrigin / friendOrigin (both IDs post Phase
+  // 3c) hit the right entry. Field name retained for back-compat
+  // with the filter-panel prop shape.
   const coordToName = useMemo(() => {
     const map: Record<string, string> = {}
     for (const s of searchableStations) map[s.coord] = s.name
@@ -3053,6 +3141,298 @@ export default function HikeMap() {
   // this expensive pass (~10s stall).
   const routedStations = useMemo(() => {
     if (!baseStations) return null
+    // CRS → coord lookup. Built once and shared between the diff fast
+    // path's polyline augmentation (below) and the live compute path's
+    // polyline assembly (further down).
+    const crsToCoord: Record<string, [number, number]> = {}
+    for (const f of baseStations.features) {
+      const crs = f.properties?.["ref:crs"] as string | undefined
+      if (!crs) continue
+      const [lng, lat] = f.geometry.coordinates as [number, number]
+      crsToCoord[crs] = [lng, lat]
+    }
+    // Display-name → that station's full journeys map. Built once so
+    // multi-leg polyline builders can look up an intermediate stop's
+    // sibling polylines: e.g. CLON→Sutton Coldfield's first leg ends at
+    // Lichfield Trent Valley, and LTV's feature has a Farringdon-sourced
+    // encoded polyline that traces the curvy WCML Euston→TAM→LTV track.
+    // Without this lookup the multi-leg builder could only see
+    // siblings on the FINAL destination (SUT) — which has no encoded
+    // polyline anywhere — and falls back to a straight RTT chain.
+    type NamedJourneys = Record<string, { polyline?: string; polylineCoords?: [number, number][] }>
+    const nameToFeatureJourneys: Record<string, NamedJourneys> = {}
+    for (const f of baseStations.features) {
+      const name = f.properties?.name as string | undefined
+      if (!name) continue
+      const journeys = (f.properties as { journeys?: NamedJourneys }).journeys
+      if (journeys) nameToFeatureJourneys[name] = journeys
+    }
+    // Helper: rebuild a precomputed journey's polyline using the
+    // richest source available. Two upgrade paths, in priority order:
+    //
+    //   1. SIBLING ENCODED POLYLINE — when the destination feature has
+    //      a sibling-origin journey (e.g. Farringdon's pre-fetched
+    //      Google Routes journey) with an `polyline` encoded string,
+    //      decode it and trim to the segment from the leg-departure
+    //      terminal onwards. Produces real-track curves through every
+    //      intermediate stop on the line. This is what makes
+    //      CLON-as-primary's HND polyline follow the actual GWR track
+    //      rather than zig-zag straight between stations.
+    //
+    //   2. RTT CRS-CHAIN FALLBACK — straight segments between every
+    //      calling point's coord. Always at least as detailed as the
+    //      precomputed diff entry (which sometimes trimmed to as few
+    //      as 3 coords).
+    //
+    // Returns null when neither produces something richer than what's
+    // already stored. Skips entries that already carry their own
+    // encoded `polyline` string — those are already real-track.
+    // Maps a station's display name (e.g. "Euston", "Birmingham New
+    // Street", "Dudley Port") to its canonical station ID. Used to
+    // walk a multi-leg journey's leg-departure/arrival labels back
+    // into the RTT data so we can build a polyline per leg.
+    // Resolution order:
+    //   1. originRoutes — covers the 344 origins we've fetched, with
+    //      matchTerminal canonicalisation (so "London Euston" → EUS).
+    //   2. station-registry — covers EVERY named station, including
+    //      destinations like "Dudley Port" that aren't fetched as
+    //      origins.
+    function nameToOriginRoutesId(name: string | undefined): string | undefined {
+      if (!name) return undefined
+      const canonical = matchTerminal(name, londonTerminals) ?? name
+      for (const [id, data] of Object.entries(originRoutes)) {
+        const dataCanonical = matchTerminal(data.name, londonTerminals) ?? data.name
+        if (dataCanonical === canonical || data.name === canonical) return id
+      }
+      return registryResolveName(canonical) ?? registryResolveName(name)
+    }
+    // Rewrite a journey whose first leg departs OUT of the active
+    // primary's cluster by prepending a leg from a cluster member
+    // that reaches that station directly. Pure data-fixup: the
+    // precomputed routing diffs sometimes hold stale entries whose
+    // first leg starts at a non-cluster station (e.g. CLON → Sudbury
+    // currently begins "Stratford → Marks Tey", with no preceding
+    // London leg — implies the user is already at Stratford). The
+    // displayed journey then misleads the user about where they
+    // board ("from Stratford"). This rewrite fills in the missing
+    // London leg using current RTT data so the modal/polyline
+    // attribute the journey to a real cluster terminus the user
+    // can actually start from.
+    //
+    // Returns the same journey object when no rewrite applies (first
+    // leg already in-cluster, or no cluster member reaches the
+    // out-of-cluster station). Otherwise returns a new journey with
+    // an extra prepended leg + adjusted durationMinutes/changes.
+    type RewritableJourney = JourneyInfo & { changes?: number; durationMinutes?: number; polylineCoords?: [number, number][]; polyline?: string }
+    function prependClusterEntryLeg(journey: RewritableJourney, activeClusterMemberIds: Set<string> | undefined): RewritableJourney {
+      if (!activeClusterMemberIds) return journey
+      const legs = journey.legs ?? []
+      if (legs.length === 0) return journey
+      const firstLeg = legs[0]
+      const depName = firstLeg?.departureStation
+      if (!depName) return journey
+      const depId = nameToOriginRoutesId(depName)
+      if (!depId || activeClusterMemberIds.has(depId)) return journey
+      // Find the fastest cluster-member route to depId.
+      let bestMember: string | undefined
+      let bestRoute: { minMinutes?: number; fastestCallingPoints?: string[]; name?: string } | undefined
+      for (const memberId of activeClusterMemberIds) {
+        const memberRoute = originRoutes[memberId]?.directReachable?.[depId]
+        if (memberRoute?.minMinutes == null) continue
+        if (!bestRoute || (bestRoute.minMinutes ?? Infinity) > memberRoute.minMinutes) {
+          bestMember = memberId
+          bestRoute = memberRoute
+        }
+      }
+      if (!bestMember || !bestRoute) return journey
+      const memberName = registryGetName(bestMember) ?? bestMember
+      // Standard 5-minute change buffer at the interchange (depName).
+      const interchangeMin = 5
+      const prependedLeg = {
+        vehicleType: "HEAVY_RAIL",
+        departureStation: memberName,
+        arrivalStation: depName,
+        stopCount: Math.max(0, (bestRoute.fastestCallingPoints?.length ?? 0) - 2),
+      } as JourneyInfo["legs"][number]
+      return {
+        ...journey,
+        legs: [prependedLeg, ...legs],
+        durationMinutes: (journey.durationMinutes ?? 0) + (bestRoute.minMinutes ?? 0) + interchangeMin,
+        changes: (journey.changes ?? 0) + 1,
+      }
+    }
+    // Build a multi-leg polyline by walking each leg and using the
+    // richest source available per leg, then concatenating. Per leg,
+    // priority order:
+    //
+    //   1. INTERMEDIATE SIBLING ENCODED POLYLINE — the leg's arrival
+    //      station's feature may carry a sibling-origin journey with
+    //      a Google-encoded polyline that already traces this leg's
+    //      track. Trim it to start at the leg-departure terminal.
+    //      Example: CLON→Sutton Coldfield's first leg (Euston→LTV)
+    //      can borrow Farringdon's encoded polyline stored on LTV's
+    //      feature, giving real WCML curves rather than the 3-coord
+    //      EUS→TAM→LTV straight chain.
+    //
+    //   2. RTT CRS-CHAIN FALLBACK — straight segments between every
+    //      calling-point coord on the leg. Always works when the
+    //      origin-routes data covers the leg, but renders as zig-zag
+    //      lines between station coords.
+    //
+    // Returns null when no leg resolves at all.
+    function buildMultiLegRttPolyline(legs: Array<{ departureStation?: string; arrivalStation?: string }>): [number, number][] | null {
+      const out: [number, number][] = []
+      let prevLast: [number, number] | undefined
+      for (const leg of legs) {
+        const depId = nameToOriginRoutesId(leg.departureStation)
+        const arrId = nameToOriginRoutesId(leg.arrivalStation)
+        if (!depId || !arrId) continue
+        let coords: [number, number][] | null = null
+        // Path 1 — try intermediate sibling encoded polyline at the
+        // leg's arrival station.
+        const arrJourneys = leg.arrivalStation ? nameToFeatureJourneys[leg.arrivalStation] : undefined
+        if (arrJourneys) {
+          let bestSibling: [number, number][] | null = null
+          for (const sib of Object.values(arrJourneys)) {
+            if (!sib?.polyline) continue
+            const decoded = decodePolyline(sib.polyline)
+            if (!decoded || decoded.length < 2) continue
+            const trimmed = trimSiblingPolylineToRttRoute(decoded, [depId, arrId], crsToCoord)
+            if (trimmed && trimmed.length > 1 && (!bestSibling || trimmed.length > bestSibling.length)) {
+              bestSibling = trimmed
+            }
+          }
+          if (bestSibling) coords = bestSibling
+        }
+        // Path 2 — RTT calling-point chain.
+        if (!coords) {
+          const dest = originRoutes[depId]?.directReachable?.[arrId]
+          if (dest?.fastestCallingPoints) {
+            coords = dest.fastestCallingPoints
+              .map((crs) => crsToCoord[crs])
+              .filter((c): c is [number, number] => !!c)
+          }
+        }
+        if (!coords || coords.length === 0) continue
+        // Dedup the leg's first coord when it duplicates the previous
+        // leg's last (same station — the change point).
+        const start = prevLast
+          && Math.abs(coords[0]![0] - prevLast[0]) < 1e-6
+          && Math.abs(coords[0]![1] - prevLast[1]) < 1e-6
+          ? 1 : 0
+        for (let i = start; i < coords.length; i++) out.push(coords[i]!)
+        prevLast = coords[coords.length - 1]
+      }
+      return out.length > 1 ? out : null
+    }
+    function deriveRichPolyline(
+      featureId: string | undefined,
+      journey: { legs?: Array<{ departureStation?: string; arrivalStation?: string }>; polyline?: string; polylineCoords?: [number, number][] },
+      siblingJourneys?: Record<string, { polyline?: string; polylineCoords?: [number, number][] }>,
+      activeClusterMemberIds?: Set<string>,
+    ): [number, number][] | null {
+      if (!featureId) return null
+      if (journey.polyline) return null
+      const existing = journey.polylineCoords?.length ?? 0
+      const departure = journey.legs?.[0]?.departureStation
+      if (!departure) return null
+      const canonical = matchTerminal(departure, londonTerminals) ?? departure
+      // Resolve the leg-departure name to an originRoutes member id.
+      let memberId: string | undefined
+      for (const [id, data] of Object.entries(originRoutes)) {
+        const dataCanonical = matchTerminal(data.name, londonTerminals) ?? data.name
+        if (dataCanonical === canonical || data.name === canonical) {
+          memberId = id
+          break
+        }
+      }
+      // Pre-pass: when the diff entry's leg-departure is OUT of the
+      // active primary's cluster (e.g. CLON's stale precomputed entry
+      // for SUY says "departureStation: Stratford" but Stratford isn't
+      // a CLON member), the leg-rooted trim below would start the
+      // polyline at the out-of-cluster station — visibly wrong on the
+      // map. In that case, ditch the leg-departure as the trim entry
+      // point and use the sibling's own origin instead. Farringdon
+      // (ZFD) is the typical sibling for CLON destinations: its
+      // polyline starts at the Thameslink central-London core, which
+      // visually reads as a sensible CLON departure even though ZFD
+      // isn't formally a cluster member.
+      if (siblingJourneys && activeClusterMemberIds && memberId && !activeClusterMemberIds.has(memberId)) {
+        let best: [number, number][] | null = null
+        for (const [sibOriginId, sibJourney] of Object.entries(siblingJourneys) as Array<[string, { polyline?: string; polylineCoords?: [number, number][] }]>) {
+          // Skip the active primary's own entry — using it as the
+          // sibling source would be circular (it's what we're
+          // upgrading) and any out-of-cluster sibling is fine here
+          // since we're already in the "diff is suspect" branch.
+          if (sibOriginId === primaryOrigin) continue
+          let decoded: [number, number][] | null = null
+          if (sibJourney?.polyline) decoded = decodePolyline(sibJourney.polyline)
+          else if (sibJourney?.polylineCoords && sibJourney.polylineCoords.length > 1) decoded = sibJourney.polylineCoords
+          if (!decoded) continue
+          // chain = [sibOriginId, destId] — trim joins at sibOriginId
+          // (the sibling's start) and runs through to the destination.
+          const trimmed = trimSiblingPolylineToRttRoute(decoded, [sibOriginId, featureId], crsToCoord)
+          if (trimmed && trimmed.length > existing && (!best || trimmed.length > best.length)) {
+            best = trimmed
+          }
+        }
+        if (best) return best
+      }
+      // Build the calling-point chain we'll use as the trim guide. Two
+      // shapes:
+      //   • Single-leg journey AND the leg-departure terminal directly
+      //     reaches our destination — use the full RTT calling chain.
+      //     Most precise: the trim joins at every intermediate stop the
+      //     train calls at.
+      //   • Multi-leg journey OR no direct RTT data — fall back to a
+      //     two-element chain [departure, destination]. trimSibling
+      //     finds whichever coord appears first on the sibling polyline
+      //     and stitches from there. For SUY (CLON→Stratford→MKT→SUY)
+      //     the join lands at Stratford, then the sibling polyline
+      //     fills in the curvy track all the way to SUY.
+      let chain: string[] | undefined
+      if (memberId) {
+        const dest = originRoutes[memberId]?.directReachable?.[featureId]
+        if (dest?.fastestCallingPoints) chain = dest.fastestCallingPoints
+      }
+      if (!chain && memberId) chain = [memberId, featureId]
+      if (!chain) return null
+      // Three candidate polylines. Compute all, return the longest:
+      //
+      //   Path 1: sibling-polyline trim. Decode (or reuse) any sibling
+      //   origin's polyline and trim to start at our trim-chain entry
+      //   point. Best for single-leg destinations Farringdon already
+      //   has Google routes for (HND, TRI, SUY, etc.) — produces 400+
+      //   coord real-track curves.
+      //
+      //   Path 2: multi-leg RTT assembly. For 2+ leg journeys, walk
+      //   each leg and concat its RTT calling-point chain. Best for
+      //   destinations no sibling polyline covers end-to-end (DDP,
+      //   CSY, TIP — Birmingham-area destinations reached via
+      //   Euston→BHM→destination).
+      //
+      //   Path 3: straight-segment fallback from the single-leg trim
+      //   chain. Backstop when neither richer path produces anything.
+      let best: [number, number][] | null = null
+      const tryUpgrade = (candidate: [number, number][] | null) => {
+        if (!candidate || candidate.length <= existing) return
+        if (!best || candidate.length > best.length) best = candidate
+      }
+      if (siblingJourneys) {
+        for (const sibJourney of Object.values(siblingJourneys) as Array<{ polyline?: string; polylineCoords?: [number, number][] }>) {
+          let decoded: [number, number][] | null = null
+          if (sibJourney?.polyline) decoded = decodePolyline(sibJourney.polyline)
+          else if (sibJourney?.polylineCoords && sibJourney.polylineCoords.length > 1) decoded = sibJourney.polylineCoords
+          if (!decoded) continue
+          tryUpgrade(trimSiblingPolylineToRttRoute(decoded, chain, crsToCoord))
+        }
+      }
+      if (journey.legs && journey.legs.length >= 2) {
+        tryUpgrade(buildMultiLegRttPolyline(journey.legs))
+      }
+      tryUpgrade(chain.map((crs) => crsToCoord[crs]).filter((c): c is [number, number] => !!c))
+      return best
+    }
     // Short-circuit: if we've got a precomputed routing diff for
     // the currently active primary, reconstruct the full
     // FeatureCollection by merging the diff over baseStations and
@@ -3076,6 +3456,7 @@ export default function HikeMap() {
         ...baseStations,
         features: baseStations.features.map((f) => {
           const coordKey = f.properties.coordKey as string
+          const featureId = f.properties.id as string | undefined
           const delta = diffForPrimary[coordKey]
           if (!delta) return f
           // Merge the routing deltas on top of base properties. For
@@ -3086,10 +3467,59 @@ export default function HikeMap() {
           const nextProps: Record<string, unknown> = { ...f.properties }
           for (const [k, v] of Object.entries(delta)) {
             if (k === "journeys") {
-              nextProps.journeys = {
-                ...((f.properties as Record<string, unknown>).journeys as Record<string, unknown> | undefined),
-                ...(v as Record<string, unknown>),
+              const merged: Record<string, JourneyInfo> = {
+                ...((f.properties as Record<string, unknown>).journeys as Record<string, JourneyInfo> | undefined),
+                ...(v as Record<string, JourneyInfo>),
               }
+              // First pass — rewrite stale precomputed entries whose
+              // first leg departs OUT of the active primary's cluster
+              // (e.g. CLON's SUY entry currently begins "Stratford →
+              // Marks Tey" with no preceding London leg). The rewrite
+              // prepends a leg from a real cluster member that
+              // actually reaches the dep station, so the modal title
+              // and journey description attribute the journey to a
+              // station the user can start from.
+              const activeClusterMemberIds = new Set<string>([
+                primaryOrigin,
+                ...(PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []),
+              ])
+              const primaryEntry = merged[primaryOrigin] as JourneyInfo | undefined
+              if (primaryEntry) {
+                const rewritten = prependClusterEntryLeg(primaryEntry as JourneyInfo & { changes?: number; durationMinutes?: number; polylineCoords?: [number, number][]; polyline?: string }, activeClusterMemberIds)
+                if (rewritten !== primaryEntry) {
+                  merged[primaryOrigin] = rewritten
+                  // Keep nextProps.londonMinutes consistent with the
+                  // rewritten duration so the time slider + map labels
+                  // reflect the real travel time including the prefixed
+                  // London leg.
+                  if (rewritten.durationMinutes != null) {
+                    nextProps.londonMinutes = rewritten.durationMinutes
+                  }
+                  if (rewritten.changes != null) {
+                    nextProps.effectiveChanges = rewritten.changes
+                  }
+                }
+              }
+              // Second pass — augment any sparse polylines. Pass the
+              // merged journeys map itself as siblingJourneys so
+              // deriveRichPolyline can borrow encoded polylines from
+              // sibling-origin entries (e.g. Farringdon's pre-fetched
+              // Google polyline) when upgrading the active primary's
+              // straight CRS-chain. activeClusterMemberIds lets the
+              // upgrade reject sibling polylines whose origin is
+              // OUTSIDE the active primary's cluster (and prefer
+              // in-cluster ones when the diff's own leg-departure is
+              // out-of-cluster).
+              for (const [originKey, journey] of Object.entries(merged)) {
+                const richer = deriveRichPolyline(
+                  featureId,
+                  journey as { legs?: Array<{ departureStation?: string; arrivalStation?: string }>; polyline?: string; polylineCoords?: [number, number][] },
+                  merged as Record<string, { polyline?: string; polylineCoords?: [number, number][] }>,
+                  activeClusterMemberIds,
+                )
+                if (richer) merged[originKey] = { ...journey, polylineCoords: richer } as JourneyInfo
+              }
+              nextProps.journeys = merged
             } else {
               nextProps[k] = v
             }
@@ -3109,13 +3539,14 @@ export default function HikeMap() {
     // Greater-London bounding box: lat 51.28–51.70, lng -0.55–0.30.
     const isLondonBox = (lat: number, lng: number) =>
       lat > 51.28 && lat < 51.70 && lng > -0.55 && lng < 0.30
-    const crsToCoord: Record<string, [number, number]> = {}
+    // crsToCoord was already built above (shared with the diff fast
+    // path's polyline augmentation). Build the richer crsToStation
+    // here, layering name + coordKey + isLondon on top.
     const crsToStation: Record<string, { name: string; coord: [number, number]; coordKey: string; isLondon: boolean }> = {}
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
       if (!crs) continue
       const [lng, lat] = f.geometry.coordinates as [number, number]
-      crsToCoord[crs] = [lng, lat]
       crsToStation[crs] = {
         name: f.properties.name as string,
         coord: [lng, lat],
@@ -3172,8 +3603,11 @@ export default function HikeMap() {
           const station = crsToStation[crs]
           if (!station || !station.isLondon) return null
           // Skip the primary origin itself — see header comment.
-          if (station.coordKey === primaryOrigin) return null
-          const sub = winnerRoutes?.directReachable?.[station.coordKey]
+          if (crs === primaryOrigin) return null
+          // origin-routes is ID-keyed post Phase 3c; crs IS the station
+          // ID for any real NR station, so we look up directReachable[crs]
+          // directly rather than via the legacy coordKey.
+          const sub = winnerRoutes?.directReachable?.[crs]
           if (!sub) return null
           return { name: nicerTerminusName(station.name, crs), crs, minutesFromOrigin: sub.minMinutes }
         })
@@ -3183,7 +3617,7 @@ export default function HikeMap() {
           const station = crsToStation[u.crs]
           if (!station || !station.isLondon) return null
           // Same reason as downstream — skip the primary origin.
-          if (station.coordKey === primaryOrigin) return null
+          if (u.crs === primaryOrigin) return null
           return { name: nicerTerminusName(u.name, u.crs), crs: u.crs, minutesExtra: u.minutesBeforeOrigin }
         })
         .filter((p): p is { name: string; crs: string; minutesExtra: number } => !!p)
@@ -3206,13 +3640,18 @@ export default function HikeMap() {
     // Returns downstream/upstream lists with times relative to X, or null
     // if no donor terminal has BOTH X and D on the same train.
     const buildCallingPointsViaDonor = (
-      boardAtCoord: string,
-      destCoord: string,
+      boardAtId: string,
+      destId: string,
     ): { downstream: { name: string; crs: string; minutesFromOrigin: number }[]
        ; upstream: { name: string; crs: string; minutesExtra: number }[] } | null => {
-      for (const donorCoord of Object.keys(originRoutes)) {
-        const donor = originRoutes[donorCoord]
-        const entry = donor?.directReachable?.[destCoord]
+      // Post Phase 3c: origin-routes is ID-keyed at every level, so
+      // donorId / destId / boardAtId are all canonical station IDs.
+      // For real NR stations the ID IS the CRS, which is how we cross-
+      // reference the upstream-calling-points list (whose `crs` field
+      // is on disk).
+      for (const donorId of Object.keys(originRoutes)) {
+        const donor = originRoutes[donorId]
+        const entry = donor?.directReachable?.[destId]
         if (!entry) continue
         // Check if boardAt is represented somewhere on this train's route.
         // The train relative to the donor D looks like:
@@ -3223,19 +3662,18 @@ export default function HikeMap() {
         //   - if S is in entry.upstreamCallingPoints, t_S = -minutesBeforeOrigin
         //   - if S is in entry.fastestCallingPoints, t_S = donor.directReachable[S].minMinutes
         //   - if S is the donor itself, t_S = 0
-        const boardAtInUpstream = entry.upstreamCallingPoints?.find((u) => u.coord === boardAtCoord)
+        const boardAtInUpstream = entry.upstreamCallingPoints?.find((u) => u.crs === boardAtId)
         let boardAtT: number | null = null
         if (boardAtInUpstream) {
           boardAtT = -boardAtInUpstream.minutesBeforeOrigin
-        } else if (donorCoord === boardAtCoord) {
+        } else if (donorId === boardAtId) {
           boardAtT = 0
         } else {
-          // Check fastestCallingPoints — see if boardAt coord appears as an
+          // Check fastestCallingPoints — see if boardAt CRS appears as an
           // intermediate stop on the train from donor to destination.
           for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
-            const station = crsToStation[crs]
-            if (station && station.coordKey === boardAtCoord) {
-              const sub = donor?.directReachable?.[boardAtCoord]
+            if (crs === boardAtId) {
+              const sub = donor?.directReachable?.[boardAtId]
               if (sub?.minMinutes != null) boardAtT = sub.minMinutes
               break
             }
@@ -3248,27 +3686,27 @@ export default function HikeMap() {
         // - dest is at t = entry.minMinutes
         const destT = entry.minMinutes
         // Gather all stations on the route with their time relative to donor.
-        const routeStations: Array<{ name: string; crs: string; coordKey: string; tDonor: number }> = []
+        const routeStations: Array<{ name: string; crs: string; id: string; tDonor: number }> = []
         // Upstream of donor (negative tDonor).
         for (const u of entry.upstreamCallingPoints ?? []) {
           const station = crsToStation[u.crs]
           if (!station) continue
-          routeStations.push({ name: u.name, crs: u.crs, coordKey: station.coordKey, tDonor: -u.minutesBeforeOrigin })
+          routeStations.push({ name: u.name, crs: u.crs, id: u.crs, tDonor: -u.minutesBeforeOrigin })
         }
         // Donor itself at tDonor = 0.
         routeStations.push({
           name: donor?.name ?? "",
           crs: donor?.crs ?? "",
-          coordKey: donorCoord,
+          id: donorId,
           tDonor: 0,
         })
         // Intermediate stops between donor and destination.
         for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
           const station = crsToStation[crs]
           if (!station) continue
-          const sub = donor?.directReachable?.[station.coordKey]
+          const sub = donor?.directReachable?.[crs]
           if (!sub) continue
-          routeStations.push({ name: station.name, crs, coordKey: station.coordKey, tDonor: sub.minMinutes })
+          routeStations.push({ name: station.name, crs, id: crs, tDonor: sub.minMinutes })
         }
         // Destination itself (will be filtered out below — it IS the target).
         // routeStations.push({ ..., tDonor: destT })
@@ -3278,9 +3716,9 @@ export default function HikeMap() {
         const upstream: { name: string; crs: string; minutesExtra: number }[] = []
         for (const s of routeStations) {
           // Skip boardAt, destination, and primary-origin.
-          if (s.coordKey === boardAtCoord) continue
-          if (s.coordKey === destCoord) continue
-          if (s.coordKey === primaryOrigin) continue
+          if (s.id === boardAtId) continue
+          if (s.id === destId) continue
+          if (s.id === primaryOrigin) continue
           const station = crsToStation[s.crs]
           if (!station || !station.isLondon) continue
           // Skip stations outside the [boardAt, dest] window — they're on
@@ -3400,18 +3838,24 @@ export default function HikeMap() {
     //
     // Both lists are filtered to London stops and exclude X itself.
     const buildSameTrainCallingPoints = (
-      terminalCoord: string,
-      destCoord: string,
+      terminalId: string,
+      destId: string,
       xTimeRelativeToP: number,
     ): { downstream: { name: string; crs: string; minutesFromOrigin: number }[]
        ; upstream: { name: string; crs: string; minutesExtra: number }[] } | null => {
-      const winnerRoutes = originRoutes[terminalCoord]
-      const entry = winnerRoutes?.directReachable?.[destCoord]
+      // Post Phase 3c: terminalId / destId are canonical station IDs.
+      // For every real NR station on this through-train the ID === the
+      // CRS, which is how directReachable[id] keys back into the data.
+      const winnerRoutes = originRoutes[terminalId]
+      const entry = winnerRoutes?.directReachable?.[destId]
       if (!entry) return null
 
       // Build a flat list: every station on the train (except D) with its
       // time relative to P. Positive = after P, negative = before P.
-      const route: Array<{ name: string; coord: string; crs: string; tP: number }> = []
+      // `id` is the station ID (CRS for real NR stops) for comparison
+      // against primaryOrigin; isLondon is precomputed off crsToStation
+      // so we don't have to re-parse coords during the reclassify loop.
+      const route: Array<{ name: string; id: string; crs: string; tP: number; isLondon: boolean }> = []
 
       // P itself (the terminal). Resolve to the CANONICAL short name via
       // matchTerminal ("St Pancras" rather than "London St. Pancras
@@ -3425,9 +3869,10 @@ export default function HikeMap() {
         ?? winnerRoutes.name
       route.push({
         name: canonicalTerminalName,
-        coord: terminalCoord,
+        id: terminalId,
         crs: terminalCrs,
         tP: 0,
+        isLondon: terminalStation?.isLondon ?? false,
       })
 
       // Upstream of P — stations the train calls at BEFORE reaching P.
@@ -3437,21 +3882,22 @@ export default function HikeMap() {
         if (!station) continue
         route.push({
           name: u.name,
-          coord: station.coordKey,
+          id: u.crs,
           crs: u.crs,
           tP: -u.minutesBeforeOrigin,
+          isLondon: station.isLondon,
         })
       }
 
       // Intermediate stops (between P and D). fastestCallingPoints[0] is P
       // (already pushed above); last entry is D (skip). tP is POSITIVE and
-      // comes from the terminal's own directReachable[intermediate coord].
+      // comes from the terminal's own directReachable[intermediate ID].
       for (const crs of entry.fastestCallingPoints.slice(1, -1)) {
         const station = crsToStation[crs]
         if (!station) continue
-        const sub = winnerRoutes.directReachable?.[station.coordKey]
+        const sub = winnerRoutes.directReachable?.[crs]
         if (!sub) continue
-        route.push({ name: station.name, coord: station.coordKey, crs, tP: sub.minMinutes })
+        route.push({ name: station.name, id: crs, crs, tP: sub.minMinutes, isLondon: station.isLondon })
       }
 
       // Reclassify each station relative to X. delta = tP - xTimeRelativeToP:
@@ -3464,11 +3910,8 @@ export default function HikeMap() {
       const downstream: { name: string; crs: string; minutesFromOrigin: number }[] = []
       const upstream: { name: string; crs: string; minutesExtra: number }[] = []
       for (const s of route) {
-        if (s.coord === primaryOrigin) continue
-        const [lngStr, latStr] = s.coord.split(",")
-        const sLng = parseFloat(lngStr)
-        const sLat = parseFloat(latStr)
-        if (!isLondonBox(sLat, sLng)) continue
+        if (s.id === primaryOrigin) continue
+        if (!s.isLondon) continue
         const delta = s.tP - xTimeRelativeToP
         if (delta < 0) upstream.push({ name: s.name, crs: s.crs, minutesExtra: -delta })
         else if (delta > 0) downstream.push({ name: s.name, crs: s.crs, minutesFromOrigin: delta })
@@ -3568,6 +4011,7 @@ export default function HikeMap() {
       primaryName: string,
       coordKey: string,
       customCoord: string,
+      featureJourneys?: Record<string, { polyline?: string }>,
     ): { journey: JourneyInfo; mins: number; changes: number } | null {
       // Canonicalise the primary name before the matrix lookup. Callers
       // pass `coordToName[primaryOrigin]` which holds the OSM `name` field
@@ -3604,9 +4048,28 @@ export default function HikeMap() {
           // Interchange happens at T (TfL hop arrives at T, rail leg starts there).
           const mins = hop.minutes + interchangeBufferFor(T.name) + tToD.minMinutes
           if (best1 == null || mins < best1.mins) {
-            const tToDCoords = (tToD.fastestCallingPoints ?? [])
+            const tToDCoordsStraight = (tToD.fastestCallingPoints ?? [])
               .map((crs) => crsToCoord[crs])
               .filter((c): c is [number, number] => !!c)
+            // Polyline upgrade: if any sibling-origin journey on this
+            // destination feature carries an encoded Google Routes
+            // polyline (typically Farringdon, eagerly preloaded so
+            // every custom primary can borrow it), trim that polyline
+            // to the segment from this terminal T onwards. Replaces
+            // the straight CRS-chain with real-track curves for the
+            // whole rail leg.
+            let tToDCoords = tToDCoordsStraight
+            if (featureJourneys && tToD.fastestCallingPoints) {
+              for (const sibJourney of Object.values(featureJourneys)) {
+                if (!sibJourney?.polyline) continue
+                const decoded = decodePolyline(sibJourney.polyline)
+                const trimmed = trimSiblingPolylineToRttRoute(decoded, tToD.fastestCallingPoints, crsToCoord)
+                if (trimmed && trimmed.length > tToDCoords.length) {
+                  tToDCoords = trimmed
+                  break
+                }
+              }
+            }
             const polylineCoords = tToDCoords.length > 1 ? [...hopCoords, ...tToDCoords] : undefined
             const cp = buildCallingPoints(tCoord, coordKey)
             const journey = {
@@ -3770,6 +4233,11 @@ export default function HikeMap() {
       ...baseStations,
       features: baseStations.features.map((f) => {
         const coordKey = f.properties.coordKey as string
+        // Canonical station ID — used for comparisons against
+        // primaryOrigin / friendOrigin (both IDs post Phase 3c).
+        // coordKey is still kept in scope for the rating/notes/etc.
+        // lookups that remain coord-keyed at rest.
+        const featureId = f.properties.id as string | undefined
         // NOTE: origin / excluded flags are applied in a SEPARATE thin
         // useMemo downstream so toggling them via admin actions doesn't
         // re-run this heavy routing pass (Extension A, alt routes,
@@ -3817,10 +4285,10 @@ export default function HikeMap() {
         // origin's RTT data (so the "you could board here" list in the modal
         // shows minutes derived from the same origin as the primary journey).
         let rttReachableOriginCoord: string | undefined
-        if (isRttPrimary) {
+        if (isRttPrimary && featureId) {
           for (const ck of clusterCoords) {
             const entry = originRoutes[ck]
-            const candidate = entry?.directReachable?.[coordKey]
+            const candidate = entry?.directReachable?.[featureId]
             if (candidate && (!rttReachable || candidate.minMinutes < rttReachable.minMinutes)) {
               rttReachable = candidate
               rttReachableOriginName = entry?.name
@@ -3834,7 +4302,7 @@ export default function HikeMap() {
           // London Bridge in sequence), always surface Farringdon as the start
           // point even if another cluster member nominally edges it on minutes.
           if (clusterCoords.includes(FARRINGDON_COORD) && rttReachable && rttReachableOriginName !== "Farringdon") {
-            const frn = originRoutes[FARRINGDON_COORD]?.directReachable?.[coordKey]
+            const frn = originRoutes[FARRINGDON_COORD]?.directReachable?.[featureId]
             if (frn) {
               const winnerStartCrs = rttReachable.fastestCallingPoints[0]
               const sameService = frn.fastestCallingPoints.includes(winnerStartCrs)
@@ -3997,9 +4465,10 @@ export default function HikeMap() {
             // London calling-points: delegated to buildCallingPoints so the
             // same logic is shared across direct / stitched / custom-primary
             // code paths. For direct trains, "boardHere" is the winning
-            // cluster member (rttReachableOriginCoord).
-            const cp = rttReachableOriginCoord
-              ? buildCallingPoints(rttReachableOriginCoord, coordKey)
+            // cluster member ID (rttReachableOriginCoord — name is legacy,
+            // value is now an ID).
+            const cp = rttReachableOriginCoord && featureId
+              ? buildCallingPoints(rttReachableOriginCoord, featureId)
               : null
             const londonCallingPoints = cp?.downstream ?? []
             const londonUpstreamCallingPoints = cp?.upstream ?? []
@@ -4237,7 +4706,7 @@ export default function HikeMap() {
           //        time(custom → D via P) = P→custom + P→D + interchange
           //      where P is the fastest curated primary that direct-reaches
           //      both. 1 change at P.
-          if (primaryOrigin === coordKey) {
+          if (primaryOrigin === featureId) {
             // User's own station — drop it from the destination map.
             rttClearLondonMinutes = true
           } else if ((f.properties.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]) {
@@ -4297,12 +4766,15 @@ export default function HikeMap() {
             // Extension A: via-direct-hub composition. Wins when a
             // single suburban interchange (e.g. Redhill for CLJ→PHR)
             // beats Google's central-London routing. 1 change.
-            const viaHub = buildViaDirectHubJourney(
+            // primaryOrigin is an ID; the compose helpers want a real
+            // coord for parseCoordKey-based polyline building.
+            const primaryCoordStrA = registryGetCoordKey(primaryOrigin) ?? ""
+            const viaHub = (featureId && primaryCoordStrA) ? buildViaDirectHubJourney(
               customHubs,
-              coordKey,
+              featureId,
               coordToName[primaryOrigin] ?? primaryOrigin,
-              primaryOrigin,
-            )
+              primaryCoordStrA,
+            ) : null
             if (viaHub) {
               const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
               const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
@@ -4319,12 +4791,12 @@ export default function HikeMap() {
             // STRICTLY faster than what we already have — it's 2 rail
             // changes, so direct or single-change options beat it by
             // the change-count tiebreak automatically.
-            const viaWalk = tryComposeViaWalkingDoubleHub(
+            const viaWalk = (featureId && primaryCoordStrA) ? tryComposeViaWalkingDoubleHub(
               customHubs,
-              coordKey,
+              featureId,
               coordToName[primaryOrigin] ?? primaryOrigin,
-              primaryOrigin,
-            )
+              primaryCoordStrA,
+            ) : null
             if (viaWalk) {
               const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
               const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
@@ -4340,11 +4812,12 @@ export default function HikeMap() {
             // (CLJ→Wendover via MYB, CLJ→WelwynGC via KGX, etc.),
             // bridge primary→T using the TfL hop matrix and finish
             // with T→D rail from origin-routes. 1 change.
-            const viaTflHop = tryComposeViaPrimaryHop(
+            const viaTflHop = (featureId && primaryCoordStrA) ? tryComposeViaPrimaryHop(
               coordToName[primaryOrigin] ?? primaryOrigin,
-              coordKey,
-              primaryOrigin,
-            )
+              featureId,
+              primaryCoordStrA,
+              f.properties.journeys as Record<string, { polyline?: string }> | undefined,
+            ) : null
             if (viaTflHop) {
               const curMins = effectiveSourceJourney.durationMinutes ?? Infinity
               const curChanges = (effectiveSourceJourney as unknown as { changes?: number }).changes ?? 99
@@ -4365,9 +4838,9 @@ export default function HikeMap() {
             // Farringdon → Elstree & Borehamwood shows no "Can also board
             // at" list despite the Thameslink service obviously calling at
             // St Pancras, West Hampstead, Mill Hill Broadway, etc.
-            const selfEntry = originRoutes[primaryOrigin]?.directReachable?.[coordKey]
-            if (selfEntry) {
-              const cp = buildCallingPoints(primaryOrigin, coordKey)
+            const selfEntry = featureId ? originRoutes[primaryOrigin]?.directReachable?.[featureId] : undefined
+            if (selfEntry && featureId) {
+              const cp = buildCallingPoints(primaryOrigin, featureId)
               if (cp && (cp.downstream.length > 0 || cp.upstream.length > 0)) {
                 effectiveSourceJourney = {
                   ...effectiveSourceJourney,
@@ -4387,7 +4860,7 @@ export default function HikeMap() {
             // The spliceOverride case above writes the enriched / hybrid
             // variant back into next.journeys at feature-return time; the
             // original Google journey is used as-is otherwise.
-          } else if (originRoutes[primaryOrigin]?.directReachable?.[coordKey]?.minMinutes != null) {
+          } else if (featureId && originRoutes[primaryOrigin]?.directReachable?.[featureId]?.minMinutes != null) {
             // --- Step 0: Self-direct lookup ---
             // The custom primary has itself been RTT-fetched (its coord
             // is a key in origin-routes.json). Its own directReachable
@@ -4407,7 +4880,7 @@ export default function HikeMap() {
             // coverage. For custom primaries NOT in origin-routes.json
             // (the majority before we extend the fetch scope), we
             // fall through to the existing Steps 1 & 2 unchanged.
-            const selfEntry = originRoutes[primaryOrigin]!.directReachable[coordKey]
+            const selfEntry = originRoutes[primaryOrigin]!.directReachable[featureId!]
             originMins = selfEntry.minMinutes
             effectiveChanges = 0
             const customName = coordToName[primaryOrigin] ?? primaryOrigin
@@ -4419,7 +4892,7 @@ export default function HikeMap() {
               .filter((c): c is [number, number] => !!c)
             // London calling-points hint — same helper used on other
             // single-leg branches.
-            const cp = buildCallingPoints(primaryOrigin, coordKey)
+            const cp = featureId ? buildCallingPoints(primaryOrigin, featureId) : null
             synthJourney = {
               durationMinutes: selfEntry.minMinutes,
               changes: 0,
@@ -4451,21 +4924,23 @@ export default function HikeMap() {
             // passes through X before reaching P), positive if X is
             // intermediate (between P and D).
             let sameTrainXTimeRelativeToP: number | undefined
-            for (const terminalCoord of Object.keys(originRoutes)) {
-              const entry = originRoutes[terminalCoord]?.directReachable?.[coordKey]
+            for (const terminalId of Object.keys(originRoutes)) {
+              const entry = featureId ? originRoutes[terminalId]?.directReachable?.[featureId] : undefined
               if (!entry) continue
               const pToDestMins = entry.minMinutes
 
-              // Upstream: X is before P. Match by coord (upstreamCallingPoints
-              // carries a pre-formatted "lng,lat" string).
+              // Upstream: X is before P. The upstream-calling-point list
+              // carries each station's CRS, which IS the canonical ID for
+              // any real NR station — so primaryOrigin (now an ID) compares
+              // directly against u.crs.
               const upstreamMatch = entry.upstreamCallingPoints?.find(
-                (u) => u.coord === primaryOrigin,
+                (u) => u.crs === primaryOrigin,
               )
               if (upstreamMatch) {
                 const mins = pToDestMins + upstreamMatch.minutesBeforeOrigin
                 if (sameTrainMins == null || mins < sameTrainMins) {
                   sameTrainMins = mins
-                  sameTrainTerminalCoord = terminalCoord
+                  sameTrainTerminalCoord = terminalId
                   // X is BEFORE P → negative tP.
                   sameTrainXTimeRelativeToP = -upstreamMatch.minutesBeforeOrigin
                 }
@@ -4475,22 +4950,21 @@ export default function HikeMap() {
               // Intermediate: X is between P and D on fastestCallingPoints.
               // Excludes first (= P) and last (= D) entries; either of those
               // would mean X is the terminal or the destination, neither
-              // gives us a new same-train shortcut.
+              // gives us a new same-train shortcut. fastestCallingPoints
+              // carries CRS strings, which equal primaryOrigin directly
+              // for real NR primaries.
               const fastCP = entry.fastestCallingPoints
-              const isIntermediate = fastCP.slice(1, -1).some((crs) => {
-                const c = crsToCoord[crs]
-                return c && `${c[0]},${c[1]}` === primaryOrigin
-              })
+              const isIntermediate = fastCP.slice(1, -1).some((crs) => crs === primaryOrigin)
               if (isIntermediate) {
                 // P→X time comes from P's OWN directReachable[X] entry,
                 // which every intermediate stop on P's line should have
                 // (Old Street gets its own MOG→OLD entry with minMins=2).
-                const pToX = originRoutes[terminalCoord]?.directReachable?.[primaryOrigin]?.minMinutes
+                const pToX = originRoutes[terminalId]?.directReachable?.[primaryOrigin]?.minMinutes
                 if (pToX != null) {
                   const mins = pToDestMins - pToX
                   if (mins > 0 && (sameTrainMins == null || mins < sameTrainMins)) {
                     sameTrainMins = mins
-                    sameTrainTerminalCoord = terminalCoord
+                    sameTrainTerminalCoord = terminalId
                     // X is AFTER P → positive tP.
                     sameTrainXTimeRelativeToP = pToX
                   }
@@ -4516,8 +4990,8 @@ export default function HikeMap() {
               // here so the list (a) INCLUDES the terminal P itself as an
               // "also start same route at" option and (b) labels times
               // relative to X, not P.
-              const cp = sameTrainTerminalCoord != null && sameTrainXTimeRelativeToP != null
-                ? buildSameTrainCallingPoints(sameTrainTerminalCoord, coordKey, sameTrainXTimeRelativeToP)
+              const cp = sameTrainTerminalCoord != null && sameTrainXTimeRelativeToP != null && featureId
+                ? buildSameTrainCallingPoints(sameTrainTerminalCoord, featureId, sameTrainXTimeRelativeToP)
                 : null
 
               // Polyline for the same-train shortcut. Derived from the
@@ -4535,15 +5009,15 @@ export default function HikeMap() {
               // have NO polyline drawn on hover despite having an
               // otherwise complete journey.
               let stPolylineCoords: [number, number][] | undefined
-              if (sameTrainTerminalCoord != null) {
-                const winnerEntry = originRoutes[sameTrainTerminalCoord]?.directReachable?.[coordKey]
+              if (sameTrainTerminalCoord != null && featureId) {
+                const winnerEntry = originRoutes[sameTrainTerminalCoord]?.directReachable?.[featureId]
                 const fastCP = winnerEntry?.fastestCallingPoints ?? []
                 if ((sameTrainXTimeRelativeToP ?? 0) >= 0) {
-                  // Intermediate — slice fastCP from X forward.
-                  const idxX = fastCP.findIndex((crs) => {
-                    const c = crsToCoord[crs]
-                    return c && `${c[0]},${c[1]}` === primaryOrigin
-                  })
+                  // Intermediate — slice fastCP from X forward. fastCP
+                  // entries are CRS strings; primaryOrigin is the
+                  // user's primary ID, equal to its CRS for real NR
+                  // stations (custom primaries are always real NR).
+                  const idxX = fastCP.findIndex((crs) => crs === primaryOrigin)
                   if (idxX > -1) {
                     const sliced = fastCP.slice(idxX)
                       .map((crs) => crsToCoord[crs])
@@ -4552,11 +5026,16 @@ export default function HikeMap() {
                   }
                 } else {
                   // Upstream — prepend X's coord to the full P→D chain.
-                  const { lng: xLng, lat: xLat } = parseCoordKey(primaryOrigin)
+                  // primaryOrigin is an ID; resolve to a real coord via
+                  // the registry before parsing into lng/lat.
+                  const primaryCoord = registryGetCoordKey(primaryOrigin)
+                  const { lng: xLng, lat: xLat } = primaryCoord
+                    ? parseCoordKey(primaryCoord)
+                    : { lng: NaN, lat: NaN }
                   const pToDestCoords = fastCP
                     .map((crs) => crsToCoord[crs])
                     .filter((c): c is [number, number] => !!c)
-                  if (pToDestCoords.length > 0) {
+                  if (pToDestCoords.length > 0 && Number.isFinite(xLng)) {
                     stPolylineCoords = [[xLng, xLat], ...pToDestCoords]
                   }
                 }
@@ -4618,7 +5097,7 @@ export default function HikeMap() {
             const featureJourneys = f.properties.journeys as Record<string, JourneyInfo> | undefined
             for (const hub of customHubs) {
               // Option A: P.directReachable[D] exists → 1-change RTT path.
-              const pToD = hub.routes.directReachable?.[coordKey]?.minMinutes
+              const pToD = featureId ? hub.routes.directReachable?.[featureId]?.minMinutes : undefined
               if (pToD != null) {
                 const candidate: RouteCandidate = {
                   mins: hub.pToCustomMins + pToD + interchangeBufferFor(hub.routes.name),
@@ -4662,14 +5141,14 @@ export default function HikeMap() {
               // lines, most of the non-SWR network).
               const hubCanonical = matchTerminal(hub.routes.name, londonTerminals)
               if (hubCanonical && featureJourneys) {
-                for (const [sourceCoord, journey] of Object.entries(featureJourneys)) {
+                for (const [sourceId, journey] of Object.entries(featureJourneys)) {
                   if (!journey?.durationMinutes) continue
-                  if (sourceCoord === hub.pCoord) continue  // already covered by Option B
+                  if (sourceId === hub.pCoord) continue  // already covered by Option B
                   // Find the terminal name of this source-journey origin.
-                  // Source coords come from stations.json entries we fetched
-                  // Google Routes from (Farringdon, KX NR, Stratford, …).
+                  // featureJourneys is keyed by station ID post Phase 4, so
+                  // we look up the source station's feature by its id.
                   const srcStationFeat = baseStations.features.find(
-                    (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === sourceCoord,
+                    (x) => (x.properties as { id?: string }).id === sourceId,
                   )
                   const srcCanonical = matchTerminal(srcStationFeat?.properties?.name, londonTerminals)
                   if (!srcCanonical || srcCanonical === hubCanonical) continue
@@ -4704,13 +5183,17 @@ export default function HikeMap() {
             // any source journey on the feature. Crucial for destinations
             // where the best first terminus isn't one of the baseline Routes
             // API origins (PAD, VIC, Marylebone, …).
+            // primaryOrigin is an ID post Phase 3c; the compose helpers
+            // want a real coord string for parseCoordKey on the home
+            // station, so resolve via the registry once per branch.
+            const primaryCoordStr = registryGetCoordKey(primaryOrigin) ?? ""
             {
-              const composed = tryComposeViaTerminal(
+              const composed = primaryCoordStr ? tryComposeViaTerminal(
                 f,
                 customHubs,
                 coordToName[primaryOrigin] ?? primaryOrigin,
-                primaryOrigin,
-              )
+                primaryCoordStr,
+              ) : null
               if (composed && customHubs[0]) {
                 const candidate: RouteCandidate = {
                   mins: composed.mins,
@@ -4729,12 +5212,12 @@ export default function HikeMap() {
             // rendering path as "composed" because its journey has
             // pre-assembled legs + polyline.
             {
-              const viaWalk = tryComposeViaWalkingDoubleHub(
+              const viaWalk = (featureId && primaryCoordStr) ? tryComposeViaWalkingDoubleHub(
                 customHubs,
-                coordKey,
+                featureId,
                 coordToName[primaryOrigin] ?? primaryOrigin,
-                primaryOrigin,
-              )
+                primaryCoordStr,
+              ) : null
               if (viaWalk && customHubs[0]) {
                 const candidate: RouteCandidate = {
                   mins: viaWalk.mins,
@@ -4754,11 +5237,12 @@ export default function HikeMap() {
             // CLJ→WelwynGC via KGX, etc.). Same rendering path as
             // "composed" — the journey ships with pre-assembled legs.
             {
-              const viaTflHop = tryComposeViaPrimaryHop(
+              const viaTflHop = (featureId && primaryCoordStr) ? tryComposeViaPrimaryHop(
                 coordToName[primaryOrigin] ?? primaryOrigin,
-                coordKey,
-                primaryOrigin,
-              )
+                featureId,
+                primaryCoordStr,
+                f.properties.journeys as Record<string, { polyline?: string }> | undefined,
+              ) : null
               if (viaTflHop && customHubs[0]) {
                 const candidate: RouteCandidate = {
                   mins: viaTflHop.mins,
@@ -4783,7 +5267,9 @@ export default function HikeMap() {
               // non-terminus home station used to show no line on the map.
               // We build one here by prepending the custom-primary coord to
               // whatever coords the backbone of the journey already has.
-              const { lng: pLng, lat: pLat } = parseCoordKey(primaryOrigin)
+              // primaryOrigin is an ID; resolve via the registry before
+              // parsing into lng/lat for the polyline anchor.
+              const { lng: pLng, lat: pLat } = parseCoordKey(registryGetCoordKey(primaryOrigin) ?? "")
               // Pull coords out of a pre-existing journey: polylineCoords if
               // present (RTT path), else decode the `polyline` string
               // (Google Routes path).
@@ -4810,9 +5296,9 @@ export default function HikeMap() {
                 // is set to the destination's name so photo-overlay renders
                 // the "Alternative starts for the direct train to {dest}"
                 // variant (since the HEAVY_RAIL leg's arrival IS the dest).
-                const hubEntry = winner.hub.routes.directReachable?.[coordKey]
+                const hubEntry = featureId ? winner.hub.routes.directReachable?.[featureId] : undefined
                 const hubEntryName = hubEntry?.name ?? ""
-                const cp = buildCallingPoints(winner.hub.pCoord, coordKey)
+                const cp = featureId ? buildCallingPoints(winner.hub.pCoord, featureId) : null
                 // Polyline: [custom home] → [hub calling points → dest].
                 // fastestCallingPoints[0] IS the hub, so we just stick the
                 // home-station coord on the front. One straight line then
@@ -4901,7 +5387,9 @@ export default function HikeMap() {
                 // where the matrix hop lands); the hub→via-terminal hop
                 // is drawn as a single straight segment. Home→hub is
                 // another straight segment on the front.
-                const { lng: hLng, lat: hLat } = parseCoordKey(winner.hub.pCoord)
+                // winner.hub.pCoord is a station ID post Phase 3c —
+                // resolve to its real coord before parsing.
+                const { lng: hLng, lat: hLat } = parseCoordKey(registryGetCoordKey(winner.hub.pCoord) ?? "")
                 const srcCoords = sourceCoordsFromJourney(winner.sourceJourney)
                 const polylineCoords = srcCoords
                   ? [[pLng, pLat] as [number, number], [hLng, hLat] as [number, number], ...srcCoords]
@@ -4950,20 +5438,17 @@ export default function HikeMap() {
             let terminalCoord: string | undefined
             let xTimeRelativeToP: number | undefined
             for (const tc of Object.keys(originRoutes)) {
-              const entry = originRoutes[tc]?.directReachable?.[coordKey]
+              const entry = featureId ? originRoutes[tc]?.directReachable?.[featureId] : undefined
               if (!entry) continue
               const upstreamMatch = entry.upstreamCallingPoints?.find(
-                (u) => u.coord === primaryOrigin,
+                (u) => u.crs === primaryOrigin,
               )
               if (upstreamMatch) {
                 terminalCoord = tc
                 xTimeRelativeToP = -upstreamMatch.minutesBeforeOrigin
                 break
               }
-              const isIntermediate = entry.fastestCallingPoints.slice(1, -1).some((crs) => {
-                const c = crsToCoord[crs]
-                return c && `${c[0]},${c[1]}` === primaryOrigin
-              })
+              const isIntermediate = entry.fastestCallingPoints.slice(1, -1).some((crs) => crs === primaryOrigin)
               if (isIntermediate) {
                 const pToX = originRoutes[tc]?.directReachable?.[primaryOrigin]?.minMinutes
                 if (pToX != null) {
@@ -4973,8 +5458,8 @@ export default function HikeMap() {
                 }
               }
             }
-            if (terminalCoord != null && xTimeRelativeToP != null) {
-              const cp = buildSameTrainCallingPoints(terminalCoord, coordKey, xTimeRelativeToP)
+            if (terminalCoord != null && xTimeRelativeToP != null && featureId) {
+              const cp = buildSameTrainCallingPoints(terminalCoord, featureId, xTimeRelativeToP)
               if (cp && (cp.downstream.length > 0 || cp.upstream.length > 0)) {
                 // Shallow-clone the existing journey and attach calling
                 // points. Cast through unknown because the base JourneyInfo
@@ -5020,7 +5505,7 @@ export default function HikeMap() {
         // scenarios. Only relevant when the user's home is the whole
         // London cluster — for any other primary, the specific terminus
         // they'd use is already nailed down.
-        if (primaryOrigin === "-0.1269,51.5196") {
+        if (primaryOrigin === "CLON") {
           const activeJ = (next.journeys as Record<string, JourneyInfo> | undefined)?.[primaryOrigin]
           if (activeJ) {
             type Candidate = {
@@ -5042,7 +5527,7 @@ export default function HikeMap() {
             for (const tCoord of clusterCoords) {
               const tRoutes = originRoutes[tCoord]
               if (!tRoutes) continue
-              const entry = tRoutes.directReachable?.[coordKey]
+              const entry = featureId ? tRoutes.directReachable?.[featureId] : undefined
               if (!entry?.minMinutes) continue
               // Resolve terminus display name through matchTerminal so cluster
               // satellites (Waterloo East, Euston Underground) surface under
@@ -5053,7 +5538,7 @@ export default function HikeMap() {
               // fastest observation per canonical name.
               const existing = candidates.find((c) => c.terminusName === canonical)
               if (existing && existing.durationMinutes <= entry.minMinutes) continue
-              const cp = buildCallingPoints(tCoord, coordKey)
+              const cp = featureId ? buildCallingPoints(tCoord, featureId) : null
               const record: Candidate = {
                 terminusName: canonical,
                 terminusCoord: tCoord,
@@ -5097,7 +5582,12 @@ export default function HikeMap() {
             // just duplicate the main route's narrative. Currently
             // affects Farringdon and will auto-include any other
             // zone-1 hub we fetch later.
-            const isInZone1 = (coord: string) => {
+            // Translate the station ID back to its real coord before
+            // bbox-checking. Hubs in originRoutes are keyed by ID post
+            // Phase 3c, so the coord-shaped check needs the registry.
+            const isInZone1 = (id: string) => {
+              const coord = registryGetCoordKey(id)
+              if (!coord) return false
               const [lngS, latS] = coord.split(",")
               const lng = parseFloat(lngS), lat = parseFloat(latS)
               return lng >= -0.20 && lng <= -0.05 && lat >= 51.49 && lat <= 51.54
@@ -5125,7 +5615,7 @@ export default function HikeMap() {
                 if (clusterCoordSet.has(hCoord)) continue
                 if (isInZone1(hCoord)) continue
                 const tToH = tRoutes.directReachable?.[hCoord]
-                const hToD = hRoutes.directReachable?.[coordKey]
+                const hToD = featureId ? hRoutes.directReachable?.[featureId] : undefined
                 if (!tToH?.minMinutes || !hToD?.minMinutes) continue
                 // Interchange happens at H (between the two rail legs).
                 const total = tToH.minMinutes + interchangeBufferFor(hRoutes.name) + hToD.minMinutes
@@ -5343,25 +5833,27 @@ export default function HikeMap() {
     // origin flags) — so they all flow through the same virtual-
     // feature pipeline. Windsor for example has no origin flags yet
     // but still needs its anchor to render and be clickable.
-    for (const [synthCoord, def] of Object.entries(ALL_CLUSTERS)) {
-      const memberCoords = def.members
+    for (const [synthId, def] of Object.entries(ALL_CLUSTERS)) {
+      const memberIds = def.members
       // Skip the active primary/friend — their hexagon/square is
       // already rendered, and we don't want a duplicate icon on top.
-      if (synthCoord === primaryOrigin) continue
-      if (synthCoord === friendOrigin) continue
+      if (synthId === primaryOrigin) continue
+      if (synthId === friendOrigin) continue
       // When a Central London terminus is the active primary, the whole
       // Central London cluster is "disabled" — skip its virtual feature
       // so it doesn't surface as a destination icon at the British Museum
       // centroid, and (crucially) its anchor doesn't get added to
       // visibleSynthAnchors below, which would otherwise re-enable the
       // members' diamonds + cluster hover/anchor-line behaviours.
-      if (isLondonTerminusActive && synthCoord === CENTRAL_LONDON_ANCHOR) continue
+      if (isLondonTerminusActive && synthId === CENTRAL_LONDON_ANCHOR) continue
 
-      // Collect each member's feature from routedStations.
+      // Collect each member's feature from routedStations. Members are
+      // station IDs; the routing pass stamps `id` on every feature
+      // (Phase 3c Step 4), so this is a direct id→feature lookup.
       type Feat = (typeof routedStations.features)[number]
       const memberFeats: Feat[] = []
-      for (const mc of memberCoords) {
-        const f = routedStations.features.find((g) => (g.properties as { coordKey?: string }).coordKey === mc)
+      for (const mid of memberIds) {
+        const f = routedStations.features.find((g) => (g.properties as { id?: string }).id === mid)
         if (f) memberFeats.push(f)
       }
       if (memberFeats.length === 0) continue
@@ -5427,10 +5919,19 @@ export default function HikeMap() {
         }
       }
 
+      // The cluster's centroid coord is carried in clusters-data.json's
+      // `coord` field for each anchor. SYNTHETIC_COORDS surfaces it for
+      // the rendering sites that need a position (Mapbox label points,
+      // synth-anchor-icon layers).
+      const synthCoord = SYNTHETIC_COORDS[synthId] ?? def.coord
       const [lng, lat] = synthCoord.split(",").map(Number)
-      const synthName = SYNTHETIC_DISPLAY_NAMES[synthCoord] ?? synthCoord
+      const synthName = SYNTHETIC_DISPLAY_NAMES[synthId] ?? synthId
+      // buriedStations is coord-keyed at rest (admin state file).
       const isBuried = buriedStations.has(synthCoord)
       const props: Record<string, unknown> = {
+        // Both id and coordKey on the virtual feature so the click
+        // handler + downstream layers can read either form.
+        id: synthId,
         coordKey: synthCoord,
         name: synthName,
         londonMinutes: bestPrimaryJourney.durationMinutes ?? null,
@@ -5458,6 +5959,11 @@ export default function HikeMap() {
       features: [
         ...routedStations.features.map((f) => {
           const coordKey = f.properties.coordKey as string
+          const id = f.properties.id as string | undefined
+          // buriedStations is coord-keyed (admin state file), so we
+          // still index it by coord — but cluster-membership is keyed
+          // by ID post Phase 3c, so we read MEMBER_TO_SYNTHETIC and
+          // ALL_CLUSTER_MEMBER_IDS using the feature's id.
           const isBuried = buriedStations.has(coordKey)
           // When a Central London terminus IS the active primary, suspend
           // the cluster-member treatment for every Central London member.
@@ -5470,9 +5976,10 @@ export default function HikeMap() {
           // the standard zoom-tier rules, which matches the spec: in
           // London-terminus-as-primary mode, the cluster is "disabled"
           // and members behave like normal stations.
-          const isCentralLondonMember = MEMBER_TO_SYNTHETIC[coordKey] === CENTRAL_LONDON_ANCHOR
+          const isCentralLondonMember = id ? MEMBER_TO_SYNTHETIC[id] === CENTRAL_LONDON_ANCHOR : false
           const isClusterMember =
-            ALL_CLUSTER_MEMBER_COORDS.has(coordKey)
+            !!id
+            && ALL_CLUSTER_MEMBER_IDS.has(id)
             && !(isLondonTerminusActive && isCentralLondonMember)
           const hadBuried = !!f.properties.isBuried
           const hadClusterMember = !!f.properties.isClusterMember
@@ -5536,7 +6043,7 @@ export default function HikeMap() {
         // its own journeys dict, so the friend-mins check below would
         // null-filter it out. Hoisted to the top so it beats every
         // subsequent return-false gate.
-        if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
+        if (friendOrigin && (f.properties.id as string | undefined) === friendOrigin) return true
 
         const mins = f.properties.londonMinutes as number | null
 
@@ -5572,8 +6079,15 @@ export default function HikeMap() {
             const alts = (journey as unknown as { alternativeRoutes?: unknown[] } | undefined)?.alternativeRoutes
             return !!alts && alts.length > 0
           }
+          // ID-keyed admin-state lookups. Every feature carries `id`
+          // (Phase 3c) — for real NR stations it equals the CRS, for
+          // non-NR stations it's the synthetic ID, and for cluster
+          // anchors it's the C-prefix ID (e.g. CBIR Birmingham). Using
+          // ref:crs alone would miss any cluster anchor or non-NR
+          // station the user has flagged.
+          const fid = f.properties.id as string | undefined
           if (primaryFeatureFilter === "private-notes") {
-            const entry = stationNotes[f.properties["ref:crs"] as string]
+            const entry = fid ? stationNotes[fid] : undefined
             return !!entry?.privateNote?.trim()
           }
           if (primaryFeatureFilter === "sloppy-pics") {
@@ -5587,17 +6101,17 @@ export default function HikeMap() {
             return approvedCount === 0
           }
           if (primaryFeatureFilter === "undiscovered") {
-            return !stationsHiked.has(f.properties["ref:crs"] as string)
+            return !fid || !stationsHiked.has(fid)
           }
           if (primaryFeatureFilter === "komoot") {
-            return stationsWithKomoot.has(f.properties["ref:crs"] as string)
+            return !!fid && stationsWithKomoot.has(fid)
           }
           // "No komoot" — inverse of "komoot": only stations that
           // DON'T have any attached walk with a Komoot URL. Note this
           // includes stations with no attached walks at all; the rating
           // filter still applies to gate that further if needed.
           if (primaryFeatureFilter === "no-komoot") {
-            return !stationsWithKomoot.has(f.properties["ref:crs"] as string)
+            return !fid || !stationsWithKomoot.has(fid)
           }
           // "Potential month data" — stations with a Komoot route AND
           // month metadata only on admin-only walks (none on public
@@ -5605,18 +6119,18 @@ export default function HikeMap() {
           // month data could be promoted to a public walk to make the
           // station appear in the public month filter.
           if (primaryFeatureFilter === "potential-month-data") {
-            return stationsPotentialMonths.has(f.properties["ref:crs"] as string)
+            return !!fid && stationsPotentialMonths.has(fid)
           }
           // "Issues" — admin-flagged stations only. hasIssue is station-global
           // (set keyed by station ID, no primary-origin lookup needed).
           if (primaryFeatureFilter === "issues") {
-            return issueStations.has(f.properties["ref:crs"] as string)
+            return !!fid && issueStations.has(fid)
           }
           // "Placemark" — admin-flagged stations whose name-label is forced
           // visible at zoom 8+. Station-global like "Issues", same Set-keyed
           // lookup pattern. Lets the admin audit the placemark set in one shot.
           if (primaryFeatureFilter === "placemark") {
-            return placemarkStations.has(f.properties["ref:crs"] as string)
+            return !!fid && placemarkStations.has(fid)
           }
           // "No travel data" — destinations with no journey-time data
           // (londonMinutes is null). Only effective when the time sliders
@@ -5726,7 +6240,10 @@ export default function HikeMap() {
         //     whose months don't include the current calendar month.
         // AND semantics — both apply when both are active.
         if (monthFilter !== "off" || currentMonthHighlight) {
-          const entry = stationMonths[f.properties["ref:crs"] as string]
+          // stationMonths is keyed by station ID (Phase 2c) — index by
+          // the canonical id stamped on every feature.
+          const fid = f.properties.id as string | undefined
+          const entry = fid ? stationMonths[fid] : undefined
           const months = entry?.months ?? []
           if (monthFilter === "None") {
             if (months.length > 0) return false
@@ -5763,14 +6280,18 @@ export default function HikeMap() {
     return {
       ...filteredStations,
       features: filteredStations.features.filter((f) => {
-        // Match on station name (substring) OR CRS code (3-letter code,
-        // matched as a prefix so typing "swl" finds Swale, "swa" finds
-        // Swansea/Swanley/etc., but a single letter doesn't drag in
-        // every code starting with it via `includes`).
+        // Match on station name (substring) OR canonical station ID
+        // (matched as a prefix so typing "swl" finds Swale, "swa" finds
+        // Swansea/Swanley/etc., "umyl" finds Marylebone Underground,
+        // and "cbic" finds the Bicester cluster — but a single letter
+        // doesn't drag in every code starting with it via `includes`).
+        // Phase 3c stamps `id` on every feature including non-NR and
+        // synthetic cluster anchors, so this catches more than the
+        // pre-Phase-3c ref:crs-only check did.
         const name = (f.properties.name as string).toLowerCase()
         if (name.includes(q)) return true
-        const crs = (f.properties["ref:crs"] as string | undefined)?.toLowerCase()
-        return !!crs && crs.startsWith(q)
+        const id = (f.properties.id as string | undefined)?.toLowerCase()
+        return !!id && id.startsWith(q)
       }),
     }
   }, [filteredStations, isSearching, searchQuery])
@@ -5806,6 +6327,10 @@ export default function HikeMap() {
       ...displayedStations,
       features: displayedStations.features.map(f => {
         const coordKey = f.properties.coordKey as string
+        // ratings is coord-keyed at rest (server-side response shape),
+        // but every other origin/cluster lookup is now ID-based — pull
+        // both off the feature so each indexes its respective map.
+        const id = f.properties.id as string | undefined
         const r = ratings[coordKey]
         const extra: Record<string, unknown> = {}
         if (r) extra.rating = r
@@ -5818,7 +6343,7 @@ export default function HikeMap() {
           // used below by the rating-icons layer to render it as a
           // primary-colour square (same shape as primary origins) so
           // it stands out from its surrounding rating icons.
-          if (coordKey === friendOrigin) extra.isFriendOrigin = 1
+          if (id === friendOrigin) extra.isFriendOrigin = 1
         }
         // Buried + unrated + not in active-origin set → only renders
         // at zoom 12+. Stamp the flag so Mapbox's per-layer minzoom
@@ -5829,8 +6354,8 @@ export default function HikeMap() {
         if (
           f.properties.isBuried &&
           !r &&
-          !activeOrigins.has(coordKey) &&
-          !placemarkStations.has(f.properties["ref:crs"] as string)
+          !(id && activeOrigins.has(id)) &&
+          !(id && placemarkStations.has(id))
         ) {
           extra.isBuriedHidden = 1
         }
@@ -5876,28 +6401,30 @@ export default function HikeMap() {
     // synthetic; the friend variant has its own separate Source.
     const primaryDef = PRIMARY_ORIGINS[primaryOrigin]
     if (!primaryDef?.isSynthetic) return null
-    const clusterCoords = PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []
+    const clusterMemberIds = PRIMARY_ORIGIN_CLUSTER[primaryOrigin] ?? []
     type PointFeature = {
       type: "Feature"
       geometry: { type: "Point"; coordinates: [number, number] }
       properties: Record<string, unknown>
     }
     const iconFeatures: PointFeature[] = []
-    for (const coord of clusterCoords) {
-      const [lngStr, latStr] = coord.split(",")
-      const lng = parseFloat(lngStr)
-      const lat = parseFloat(latStr)
+    // Cluster members are station IDs post Phase 3c. Find each
+    // member's feature directly by id, then read its geometry for
+    // the diamond's lng/lat. coordKey is preserved on the diamond
+    // feature for legacy click-resolution.
+    for (const memberId of clusterMemberIds) {
+      const bf = baseStations.features.find(
+        (f) => (f.properties as { id?: string }).id === memberId,
+      )
+      if (!bf) continue
+      const [lng, lat] = bf.geometry.coordinates as [number, number]
       if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
-      // Skip tube-only coords — the cluster includes Underground entrances
-      // for Kings Cross and Euston as satellite coords so cluster-member
+      const coord = `${lng},${lat}`
+      // Skip tube-only members — the cluster includes Underground entrances
+      // for Kings Cross and Euston as satellite IDs so cluster-member
       // taps resolve to the parent primary, but visually we only want the
-      // National Rail stations shown as waypoint diamonds. Identify tube-
-      // only coords by their network tag.
-      const bf = baseStations.features.find((f) => {
-        const [l, a] = f.geometry.coordinates as [number, number]
-        return `${l},${a}` === coord
-      })
-      const network = (bf?.properties?.network as string | undefined) ?? ""
+      // National Rail stations shown as waypoint diamonds.
+      const network = (bf.properties?.network as string | undefined) ?? ""
       const isNR = /National Rail|Elizabeth line/.test(network)
       if (!isNR) continue
       // Proximity dedupe: if a previously-added diamond is within ~70m
@@ -5926,18 +6453,18 @@ export default function HikeMap() {
       iconFeatures.push({
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
-        // Stamp coord + coordKey + name so the click handler can
-        // resolve a diamond tap back to its station feature (via
-        // baseStations) and open the stripped-down active-primary
-        // modal. coordKey matches the same-named property on
-        // regular station features — lets the existing click-to-
-        // modal plumbing reuse the cluster-member branch.
+        // Stamp id + coord + coordKey + name so the click handler can
+        // resolve a diamond tap back to its station feature. id is the
+        // canonical key for cluster lookups (MEMBER_TO_SYNTHETIC, the
+        // ALL_CLUSTER_MEMBER_IDS membership test); coordKey is kept for
+        // legacy callers reading f.properties.coordKey.
         //
         // isTerminus tells resolveStationIconImage to use the diamond
         // icon for the hover pulse animation — without this, the
         // pulse defaults to the unrated circle because the feature
         // has no rating/isLondon properties.
         properties: {
+          id: memberId,
           coord: coord,
           coordKey: coord,
           name: cleanName,
@@ -5958,23 +6485,22 @@ export default function HikeMap() {
     if (!baseStations || !friendOrigin) return null
     const friendDef = FRIEND_ORIGINS[friendOrigin]
     if (!friendDef?.isSynthetic) return null
-    const clusterCoords = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
+    const memberIds = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
     type PointFeature = {
       type: "Feature"
       geometry: { type: "Point"; coordinates: [number, number] }
       properties: Record<string, unknown>
     }
     const iconFeatures: PointFeature[] = []
-    for (const coord of clusterCoords) {
-      const [lngStr, latStr] = coord.split(",")
-      const lng = parseFloat(lngStr)
-      const lat = parseFloat(latStr)
+    for (const memberId of memberIds) {
+      const bf = baseStations.features.find(
+        (f) => (f.properties as { id?: string }).id === memberId,
+      )
+      if (!bf) continue
+      const [lng, lat] = bf.geometry.coordinates as [number, number]
       if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
-      const bf = baseStations.features.find((f) => {
-        const [l, a] = f.geometry.coordinates as [number, number]
-        return `${l},${a}` === coord
-      })
-      const network = (bf?.properties?.network as string | undefined) ?? ""
+      const coord = `${lng},${lat}`
+      const network = (bf.properties?.network as string | undefined) ?? ""
       const isNR = /National Rail|Elizabeth line/.test(network)
       if (!isNR) continue
       const nearPrevious = iconFeatures.some((f) => {
@@ -5982,7 +6508,7 @@ export default function HikeMap() {
         return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
       })
       if (nearPrevious) continue
-      const rawName = bf?.properties?.name as string | undefined
+      const rawName = bf.properties?.name as string | undefined
       let cleanName = cleanTerminusLabel(rawName)
       // Disambiguate satellite labels that collide with the friend
       // anchor's displayName (e.g. BHM cleans to "Birmingham New
@@ -5996,6 +6522,7 @@ export default function HikeMap() {
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
         properties: {
+          id: memberId,
           coord: coord,
           coordKey: coord,
           name: cleanName,
@@ -6039,19 +6566,18 @@ export default function HikeMap() {
       clusters.push({ anchor, displayName: def.displayName, members: def.members })
     }
     for (const { anchor, displayName, members } of clusters) {
-      for (const coord of members) {
-        const [lngStr, latStr] = coord.split(",")
-        const lng = parseFloat(lngStr)
-        const lat = parseFloat(latStr)
+      for (const memberId of members) {
+        const bf = baseStations.features.find(
+          (f) => (f.properties as { id?: string }).id === memberId,
+        )
+        if (!bf) continue
+        const [lng, lat] = bf.geometry.coordinates as [number, number]
         if (!Number.isFinite(lng) || !Number.isFinite(lat)) continue
-        const bf = baseStations.features.find((f) => {
-          const [l, a] = f.geometry.coordinates as [number, number]
-          return `${l},${a}` === coord
-        })
+        const coord = `${lng},${lat}`
         // Skip tube-only entries (matches the existing London-cluster
         // rule — Underground entrances for Kings Cross / Euston aren't
         // wanted as visible diamonds, just as cluster-routing aliases).
-        const network = (bf?.properties?.network as string | undefined) ?? ""
+        const network = (bf.properties?.network as string | undefined) ?? ""
         const isNR = /National Rail|Elizabeth line/.test(network)
         if (!isNR) continue
         // Proximity dedupe within the SAME cluster — collapses St Pancras
@@ -6061,18 +6587,19 @@ export default function HikeMap() {
           return (l - lng) ** 2 + (a - lat) ** 2 < 1e-6
         })
         if (nearPrevious) continue
-        const rawName = bf?.properties?.name as string | undefined
+        const rawName = bf.properties?.name as string | undefined
         let cleanName = cleanTerminusLabel(rawName)
         if (cleanName === displayName) cleanName = `${cleanName} Station`
         iconFeatures.push({
           type: "Feature",
           geometry: { type: "Point", coordinates: [lng, lat] },
           properties: {
+            id: memberId,
             coord: coord,
             coordKey: coord,
             name: cleanName,
             isTerminus: true,
-            // Parent synthetic's anchor coord — drives the visibility
+            // Parent synthetic's anchor ID — drives the visibility
             // filter downstream (a diamond only renders when its
             // parent synthetic survives the filter pipeline).
             synthAnchor: anchor,
@@ -6095,7 +6622,7 @@ export default function HikeMap() {
       features: allStationsWithRatings.features
         .filter(f => {
           // The active friend origin always shows regardless of rating filters (coord-keyed)
-          if (friendOrigin && (f.properties.coordKey as string) === friendOrigin) return true
+          if (friendOrigin && (f.properties.id as string | undefined) === friendOrigin) return true
           // Empty rating checkboxes = empty map. Falls straight through to
           // the per-category gates below, both of which return false when
           // visibleRatings + newlyRemovedRatings are both empty. Animations
@@ -6120,10 +6647,11 @@ export default function HikeMap() {
           // can read a cheap boolean property.
           const coord = f.properties.coordKey as string
           const isDest = coord !== primaryOrigin
-          // issueStations + placemarkStations are keyed by station ID post
-          // Phase 2b/2d. Real-station features all have ref:crs (their
-          // canonical ID), so the lookup is direct.
-          const stationId = f.properties["ref:crs"] as string | undefined
+          // issueStations + placemarkStations are keyed by station ID
+          // post Phase 2b/2d. Every feature carries `id` (Phase 3c) —
+          // includes synthetic cluster anchors like CBIR, so flagging
+          // a cluster as an issue/placemark stamps the diamond too.
+          const stationId = f.properties.id as string | undefined
           const hasIssue = isDest && !!stationId && issueStations.has(stationId)
           // Admin-only "placemark" flag — same shape as hasIssue, stamped
           // here so label-layer filters can read a cheap `isPlacemark` boolean
@@ -6157,13 +6685,19 @@ export default function HikeMap() {
     const out = new Set<string>()
     // Active primary/friend synthetics always count as visible — their
     // hexagon/square IS on the map regardless of filter checkboxes.
+    // Both origins are station IDs post Phase 3c.
     if (PRIMARY_ORIGIN_CLUSTER[primaryOrigin]) out.add(primaryOrigin)
     if (friendOrigin && FRIEND_ORIGIN_CLUSTER[friendOrigin]) out.add(friendOrigin)
-    // Non-active synthetics that survived the filter chain.
+    // Non-active synthetics that survived the filter chain. Read from
+    // the virtual feature's `id` (post Phase 3c, every synthetic
+    // virtual feature carries its anchor ID) — the diamond features
+    // downstream filter via `synthAnchor`, also an ID, so the Set
+    // and the filter agree.
     if (stationsForMap) {
       for (const f of stationsForMap.features) {
         if ((f.properties as { isSynthetic?: boolean }).isSynthetic) {
-          out.add(f.properties.coordKey as string)
+          const id = (f.properties as { id?: string }).id
+          if (id) out.add(id)
         }
       }
     }
@@ -6722,15 +7256,25 @@ export default function HikeMap() {
         const stamped = data.features.map((f) => {
           const [lng, lat] = f.geometry.coordinates
           const coordKey = `${lng},${lat}`
-          // Stamp coordKey for consistent identity
+          // Stamp both coordKey AND the canonical station ID. coordKey
+          // stays as the geometry-derived "lng,lat" string (used by a
+          // handful of legacy lookups + Mapbox click round-trips); id
+          // is the registry's canonical identifier — CRS for real NR
+          // stations, 4-char synthetic for everything else. id is what
+          // Phase 3c comparisons (=== primaryOrigin / friendOrigin) all
+          // key off, so every consumer reads it from properties.id.
+          const id = resolveCoordKey(coordKey)
           const extra: Record<string, unknown> = { coordKey }
+          if (id) extra.id = id
           // Apply Central London terminus name overrides (see
           // TERMINUS_DISPLAY_OVERRIDES). Overriding `name` on the base
           // feature propagates the cleaner short form to every consumer
           // — Mapbox label layers via ["get","name"], searchableStations,
           // coordToName, the station modal title — without each
           // consumer needing to know about the override map.
-          const nameOverride = TERMINUS_DISPLAY_OVERRIDES[coordKey]
+          // Keyed by station ID post Phase 3c (the literals were
+          // ID-rewritten by scripts/migrate-map-tsx-coord-literals.mjs).
+          const nameOverride = id ? TERMINUS_DISPLAY_OVERRIDES[id] : undefined
           if (nameOverride) extra.name = nameOverride
           // Cast restores the index signature that TypeScript loses when spreading a mapped type
           return { ...f, properties: { ...f.properties, ...extra } as StationFeature["properties"] }
@@ -6915,8 +7459,9 @@ export default function HikeMap() {
     const feature = stationsForMap?.features.find(
       f => (f.properties.coordKey as string) === hovered.coordKey
     )
-    // friendOrigin is a coord key — compare against the feature's coordKey
-    return (feature?.properties.coordKey as string) === friendOrigin
+    // friendOrigin is a station ID post Phase 3c; compare against the
+    // feature's id rather than its coordKey.
+    return (feature?.properties.id as string | undefined) === friendOrigin
   }, [friendOrigin, hovered, stationsForMap])
 
   // The animated journey line GeoJSON — grows from origin to destination over time.
@@ -7270,13 +7815,24 @@ export default function HikeMap() {
   // before it could advance (feedback loop → progress stuck at 0).
   const hoveredClusterAnchor = useMemo(() => {
     if (!hovered) return null
-    const effective = hovered.coordKey === "london" ? primaryOrigin : hovered.coordKey
-    return ALL_SYNTHETIC_COORDS.has(effective) ? effective : null
+    // hovered.coordKey is a real coord (or the magic string "london"
+    // for the active-primary hexagon). Translate to the canonical
+    // anchor ID via the registry — coord→ID resolution covers both
+    // synthetic anchor centroids AND real station coords; only
+    // anchor-coord hits will then survive ALL_SYNTHETIC_IDS.
+    const effective = hovered.coordKey === "london"
+      ? primaryOrigin
+      : (resolveCoordKey(hovered.coordKey) ?? hovered.coordKey)
+    return ALL_SYNTHETIC_IDS.has(effective) ? effective : null
   }, [hovered, primaryOrigin])
 
   const clusterAnchorLineTargets = useMemo(() => {
     if (!hoveredClusterAnchor || !visibleClusterDiamondFeatures) return null
-    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(hoveredClusterAnchor)
+    // hoveredClusterAnchor is now an anchor ID; resolve to its
+    // centroid coord for the line endpoint.
+    const anchorCoord = SYNTHETIC_COORDS[hoveredClusterAnchor]
+    if (!anchorCoord) return null
+    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(anchorCoord)
     if (!Number.isFinite(anchorLng) || !Number.isFinite(anchorLat)) return null
     // Pair each cluster member's diamond coord with the anchor coord.
     // Result is the FULL line — the rAF effect below interpolates the
@@ -7353,7 +7909,10 @@ export default function HikeMap() {
     // Re-derive the from→to pairs here (rather than depending on the
     // clusterAnchorLineTargets memo) so this effect's dep array stays
     // a stable string and we don't refetch on every render.
-    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(hoveredClusterAnchor)
+    // hoveredClusterAnchor is an anchor ID — resolve to centroid coord.
+    const anchorCoord = SYNTHETIC_COORDS[hoveredClusterAnchor]
+    if (!anchorCoord) return
+    const { lng: anchorLng, lat: anchorLat } = parseCoordKey(anchorCoord)
     if (!Number.isFinite(anchorLng) || !Number.isFinite(anchorLat)) return
     const pairs = visibleClusterDiamondFeatures.icons.features
       .filter((f) => f.properties.synthAnchor === hoveredClusterAnchor)
@@ -7576,14 +8135,21 @@ export default function HikeMap() {
     // the diamond on a dedicated `hoveredDiamond` state so the diamond
     // itself can grow + pulse via its own dedicated layer.
     // Resolve the synthetic anchor — diamond features carry it directly
-    // as `synthAnchor`, but station-hit-area-cluster features (which
-    // Mapbox often returns first because their layer renders on top)
-    // only have `isClusterMember`. Fall back to the MEMBER_TO_SYNTHETIC
-    // lookup so both paths enter the diamond hover branch.
+    // as `synthAnchor` (a station ID post Phase 3c), but station-hit-
+    // area-cluster features (which Mapbox often returns first because
+    // their layer renders on top) only have `isClusterMember`. Fall
+    // back to MEMBER_TO_SYNTHETIC keyed by the feature's id so both
+    // paths enter the diamond hover branch.
+    const featureIdProp = feature.properties?.id as string | undefined
     const synthAnchor = (feature.properties?.synthAnchor as string | undefined)
-      ?? (feature.properties?.isClusterMember ? MEMBER_TO_SYNTHETIC[coordKey] : undefined)
+      ?? (feature.properties?.isClusterMember && featureIdProp
+        ? MEMBER_TO_SYNTHETIC[featureIdProp]
+        : undefined)
     if (synthAnchor) {
-      const [synthLngStr, synthLatStr] = synthAnchor.split(",")
+      // Anchor coord (lng/lat) for the hover pulse — read from the
+      // SYNTHETIC_COORDS map since synthAnchor is an ID.
+      const synthCoord = SYNTHETIC_COORDS[synthAnchor] ?? ""
+      const [synthLngStr, synthLatStr] = synthCoord.split(",")
       const synthLng = parseFloat(synthLngStr)
       const synthLat = parseFloat(synthLatStr)
       // Look up the synthetic's underlying station feature for icon
@@ -7594,7 +8160,7 @@ export default function HikeMap() {
       // through to the synthetic anchor's feature in `stations` lets
       // resolveStationIconImage do that resolution naturally.
       const synthFeat = stations?.features.find(
-        (f) => (f.properties as { coordKey?: string }).coordKey === synthAnchor
+        (f) => (f.properties as { id?: string }).id === synthAnchor
       )
       // The synthetic feature in `stations` is built without a `rating`
       // — that property is stamped later in allStationsWithRatings.
@@ -7602,8 +8168,9 @@ export default function HikeMap() {
       // matches the static one (e.g. London = hexagon for rating 2).
       // Without this, resolveStationIconImage sees no rating and
       // returns "icon-unrated" — the pulse renders as a circle on top
-      // of the static hexagon.
-      const synthRating = ratings[synthAnchor]
+      // of the static hexagon. ratings is coord-keyed (legacy server
+      // shape), so look up via the synthetic's coord.
+      const synthRating = synthCoord ? ratings[synthCoord] : undefined
       const synthPropsForIcon = synthRating != null
         ? { ...(synthFeat?.properties ?? {}), rating: synthRating }
         : (synthFeat?.properties ?? undefined)
@@ -7612,9 +8179,10 @@ export default function HikeMap() {
         : synthAnchor === friendOrigin
         ? "icon-origin"
         : resolveStationIconImage(synthPropsForIcon)
-      setHovered({ lng: synthLng, lat: synthLat, coordKey: synthAnchor, iconImage: synthIconImage })
+      setHovered({ lng: synthLng, lat: synthLat, coordKey: synthCoord, iconImage: synthIconImage })
       setHoveredDiamond({
         coordKey,
+        id: featureIdProp,
         lng,
         lat,
         name: (feature.properties?.name as string | undefined) ?? "",
@@ -7837,7 +8405,10 @@ export default function HikeMap() {
     if (friendAnchorHit && friendOrigin) {
       const friendDef = FRIEND_ORIGINS[friendOrigin]
       if (friendDef?.isSynthetic) {
-        const [aLngStr, aLatStr] = friendOrigin.split(",")
+        // friendOrigin is now an ID; SYNTHETIC_COORDS / the registry
+        // surface the centroid coord we draw at.
+        const friendCoord = SYNTHETIC_COORDS[friendOrigin] ?? registryGetCoordKey(friendOrigin) ?? ""
+        const [aLngStr, aLatStr] = friendCoord.split(",")
         const aLng = parseFloat(aLngStr)
         const aLat = parseFloat(aLatStr)
         const pt = mapRef.current?.project([aLng, aLat])
@@ -7846,7 +8417,8 @@ export default function HikeMap() {
           lng: aLng,
           lat: aLat,
           minutes: 0,
-          coordKey: friendOrigin,
+          coordKey: friendCoord,
+          id: friendOrigin,
           flickrCount: null,
           screenX: pt?.x ?? window.innerWidth / 2,
           screenY: pt?.y ?? window.innerHeight / 2,
@@ -7891,29 +8463,38 @@ export default function HikeMap() {
       feature.layer?.id === "cluster-diamond-icon" ||
       feature.layer?.id === "station-hit-area-cluster"
     ) {
-      const diamondCoord = feature.properties?.coordKey as string | undefined
-      const anchorCoord = diamondCoord ? MEMBER_TO_SYNTHETIC[diamondCoord] : undefined
-      const anchorName = anchorCoord
-        ? (PRIMARY_ORIGINS[anchorCoord]?.overlayName
-          ?? PRIMARY_ORIGINS[anchorCoord]?.displayName
-          ?? FRIEND_ORIGINS[anchorCoord]?.overlayName
-          ?? FRIEND_ORIGINS[anchorCoord]?.displayName
+      // Diamond features carry the member's station ID; synthetic
+      // virtual features carry the anchor ID directly. Either way,
+      // resolving via MEMBER_TO_SYNTHETIC handles both: a member ID
+      // maps to its anchor, and a non-member ID falls through (we
+      // then fall back to the ID itself when it IS a synthetic anchor).
+      const diamondId = feature.properties?.id as string | undefined
+      const anchorId = diamondId
+        ? (MEMBER_TO_SYNTHETIC[diamondId] ?? (ALL_SYNTHETIC_IDS.has(diamondId) ? diamondId : undefined))
+        : undefined
+      const anchorName = anchorId
+        ? (PRIMARY_ORIGINS[anchorId]?.overlayName
+          ?? PRIMARY_ORIGINS[anchorId]?.displayName
+          ?? FRIEND_ORIGINS[anchorId]?.overlayName
+          ?? FRIEND_ORIGINS[anchorId]?.displayName
           // Final fallback: destination-only clusters (e.g. Windsor)
           // aren't in the origin maps, but every cluster has a
           // displayName in SYNTHETIC_DISPLAY_NAMES.
-          ?? SYNTHETIC_DISPLAY_NAMES[anchorCoord]
+          ?? SYNTHETIC_DISPLAY_NAMES[anchorId]
           ?? null)
         : null
-      if (anchorCoord && anchorName) {
-        const [aLngStr, aLatStr] = anchorCoord.split(",")
+      if (anchorId && anchorName) {
+        const anchorCoord = SYNTHETIC_COORDS[anchorId]
+        const [aLngStr, aLatStr] = (anchorCoord ?? ",").split(",")
         const aLng = parseFloat(aLngStr)
         const aLat = parseFloat(aLatStr)
         const pt = mapRef.current?.project([aLng, aLat])
         // Look up the synthetic's virtual feature (built in the
         // `stations` memo) so the modal gets the synthetic's
-        // top-ranked-member journey + cluster member labels.
+        // top-ranked-member journey + cluster member labels. The
+        // virtual feature carries `id: anchorId` for direct lookup.
         const synthFeat = stations?.features.find(
-          (g) => (g.properties as { coordKey?: string }).coordKey === anchorCoord
+          (g) => (g.properties as { id?: string }).id === anchorId
         )
         const synthProps = (synthFeat?.properties ?? {}) as Record<string, unknown>
         setSelectedStation({
@@ -7921,7 +8502,8 @@ export default function HikeMap() {
           lng: aLng,
           lat: aLat,
           minutes: (synthProps.londonMinutes as number | null | undefined) ?? 0,
-          coordKey: anchorCoord,
+          coordKey: anchorCoord ?? "",
+          id: anchorId,
           flickrCount: null,
           screenX: pt?.x ?? window.innerWidth / 2,
           screenY: pt?.y ?? window.innerHeight / 2,
@@ -7956,7 +8538,8 @@ export default function HikeMap() {
             lng: originCoords.lng,
             lat: originCoords.lat,
             minutes: 0,
-            coordKey: primaryOrigin,
+            coordKey: registryGetCoordKey(primaryOrigin) ?? "",
+            id: primaryOrigin,
             flickrCount: null,
             screenX: pt?.x ?? window.innerWidth / 2,
             screenY: pt?.y ?? window.innerHeight / 2,
@@ -7968,7 +8551,7 @@ export default function HikeMap() {
           return
         }
         const primaryFeature = stations?.features.find(
-          (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === primaryOrigin
+          (f) => (f.properties as { id?: string } | undefined)?.id === primaryOrigin
         )
         if (primaryFeature) feature = primaryFeature as unknown as typeof feature
       } else {
@@ -8025,7 +8608,8 @@ export default function HikeMap() {
           lng: originCoords.lng,
           lat: originCoords.lat,
           minutes: 0,
-          coordKey: primaryOrigin,
+          coordKey: registryGetCoordKey(primaryOrigin) ?? "",
+          id: primaryOrigin,
           flickrCount: null,
           screenX: pt?.x ?? window.innerWidth / 2,
           screenY: pt?.y ?? window.innerHeight / 2,
@@ -8033,7 +8617,7 @@ export default function HikeMap() {
         return
       }
       const primaryFeature = stations?.features.find(
-        (f) => (f.properties as { coordKey?: string } | undefined)?.coordKey === primaryOrigin
+        (f) => (f.properties as { id?: string } | undefined)?.id === primaryOrigin
       )
       if (primaryFeature) {
         feature = primaryFeature as unknown as typeof feature
@@ -8048,11 +8632,14 @@ export default function HikeMap() {
       }
     }
     const clickedCoordKey = feature.properties?.coordKey as string | undefined
+    const clickedId = feature.properties?.id as string | undefined
     // Scope to the active primary's cluster — a tap on a London cluster
     // member (e.g. Moorgate) when the active primary is Charing Cross is a
     // normal station tap, not a primary-dot tap.
+    // getActivePrimaryCoords returns IDs (post Phase 3c), so compare
+    // against the feature's id rather than its coordKey.
     const isPrimaryDot =
-      !!clickedCoordKey && getActivePrimaryCoords(primaryOrigin).includes(clickedCoordKey)
+      !!clickedId && getActivePrimaryCoords(primaryOrigin).includes(clickedId)
     if (isPrimaryDot && PRIMARY_CLICK_BEHAVIOUR === "banner") {
       const pt = mapRef.current?.project([originCoords.lng, originCoords.lat])
       setBannerOrigin(pt ? { x: pt.x, y: pt.y } : null)
@@ -8063,6 +8650,7 @@ export default function HikeMap() {
     // Convert geo coords → screen pixels so the modal can animate from this point
     const screenPt = mapRef.current?.project([lng, lat])
     const coordKey = feature.properties?.coordKey as string
+    const featureId = (feature.properties?.id as string | undefined) ?? clickedCoordKey ?? ""
 
     // Look up journey data from the raw GeoJSON (Mapbox flattens nested props)
     const rawFeature = stations?.features.find(
@@ -8086,6 +8674,7 @@ export default function HikeMap() {
       lat,
       minutes: feature.properties?.londonMinutes as number,
       coordKey,
+      id: featureId,
       flickrCount: feature.properties?.flickrCount as number | null ?? null,
       screenX: screenPt?.x ?? window.innerWidth / 2,
       screenY: screenPt?.y ?? window.innerHeight / 2,
@@ -8151,6 +8740,7 @@ export default function HikeMap() {
       lat,
       minutes: feature.properties?.londonMinutes as number,
       coordKey,
+      id: stationId,
       flickrCount: (feature.properties?.flickrCount as number | null) ?? null,
       screenX: screenPt?.x ?? window.innerWidth / 2,
       screenY: screenPt?.y ?? window.innerHeight / 2,
@@ -8166,6 +8756,11 @@ export default function HikeMap() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function handleMapLoad(e: any) {
     const map = e.target
+    // Dev-only: expose the Mapbox map instance on window for browser-
+    // console debugging (e.g. window.__ttgMap.getSource('stations')._data).
+    if (process.env.NODE_ENV === "development") {
+      (window as unknown as { __ttgMap: unknown }).__ttgMap = map
+    }
     // Touch zoom and rotate share one handler. disableRotation() keeps pinch-zoom
     // but removes the two-finger twist gesture that rotates the map on touchscreens.
     map.touchZoomRotate.disableRotation()
@@ -9518,7 +10113,14 @@ export default function HikeMap() {
             data={{
               type: "Feature",
               geometry: { type: "Point", coordinates: [hoveredDiamond.lng, hoveredDiamond.lat] },
-              properties: { coordKey: hoveredDiamond.coordKey, name: hoveredDiamond.name },
+              properties: {
+                coordKey: hoveredDiamond.coordKey,
+                // Stamp id when known so the admin-mode label can read
+                // it via ["get","id"] — matches the main hover label's
+                // "ID + name" treatment.
+                ...(hoveredDiamond.id ? { id: hoveredDiamond.id } : {}),
+                name: hoveredDiamond.name,
+              },
             }}
           >
             <Layer
@@ -9526,7 +10128,13 @@ export default function HikeMap() {
               type="symbol"
               minzoom={9}
               layout={{
-                "text-field": ["get", "name"],
+                "text-field": devExcludeActive
+                  ? ["case",
+                      ["has", "id"],
+                      ["concat", ["get", "id"], " ", ["get", "name"]],
+                      ["get", "name"],
+                    ]
+                  : ["get", "name"],
                 "text-size": 11,
                 "text-offset": [0, 1.2],
                 "text-anchor": "top",
@@ -10074,9 +10682,13 @@ export default function HikeMap() {
                 id="station-label-friend"
                 type="symbol"
                 /* eslint-disable @typescript-eslint/no-explicit-any */
-                filter={["==", ["get", "coordKey"], friendOrigin] as any}
+                filter={["==", ["get", "id"], friendOrigin] as any}
                 /* eslint-enable @typescript-eslint/no-explicit-any */
                 layout={{
+                  // Persistent label — name only. The admin-mode code
+                  // prefix is supplied by the dedicated `station-label-
+                  // hover` layer when the user actually hovers, so this
+                  // persistent label stays uncluttered.
                   "text-field": ["format", ["get", "name"], { "font-scale": 1 }],
                   "text-size": 11,
                   "text-offset": [0, 1.4],
@@ -10107,44 +10719,18 @@ export default function HikeMap() {
                     : [
                         "format",
                         // In admin mode, prefix the station name with its
-                        // CRS code — "TRI Tring" — for quick station
-                        // identification. Falls back to plain name when
-                        // ref:crs is absent (e.g. London terminus pseudo-
-                        // features). Built here at render time, not as a
-                        // Mapbox `case`, because devExcludeActive is React
-                        // state, not a feature property.
+                        // canonical station ID — "TRI Tring", "UMYL
+                        // Marylebone (Underground)", "CLON London" — for
+                        // quick station identification. Every map feature
+                        // gets `id` stamped (Phase 3c, in the fetch
+                        // handler + virtual-feature builders), so the
+                        // case fallback only fires for the rare feature
+                        // we couldn't resolve through the registry.
                         devExcludeActive
                           ? ["case",
-                              // SYNTH: virtual cluster anchors (Windsor,
-                              // Stratford, Birmingham, Central London…).
-                              // These are centroid pseudo-features built
-                              // in the `stations` memo, not real stations,
-                              // so they have no CRS — but they're
-                              // categorically different from "missing CRS"
-                              // non-NR stations and deserve their own tag.
-                              // Checked first so the NULL branch below
-                              // never matches a synthetic.
-                              ["==", ["get", "isSynthetic"], true],
-                              ["concat", "SYNTH ", ["get", "name"]],
-                              // Non-NR detection: no CRS, OR a Z-prefix
-                              // code that isn't on our allowlist of Z-prefix
-                              // codes that ARE actually National Rail
-                              // stations (ZFD Farringdon, ZLW Whitechapel,
-                              // ZEL Elephant & Castle, ZCW Canada Water,
-                              // ZTU Turnham Green). Without the allowlist,
-                              // ZFD would be wrongly flagged — it's a
-                              // critical Thameslink + Elizabeth stitcher
-                              // source. Mirrors isNonNrStation() in
-                              // photo-overlay.tsx; keep them in sync.
-                              ["any",
-                                ["!", ["has", "ref:crs"]],
-                                ["all",
-                                  ["==", ["index-of", "Z", ["get", "ref:crs"]], 0],
-                                  ["!", ["in", ["get", "ref:crs"], ["literal", ["ZFD", "ZLW", "ZEL", "ZCW", "ZTU"]]]],
-                                ],
-                              ],
-                              ["concat", "NULL ", ["get", "name"]],
-                              ["concat", ["get", "ref:crs"], " ", ["get", "name"]],
+                              ["has", "id"],
+                              ["concat", ["get", "id"], " ", ["get", "name"]],
+                              ["get", "name"],
                             ]
                           : ["get", "name"],
                         { "font-scale": 1 },
@@ -10212,25 +10798,36 @@ export default function HikeMap() {
           {/* Label — always visible beneath the hexagon, showing the current
               primary origin name plus a "time to escape" sublabel. Falls back to
               canonicalName if displayName isn't set, and finally to the raw coord key. */}
-          {mapReady && (
+          {mapReady && (() => {
+            // Primary's display name. Map label uses the full displayName
+            // (even on mobile). The mobileDisplayName "super-shorthand"
+            // is intentionally only applied to the filter-panel dropdown
+            // trigger where horizontal space is tight — the map has more
+            // room and users benefit from seeing the full name of their
+            // origin. For a custom primary (NR station picked via the
+            // search), PRIMARY_ORIGINS has no entry → fall back to
+            // coordToName (the station's own name).
+            const displayName = PRIMARY_ORIGINS[primaryOrigin]?.displayName
+              ?? PRIMARY_ORIGINS[primaryOrigin]?.canonicalName
+              ?? coordToName[primaryOrigin]
+              ?? primaryOrigin
+            // Admin mode prefixes with the canonical station ID — but
+            // ONLY while this hexagon is being hovered, matching the
+            // hover-only behaviour of every other admin code prefix on
+            // the map. Hover handler stamps hovered.coordKey = "london"
+            // when the primary hexagon is the hover target.
+            const isHovered = hovered?.coordKey === "london"
+            const labelText = devExcludeActive && isHovered
+              ? `${primaryOrigin} ${displayName}`
+              : displayName
+            return (
             <Layer
               id="london-label"
               type="symbol"
               layout={{
                 "text-field": [
                   "format",
-                  // Map label uses the full displayName (even on mobile).
-                  // The mobileDisplayName "super-shorthand" is intentionally
-                  // only applied to the filter-panel dropdown trigger where
-                  // horizontal space is tight — the map has more room and
-                  // users benefit from seeing the full name of their origin.
-                  // For a custom primary (NR station picked via the search),
-                  // PRIMARY_ORIGINS has no entry → fall back to coordToName
-                  // (the station's own name from stations.json).
-                  PRIMARY_ORIGINS[primaryOrigin]?.displayName
-                    ?? PRIMARY_ORIGINS[primaryOrigin]?.canonicalName
-                    ?? coordToName[primaryOrigin]
-                    ?? primaryOrigin, { "font-scale": 1 },
+                  labelText, { "font-scale": 1 },
                   "\n", {},
                   "time to escape", { "font-scale": 0.8 },
                 ],
@@ -10255,7 +10852,8 @@ export default function HikeMap() {
                 "text-halo-width": 1.5,
               }}
             />
-          )}
+            )
+          })()}
           {/* Invisible hit area for click detection */}
           <Layer
             id="london-hit-area"
@@ -10278,7 +10876,10 @@ export default function HikeMap() {
             doesn't match any real station, so without this layer the
             friend would have no visible anchor on the map. */}
         {friendOrigin && FRIEND_ORIGINS[friendOrigin]?.isSynthetic && (() => {
-          const [fLngStr, fLatStr] = friendOrigin.split(",")
+          // friendOrigin is a station ID; resolve to its centroid coord
+          // via the synthetic-coord lookup before drawing the anchor.
+          const friendCoord = SYNTHETIC_COORDS[friendOrigin] ?? registryGetCoordKey(friendOrigin) ?? ""
+          const [fLngStr, fLatStr] = friendCoord.split(",")
           const fLng = parseFloat(fLngStr)
           const fLat = parseFloat(fLatStr)
           if (!Number.isFinite(fLng) || !Number.isFinite(fLat)) return null
@@ -10295,7 +10896,7 @@ export default function HikeMap() {
                   // standard friend rendering, but the source it lives on is
                   // separate — drives this layer alone, not the stations
                   // rating-icons layer.
-                  properties: { isFriendOrigin: 1, coordKey: friendOrigin },
+                  properties: { isFriendOrigin: 1, id: friendOrigin, coordKey: friendCoord },
                 }],
               }}
             >
@@ -10315,7 +10916,17 @@ export default function HikeMap() {
                   id="friend-anchor-label"
                   type="symbol"
                   layout={{
-                    "text-field": FRIEND_ORIGINS[friendOrigin]?.displayName ?? "",
+                    "text-field": (() => {
+                      const name = FRIEND_ORIGINS[friendOrigin]?.displayName ?? ""
+                      // Code prefix only while the friend hexagon is
+                      // hovered. friendCoord is the centroid the hover
+                      // handler stamps onto hovered.coordKey for this
+                      // anchor.
+                      const isHovered = hovered?.coordKey === friendCoord
+                      return devExcludeActive && isHovered
+                        ? `${friendOrigin} ${name}`
+                        : name
+                    })(),
                     "text-size": 11,
                     "text-offset": [0, 1.4],
                     "text-anchor": "top",
@@ -10480,7 +11091,7 @@ export default function HikeMap() {
             // keeps it for all cluster members so "Kings Cross" reads as
             // "Kings Cross Station" in the modal.
             stationName={
-              displayStation.coordKey === primaryOrigin &&
+              displayStation.id === primaryOrigin &&
               !!PRIMARY_ORIGINS[primaryOrigin]?.isSynthetic
                 ? (PRIMARY_ORIGINS[primaryOrigin]?.overlayName
                     ?? PRIMARY_ORIGINS[primaryOrigin]?.menuName
@@ -10495,26 +11106,29 @@ export default function HikeMap() {
             originY={displayStation.screenY}
             devMode={devExcludeActive}
             adminMode={devExcludeActive}
-            stationCrs={(() => {
-              // Real-station CRS (most cases). Synthetic features have
-              // no ref:crs, so this stays undefined for cluster anchors.
+            // The canonical station ID for display + predicates. For
+            // real NR stations this is the CRS; for non-NR (Underground/
+            // DLR) and cluster anchors it's the canonical synthetic ID
+            // (UMYL, CLON, CSTR, …). The modal title prefix in admin
+            // mode uses this directly.
+            stationCrs={displayStation.id || undefined}
+            // Real 3-char CRS for the WalksAdminPanel's "new walk"
+            // default station. For real NR stations this matches
+            // stationCrs above; for cluster anchors it falls back to
+            // the first member that has a real CRS (so the picker
+            // defaults to a sensible NR station, not "CLON" which has
+            // no walks). For non-NR standalone stations there's no
+            // real CRS — undefined keeps the panel unmounted.
+            walkDefaultCrs={(() => {
               const own = stations?.features.find(
                 (x) => (x.properties as { coordKey?: string } | undefined)?.coordKey === displayStation.coordKey,
               )?.properties?.["ref:crs"] as string | undefined
               if (own) return own
-              // For synthetic clusters, fall back to the first member's
-              // CRS. WalksAdminPanel uses this as the default for the
-              // create-walk picker AND as the gate that decides whether
-              // the panel renders at all (in photo-overlay.tsx). Without
-              // this fallback, admins can't edit walks via a cluster
-              // overlay — the panel never mounts. extraCrsCodes still
-              // contributes ALL members so every member's walks list
-              // alongside the default.
-              if (ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) {
-                const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
-                for (const c of memberCoords) {
+              if (ALL_SYNTHETIC_IDS.has(displayStation.id)) {
+                const memberIds = ALL_CLUSTERS[displayStation.id]?.members ?? []
+                for (const m of memberIds) {
                   const f = baseStations?.features.find(
-                    (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c,
+                    (bf) => (bf.properties as { id?: string }).id === m,
                   )
                   const crs = f?.properties?.["ref:crs"] as string | undefined
                   if (crs) return crs
@@ -10522,7 +11136,7 @@ export default function HikeMap() {
               }
               return undefined
             })()}
-            isLondonHome={primaryOrigin === "-0.1269,51.5196"}
+            isLondonHome={primaryOrigin === "CLON"}
             {...(() => {
               // Direct lookup — works for non-synthetic stations.
               let f = baseStations?.features.find(
@@ -10530,11 +11144,11 @@ export default function HikeMap() {
               )
               // Synthetic clusters have no feature at the anchor coord, so
               // borrow location info from the first member that has it.
-              if (!f?.properties?.county && ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) {
-                const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
-                for (const c of memberCoords) {
+              if (!f?.properties?.county && ALL_SYNTHETIC_IDS.has(displayStation.id)) {
+                const memberIds = ALL_CLUSTERS[displayStation.id]?.members ?? []
+                for (const m of memberIds) {
                   const memberF = baseStations?.features.find(
-                    (x) => `${x.geometry.coordinates[0]},${x.geometry.coordinates[1]}` === c,
+                    (x) => (x.properties as { id?: string }).id === m,
                   )
                   if (memberF?.properties?.county) {
                     f = memberF
@@ -10588,7 +11202,7 @@ export default function HikeMap() {
               // Synthetic anchors and any of their cluster members (London,
               // Stratford, Birmingham, Manchester, etc.) plus buried stations
               // default to "station"; everything else defaults to "landscapes".
-              syntheticClusterCoords.has(displayStation.coordKey) || buriedStations.has(displayStation.coordKey)
+              syntheticClusterCoords.has(displayStation.id) || buriedStations.has(displayStation.coordKey)
                 ? "station"
                 : "landscapes"
             }
@@ -10613,14 +11227,14 @@ export default function HikeMap() {
                 ?? coordToName[primaryOrigin]
                 ?? primaryOrigin
             }
-            isFriendOrigin={!!friendOrigin && displayStation.coordKey === friendOrigin}
+            isFriendOrigin={!!friendOrigin && displayStation.id === friendOrigin}
             // Active-primary coords (the primary itself + its cluster members)
             // get the same stripped-down modal as friend stations — title +
             // photos only, no journey info or Hike button. Scoped to the
             // ACTIVE primary so a click on, say, Moorgate while primary is
             // Charing Cross opens the normal modal (Moorgate is only a
             // cluster member of the London synthetic primary).
-            isPrimaryOrigin={getActivePrimaryCoords(primaryOrigin).includes(displayStation.coordKey)}
+            isPrimaryOrigin={getActivePrimaryCoords(primaryOrigin).includes(displayStation.id)}
             // Suppress the " Station" suffix ONLY for the synthetic-primary
             // coord itself (Central London hexagon) — the title there is a
             // place name, not a station. Clicks on cluster members (KX NR,
@@ -10629,7 +11243,7 @@ export default function HikeMap() {
             // Station", and so on. Earlier we suppressed for any cluster
             // primary, which produced "Kings Cross, St Pancras, & Euston"
             // as the title — too verbose for a single-station click.
-            isSynthetic={ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)}
+            isSynthetic={ALL_SYNTHETIC_IDS.has(displayStation.id)}
             // Cluster header — populated for ANY synthetic anchor (active
             // primary, active friend, OR a non-active synthetic that the
             // user clicked on). Resolves member coords → station names
@@ -10640,18 +11254,18 @@ export default function HikeMap() {
             // by the modal's cluster description copy. Distinct from the
             // modal title above, which may use `overlayName` ("London
             // termini") for a more polished header.
-            clusterDisplayName={ALL_CLUSTERS[displayStation.coordKey]?.displayName}
+            clusterDisplayName={ALL_CLUSTERS[displayStation.id]?.displayName}
             clusterMemberNames={(() => {
-              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
+              if (!ALL_SYNTHETIC_IDS.has(displayStation.id)) return undefined
               // Lookup via the unified cluster registry so destination-
               // only clusters (no origin flags) resolve their members
               // the same way primary/friend clusters do.
-              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
+              const memberIds = ALL_CLUSTERS[displayStation.id]?.members ?? []
               const names: string[] = []
               const seen = new Set<string>()
-              for (const c of memberCoords) {
+              for (const m of memberIds) {
                 const f = baseStations?.features.find(
-                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                  (bf) => (bf.properties as { id?: string }).id === m,
                 )
                 const network = (f?.properties?.network as string | undefined) ?? ""
                 const isNR = /National Rail|Elizabeth line/.test(network)
@@ -10670,13 +11284,13 @@ export default function HikeMap() {
             // {name, lat, lng} so the dropdown items can build
             // per-member Komoot URLs.
             clusterMembers={(() => {
-              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
-              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
+              if (!ALL_SYNTHETIC_IDS.has(displayStation.id)) return undefined
+              const memberIds = ALL_CLUSTERS[displayStation.id]?.members ?? []
               const out: { name: string; lat: number; lng: number }[] = []
               const seen = new Set<string>()
-              for (const c of memberCoords) {
+              for (const m of memberIds) {
                 const f = baseStations?.features.find(
-                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                  (bf) => (bf.properties as { id?: string }).id === m,
                 )
                 const network = (f?.properties?.network as string | undefined) ?? ""
                 const isNR = /National Rail|Elizabeth line/.test(network)
@@ -10694,15 +11308,15 @@ export default function HikeMap() {
             // multi-station fetch. Each CRS contributes its walks to the
             // panel; the synthetic itself has no CRS.
             clusterMemberCrsCodes={(() => {
-              if (!ALL_SYNTHETIC_COORDS.has(displayStation.coordKey)) return undefined
-              const memberCoords = ALL_CLUSTERS[displayStation.coordKey]?.members ?? []
+              if (!ALL_SYNTHETIC_IDS.has(displayStation.id)) return undefined
+              const memberIds = ALL_CLUSTERS[displayStation.id]?.members ?? []
               const out: string[] = []
-              for (const c of memberCoords) {
-                const f = baseStations?.features.find(
-                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
-                )
-                const crs = f?.properties?.["ref:crs"] as string | undefined
-                if (crs) out.push(crs)
+              for (const m of memberIds) {
+                // For real NR stations the canonical ID IS the CRS, so
+                // we can return 3-char IDs directly. 4-char synthetic
+                // member IDs (Underground entrances etc.) are skipped
+                // — they have no walks.
+                if (m.length === 3) out.push(m)
               }
               return out.length > 0 ? out : undefined
             })()}
@@ -10737,11 +11351,11 @@ export default function HikeMap() {
             friendClusterMemberNames={(() => {
               if (!friendOrigin) return undefined
               if (!FRIEND_ORIGINS[friendOrigin]?.isSynthetic) return undefined
-              const memberCoords = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
+              const memberIds = FRIEND_ORIGIN_CLUSTER[friendOrigin] ?? []
               const names: string[] = []
-              for (const c of memberCoords) {
+              for (const m of memberIds) {
                 const f = baseStations?.features.find(
-                  (bf) => `${bf.geometry.coordinates[0]},${bf.geometry.coordinates[1]}` === c
+                  (bf) => (bf.properties as { id?: string }).id === m,
                 )
                 const raw = f?.properties?.name as string | undefined
                 if (raw) names.push(raw)
