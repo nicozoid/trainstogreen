@@ -28,6 +28,18 @@ const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson
   .map(([slug, meta]) => ({ slug, name: (meta as { name?: string })?.name ?? slug }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
+// Middle-truncates a string with a single … separator, keeping equal
+// halves of the original text on either side. Used by the Source filter
+// trigger so long org names like "Long Distance Walkers Association"
+// stay readable at both ends ("Long Dist…sociation") inside the 230px
+// cap. Char-count based — good enough for this single fixed-width
+// dropdown without dragging in a canvas-measure helper.
+function middleTruncate(s: string, max: number): string {
+  if (s.length <= max) return s
+  const half = Math.floor((max - 1) / 2)
+  return `${s.slice(0, half)}…${s.slice(s.length - half)}`
+}
+
 // Wraps any inline content with a tooltip that works on both desktop (hover)
 // and touchscreens (tap toggles open/closed). Uses controlled `open` state
 // so Radix honours our state while still closing on blur.
@@ -189,6 +201,8 @@ type FilterPanelProps = {
   onShowAll: () => void
   visibleRatings: Set<string>
   onToggleRating: (key: string) => void
+  /** Right-click "solo" — make this rating the only visible one. */
+  onSoloRating: (key: string) => void
   searchQuery: string
   onSearchChange: (value: string) => void
   adminMode: boolean
@@ -315,7 +329,7 @@ type FilterPanelProps = {
   onHideNoTravelTimeChange: (value: boolean) => void
 }
 
-export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, monthFilter, onMonthFilterChange, currentMonthLabel, currentMonthHighlight, onCurrentMonthHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
+export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinChange, showTrails, onToggleTrails, showRegions, onToggleRegions, onShowAll, visibleRatings, onToggleRating, onSoloRating, searchQuery, onSearchChange, adminMode, bannerVisible, primaryOrigin, pinnedPrimaries, adminOnlyPrimaries, onPrimaryOriginChange, originDisplayName, originMobileDisplayName, originMenuName, searchableStations = [], recentPrimaries = [], onCustomPrimarySelect, coordToName = {}, friendOrigin, pinnedFriends, recentFriends = [], searchableFriendStations = [], friendOrigins, onFriendOriginChange, friendMaxMinutes, onFriendMaxMinutesChange, onActivateFriend, onDeactivateFriend, primaryDirectOnly, onPrimaryDirectOnlyChange, primaryInterchangeFilter, onPrimaryInterchangeFilterChange, primaryFeatureFilter, onPrimaryFeatureFilterChange, sourceFilter, onSourceFilterChange, monthFilter, onMonthFilterChange, currentMonthLabel, currentMonthHighlight, onCurrentMonthHighlightChange, friendDirectOnly, onFriendDirectOnlyChange, hideNoTravelTime, onHideNoTravelTimeChange }: FilterPanelProps) {
   // Helper: renders the trigger's origin label, using the mobile super-shorthand
   // on narrow viewports (via sm:hidden / hidden sm:inline siblings) where one
   // is defined. Keeps the markup tidy at each of the several call-sites.
@@ -1484,31 +1498,70 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
               by display name. Distinct from the Feature dropdown because
               this is a one-vs-many lookup that doesn't fit cleanly under
               "feature toggles". */}
-          {adminMode && (
-            <div className="mt-1.5 flex items-center gap-[0.4rem]">
-              <Label htmlFor="primary-source-filter" className="cursor-pointer text-xs text-muted-foreground">
-                Source
-              </Label>
-              <select
-                id="primary-source-filter"
-                value={sourceFilter}
-                onChange={(e) => onSourceFilterChange(e.target.value)}
-                className="cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
-              >
-                <option value="off">—</option>
-                {/* "No source" — sentinel value matching the build
-                    script's "none" key. Surfaces stations where ≥1
-                    attached walk has neither source.orgSlug nor
-                    relatedSource.orgSlug populated. Hand-coded above
-                    the registered orgs because there's no entry for
-                    it in sources.json. */}
-                <option value="none">No source</option>
-                {SOURCE_ORGS.map((o) => (
-                  <option key={o.slug} value={o.slug}>{o.name}</option>
-                ))}
-              </select>
-            </div>
-          )}
+          {adminMode && (() => {
+            // Resolve the human-readable label for the currently selected
+            // value. "off" means no filter (the dash) and skips the
+            // overlay; otherwise we look up the org name in SOURCE_ORGS.
+            const selectedSourceLabel =
+              sourceFilter === "off" ? null
+                : sourceFilter === "none" ? "No source"
+                : SOURCE_ORGS.find((o) => o.slug === sourceFilter)?.name ?? sourceFilter
+            // Char-count threshold tuned for ~230px wide select at text-xs:
+            // ~26 chars sit comfortably inside the trigger leaving room
+            // for the native chevron at the right edge. Anything longer
+            // gets the middle-… treatment.
+            const TRUNC_AT = 26
+            return (
+              <div className="mt-1.5 flex items-center gap-[0.4rem]">
+                <Label htmlFor="primary-source-filter" className="cursor-pointer text-xs text-muted-foreground">
+                  Source
+                </Label>
+                {/* Relative wrapper hosts the overlay span and sizes
+                    naturally to its child — no w-full, otherwise the row
+                    overflows the panel by the Label's width. max-width
+                    lives on the <select> itself so the cap actually
+                    constrains the rendered trigger. */}
+                <div className="relative">
+                  <select
+                    id="primary-source-filter"
+                    value={sourceFilter}
+                    onChange={(e) => onSourceFilterChange(e.target.value)}
+                    className={`max-w-[230px] cursor-pointer rounded border border-input bg-transparent px-1 py-0.5 text-xs focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 ${
+                      // When a value is selected we hide the native
+                      // trigger text by making it transparent, then draw
+                      // the middle-truncated label as an overlay on top.
+                      // The dropdown popup (when opened) renders option
+                      // text normally — text-transparent only affects
+                      // the closed-state trigger.
+                      selectedSourceLabel ? "text-transparent" : "text-muted-foreground"
+                    }`}
+                  >
+                    <option value="off">—</option>
+                    {/* "No source" — sentinel value matching the build
+                        script's "none" key. Surfaces stations where ≥1
+                        attached walk has neither source.orgSlug nor
+                        relatedSource.orgSlug populated. Hand-coded above
+                        the registered orgs because there's no entry for
+                        it in sources.json. */}
+                    <option value="none">No source</option>
+                    {SOURCE_ORGS.map((o) => (
+                      <option key={o.slug} value={o.slug}>{o.name}</option>
+                    ))}
+                  </select>
+                  {selectedSourceLabel && (
+                    /* Overlay sits on top of the (now-transparent) select
+                       text. pointer-events-none lets clicks pass through
+                       to the underlying select so the dropdown still
+                       opens. right-5 leaves space for the native chevron;
+                       left-1 matches the select's px-1 inset. */
+                    <span className="pointer-events-none absolute inset-y-0 left-1 right-5 flex items-center text-xs text-muted-foreground">
+                      {middleTruncate(selectedSourceLabel, TRUNC_AT)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Admin-only: "Month" filter. Hides destinations whose
               recommended-months metadata doesn't include the selected
@@ -1605,7 +1658,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
           {!friendOrigin && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="xs" className="mt-1 -ml-2.5 cursor-pointer text-muted-foreground">
+                <Button variant="ghost" size="xs" className="mt-1 pl-0 justify-start cursor-pointer text-muted-foreground">
                   <IconPlus size={14} />
                   Add friend&apos;s home station
                 </Button>
@@ -1678,10 +1731,28 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
             </>
           )}
 
-          {/* Rating visibility toggles — one checkbox per rating category. */}
-          <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0">
+          {/* Rating visibility toggles — one checkbox per rating category.
+              overflow-x-hidden contains the shadcn Checkbox `after:-inset-x-3`
+              tap-target halo (12px on each side). Without it, the right-
+              flush halos push past the panel content edge; combined with
+              the panel's overflow-y-auto, CSS promotes the X axis to auto
+              and a horizontal scrollbar appears. Clipping at the rating-
+              list level keeps other rows (e.g. the friend-button outdent)
+              free to bleed left/right as before. */}
+          <div className="mt-4 border-t pt-3 flex flex-col gap-1 sm:gap-0 overflow-x-hidden">
             {RATING_FILTERS.map(({ key, label, icon, tooltip, secondary }) => (
-              <div key={key} className="mt-1.5 flex items-center justify-between">
+              <div
+                key={key}
+                className="mt-1.5 flex items-center justify-between"
+                /* Right-click anywhere on the row "solos" the rating —
+                   replaces visibleRatings with a set containing only this
+                   one. preventDefault suppresses the browser context menu
+                   so the gesture feels like a UI shortcut, not a leak. */
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  onSoloRating(key)
+                }}
+              >
                 {/* Tooltip wraps the icon + label so hovering/tapping them shows the description */}
                 <LabelTip text={tooltip} icon={icon}>
                   {label}
