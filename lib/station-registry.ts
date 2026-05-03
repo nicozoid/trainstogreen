@@ -144,6 +144,7 @@ const STATION_ALIASES: Record<string, StationId> = {
   "newport essex": "NWE",              // = Newport on the West Anglia line
   "haddenham thame parkway": "HDM",    // = Haddenham and Thame Parkway
   "waterloo": "WAT",                   // = London Waterloo (NOT Liverpool's WLO)
+  "meadowhall": "MHS",                 // = Meadowhall Interchange (Routes API uses the short form)
   // "St Margarets" is ambiguous between SMT (Hertfordshire) and SMG
   // (Richmond). Resolved by resolveName() via the optional `region`
   // hint, not by this static map.
@@ -178,6 +179,13 @@ const coordKeyToId = new Map<string, StationId>()
 // write wins, but the alias map (Phase 1c) provides explicit overrides
 // for ambiguous cases.
 const normalizedNameToId = new Map<string, StationId>()
+// Multi-candidate index for homonyms (Newport Wales vs Essex,
+// Whitchurch Hampshire vs Cardiff, …). Mirrors normalizedNameToId but
+// keeps EVERY station that normalises to a given key, so callers with
+// disambiguation context (a journey's prior leg, a region hint) can
+// pick the right one. Order is "best guess first": non-synthetic
+// stations come before synthetic ones, otherwise insertion order.
+const normalizedNameToIds = new Map<string, StationId[]>()
 
 function normalizeName(name: string): string {
   return name
@@ -185,7 +193,12 @@ function normalizeName(name: string): string {
     .replace(/^london\s+/i, "")
     .replace(/\s+station$/i, "")
     .replace(/\s*\([^)]*\)/g, "")
-    .replace(/['']/g, "")
+    // Strip apostrophes — straight (U+0027) AND Unicode curly variants
+    // (left U+2018, right U+2019). Routes API output uses the curly
+    // forms ("King's Cross"), so without these the leg names produced
+    // by the journey composer never match the OSM-canonical entries
+    // in stations.json (which use the straight form).
+    .replace(/['‘’]/g, "")
     .replace(/[.,&-]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
@@ -242,6 +255,16 @@ function normalizeName(name: string): string {
       normalizedNameToId.set(normalized, id)
     } else if (!isSynthetic && idToStation.get(existing)?.isSynthetic) {
       normalizedNameToId.set(normalized, id)
+    }
+    // Multi-candidate index — keep every match so disambiguation
+    // helpers can pick by context. Non-synthetic IDs are pushed to
+    // the front so plain `getAllByName(...)[0]` still prefers the
+    // real-NR station over a tube-platform synthetic.
+    const all = normalizedNameToIds.get(normalized) ?? []
+    if (!all.includes(id)) {
+      if (!isSynthetic) all.unshift(id)
+      else all.push(id)
+      normalizedNameToIds.set(normalized, all)
     }
   }
 }
@@ -307,6 +330,23 @@ export function resolveName(name: string, regionHint?: string): StationId | unde
   const aliased = STATION_ALIASES[normalized]
   if (aliased) return aliased
   return normalizedNameToId.get(normalized)
+}
+
+// Multi-candidate name lookup. Returns every station whose name
+// normalises to the same key, ordered "best guess first" (non-
+// synthetic before synthetic, then insertion order). Used by callers
+// with their own disambiguation criterion — e.g. the journey
+// composer picks the Newport whose origin-routes connectivity
+// matches the surrounding legs, rather than relying on resolveName's
+// last-write-wins choice.
+//
+// Returns an empty array when nothing matches. Aliases AND the
+// St Margarets special case are NOT consulted here; this is the raw
+// homonym list. Callers that want both alias and homonym semantics
+// should call resolveName first, then resolveAllNameCandidates as a
+// fallback.
+export function resolveAllNameCandidates(name: string): StationId[] {
+  return normalizedNameToIds.get(normalizeName(name)) ?? []
 }
 
 // Reverse lookups for consumers that need the legacy form.

@@ -12,7 +12,7 @@ import segmentsData from "@/data/rail-segments.json"
 import clustersData from "@/lib/clusters-data.json"
 import { originRoutesById } from "@/lib/origin-routes"
 import stationsData from "../public/stations.json"
-import { resolveName, getStation } from "./station-registry"
+import { resolveName, resolveAllNameCandidates, getStation } from "./station-registry"
 import {
   composeFromCallingPoints,
   type RailSegments,
@@ -123,12 +123,37 @@ function composeFromLegs(legs: JourneyLeg[]): ComposedPolyline | null {
     const depName = leg.departureStation
     const arrName = leg.arrivalStation
     if (!depName || !arrName) continue
-    const depId = resolveName(depName)
-    const arrId = resolveName(arrName)
+    let depId = resolveName(depName)
+    let arrId = resolveName(arrName)
     let legCoords: [number, number][] = []
 
-    if (leg.vehicleType === "HEAVY_RAIL" && depId && arrId) {
-      const cp = tryDirectCallingPoints(depId, arrId)
+    if (leg.vehicleType === "HEAVY_RAIL") {
+      // Try the primary resolution first.
+      let cp = depId && arrId ? tryDirectCallingPoints(depId, arrId) : null
+      // Homonym fallback — when the leg's name resolves to a station
+      // that origin-routes has no path from/to, try every other
+      // station with the same normalised name. Catches the
+      // Newport-Wales-vs-Essex case (resolveName picks NWE; the
+      // calling-points lookup needs NWP because we're routing from
+      // PAD via the Welsh ECML). First (depAlt, arrAlt) pair that
+      // yields a path wins.
+      if (!cp || cp.length < 2) {
+        const depAlts = resolveAllNameCandidates(depName)
+        const arrAlts = resolveAllNameCandidates(arrName)
+        const depCands = depAlts.length > 0 ? depAlts : depId ? [depId] : []
+        const arrCands = arrAlts.length > 0 ? arrAlts : arrId ? [arrId] : []
+        outer: for (const o of depCands) {
+          for (const d of arrCands) {
+            const candidate = tryDirectCallingPoints(o, d)
+            if (candidate && candidate.length >= 2) {
+              cp = candidate
+              depId = o
+              arrId = d
+              break outer
+            }
+          }
+        }
+      }
       if (cp && cp.length >= 2) {
         const result = composeFromCallingPoints(cp, { segments, crsToCoord })
         legCoords = result.coords
