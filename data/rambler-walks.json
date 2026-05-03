@@ -46064,101 +46064,94 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Harpenden to St Albans via Sanbridge",
         "startPlace": "Harpenden",
         "endPlace": "St Albans City",
         "startStation": "HPD",
         "endStation": "SAC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.58,
-        "hours": 4.5,
+        "distanceKm": 16.5,
+        "hours": 4.33,
         "lunchStops": [
           {
             "name": "Queens Head",
-            "location": "Sandridge",
-            "url": null
+            "location": "Sandridge"
           },
           {
             "name": "Green Man",
-            "location": "Sandridge",
-            "url": null
+            "location": "Sandridge"
           },
           {
             "name": "Rose & Crown",
-            "location": "Sandridge",
-            "url": null
+            "location": "Sandridge"
           },
           {
             "name": "Heartwood Tearooms",
-            "location": "Sandridge",
-            "url": null
+            "location": "Sandridge"
           }
         ],
         "terrain": "Commons, golf course, new native woodland, wildflower meadows, country estate drive, parkland, historic city streets",
         "sights": [
           {
-            "name": "Heartwood Forest",
-            "url": null
+            "name": "Heartwood Forest"
           },
           {
-            "name": "St Leonard's Church",
-            "url": null
+            "name": "St Leonard's Church"
           },
           {
-            "name": "Childwickbury Country Estate",
-            "url": null
+            "name": "Childwickbury Country Estate"
           },
           {
-            "name": "St Mary's Church",
-            "url": null
+            "name": "St Mary's Church"
           },
           {
-            "name": "Childwickbury Manor House",
-            "url": null
+            "name": "Childwickbury Manor House"
           },
           {
-            "name": "Gorehambury",
-            "url": null
+            "name": "Gorehambury"
           },
           {
-            "name": "Verulamium Museum",
-            "url": null
+            "name": "Verulamium Museum"
           },
           {
-            "name": "St Michael's Church",
-            "url": null
+            "name": "St Michael's Church"
           },
           {
-            "name": "St Albans Cathedral",
-            "url": null
+            "name": "St Albans Cathedral"
           },
           {
-            "name": "Abbey Gatehouse",
-            "url": null
+            "name": "Abbey Gatehouse"
           },
           {
-            "name": "Ye Olde Fighting Cocks",
-            "url": null
+            "name": "Ye Olde Fighting Cocks"
           },
           {
-            "name": "Roman Wall",
-            "url": null
+            "name": "Roman Wall"
           },
           {
-            "name": "St Albans Museum",
-            "url": null
+            "name": "St Albans Museum"
           }
         ],
         "miscellany": "Can be muddy",
         "id": "hpdsaccrabapple",
         "mudWarning": true,
         "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "komootUrl": "https://www.komoot.com/tour/2930623590",
+        "uphillMetres": 136.06,
+        "difficulty": "moderate",
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Harpenden to St Albans",
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
-          "type": "main"
-        }
+          "type": "adapted"
+        },
+        "updatedAt": "2026-05-03T13:05:42.092Z"
       }
     ]
   },
@@ -120503,8 +120496,8 @@
         "endStation": "EMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 22.5,
-        "hours": null,
+        "distanceKm": 23.6,
+        "hours": 5.97,
         "lunchStops": [
           {
             "name": "refreshments",
@@ -120544,7 +120537,11 @@
           "type": "main"
         },
         "suffix": "via Nottingham Canal",
-        "komootUrl": "https://www.komoot.com/tour/2925748565"
+        "komootUrl": "https://www.komoot.com/tour/2925748565",
+        "uphillMetres": 39.71,
+        "difficulty": "hard",
+        "name": "Nottingham to East Midlands Parkway",
+        "updatedAt": "2026-05-02T02:12:42.216Z"
       }
     ],
     "extracted": true,
@@ -120582,8 +120579,8 @@
         "endStation": "BWS",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 22.5,
-        "hours": null,
+        "distanceKm": 22.9,
+        "hours": 5.78,
         "lunchStops": [
           {
             "name": "pubs",
@@ -120622,7 +120619,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925755432"
+        "komootUrl": "https://www.komoot.com/tour/2925755432",
+        "uphillMetres": 47.3,
+        "difficulty": "hard",
+        "name": "East Midlands Parkway to Barrow upon Soar",
+        "updatedAt": "2026-05-02T02:12:48.484Z"
       }
     ],
     "extracted": true,
@@ -120660,8 +120661,8 @@
         "endStation": "LEI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 19.5,
+        "hours": 4.92,
         "lunchStops": [],
         "terrain": "Flat, on decent paths",
         "sights": [
@@ -120690,7 +120691,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925759790"
+        "komootUrl": "https://www.komoot.com/tour/2925759790",
+        "uphillMetres": 44.02,
+        "difficulty": "moderate",
+        "name": "Barrow upon Soar to Leicester",
+        "updatedAt": "2026-05-02T02:12:53.852Z"
       }
     ],
     "extracted": true,
@@ -120728,9 +120733,9 @@
         "endStation": "MHR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 15.6,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.13,
         "lunchStops": [],
         "terrain": "Views, old-railway cycle/walking path",
         "sights": [
@@ -120759,7 +120764,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925764901"
+        "komootUrl": "https://www.komoot.com/tour/2925764901",
+        "uphillMetres": 159.09,
+        "difficulty": "moderate",
+        "name": "105. Mkt Haboro Circular 9m",
+        "updatedAt": "2026-05-02T02:12:58.587Z"
       }
     ],
     "extracted": true,
@@ -120797,8 +120806,8 @@
         "endStation": "OKM",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 19.1,
+        "hours": 5,
         "lunchStops": [],
         "terrain": "Villages, churches, views across the Vale of Catmose",
         "sights": [
@@ -120831,7 +120840,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925766569"
+        "komootUrl": "https://www.komoot.com/tour/2925766569",
+        "uphillMetres": 156.14,
+        "difficulty": "moderate",
+        "name": "Oakham Circular",
+        "updatedAt": "2026-05-02T02:13:03.271Z"
       }
     ],
     "extracted": true,
@@ -120870,7 +120883,7 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 20.9,
-        "hours": null,
+        "hours": 5.33,
         "lunchStops": [],
         "terrain": "Flat, footpaths",
         "sights": [
@@ -120903,7 +120916,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925768336"
+        "komootUrl": "https://www.komoot.com/tour/2925768336",
+        "uphillMetres": 78.08,
+        "difficulty": "hard",
+        "name": "Syston to Melton",
+        "updatedAt": "2026-05-02T02:13:07.965Z"
       }
     ],
     "extracted": true,
@@ -120941,8 +120958,8 @@
         "endStation": "OKM",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 20.9,
-        "hours": null,
+        "distanceKm": 20.6,
+        "hours": 5.4,
         "lunchStops": [
           {
             "name": "Grain Store",
@@ -120965,7 +120982,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925770787"
+        "komootUrl": "https://www.komoot.com/tour/2925770787",
+        "uphillMetres": 177.34,
+        "difficulty": "hard",
+        "name": "Melton to Oakham v Whissendine",
+        "updatedAt": "2026-05-02T02:13:13.112Z"
       }
     ],
     "extracted": true,
@@ -121004,7 +121025,7 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 18.5,
-        "hours": null,
+        "hours": 4.85,
         "lunchStops": [
           {
             "name": "pubs and seating by the church",
@@ -121039,7 +121060,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925773451"
+        "komootUrl": "https://www.komoot.com/tour/2925773451",
+        "uphillMetres": 151.74,
+        "difficulty": "moderate",
+        "name": "East Midlands Parkway Circular via Gotham",
+        "updatedAt": "2026-05-02T02:13:18.144Z"
       }
     ],
     "extracted": true,
@@ -121077,8 +121102,8 @@
         "endStation": "EMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 17.5,
+        "hours": 4.5,
         "lunchStops": [
           {
             "name": "Barton in Fabis farm shop and cafe",
@@ -121118,7 +121143,11 @@
           "type": "main"
         },
         "suffix": "via Trent Bridge",
-        "komootUrl": "https://www.komoot.com/tour/2925782195"
+        "komootUrl": "https://www.komoot.com/tour/2925782195",
+        "uphillMetres": 82.05,
+        "difficulty": "moderate",
+        "name": "Notting to East Midlands Parkway along the Trent",
+        "updatedAt": "2026-05-02T02:13:24.372Z"
       }
     ],
     "extracted": true,
@@ -121156,8 +121185,8 @@
         "endStation": "ATH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 20.1,
-        "hours": null,
+        "distanceKm": 20.7,
+        "hours": 5.55,
         "lunchStops": [
           {
             "name": "Church End Brewery",
@@ -121188,7 +121217,11 @@
           "type": "main"
         },
         "suffix": "via Hartshill Country Park",
-        "komootUrl": "https://www.komoot.com/tour/2925784524"
+        "komootUrl": "https://www.komoot.com/tour/2925784524",
+        "uphillMetres": 299.21,
+        "difficulty": "hard",
+        "name": "Atherstone Circular via Bluebell Woodland",
+        "updatedAt": "2026-05-02T02:13:34.389Z"
       }
     ],
     "extracted": true,
@@ -121226,9 +121259,9 @@
         "endStation": "LGE",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 18.5,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.67,
         "lunchStops": [],
         "terrain": "Waterways — River Derwent, Derby & Sandiacre Canal, Erewash Canal",
         "sights": [
@@ -121253,7 +121286,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925784648"
+        "komootUrl": "https://www.komoot.com/tour/2925784648",
+        "uphillMetres": 18.92,
+        "difficulty": "moderate",
+        "name": "Derby to Long Eaton along waterways",
+        "updatedAt": "2026-05-02T02:13:39.266Z"
       }
     ],
     "extracted": true,
@@ -121291,8 +121328,8 @@
         "endStation": "ATH",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 17,
+        "hours": 4.38,
         "lunchStops": [],
         "terrain": "Canal, villages",
         "sights": [
@@ -121322,7 +121359,11 @@
           "type": "main"
         },
         "suffix": "via Coventry Canal",
-        "komootUrl": "https://www.komoot.com/tour/2925784899"
+        "komootUrl": "https://www.komoot.com/tour/2925784899",
+        "uphillMetres": 77.55,
+        "difficulty": "moderate",
+        "name": "Atherstone Circular via Sheepy Magna",
+        "updatedAt": "2026-05-02T02:13:44.918Z"
       }
     ],
     "extracted": true,
@@ -121360,8 +121401,8 @@
         "endStation": "FSK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.9,
-        "hours": null,
+        "distanceKm": 13.3,
+        "hours": 3.42,
         "lunchStops": [
           {
             "name": "pubs and cafes",
@@ -121392,7 +121433,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925785026"
+        "komootUrl": "https://www.komoot.com/tour/2925785026",
+        "uphillMetres": 61.75,
+        "difficulty": "moderate",
+        "name": "Fiskerton Circular via Southwell",
+        "updatedAt": "2026-05-02T02:13:55.706Z"
       }
     ],
     "extracted": true,
@@ -121430,8 +121475,8 @@
         "endStation": "LTV",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.7,
+        "hours": 4.12,
         "lunchStops": [],
         "terrain": "Golf club, heath, woodland, Heart of England Way",
         "sights": [
@@ -121452,7 +121497,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925785196"
+        "komootUrl": "https://www.komoot.com/tour/2925785196",
+        "uphillMetres": 128.91,
+        "difficulty": "moderate",
+        "name": "Lichfield Circular via Whittington Heath",
+        "updatedAt": "2026-05-02T02:13:49.831Z"
       }
     ],
     "extracted": true,
@@ -121490,41 +121539,33 @@
         "endStation": "DBY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 18.8,
+        "hours": 4.9,
         "lunchStops": [],
         "terrain": "Parks, river, heritage trail",
         "sights": [
           {
-            "name": "Derby Cathedral",
-            "url": null
+            "name": "Derby Cathedral"
           },
           {
-            "name": "Markeaton Park",
-            "url": null
+            "name": "Markeaton Park"
           },
           {
-            "name": "Allestree Park",
-            "url": null
+            "name": "Allestree Park"
           },
           {
-            "name": "Darley Abbey",
-            "url": null
+            "name": "Darley Abbey"
           },
           {
-            "name": "Bonnie Prince Charlie Walk",
-            "url": null
+            "name": "Bonnie Prince Charlie Walk"
           },
           {
-            "name": "Big Wood",
-            "url": null
+            "name": "Big Wood"
           },
           {
-            "name": "River Derwent Heritage Trail",
-            "url": null
+            "name": "River Derwent Heritage Trail"
           }
         ],
-        "miscellany": "",
         "id": "dbydbyjellyfish",
         "source": {
           "orgSlug": "leicester-ramblers",
@@ -121532,7 +121573,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786424"
+        "komootUrl": "https://www.komoot.com/tour/2925786424",
+        "uphillMetres": 143.12,
+        "difficulty": "moderate",
+        "name": "Derby Circular via Darley Abbey",
+        "updatedAt": "2026-05-02T02:21:19.623Z"
       }
     ],
     "extracted": true,
@@ -121570,8 +121615,8 @@
         "endStation": "BIN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.9,
-        "hours": null,
+        "distanceKm": 12.8,
+        "hours": 3.25,
         "lunchStops": [
           {
             "name": "Cafe Velo",
@@ -121598,7 +121643,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786627"
+        "komootUrl": "https://www.komoot.com/tour/2925786627",
+        "uphillMetres": 31.59,
+        "difficulty": "moderate",
+        "name": "Bingham Circular via Screveton",
+        "updatedAt": "2026-05-02T02:14:25.431Z"
       }
     ],
     "extracted": true,
@@ -121636,8 +121685,8 @@
         "endStation": "ATB",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 13.7,
-        "hours": null,
+        "distanceKm": 14.8,
+        "hours": 3.75,
         "lunchStops": [
           {
             "name": "cafe",
@@ -121668,7 +121717,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786815"
+        "komootUrl": "https://www.komoot.com/tour/2925786815",
+        "uphillMetres": 27.59,
+        "difficulty": "moderate",
+        "name": "Attenborough Circular via Nature Reserve",
+        "updatedAt": "2026-05-02T02:14:30.427Z"
       }
     ],
     "extracted": true,
@@ -121706,9 +121759,9 @@
         "endStation": "FSK",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 16.1,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.05,
         "lunchStops": [
           {
             "name": "pubs",
@@ -121749,7 +121802,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925786946"
+        "komootUrl": "https://www.komoot.com/tour/2925786946",
+        "uphillMetres": 18.8,
+        "difficulty": "moderate",
+        "name": "Burton Joyce to Fiskerton",
+        "updatedAt": "2026-05-02T02:14:37.475Z"
       }
     ],
     "extracted": true,
@@ -121787,8 +121844,8 @@
         "endStation": "LBO",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.8,
+        "hours": 4.07,
         "lunchStops": [],
         "terrain": "Canal, footpaths, roadside footpath",
         "sights": [
@@ -121813,7 +121870,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925787180"
+        "komootUrl": "https://www.komoot.com/tour/2925787180",
+        "uphillMetres": 79.93,
+        "difficulty": "moderate",
+        "name": "Loughborough Circular via Walton on the Wolds",
+        "updatedAt": "2026-05-02T02:14:42.220Z"
       }
     ],
     "extracted": true,
@@ -121851,8 +121912,8 @@
         "endStation": "SPO",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 16.3,
+        "hours": 4.35,
         "lunchStops": [],
         "terrain": "Villages, park grounds, ornamental lake",
         "sights": [
@@ -121885,7 +121946,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925787589"
+        "komootUrl": "https://www.komoot.com/tour/2925787589",
+        "uphillMetres": 182.58,
+        "difficulty": "moderate",
+        "name": "Spondon Circular via Dale Abbey",
+        "updatedAt": "2026-05-02T02:14:47.169Z"
       }
     ],
     "extracted": true,
@@ -121923,8 +121988,8 @@
         "endStation": "NUN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.9,
-        "hours": null,
+        "distanceKm": 17,
+        "hours": 4.47,
         "lunchStops": [],
         "terrain": "Parks, river, country park, canal",
         "sights": [
@@ -121954,7 +122019,11 @@
           "type": "main"
         },
         "suffix": "via Hartshill Country Park",
-        "komootUrl": "https://www.komoot.com/tour/2925787817"
+        "komootUrl": "https://www.komoot.com/tour/2925787817",
+        "uphillMetres": 145.23,
+        "difficulty": "moderate",
+        "name": "Nuneaton Circular via Hartshill",
+        "updatedAt": "2026-05-02T02:14:53.810Z"
       }
     ],
     "extracted": true,
@@ -121992,8 +122061,8 @@
         "endStation": "SMD",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.9,
-        "hours": null,
+        "distanceKm": 17.3,
+        "hours": 4.48,
         "lunchStops": [],
         "terrain": "Old railway, Roman road, park grounds, meadows",
         "sights": [
@@ -122030,7 +122099,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925788133"
+        "komootUrl": "https://www.komoot.com/tour/2925788133",
+        "uphillMetres": 97.88,
+        "difficulty": "moderate",
+        "name": "Stamford Circular via Pilsgate",
+        "updatedAt": "2026-05-02T02:14:58.431Z"
       }
     ],
     "extracted": true,
@@ -122068,8 +122141,8 @@
         "endStation": "ILN",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.1,
-        "hours": null,
+        "distanceKm": 15.9,
+        "hours": 4.02,
         "lunchStops": [],
         "terrain": "Canal, industrial towns, disused railway viaduct",
         "sights": [
@@ -122094,7 +122167,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925788454"
+        "komootUrl": "https://www.komoot.com/tour/2925788454",
+        "uphillMetres": 38.43,
+        "difficulty": "moderate",
+        "name": "Long Eaton to Ilkeston via Erewash Valley",
+        "updatedAt": "2026-05-02T02:15:03.448Z"
       }
     ],
     "extracted": true,
@@ -122132,8 +122209,8 @@
         "endStation": "BUJ",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.5,
-        "hours": null,
+        "distanceKm": 14.1,
+        "hours": 3.57,
         "lunchStops": [
           {
             "name": "pub",
@@ -122168,7 +122245,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925788637"
+        "komootUrl": "https://www.komoot.com/tour/2925788637",
+        "uphillMetres": 37.06,
+        "difficulty": "moderate",
+        "name": "Lowdham to Burton Joyce",
+        "updatedAt": "2026-05-02T02:15:07.918Z"
       }
     ],
     "extracted": true,
@@ -122206,8 +122287,8 @@
         "endStation": "KET",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 17.7,
-        "hours": null,
+        "distanceKm": 18.4,
+        "hours": 4.87,
         "lunchStops": [],
         "terrain": "Villages, countryside",
         "sights": [
@@ -122232,7 +122313,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925789056"
+        "komootUrl": "https://www.komoot.com/tour/2925789056",
+        "uphillMetres": 192.96,
+        "difficulty": "moderate",
+        "name": "Kettering Circular via Pytchley",
+        "updatedAt": "2026-05-02T02:15:12.410Z"
       }
     ],
     "extracted": true,
@@ -122270,8 +122355,8 @@
         "endStation": "LBO",
         "requiresBus": true,
         "stationToStation": false,
-        "distanceKm": 19.3,
-        "hours": null,
+        "distanceKm": 18.9,
+        "hours": 4.9,
         "lunchStops": [],
         "terrain": "Country park, villages, hall grounds, river",
         "sights": [
@@ -122300,7 +122385,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925789233"
+        "komootUrl": "https://www.komoot.com/tour/2925789233",
+        "uphillMetres": 116.3,
+        "difficulty": "moderate",
+        "name": "Ruddington to Loughborough via Bunny]",
+        "updatedAt": "2026-05-02T02:15:17.363Z"
       }
     ],
     "extracted": true,
@@ -122338,9 +122427,9 @@
         "endStation": "DBY",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
+        "distanceKm": 16.7,
         "distanceMiles": null,
-        "hours": null,
+        "hours": 4.45,
         "lunchStops": [],
         "terrain": "Repurposed railway track along the Great Northern Greenway",
         "sights": [
@@ -122365,7 +122454,11 @@
           "pageURL": "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html",
           "type": "main"
         },
-        "komootUrl": "https://www.komoot.com/tour/2925790185"
+        "komootUrl": "https://www.komoot.com/tour/2925790185",
+        "uphillMetres": 169.4,
+        "difficulty": "moderate",
+        "name": "Duffield to Derby via Drum Hill",
+        "updatedAt": "2026-05-02T02:15:22.032Z"
       }
     ],
     "extracted": true,
@@ -126144,7 +126237,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-25T00:00:13.654Z",
+        "updatedAt": "2026-05-02T02:15:38.189Z",
         "komootUrl": "https://www.komoot.com/tour/2902544251",
         "distanceKm": 12.7,
         "hours": 3.28,
@@ -126153,7 +126246,10 @@
         "suffix": "via Roman Silchester",
         "previousWalkDates": [
           "2025-05-17"
-        ]
+        ],
+        "uphillMetres": 78.04,
+        "difficulty": "moderate",
+        "name": "Mortimer to Bramley via Roman Silchester"
       }
     ],
     "extracted": true,
@@ -126189,7 +126285,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T10:10:36.832Z",
+        "updatedAt": "2026-05-02T02:15:43.091Z",
         "rating": 1,
         "suffix": "via Saffron Walden",
         "ratingExplanation": "Spoiled by a long trek along a busy road near Audley End",
@@ -126198,7 +126294,10 @@
         "hours": 3.72,
         "previousWalkDates": [
           "2023-02-11"
-        ]
+        ],
+        "uphillMetres": 150.31,
+        "difficulty": "moderate",
+        "name": "Newport to Audley End via Saffron Walden"
       }
     ],
     "extracted": true,
@@ -126235,7 +126334,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:15:47.916Z",
         "rating": 1,
         "komootUrl": "https://www.komoot.com/tour/2921483662",
         "suffix": "via Chaldon Way",
@@ -126243,7 +126342,10 @@
         "hours": 4.07,
         "previousWalkDates": [
           "2021-12-18"
-        ]
+        ],
+        "uphillMetres": 187.4,
+        "difficulty": "moderate",
+        "name": "Coulsdon to Redhill via the Chaldon Way"
       }
     ],
     "extracted": true,
@@ -126282,14 +126384,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-29T21:21:39.818Z",
+        "updatedAt": "2026-05-02T02:16:53.774Z",
         "komootUrl": "https://www.komoot.com/tour/2919353871",
         "rating": 2,
         "distanceKm": 7.47,
         "hours": 2.02,
         "previousWalkDates": [
           "2026-04-29"
-        ]
+        ],
+        "uphillMetres": 100.86,
+        "difficulty": "moderate",
+        "name": "Crowborough Circular via Hornshurst Wood"
       }
     ],
     "extracted": true,
@@ -126327,7 +126432,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T00:00:00.000Z",
+        "updatedAt": "2026-05-02T02:17:07.028Z",
         "komootUrl": "https://www.komoot.com/tour/2913988093",
         "rating": 3,
         "mudWarning": false,
@@ -126335,7 +126440,10 @@
         "hours": 4.63,
         "previousWalkDates": [
           "2025-04-27"
-        ]
+        ],
+        "uphillMetres": 377.44,
+        "difficulty": "moderate",
+        "name": "Folkestone Circular via Castle Hill"
       }
     ],
     "extracted": true,
@@ -126377,14 +126485,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:16:14.728Z",
+        "updatedAt": "2026-05-02T02:18:20.899Z",
         "komootUrl": "https://www.komoot.com/tour/2920345301",
         "rating": 4,
         "previousWalkDates": [
           "2023-05-01"
         ],
         "distanceKm": 28.4,
-        "hours": 7.6
+        "hours": 7.6,
+        "uphillMetres": 355.4,
+        "difficulty": "hard",
+        "name": "Pevensey to Battle"
       }
     ],
     "extracted": true,
@@ -126433,7 +126544,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:07.815Z",
+        "updatedAt": "2026-05-02T02:17:30.594Z",
         "suffix": "via Shere & the Surrey Hills",
         "terrain": "woods, quaint village, hilly",
         "komootUrl": "https://www.komoot.com/tour/2920217304",
@@ -126444,7 +126555,10 @@
           "2026-02-01"
         ],
         "distanceKm": 10.2,
-        "hours": 2.85
+        "hours": 2.85,
+        "uphillMetres": 178.17,
+        "difficulty": "moderate",
+        "name": "Gomshall Circular via Shere"
       }
     ],
     "extracted": true,
@@ -126491,7 +126605,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:19:14.029Z",
+        "updatedAt": "2026-05-02T02:18:52.742Z",
         "suffix": "via Ashridge Estate",
         "terrain": "ancient trees, rolling chalk downlands, lush meadows",
         "komootUrl": "https://www.komoot.com/tour/2665054524",
@@ -126504,7 +126618,10 @@
         ],
         "distanceKm": 13.1,
         "hours": 3.57,
-        "ratingExplanation": "The Ashridge Estate is very beautiful if you appreciate woodland, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely"
+        "ratingExplanation": "The Ashridge Estate is very beautiful if you appreciate woodland, and covers more then enough ground to cover a day of hiking in itself. There are paths everywhere and you can wander freely",
+        "uphillMetres": 191.54,
+        "difficulty": "moderate",
+        "name": "Tring Circular via the Ashridge Estate"
       }
     ],
     "extracted": true,
@@ -126545,7 +126662,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:11:52.167Z",
+        "updatedAt": "2026-05-02T02:17:40.048Z",
         "suffix": "via Blenheim Palace Park",
         "komootUrl": "https://www.komoot.com/tour/2920249192",
         "rating": 4,
@@ -126554,7 +126671,10 @@
         ],
         "distanceKm": 12.4,
         "hours": 3.27,
-        "ratingExplanation": "It's an easy walk from the station to the beautiful, vast (and free) grounds of the finest example of English baroque architecture. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that"
+        "ratingExplanation": "It's an easy walk from the station to the beautiful, vast (and free) grounds of the finest example of English baroque architecture. For a somewhat extortionate fee you can also visit the house, but you'd probably want a whole day for that",
+        "uphillMetres": 113.37,
+        "difficulty": "moderate",
+        "name": "Hanborough Circular via Blenheim Palace"
       }
     ],
     "extracted": true,
@@ -126601,7 +126721,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T14:30:09.601Z",
+        "updatedAt": "2026-05-02T02:17:02.678Z",
         "suffix": "via Standen House",
         "terrain": "stately home, woods",
         "komootUrl": "https://www.komoot.com/tour/2920186661",
@@ -126610,7 +126730,10 @@
           "2026-01-01"
         ],
         "distanceKm": 8.35,
-        "hours": 2.28
+        "hours": 2.28,
+        "uphillMetres": 131.13,
+        "difficulty": "moderate",
+        "name": "East Grinstead Circular via Standen House"
       }
     ],
     "extracted": true,
@@ -126653,7 +126776,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:28:20.384Z",
+        "updatedAt": "2026-05-02T02:16:00.480Z",
         "komootUrl": "https://www.komoot.com/tour/2498061103",
         "distanceKm": 11.9,
         "hours": 3.07,
@@ -126663,7 +126786,10 @@
         "previousWalkDates": [
           "2022-04-30",
           "2025-08-17"
-        ]
+        ],
+        "uphillMetres": 56.64,
+        "difficulty": "moderate",
+        "name": "Amberley to Arundel along the Arun"
       }
     ],
     "extracted": true,
@@ -126699,7 +126825,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T00:24:02.601Z",
+        "updatedAt": "2026-05-02T02:16:58.214Z",
         "komootUrl": "https://www.komoot.com/tour/1472764500",
         "distanceKm": 22.2,
         "hours": 6,
@@ -126715,7 +126841,10 @@
           "jun",
           "jul"
         ],
-        "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape"
+        "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape",
+        "uphillMetres": 298.06,
+        "difficulty": "hard",
+        "name": "Eastbourne to Seaford via Beachy Head"
       }
     ],
     "extracted": true,
@@ -126751,7 +126880,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:19:02.022Z",
         "komootUrl": "https://www.komoot.com/tour/849746255",
         "distanceKm": 12.6,
         "hours": 2.75,
@@ -126759,7 +126888,10 @@
         "suffix": "via Great Kimble",
         "previousWalkDates": [
           "2022-07-24"
-        ]
+        ],
+        "uphillMetres": 198.58,
+        "difficulty": "moderate",
+        "name": "Wendover Circular via Great Kimble (RG)"
       }
     ],
     "extracted": true,
@@ -126795,7 +126927,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:57.165Z",
         "komootUrl": "https://www.komoot.com/tour/251949858",
         "distanceKm": 19,
         "hours": 4.78,
@@ -126803,7 +126935,10 @@
         "terrain": "quaint village",
         "previousWalkDates": [
           "2024-08-03"
-        ]
+        ],
+        "uphillMetres": 25.23,
+        "difficulty": "moderate",
+        "name": "Waterbeach to Ely"
       }
     ],
     "extracted": true,
@@ -126839,17 +126974,20 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:48.137Z",
         "komootUrl": "https://www.komoot.com/tour/693628580",
-        "distanceKm": 23,
-        "hours": 6.17,
+        "distanceKm": 23.6,
+        "hours": 6.37,
         "rating": 3,
         "suffix": "via Groombridge",
         "terrain": "escarpments",
         "privateNote": "took a while to get out of the suburbs of Tunbridge, but it was worth",
         "previousWalkDates": [
           "2023-05-27"
-        ]
+        ],
+        "uphillMetres": 301.33,
+        "difficulty": "hard",
+        "name": "Tunbridge Wells Circular via Groombridge"
       }
     ],
     "extracted": true,
@@ -126891,7 +127029,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:16:05.321Z",
         "komootUrl": "https://www.komoot.com/tour/849772927",
         "distanceKm": 13.9,
         "hours": 2.93,
@@ -126900,7 +127038,10 @@
         "miscellany": "Many restaurants in Woburn",
         "previousWalkDates": [
           "2025-09-06"
-        ]
+        ],
+        "uphillMetres": 134.87,
+        "difficulty": "moderate",
+        "name": "Aspley Guise Circular via the Woburn Estate"
       }
     ],
     "extracted": true,
@@ -126936,14 +127077,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:19:17.615Z",
         "komootUrl": "https://www.komoot.com/tour/693693647",
-        "distanceKm": 17.6,
-        "hours": 3.85,
+        "distanceKm": 18.4,
+        "hours": 4.08,
         "rating": 3,
         "previousWalkDates": [
           "2024-06-29"
-        ]
+        ],
+        "uphillMetres": 328.46,
+        "difficulty": "moderate",
+        "name": "Winchelsea to Hastings"
       }
     ],
     "extracted": true,
@@ -126985,7 +127129,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:18:25.823Z",
         "komootUrl": "https://www.komoot.com/tour/251970499",
         "distanceKm": 14.2,
         "hours": 3.77,
@@ -126995,7 +127139,10 @@
         "miscellany": "Multiple cafés & restaurants in Chiddingstone",
         "previousWalkDates": [
           "2025-07-26"
-        ]
+        ],
+        "uphillMetres": 139.32,
+        "difficulty": "moderate",
+        "name": "Penshurst Circular via Chiddingstone"
       }
     ],
     "extracted": true,
@@ -127031,15 +127178,18 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:42:21.048Z",
+        "updatedAt": "2026-05-02T02:16:43.568Z",
         "komootUrl": "https://www.komoot.com/tour/849788927",
-        "distanceKm": 13.7,
-        "hours": 2.95,
+        "distanceKm": 14,
+        "hours": 3.03,
         "rating": 3,
         "suffix": "via the Pilgrim's Way",
         "previousWalkDates": [
           "2022-10-23"
-        ]
+        ],
+        "uphillMetres": 186.51,
+        "difficulty": "moderate",
+        "name": "Chilham to Canterbury via the Pilgrim's Way"
       }
     ],
     "extracted": true,
@@ -127075,15 +127225,18 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:16:38.107Z",
         "komootUrl": "https://www.komoot.com/tour/849781899",
-        "distanceKm": 20.4,
-        "hours": 4.35,
+        "distanceKm": 20.9,
+        "hours": 4.48,
         "rating": 3,
         "miscellany": "Penultimate section of the Pilgrim's Way to Canterbury",
         "previousWalkDates": [
           "2022-10-22"
-        ]
+        ],
+        "uphillMetres": 214.11,
+        "difficulty": "moderate",
+        "name": "Charing to Chilham via the Pilgrim's Way"
       }
     ],
     "extracted": true,
@@ -127119,7 +127272,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:17:35.491Z",
         "komootUrl": "https://www.komoot.com/tour/2618431014",
         "distanceKm": 12.3,
         "hours": 3.4,
@@ -127129,7 +127282,10 @@
         "privateNote": "plenty of places to eat in Goring",
         "previousWalkDates": [
           "2025-10-11"
-        ]
+        ],
+        "uphillMetres": 196.25,
+        "difficulty": "moderate",
+        "name": "Pangbourne to Goring via Streatley Hill"
       }
     ],
     "extracted": true,
@@ -127165,14 +127321,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:17:45.321Z",
         "komootUrl": "https://www.komoot.com/tour/849768913",
         "distanceKm": 15.2,
         "hours": 3.22,
         "rating": 3,
         "previousWalkDates": [
           "2024-09-28"
-        ]
+        ],
+        "uphillMetres": 135.28,
+        "difficulty": "moderate",
+        "name": "Henley-on-Thames to Marlow via Hambleden"
       }
     ],
     "extracted": true,
@@ -127214,7 +127373,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:17:51.998Z",
         "komootUrl": "https://www.komoot.com/tour/2794137045",
         "distanceKm": 16.4,
         "hours": 4.73,
@@ -127225,7 +127384,10 @@
         "privateNote": "Ditching 45 minutes into walk",
         "previousWalkDates": [
           "2026-02-27"
-        ]
+        ],
+        "uphillMetres": 385.44,
+        "difficulty": "moderate",
+        "name": "Hassocks Circular via Ditchling Beacon"
       }
     ],
     "extracted": true,
@@ -127261,15 +127423,18 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-04-30T15:17:51.564Z",
+        "updatedAt": "2026-05-02T02:16:23.030Z",
         "komootUrl": "https://www.komoot.com/tour/921270625",
-        "distanceKm": 10.3,
-        "hours": 3.02,
+        "distanceKm": 8.59,
+        "hours": 2.52,
         "rating": 2,
         "terrain": "hills, woodland",
         "previousWalkDates": [
           "2020-11-01"
-        ]
+        ],
+        "uphillMetres": 223.76,
+        "difficulty": "moderate",
+        "name": "Box Hill via Mickleham"
       }
     ],
     "extracted": true,
@@ -127305,7 +127470,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:48.862Z",
         "komootUrl": "https://www.komoot.com/tour/2921492991",
         "rating": 2,
         "suffix": "via Down House",
@@ -127313,7 +127478,10 @@
           "2020-12-20"
         ],
         "distanceKm": 15.6,
-        "hours": 4.3
+        "hours": 4.3,
+        "uphillMetres": 270.61,
+        "difficulty": "moderate",
+        "name": "Chelsfield Circular via Down House"
       }
     ],
     "extracted": true,
@@ -127355,7 +127523,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:09.788Z",
         "komootUrl": "https://www.komoot.com/tour/2921150488",
         "rating": 2,
         "suffix": "via Ouse Valley Viaduct",
@@ -127363,7 +127531,10 @@
           "2021-04-03"
         ],
         "distanceKm": 11.8,
-        "hours": 3.18
+        "hours": 3.18,
+        "uphillMetres": 145.53,
+        "difficulty": "moderate",
+        "name": "Balcome Circular via Ardingly Reservoir"
       }
     ],
     "extracted": true,
@@ -127399,7 +127570,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T09:47:03.431Z",
+        "updatedAt": "2026-05-02T02:18:06.867Z",
         "komootUrl": "https://www.komoot.com/tour/2921497025",
         "rating": 4,
         "suffix": "via Mt Caburn, Glynde & Firle",
@@ -127408,7 +127579,10 @@
           "2021-10-17"
         ],
         "distanceKm": 16,
-        "hours": 4.62
+        "hours": 4.62,
+        "uphillMetres": 382.37,
+        "difficulty": "moderate",
+        "name": "Lewes to Southease via Mt Caburn"
       }
     ],
     "extracted": true,
@@ -127444,14 +127618,17 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:19.271Z",
         "komootUrl": "https://www.komoot.com/tour/2921495389",
         "rating": 2,
         "previousWalkDates": [
           "2022-06-18"
         ],
         "distanceKm": 19.1,
-        "hours": 5.27
+        "hours": 5.27,
+        "uphillMetres": 313.43,
+        "difficulty": "hard",
+        "name": "Goring-by-Sea to Worthing"
       }
     ],
     "extracted": true,
@@ -127487,7 +127664,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:14.385Z",
         "komootUrl": "https://www.komoot.com/tour/2921494524",
         "rating": 2,
         "suffix": "via Chichester Harbour",
@@ -127496,7 +127673,10 @@
           "2023-07-30"
         ],
         "distanceKm": 11.7,
-        "hours": 2.95
+        "hours": 2.95,
+        "uphillMetres": 18.04,
+        "difficulty": "moderate",
+        "name": "Fishbourne Circular via Chichester Harbour"
       }
     ],
     "extracted": true,
@@ -127532,7 +127712,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:23.865Z",
         "komootUrl": "https://www.komoot.com/tour/2921496141",
         "rating": 3,
         "suffix": "via Watt's Chapel",
@@ -127540,7 +127720,10 @@
           "2021-05-01"
         ],
         "distanceKm": 13.1,
-        "hours": 3.5
+        "hours": 3.5,
+        "uphillMetres": 145.02,
+        "difficulty": "moderate",
+        "name": "Guildford Circular via Watt’s Chapel"
       }
     ],
     "extracted": true,
@@ -127576,7 +127759,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:17:57.984Z",
         "komootUrl": "https://www.komoot.com/tour/2921496591",
         "rating": 2,
         "suffix": "via Combe Gibbet",
@@ -127584,7 +127767,10 @@
           "2022-01-03"
         ],
         "distanceKm": 16.4,
-        "hours": 4.5
+        "hours": 4.5,
+        "uphillMetres": 250.91,
+        "difficulty": "moderate",
+        "name": "Kintbury Circular via Combe Gibbet"
       }
     ],
     "extracted": true,
@@ -127667,7 +127853,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:18:30.547Z",
         "komootUrl": "https://www.komoot.com/tour/2921497906",
         "rating": 2,
         "suffix": "via Lacey Green & Ninn Wood",
@@ -127675,7 +127861,10 @@
           "2022-02-19"
         ],
         "distanceKm": 15.8,
-        "hours": 4.37
+        "hours": 4.37,
+        "uphillMetres": 280.79,
+        "difficulty": "moderate",
+        "name": "Princes Risborough Circular via Ninn Wood"
       }
     ],
     "extracted": true,
@@ -127711,7 +127900,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:19:06.811Z",
         "komootUrl": "https://www.komoot.com/tour/2921485105",
         "rating": 2,
         "suffix": "via Upper Bacombe",
@@ -127720,7 +127909,10 @@
           "2022-02-06"
         ],
         "distanceKm": 9.85,
-        "hours": 2.88
+        "hours": 2.88,
+        "uphillMetres": 257.09,
+        "difficulty": "moderate",
+        "name": "Wendover Circular via Upper Bacombe"
       }
     ],
     "extracted": true,
@@ -127756,7 +127948,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:15:55.859Z",
         "komootUrl": "https://www.komoot.com/tour/2921490975",
         "rating": 1,
         "suffix": "via the Misbourne Valley",
@@ -127765,7 +127957,10 @@
           "2020-11-29"
         ],
         "distanceKm": 15,
-        "hours": 4.03
+        "hours": 4.03,
+        "uphillMetres": 183.48,
+        "difficulty": "moderate",
+        "name": "Amersham Circular via the Misbourne Valley"
       }
     ],
     "extracted": true,
@@ -127801,7 +127996,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T10:13:02.894Z",
+        "updatedAt": "2026-05-02T02:18:38.341Z",
         "komootUrl": "https://www.komoot.com/tour/2921498612",
         "rating": 3,
         "suffix": "via Gothambury House",
@@ -127811,7 +128006,10 @@
           "2020-08-22"
         ],
         "distanceKm": 13.2,
-        "hours": 3.5
+        "hours": 3.5,
+        "uphillMetres": 122.58,
+        "difficulty": "moderate",
+        "name": "St Albans Circular via Gorhambury House"
       }
     ],
     "extracted": true,
@@ -127847,7 +128045,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:14.882Z",
         "komootUrl": "https://www.komoot.com/tour/2921491885",
         "rating": 2,
         "privateNote": "We made it better by extending the the walk to Harlow. but still merely 'okay'",
@@ -127855,7 +128053,10 @@
           "2020-11-22"
         ],
         "distanceKm": 7.69,
-        "hours": 1.95
+        "hours": 1.95,
+        "uphillMetres": 11.23,
+        "difficulty": "easy",
+        "name": "Bishop’s Stortford to Sawbridgworth"
       }
     ],
     "extracted": true,
@@ -127891,7 +128092,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T08:05:56.696Z",
+        "updatedAt": "2026-05-02T02:16:31.035Z",
         "komootUrl": "https://www.komoot.com/tour/2921492459",
         "rating": 2,
         "suffix": "via Granchester",
@@ -127900,7 +128101,10 @@
           "2021-05-15"
         ],
         "distanceKm": 12.6,
-        "hours": 3.2
+        "hours": 3.2,
+        "uphillMetres": 41.28,
+        "difficulty": "moderate",
+        "name": "Cambridge Circular via Grantchester"
       }
     ],
     "extracted": true,
@@ -127936,7 +128140,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T23:50:16.432Z",
+        "updatedAt": "2026-05-02T02:18:43.569Z",
         "komootUrl": "https://www.komoot.com/tour/2921513301",
         "rating": 4,
         "suffix": "via Old Sarum",
@@ -127945,7 +128149,10 @@
           "2022-04-07"
         ],
         "distanceKm": 16.6,
-        "hours": 4.48
+        "hours": 4.48,
+        "uphillMetres": 229.39,
+        "difficulty": "moderate",
+        "name": "Salisbury to Stonehenge via Old Sarum"
       }
     ],
     "extracted": true,
@@ -127981,7 +128188,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-01T11:49:12.676Z",
+        "updatedAt": "2026-05-02T02:18:12.504Z",
         "komootUrl": "https://www.komoot.com/tour/2921509210",
         "rating": 2,
         "suffix": "via Roydon Woods",
@@ -127990,7 +128197,10 @@
           "2024-02-03"
         ],
         "distanceKm": 12.6,
-        "hours": 3.28
+        "hours": 3.28,
+        "uphillMetres": 90.8,
+        "difficulty": "moderate",
+        "name": "Lymington to Brockenhurst via Roydon Woods"
       }
     ],
     "extracted": true,
@@ -128040,6 +128250,332 @@
         "ratingExplanation": "Almost worthy because of the great and tranquil beauty of Gobions Wood, and it being only 20m from Kings Cross on a quick train. Unfortunately the surrounding fields and busy commuter roads that make up the bulk of the area don’t have enough going for them to put this on the recommendation list",
         "uphillMetres": 68.05,
         "difficulty": "moderate"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-alfalfowl": {
+    "slug": "manual-alfalfowl",
+    "title": "Manual ALF Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "ALF",
+        "endStation": "ALF",
+        "stationToStation": true,
+        "distanceKm": 6.5,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "90% footpaths, 10% country Roads, undulating countryside",
+        "sights": [],
+        "miscellany": "",
+        "id": "alfalfowl",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Alfreton to South Wingfield",
+          "pageURL": "https://www.visitambervalley.com/media/1101/alfreton-to-southwingfield-amber-valley-routeways-leaflet.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblpoak": {
+    "slug": "manual-blpblpoak",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 11,
+        "lunchStops": [],
+        "terrain": "Hilly countryside with steep climbs",
+        "sights": [],
+        "id": "blpblpoak",
+        "suffix": "via Blackbrook",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Belper - Blackbrook",
+          "pageURL": "https://www.visitambervalley.com/media/1102/belper-blackbrook-walking.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:41:20.771Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblpash": {
+    "slug": "manual-blpblpash",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 11.6,
+        "lunchStops": [],
+        "terrain": "Hilly countryside with several steep climbs",
+        "sights": [],
+        "id": "blpblpash",
+        "suffix": "via Kilburn",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Belper to Kilburn",
+          "pageURL": "https://www.visitambervalley.com/media/1103/11-belper-to-kilburn.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:41:01.941Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-dfidfibirch": {
+    "slug": "manual-dfidfibirch",
+    "title": "Manual DFI Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "DFI",
+        "endStation": "DFI",
+        "stationToStation": true,
+        "distanceKm": 12.8,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "Undulating countryside with several steep climbs",
+        "sights": [],
+        "miscellany": "",
+        "id": "dfidfibirch",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Duffield",
+          "pageURL": "https://www.visitambervalley.com/media/1106/10-duffield.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-lgmlgmwren": {
+    "slug": "manual-lgmlgmwren",
+    "title": "Manual LGM Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "LGM",
+        "endStation": "LGM",
+        "stationToStation": true,
+        "distanceKm": 7.7,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "35% hard surfaced 35%. Made up level surfaces 30% fields/countryside. Flat with one significant rising section",
+        "sights": [],
+        "miscellany": "",
+        "id": "lgmlgmwren",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Langley Mill",
+          "pageURL": "https://www.visitambervalley.com/media/1114/13-langley-mill.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-cmfcmfheron": {
+    "slug": "manual-cmfcmfheron",
+    "title": "Manual CMF Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "CMF",
+        "endStation": "CMF",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "The trail begins at Cromford Wharf, walking time of approximately 20 minutes with the option to extend.",
+        "id": "cmfcmfheron",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "The Cromford Canal",
+          "pageURL": "https://www.visitambervalley.com/media/1120/the-cromford-canal.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-wtscmfrobin": {
+    "slug": "manual-wtscmfrobin",
+    "title": "Manual WTS to CMF",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "WTS",
+        "endStation": "CMF",
+        "stationToStation": true,
+        "distanceKm": 9.7,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "The route of 6 miles starts from the A6 at Whatstandwell and goes via Holloway, Lea, Dethick, and Lea Bridge to rejoin the A6 at Cromford.",
+        "id": "wtscmfrobin",
+        "suffix": "",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "Florence Nightingale Trail",
+          "pageURL": "https://www.visitambervalley.com/media/1121/florence-nightingale-trail.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:22:23.948Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-blpblphazel": {
+    "slug": "manual-blpblphazel",
+    "title": "Manual BLP Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "BLP",
+        "endStation": "BLP",
+        "stationToStation": true,
+        "distanceKm": 3.2,
+        "lunchStops": [],
+        "sights": [],
+        "id": "blpblphazel",
+        "suffix": "— Strutt heritage walk",
+        "source": {
+          "orgSlug": "visit-amber-valley",
+          "pageName": "The Strutt Walk and Drive",
+          "pageURL": "https://www.visitambervalley.com/media/1118/the-strutt-walk-and-drive.pdf",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-02T12:40:46.188Z"
       }
     ],
     "extracted": true,
