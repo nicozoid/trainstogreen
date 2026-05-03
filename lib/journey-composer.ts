@@ -108,12 +108,19 @@ export function composePolylineForJourney(
 }
 
 // Quality gate for the hybrid rule. Accept the composer's polyline as
-// an upgrade over a baked polylineCoords ONLY when every edge resolved
-// to a real Google-fetched segment. A single missing or fallback edge
-// means the composer would draw a straight line for that hop — at
-// which point the existing baked polyline (often built from RTT
-// sibling-trim splices) is at least as good. Cheap, conservative,
-// and easy to relax later if we want broader coverage.
+// an upgrade over a baked polylineCoords when MOST edges resolved to a
+// real Google-fetched segment — i.e. at least as many resolved as
+// unresolved. Rationale: most missing-segment cases are very short hops
+// that the segment library never covered (CTK→BFR over the river,
+// Thameslink-core inter-platform stretches, …) and they fall back to a
+// 2-point straight line that's visually invisible against the rest of
+// the curvy journey. Strict zero-fallback gating threw out ~70 CLON
+// journeys whose composition was overwhelmingly track-following but
+// happened to include one short straight piece. The "majority real
+// edges" rule keeps the visual win while still rejecting compositions
+// that are mostly straight lines (where the existing baked polyline
+// might be at least as good).
 export function isHighQualityComposition(c: ComposedPolyline): boolean {
-  return c.edgesFallback === 0 && c.edgesMissing === 0 && c.edgesResolved >= 1
+  if (c.edgesResolved < 1) return false
+  return c.edgesResolved >= c.edgesFallback + c.edgesMissing
 }
