@@ -31,6 +31,14 @@ export type ClusterDef = {
   members: string[]         // station IDs of cluster members
   isPrimaryOrigin: boolean
   isFriendOrigin: boolean
+  // Optional display overrides for primary-side clusters. The picker UI
+  // and modal labels read these via getClusterDisplay() below; absent
+  // values fall back to displayName so non-primary clusters need none of
+  // these fields. Lifted from the old PRIMARY_ORIGINS OriginDef in
+  // map.tsx so cluster topology AND its display info live together.
+  menuName?: string         // longer label for dropdown menu items
+  mobileDisplayName?: string  // super-short label below the sm breakpoint
+  overlayName?: string      // override for the photo-overlay modal title
 }
 
 const RAW_CLUSTERS: Record<string, ClusterDef> =
@@ -106,6 +114,28 @@ export const SYNTHETIC_KIND: Record<string, "primary" | "friend" | undefined> = 
 // All synthetic anchor IDs (every cluster, regardless of selectability),
 // flat Set for membership tests.
 export const ALL_SYNTHETIC_IDS: Set<string> = new Set<string>(Object.keys(ALL_CLUSTERS))
+
+// Resolved display info for a cluster anchor — every field is filled in,
+// with absent overrides falling back to displayName. Returns null when
+// the ID is not a known cluster anchor. Used by callers that need to
+// render a cluster's name in different UI contexts (filter trigger,
+// dropdown menu, mobile label, modal title) without each call site
+// repeating the `?? displayName` fallback chain.
+export function getClusterDisplay(anchorId: string): {
+  displayName: string
+  menuName: string
+  mobileDisplayName: string
+  overlayName: string
+} | null {
+  const c = ALL_CLUSTERS[anchorId]
+  if (!c) return null
+  return {
+    displayName: c.displayName,
+    menuName: c.menuName ?? c.displayName,
+    mobileDisplayName: c.mobileDisplayName ?? c.displayName,
+    overlayName: c.overlayName ?? c.displayName,
+  }
+}
 
 // The Central London cluster's anchor ID. Hard-coded because the
 // "London termini are individually selectable as primary" feature is

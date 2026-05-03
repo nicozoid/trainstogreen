@@ -581,7 +581,10 @@
         "LBG"
       ],
       "isPrimaryOrigin": true,
-      "isFriendOrigin": false
+      "isFriendOrigin": false,
+      "menuName": "Central London",
+      "mobileDisplayName": "London",
+      "overlayName": "London termini"
     },
     "CLUT": {
       "displayName": "Luton",
