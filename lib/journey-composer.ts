@@ -15,6 +15,7 @@ import stationsData from "../public/stations.json"
 import { resolveName, resolveAllNameCandidates, getStation } from "./station-registry"
 import {
   composeFromCallingPoints,
+  findPathInSegments,
   type RailSegments,
 } from "./compose-segment-polyline"
 
@@ -160,6 +161,22 @@ function composeFromLegs(legs: JourneyLeg[]): ComposedPolyline | null {
         totalResolved += result.edgesResolved
         totalFallback += result.edgesFallback
         totalMissing += result.edgesMissing
+      } else if (depId && arrId) {
+        // Last-resort: graph-search the segment library for ANY rail
+        // path from depCRS to arrCRS. Catches direct routes that
+        // origin-routes never sampled but the segment library covers
+        // implicitly (e.g. PAD→Shipton on the Cotswold Line — segments
+        // exist for every adjacent pair from Paddington's Reading-Oxford
+        // sub-route + the rural sub-route past Hanborough, even though
+        // no fetched primary listed Shipton as directly reachable).
+        const path = findPathInSegments(depId, arrId, segments)
+        if (path && path.length >= 2) {
+          const result = composeFromCallingPoints(path, { segments, crsToCoord })
+          legCoords = result.coords
+          totalResolved += result.edgesResolved
+          totalFallback += result.edgesFallback
+          totalMissing += result.edgesMissing
+        }
       }
     }
 
