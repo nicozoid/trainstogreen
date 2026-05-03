@@ -2423,14 +2423,12 @@ export default function HikeMap() {
     name: string
   } | null>(null)
   const [showTrails, setShowTrails] = useState(false)
-  // Region labels (counties, parks, AONBs) — controlled by a checkbox in
-  // FilterPanel sitting under "Waymarked trails". Off by default in
-  // production; ON by default for local dev so curation work has the
-  // region context visible without an extra click. Next.js inlines
-  // NODE_ENV into the client bundle, so this branches at build time —
-  // a Vercel preview/prod build always gets `false`, `next dev` gets
-  // `true`. Visible to all users (not admin-only) once toggled on.
-  const [showRegions, setShowRegions] = useState(process.env.NODE_ENV === "development")
+  // Region labels (counties, parks, AONBs) and the historic-county
+  // borders that ride along — controlled by a checkbox in FilterPanel
+  // sitting under "Waymarked trails", and toggled with the `h` key.
+  // Off by default everywhere (dev and prod) so first-load reads the
+  // same regardless of environment.
+  const [showRegions, setShowRegions] = useState(false)
   // Region-label opacity is driven imperatively by an effect (further down)
   // that calls map.setPaintProperty when visibleRatings or showRegions
   // change. No React state needed — Mapbox owns the animated value, and
@@ -7732,7 +7730,7 @@ export default function HikeMap() {
   // and left the labels invisible until the user toggled the checkbox.)
   const regionLabelsOpacity = showRegions || visibleRatings.size === 0 ? 1 : 0
   const regionLabelsTransition = showRegions
-    ? { duration: 0, delay: 0 }
+    ? { duration: 2000, delay: 0 }       // fade in when toggled on
     : visibleRatings.size === 0
       ? { duration: 2000, delay: 5000 }  // fade in after a short pause when all ratings are off
       : { duration: 2000, delay: 0 }     // fade out when any rating is on
@@ -7751,6 +7749,35 @@ export default function HikeMap() {
         geometry: { type: "Point" as const, coordinates: r.coord },
       })),
     }
+  }, [])
+
+  // Historic county borders — sit alongside the region labels and follow
+  // the SAME opacity formula, so labels and borders fade together. Data is
+  // a 3.5 MB GeoJSON in /public; Mapbox fetches by URL the first time the
+  // Source mounts, then caches. We lazy-mount via `historicCountiesNeeded`
+  // so users who never reveal the labels in prod don't pay the fetch.
+  // Once flipped to true it stays true — toggling off doesn't unmount,
+  // it just fades opacity to 0, so re-toggling is instant (no re-fetch).
+  const [historicCountiesNeeded, setHistoricCountiesNeeded] = useState(false)
+  useEffect(() => {
+    if (regionLabelsOpacity > 0) setHistoricCountiesNeeded(true)
+  }, [regionLabelsOpacity])
+
+  // Keyboard shortcut: `h` toggles region labels (and the borders that
+  // ride along with them). Listens on window, not the map element, so it
+  // works regardless of focus. Guards keep it from firing when the user
+  // is typing in the search bar / any input, and let browser chords like
+  // ⌘H pass through unmolested.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "h" && e.key !== "H") return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return
+      setShowRegions((s) => !s)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
   }, [])
   const [interTerminalOpacity, setInterTerminalOpacity] = useState(0)
   const interFadeRef = useRef<number | null>(null)
@@ -9012,6 +9039,10 @@ export default function HikeMap() {
             return next
           })
         }}
+        // Right-click on a rating row "solos" it — wipes the set and
+        // re-seeds with just that one key. Replacement, not toggle, so
+        // the new Set isn't derived from prev.
+        onSoloRating={(key: string) => setVisibleRatings(new Set([key]))}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         adminMode={devExcludeActive}
@@ -9758,6 +9789,39 @@ export default function HikeMap() {
             paint={{ "raster-opacity": 0.5 }}
           />
         </Source>
+
+        {/* Historic county borders — fade in/out together with the region
+            labels (same opacity expression). Lazy-mounted: only appears in
+            the tree once the labels have been visible at least once, so
+            the 3.5 MB GeoJSON isn't fetched until needed. Mounted BEFORE
+            the region-labels source so the dashed lines render UNDER the
+            text labels. URL data — Mapbox fetches and caches itself. */}
+        {historicCountiesNeeded && (
+          <Source id="historic-counties-source" type="geojson" data="/boundaries/historic-counties.geojson">
+            <Layer
+              id="historic-counties-borders"
+              type="line"
+              minzoom={6}
+              maxzoom={12}
+              paint={{
+                // Muted neutral grey, matching the county-label colour so
+                // borders + labels read as one connected admin layer.
+                "line-color": theme === "dark" ? "#a1a1aa" : "#6b7280",
+                // Hairline width — borders are background context, not
+                // a primary visual element.
+                "line-width": 0.75,
+                // Dashed pattern signals "administrative boundary" rather
+                // than "physical line on the ground". [dashLength, gapLength]
+                // in units of line-width.
+                "line-dasharray": [2, 2],
+                // Cap opacity well below 1 so even at full visibility the
+                // borders sit quietly behind the rest of the map content.
+                "line-opacity-transition": regionLabelsTransition,
+                "line-opacity": regionLabelsOpacity * 0.6,
+              }}
+            />
+          </Source>
+        )}
 
         {/* Admin-only region labels — counties, national parks, AONBs.
             Mounted near the bottom of the layer stack so labels sit BENEATH
