@@ -58,6 +58,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO = join(__dirname, "..")
 const STATIONS_PATH = join(REPO, "public/stations.json")
 const ROUTES_PATH = join(REPO, "data/origin-routes.json")
+// Tiny per-station fetch-outcome summary — `"ready"` on success, `"ghost"`
+// when a station turns out to have zero Saturday morning service. Stations
+// absent from this file are treated as "Coming soon" (not yet fetched).
+// Maintained read-modify-write below; safe because the master-queue runner
+// is serial — no concurrent writers in normal operation.
+const COVERAGE_PATH = join(REPO, "data/rtt-coverage.json")
 const API_BASE = "https://data.rtt.io"
 const NAMESPACE = "gb-nr"
 // Rate limits (personal tier): 30/min, 750/hour, 9000/day, 30000/week.
@@ -99,6 +105,23 @@ if (!originStation) {
   process.exit(1)
 }
 console.log(`Origin: ${originStation.name} (${originCrs}) at ${originStation.coord}`)
+
+// ---------------------------------------------------------------------------
+// Coverage-file helper — records this fetch's outcome in rtt-coverage.json.
+// "ready" on a successful fetch with data; "ghost" when every sampled date
+// returned cleanly with zero services (see the no-data branch below).
+// ---------------------------------------------------------------------------
+function markCoverage(id, status) {
+  const current = existsSync(COVERAGE_PATH)
+    ? JSON.parse(readFileSync(COVERAGE_PATH, "utf8"))
+    : {}
+  current[id] = status
+  // Sort keys for stable diffs — file lives in git.
+  const sorted = Object.fromEntries(
+    Object.entries(current).sort(([a], [b]) => a.localeCompare(b)),
+  )
+  writeFileSync(COVERAGE_PATH, JSON.stringify(sorted, null, 2) + "\n")
+}
 
 // ---------------------------------------------------------------------------
 // Auth + HTTP helpers
@@ -363,17 +386,43 @@ async function fetchForDate(dateStr) {
 
 // ---------------------------------------------------------------------------
 // Run across all requested dates, collecting per-date maps.
+// We also track "successful but empty" vs "errored" separately, because the
+// no-data branch below uses both: a true ghost station returns cleanly with
+// zero services on every sample, whereas an errored fetch could be transient
+// (token expiry, 5xx, network) and should NOT be marked as ghost.
 // ---------------------------------------------------------------------------
 const perDateMaps = []
+let successfulEmptyCount = 0  // RTT returned successfully but zero services
+let erroredCount = 0          // fetch threw (network / 5xx / etc.)
 for (const dateStr of isoDateStrings) {
   try {
     const m = await fetchForDate(dateStr)
-    if (m.size > 0) perDateMaps.push({ date: dateStr, map: m })
+    if (m.size > 0) {
+      perDateMaps.push({ date: dateStr, map: m })
+    } else {
+      successfulEmptyCount++
+    }
   } catch (e) {
     console.warn(`Failed to fetch ${dateStr}: ${e.message}`)
+    erroredCount++
   }
 }
 if (perDateMaps.length === 0) {
+  // Two-or-more independent Saturdays returning a clean "no services" is
+  // the ghost-station signal — a single closure day could explain one
+  // empty result, but not several weeks/months apart. We require ≥2
+  // successful empties and zero errors before marking ghost; anything
+  // else exits 1 so the runner can retry.
+  if (erroredCount === 0 && successfulEmptyCount >= 2) {
+    markCoverage(originCrs, "ghost")
+    console.error(
+      `No services found for ${originCrs} across ${successfulEmptyCount} sampled dates — marked as ghost station in ${COVERAGE_PATH}.`,
+    )
+    // Exit 0: this is a successful determination (the station is a ghost),
+    // not a failure. The runner counts this as a completed station and
+    // future runs will skip it via the coverage-file check.
+    process.exit(0)
+  }
   console.error("No dates produced any data — aborting without writing.")
   process.exit(1)
 }
@@ -539,6 +588,11 @@ current[originCrs] = {
   generatedAt: new Date().toISOString(),
 }
 writeFileSync(ROUTES_PATH, JSON.stringify(current, null, 2) + "\n")
+// Record the successful outcome in the small coverage file. Phase-1 origin-
+// architecture refactor: the picker's eligibility predicate reads this file
+// rather than parsing the 23 MB origin-routes.json on every load.
+markCoverage(originCrs, "ready")
 console.log(`\nWrote ${ROUTES_PATH}`)
 console.log(`  ${merged.size} total destinations after merging across ${sampledDates.length} sampled date(s)`)
 console.log(`  Sampled dates: ${sampledDates.join(", ")}`)
+console.log(`  Coverage marked "ready" in ${COVERAGE_PATH}`)

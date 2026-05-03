@@ -20,6 +20,20 @@ const stations = JSON.parse(readFileSync(path.join(repoRoot, "data/stations.fat.
 const originRoutes = JSON.parse(readFileSync(path.join(repoRoot, "data/origin-routes.json"), "utf8"))
 const fetched = new Set(Object.values(originRoutes).map((o) => o.crs))
 
+// Stations the fetch script has previously determined are ghosts (zero
+// Saturday-morning services across 2+ sampled dates) — exclude them from
+// the queue so the runner doesn't burn quota re-fetching them every week.
+// Source: data/rtt-coverage.json, written by fetch-direct-reachable.mjs.
+// File may not exist on a fresh checkout — fall back to empty set.
+const COVERAGE_PATH = path.join(repoRoot, "data/rtt-coverage.json")
+let ghosts = new Set()
+try {
+  const coverage = JSON.parse(readFileSync(COVERAGE_PATH, "utf8"))
+  ghosts = new Set(Object.entries(coverage).filter(([, v]) => v === "ghost").map(([k]) => k))
+} catch {
+  // Coverage file absent or unreadable — proceed without ghost exclusion.
+}
+
 // origin-routes.json is the single source of truth for "already done".
 // The master queue includes EVERY mainland NR station; the smart runner
 // skips already-fetched ones at run time. If a separate one-off chain
@@ -104,6 +118,9 @@ const candidates = stations.features.filter((f) => {
   const crs = f.properties?.["ref:crs"]
   if (!crs) return false
   if (fetched.has(crs)) return false
+  // Skip stations the fetch script has already determined are ghosts —
+  // re-fetching them would waste RTT quota for no gain.
+  if (ghosts.has(crs)) return false
   // Crude "mainland Britain" filter — exclude Northern Ireland, Channel Islands,
   // and offshore. Greater Britain bounding box: lng ≥ -8, lat 49.8–60.8.
   const [lng, lat] = f.geometry.coordinates
@@ -139,6 +156,7 @@ const lines = []
 lines.push("# Master RTT-fetch queue — generated " + new Date().toISOString())
 lines.push(`# Total candidates: ${candidates.length}`)
 lines.push(`# Already fetched: ${fetched.size}`)
+lines.push(`# Excluded ghosts: ${ghosts.size}`)
 lines.push(`#`)
 lines.push(`# Workflow: smart runner reads this file, skips lines starting with #`)
 lines.push(`# and any CRS already in origin-routes.json, fetches each remaining`)
