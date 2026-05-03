@@ -2627,7 +2627,7 @@ export default function HikeMap() {
   // because Set membership for the filter UI is keyed by string —
   // matches the `key` field in RATING_FILTERS in filter-panel.tsx.
   const [visibleRatings, setVisibleRatings] = useState<Set<string>>(
-    () => new Set(["4", "3", "2"]),
+    () => new Set(["4", "3", "2", "1"]),
   )
 
   // Photo curations — per-station approved photo list + pinned-ids subset.
@@ -2773,7 +2773,7 @@ export default function HikeMap() {
   // leave them stuck there because the grow-in animation effect bails when
   // stationsForMap is still null on the first mapReady transition.
   const [prevVisibleRatings, setPrevVisibleRatings] = useState<Set<string>>(
-    () => new Set(["4", "3", "2"]),
+    () => new Set(["4", "3", "2", "1"]),
   )
 
   const [searchQuery, setSearchQuery] = useState("")
