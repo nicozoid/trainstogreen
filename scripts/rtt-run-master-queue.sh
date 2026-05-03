@@ -74,12 +74,21 @@ get_remaining_week() {
     | awk -F': ' '{print $2}' | tr -d '\r' | tr -d '\n'
 }
 
-# Build the set of already-done CRSes from origin-routes.json. Cheap node
-# call — runs once at start (and refreshes after each station).
+# Build the set of CRSes the runner should skip — union of stations already
+# in origin-routes.json (have data) and stations marked "ghost" in the
+# coverage file (fetched, no Saturday morning service). Skipping ghosts
+# saves quota: re-fetching them would just produce another empty result
+# and the same ghost determination.
 already_done() {
   node -e "
-    const data = require('$REPO/data/origin-routes.json');
-    console.log(Array.from(new Set(Object.values(data).map(o => o.crs))).join('\n'));
+    const fs = require('fs');
+    const routes = require('$REPO/data/origin-routes.json');
+    const ids = new Set(Object.values(routes).map(o => o.crs));
+    try {
+      const cov = JSON.parse(fs.readFileSync('$REPO/data/rtt-coverage.json', 'utf8'));
+      for (const [k, v] of Object.entries(cov)) if (v === 'ghost') ids.add(k);
+    } catch {}
+    console.log(Array.from(ids).join('\n'));
   "
 }
 
