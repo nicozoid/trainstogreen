@@ -61121,9 +61121,7 @@
         "endStation": "BSR",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": null,
         "distanceMiles": null,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Charles Dickens",
@@ -61143,27 +61141,24 @@
         "terrain": "Low chalk cliffs, sandy bays and coves, cliff-top grassland, seaside promenades",
         "sights": [
           {
-            "name": "Dickens House Museum",
-            "url": null
+            "name": "Dickens House Museum"
           },
           {
-            "name": "Turner Contemporary Gallery",
-            "url": null
+            "name": "Turner Contemporary Gallery"
           },
           {
-            "name": "North Foreland Lighthouse",
-            "url": null
+            "name": "North Foreland Lighthouse"
           }
         ],
         "miscellany": "Check tide timings",
         "id": "bsrbsrnightjar",
-        "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ramsgate to Margate",
           "pageURL": "https://www.walkingclub.org.uk/walk/ramsgate-to-margate/",
           "type": "variant"
-        }
+        },
+        "updatedAt": "2026-05-03T14:35:35.341Z"
       },
       {
         "role": "alternative",
