@@ -1049,5 +1049,35 @@
       "radius": 7,
       "sort": "relevance"
     }
+  },
+  "-0.3515572,51.8148177": {
+    "name": "Harpenden",
+    "custom": {
+      "includeTags": [
+        "harpenden",
+        "commons",
+        "heartwood forest",
+        "st leonard's church",
+        "childwickbury country estate",
+        "st mary's church",
+        "childwickbury manor house",
+        "st michael's church",
+        "st albans cathedral",
+        "abbey gatehouse",
+        "st albans",
+        "sanbridge",
+        "gorehambury",
+        "verulamium museum",
+        "ye olde fighting cocks",
+        "roman wall",
+        "st albans museum",
+        "queens head",
+        "sandridge",
+        "green man"
+      ],
+      "excludeTags": [],
+      "radius": 7,
+      "sort": "relevance"
+    }
   }
 }
