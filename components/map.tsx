@@ -3501,17 +3501,28 @@ export default function HikeMap() {
                   }
                 }
               }
-              // Second pass — augment any sparse polylines. Pass the
-              // merged journeys map itself as siblingJourneys so
-              // deriveRichPolyline can borrow encoded polylines from
-              // sibling-origin entries (e.g. Farringdon's pre-fetched
-              // Google polyline) when upgrading the active primary's
-              // straight CRS-chain. activeClusterMemberIds lets the
-              // upgrade reject sibling polylines whose origin is
-              // OUTSIDE the active primary's cluster (and prefer
-              // in-cluster ones when the diff's own leg-departure is
-              // out-of-cluster).
+              // Second pass — augment the ACTIVE PRIMARY'S sparse
+              // polyline. Pass the merged journeys map itself as
+              // siblingJourneys so deriveRichPolyline can borrow
+              // encoded polylines from sibling-origin entries (e.g.
+              // Farringdon's pre-fetched Google polyline) when
+              // upgrading the primary's straight CRS-chain.
+              // activeClusterMemberIds lets the upgrade reject sibling
+              // polylines whose origin is OUTSIDE the active primary's
+              // cluster (and prefer in-cluster ones when the diff's own
+              // leg-departure is out-of-cluster).
+              //
+              // Restricted to the primary's cluster members ONLY: the
+              // friend origin's journey came from its own
+              // ensureOriginLoaded merge with a polyline that's already
+              // correctly anchored at the friend's home. Letting
+              // deriveRichPolyline run on the friend would borrow from
+              // primary-side siblings (ZFD/CLON) and produce a polyline
+              // that starts in central London instead of, say,
+              // Nottingham — which then renders on top of the primary's
+              // line and hides the friend line entirely.
               for (const [originKey, journey] of Object.entries(merged)) {
+                if (!activeClusterMemberIds.has(originKey)) continue
                 const richer = deriveRichPolyline(
                   featureId,
                   journey as { legs?: Array<{ departureStation?: string; arrivalStation?: string }>; polyline?: string; polylineCoords?: [number, number][] },
