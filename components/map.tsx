@@ -2367,7 +2367,7 @@ export default function HikeMap() {
   // `komoot` — keeps only stations whose attached walks include at least
   // one variant with a non-empty `komootUrl`. Membership comes from the
   // pre-built stations-with-komoot.json set.
-  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  type FeatureFilter = "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "hiked" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
   // Build the Oyster CRS Set with oysterStationsData as the dep — when
   // the JSON hot-reloads in dev the import gives a new array reference,
   // which busts this memo and the downstream filteredStations memo.
@@ -6112,6 +6112,12 @@ export default function HikeMap() {
           }
           if (primaryFeatureFilter === "undiscovered") {
             return !fid || !stationsHiked.has(fid)
+          }
+          // "Hiked" — inverse of "Undiscovered": only stations with ≥1
+          // walk we've personally logged in previousWalkDates. Same
+          // stationsHiked Set, opposite test.
+          if (primaryFeatureFilter === "hiked") {
+            return !!fid && stationsHiked.has(fid)
           }
           if (primaryFeatureFilter === "komoot") {
             return !!fid && stationsWithKomoot.has(fid)

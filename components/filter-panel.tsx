@@ -299,7 +299,7 @@ type FilterPanelProps = {
    *  (< 12 approved photos — includes never-touched stations).
    *  "all-sloppy-pics" = the subset of sloppy-pics that have zero
    *  curation at all (no approvals AND no rejections yet). */
-  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
+  primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "hiked" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
   onPrimaryFeatureFilterChange: (value: FilterPanelProps["primaryFeatureFilter"]) => void
   /** Admin-only Source filter — keeps only stations with at least one
    *  attached walk whose source.orgSlug or relatedSource.orgSlug
@@ -1451,6 +1451,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     we've personally logged in previousWalkDates. Surfaces
                     destinations still to explore. */}
                 <option value="undiscovered">Undiscovered</option>
+                {/* "Hiked" — inverse of "Undiscovered": keeps only stations
+                    with ≥1 walk we've personally logged in
+                    previousWalkDates. Surfaces destinations we've
+                    already explored. */}
+                <option value="hiked">Hiked</option>
                 {/* "Komoot" — keeps only stations with ≥1 attached walk
                     variant carrying a Komoot tour URL. Surfaces
                     destinations that already have a planned route. */}
