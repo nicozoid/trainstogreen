@@ -13,6 +13,59 @@
 import { NextRequest, NextResponse } from "next/server"
 import fs from "fs/promises"
 import path from "path"
+import {
+  composePolylineForJourney,
+  isHighQualityComposition,
+} from "@/lib/journey-composer"
+import { resolveCoordKey } from "@/lib/station-registry"
+
+// Walks the routing-diff payload and deletes `polylineCoords` from
+// any journey the rail-segment composer can reproduce at runtime
+// (Phase 3 of the polylines-from-segments work). Mirrors the runtime
+// preferGooglePolyline hybrid:
+//   - encoded `polyline` (real Google data) → never stripped
+//   - composer high-Q for (originId, destId) → strip
+//   - composer not high-Q → keep as the runtime fallback
+// Mutates in place; returns counts for the response payload.
+function stripComposerCapablePolylines(payload: unknown): {
+  stripped: number
+  kept: number
+} {
+  let stripped = 0
+  let kept = 0
+  if (payload == null || typeof payload !== "object") return { stripped, kept }
+  for (const [destCoord, entry] of Object.entries(payload as Record<string, unknown>)) {
+    if (!entry || typeof entry !== "object") continue
+    const journeys = (entry as { journeys?: Record<string, unknown> }).journeys
+    if (!journeys || typeof journeys !== "object") continue
+    const destId = resolveCoordKey(destCoord) ?? destCoord
+    for (const [originCoord, j] of Object.entries(journeys)) {
+      if (!j || typeof j !== "object") continue
+      const journey = j as {
+        polyline?: string
+        polylineCoords?: [number, number][]
+      }
+      // Encoded Google polyline always wins — leave alone.
+      if (journey.polyline) continue
+      if (
+        Array.isArray(journey.polylineCoords) &&
+        journey.polylineCoords.length > 1
+      ) {
+        const originId = originCoord.includes(",")
+          ? (resolveCoordKey(originCoord) ?? originCoord)
+          : originCoord
+        const composed = composePolylineForJourney(originId, destId)
+        if (composed && isHighQualityComposition(composed)) {
+          delete journey.polylineCoords
+          stripped += 1
+        } else {
+          kept += 1
+        }
+      }
+    }
+  }
+  return { stripped, kept }
+}
 
 // Count entries that have a non-empty `journeys` object. We count the
 // TOTAL number of (coord, origin) journey pairs so primaries like
@@ -84,6 +137,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const stripStats = stripComposerCapablePolylines(payload)
     const body = JSON.stringify(payload)
     await fs.writeFile(filePath, body, "utf8")
     return NextResponse.json({
@@ -91,6 +145,7 @@ export async function POST(req: NextRequest) {
       path: `/routing/${key}.json`,
       bytes: body.length,
       journeyCount: countJourneyEntries(payload),
+      polylineStrip: stripStats,
     })
   } catch (err) {
     return NextResponse.json(
