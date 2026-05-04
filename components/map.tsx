@@ -4272,6 +4272,13 @@ export default function HikeMap() {
       // to clusters.
       const primaryTargetIds = ALL_CLUSTERS[primaryOrigin]?.members ?? [primaryOrigin]
       for (const [pCoord, routes] of Object.entries(originRoutes)) {
+        // Skip cluster-anchor synth entries (CLON, CSTR, …). Their
+        // aggregated `routes.name` is the cluster's displayName ("London",
+        // "Stratford") which leaks into composed legs as "Change at London".
+        // The cluster's individual members (VIC, STP, KGX, …) already appear
+        // as their own customHub entries with real station names, so nothing
+        // is lost. Synth entries stay live for friend-side RTT composition.
+        if (getStation(pCoord)?.isClusterAnchor) continue
         let bestMins: number | undefined
         for (const targetId of primaryTargetIds) {
           const entry = routes?.directReachable?.[targetId]
