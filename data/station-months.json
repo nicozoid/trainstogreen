@@ -121,8 +121,26 @@
       "may"
     ]
   },
+  "CASH": {
+    "name": "Ash",
+    "months": [
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug"
+    ]
+  },
   "CAT": {
     "name": "Caterham",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CBAR": {
+    "name": "Barnes",
     "months": [
       "mar",
       "apr",
@@ -137,6 +155,13 @@
       "jul",
       "aug",
       "sep"
+    ]
+  },
+  "CDOR": {
+    "name": "Dorking",
+    "months": [
+      "apr",
+      "may"
     ]
   },
   "CFO": {
@@ -200,6 +225,29 @@
   },
   "CUX": {
     "name": "Cuxton",
+    "months": [
+      "apr",
+      "may"
+    ]
+  },
+  "CWEL": {
+    "name": "Welwyn",
+    "months": [
+      "mar",
+      "apr",
+      "may"
+    ]
+  },
+  "CWIM": {
+    "name": "Wimbledon",
+    "months": [
+      "sep",
+      "oct",
+      "nov"
+    ]
+  },
+  "CWIN": {
+    "name": "Windsor",
     "months": [
       "apr",
       "may"

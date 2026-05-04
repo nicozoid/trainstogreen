@@ -988,7 +988,15 @@ function buildRamblerNotes(args) {
   // Iterate every cluster — destination-only ones (no origin flags) also
   // need their members' walks aggregated under the anchor, otherwise the
   // cluster modal renders no walks even though members have plenty.
-  for (const [synthCoord, memberCoords] of Object.entries(ALL_CLUSTER_MEMBERS)) {
+  // ALL_CLUSTER_MEMBERS is ID-keyed (post Phase 2e): both the synthetic
+  // anchor key and each member entry are station IDs, not coord strings.
+  // perStation / perStationHiked / perStationKomoot stay coord-keyed
+  // (matches the rest of this script), so we translate IDs → coords
+  // via idToCoord at the boundary. Pre-fix this loop quietly missed
+  // every member lookup and clusters ended up with empty walks.
+  for (const [synthId, memberIds] of Object.entries(ALL_CLUSTER_MEMBERS)) {
+    const synthCoord = idToCoord.get(synthId)
+    if (!synthCoord) continue
     // Dedup by walkId: a walk with both endpoints in the same cluster
     // attaches to two member stations (once as "starting", once as
     // "ending") and would otherwise appear twice in the synthetic's
@@ -997,7 +1005,9 @@ function buildRamblerNotes(args) {
     const seenWalks = new Map()
     let aggregatedHiked = false
     let aggregatedKomoot = false
-    for (const memberCoord of memberCoords) {
+    for (const memberId of memberIds) {
+      const memberCoord = idToCoord.get(memberId)
+      if (!memberCoord) continue
       const memberBucket = perStation.get(memberCoord)
       if (memberBucket) {
         for (const p of memberBucket.ramblerParts) {
@@ -1014,7 +1024,7 @@ function buildRamblerNotes(args) {
     // Always set a perStation entry for the synthetic, even when
     // empty — keeps the cleanup pass below from removing the
     // synthetic's user-authored notes if no member walks exist yet.
-    const synthName = SYNTHETIC_DISPLAY_NAMES[synthCoord] ?? synthCoord
+    const synthName = SYNTHETIC_DISPLAY_NAMES[synthId] ?? synthId
     if (!perStation.has(synthCoord)) {
       perStation.set(synthCoord, { name: synthName, ramblerParts: [] })
     }
