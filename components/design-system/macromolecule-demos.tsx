@@ -113,8 +113,7 @@ export function FilterPanelDemo() {
         adminMode={false}
         bannerVisible={false}
         primaryOrigin={primaryOrigin}
-        // Pinned primary origins — we list a couple of central
-        // London options.
+        // Pinned primary IDs — keeping the demo state minimal.
         pinnedPrimaries={["Charing Cross"]}
         onPrimaryOriginChange={setPrimaryOrigin}
         originDisplayName={(key) => ORIGIN_NAMES[key] ?? key}

@@ -28,9 +28,12 @@ import {
   pickTopRankedIndex,
   type RankableJourney,
 } from "@/lib/clusters"
-import { resolveCoordKey, resolveName as registryResolveName, getCoordKey as registryGetCoordKey, getName as registryGetName } from "@/lib/station-registry"
+import { resolveCoordKey, resolveName as registryResolveName, getCoordKey as registryGetCoordKey, getName as registryGetName, getStation } from "@/lib/station-registry"
 import { getOriginDisplay } from "@/lib/origin-display"
+import { getStationStatus, getClusterStatus, ineligibilityRank, type RttCoverage } from "@/lib/origin-eligibility"
+import rttCoverageData from "@/data/rtt-coverage.json"
 import buriedStationsList from "@/data/buried-stations.json"
+const RTT_COVERAGE = rttCoverageData as RttCoverage
 // Stations that are TECHNICALLY a London NR station (so they match the
 // searchableStations criteria) but produce no useful data when picked as
 // a home station — because they have no RTT-reachable hub in any of our
@@ -342,40 +345,36 @@ const byDisplayName = (a: string, b: string) => {
   if (b === CENTRAL_LONDON_COORD) return 1
   return (getOriginDisplay(a)?.displayName ?? a).localeCompare(getOriginDisplay(b)?.displayName ?? b)
 }
-// Pinned primary coords — always shown at the top of the primary dropdown,
-// always present, never evicted. For now just Central London; the rest of
-// the menu is composed of seeded/user recents below.
+// Pinned primary IDs — always shown at the top of the primary
+// dropdown, never evicted. CLON's "Central London" cluster lives here:
+// it's the canonical default and is what every fresh user sees first.
 const PINNED_PRIMARIES: string[] = [CENTRAL_LONDON_COORD]
-// Pinned friend coords — same idea on the friend side, currently empty.
-// Kept as a const so future "always-visible" picks can be added without
-// touching the dropdown rendering.
+// Pinned friend IDs — same idea on the friend side. Currently empty;
+// reserved for future always-visible picks.
 const PINNED_FRIENDS: string[] = []
-// Seeded recents for the primary dropdown — IDs pre-populated as if
-// the user had recently searched for and picked each one. Merged with
-// the actual user recents at render time (user picks float to the top,
-// defaults below — deduped). Picked for major-interchange status,
+// Seeded primary recents — pre-populated as if the user had already
+// picked each one. Merged at render time below: PINNED first, then
+// any user picks the user has actually made (top), then these defaults
+// (filling out the rest). Picked for major-interchange status,
 // geographic spread, and population catchment.
 const DEFAULT_RECENT_PRIMARIES: string[] = [
-  "CLJ",   // Clapham Junction (CLJ)
-  "WIJ",   // Willesden Junction (WIJ)
-  "NWD",   // Norwood Junction (NWD)
-  "FPK",   // Finsbury Park (FPK)
-  "TOM",    // Tottenham Hale (TOM)
-  "EAL",   // Ealing Broadway (EAL)
-  "FOG",     // Forest Gate (FOG)
-  "ECR",   // East Croydon (ECR)
-  "DFD",    // Dartford (DFD)
-  "ORP",    // Orpington (ORP)
-  "RMD",   // Richmond (RMD)
-  "WFJ",   // Watford Junction (WFJ)
-  "SAC",   // St Albans City (SAC)
-  "RMF",    // Romford (RMF)
-  "HAY",   // Hayes and Harlington (HAY)
-  "ZFD",     // Farringdon (ZFD)
+  "CLJ",   // Clapham Junction
+  "WIJ",   // Willesden Junction
+  "NWD",   // Norwood Junction
+  "FPK",   // Finsbury Park
+  "TOM",   // Tottenham Hale
+  "EAL",   // Ealing Broadway
+  "FOG",   // Forest Gate
+  "ECR",   // East Croydon
+  "DFD",   // Dartford
+  "ORP",   // Orpington
+  "RMD",   // Richmond
+  "WFJ",   // Watford Junction
+  "SAC",   // St Albans City
+  "RMF",   // Romford
+  "HAY",   // Hayes and Harlington
+  "ZFD",   // Farringdon
 ]
-// DEFAULT_RECENT_FRIENDS is declared further below alongside FRIEND_IDS,
-// the friend-side equivalent of HUB_PRIMARY_IDS. Both are scheduled for
-// deletion in Phase 4 of the origin-architecture refactor.
 
 // Cluster-member topology lives in lib/clusters.ts so build scripts and
 // API routes can use it too. Per-station display overrides (e.g. "Charing X"
@@ -497,30 +496,26 @@ const FRIEND_SLUGS: Record<string, string> = (() => {
   return out
 })()
 
-// Seeded recents for the friend dropdown. Order is the user's curated
-// priority — picked for population catchment + geographic spread, with
-// the largest cities first. Each coord is the friend's anchor (the
-// synthetic centroid for cluster friends like Birmingham/Manchester,
-// or the single-station coord for everywhere else). Other friends still
-// exist in FRIEND_ORIGINS for searchability — they're just not seeded.
+// Seeded friend recents — same pattern as DEFAULT_RECENT_PRIMARIES
+// above, picked for population catchment + geographic spread.
 const DEFAULT_RECENT_FRIENDS: string[] = [
   "CBIR",   // Birmingham (BHM·BMO·BSW cluster)
-  "RDG",   // Reading
-  "BTN",   // Brighton
-  "LEI",   // Leicester
+  "RDG",    // Reading
+  "BTN",    // Brighton
+  "LEI",    // Leicester
   "CMAN",   // Manchester (MAN·MCV·MCO cluster)
   "COV",    // Coventry
-  "BRI",   // Bristol (Temple Meads only — not a cluster)
-  "NOT",   // Nottingham
-  "LDS",     // Leeds
-  "SOU",   // Southampton (Central only — not a cluster)
+  "BRI",    // Bristol (Temple Meads only — not a cluster)
+  "NOT",    // Nottingham
+  "LDS",    // Leeds
+  "SOU",    // Southampton (Central only — not a cluster)
   "CCAR",   // Cardiff (CDF·CDQ cluster, centroid anchor)
   "CLIV",   // Liverpool (LIV·LVC·LVJ cluster, centroid anchor)
-  "SHF",   // Sheffield
-  "OXF",   // Oxford
+  "SHF",    // Sheffield
+  "OXF",    // Oxford
   "CPOR",   // Portsmouth (PMS·PMH cluster, centroid anchor)
   "CBG",    // Cambridge
-  "MKC",   // Milton Keynes
+  "MKC",    // Milton Keynes
   "CGLA",   // Glasgow (GLC·GLQ cluster, centroid anchor)
   "DBY",    // Derby
   "CEDI",   // Edinburgh (EDB·HYM cluster, centroid anchor)
@@ -1609,10 +1604,9 @@ export default function HikeMap() {
     "ttg:recentCustomPrimaries",
     [],
   )
-  // Mirror of recentCustomPrimaries on the friend side — coord keys the
-  // user has previously picked as a friend's home. Merged with
-  // DEFAULT_RECENT_FRIENDS at render time so user picks float to the top
-  // of the friend dropdown.
+  // Mirror of recentCustomPrimaries on the friend side — IDs the user
+  // has previously picked as a friend's home. No seeded defaults post
+  // Phase 4 of the origin-architecture refactor.
   const [recentCustomFriends, setRecentCustomFriends] = usePersistedState<string[]>(
     "ttg:recentCustomFriends",
     [],
@@ -2780,6 +2774,16 @@ export default function HikeMap() {
       primaryCoord: string
       displayLabel: string
       hasData: boolean
+      // When hasData is false, the specific reason — "Coming soon" /
+      // "Ghost station" / "TfL station — no data" / etc. Surfaces in
+      // the disabled row's suffix and tooltip; also drives ineligibility
+      // sort rank (Coming soon first, network-only last).
+      ineligibleLabel?: string
+      // Extra search keywords beyond `name` and `displayLabel`. Used
+      // for the CLON-cluster's "Central London" row to ALSO match when
+      // the user types a member name like "Paddington" — typical
+      // London-cluster ergonomics.
+      searchKeywords?: string[]
     }
     // Strict hasData definition: a station counts as "fully usable as a
     // primary" only when both RTT and TfL-hop data are available.
@@ -2820,15 +2824,15 @@ export default function HikeMap() {
       if (!crs) continue
       const [lng, lat] = f.geometry.coordinates
       if (!isLondonBox(lat, lng)) continue
-      const network = f.properties?.["network"] as string | undefined
-      // Include London Overground alongside NR/Elizabeth line — Overground
-      // stations have real CRS codes and plenty serve areas where hikes are
-      // reachable. Harrow & Wealdstone and Willesden Junction, which sit in
-      // our curated recents seed, are Overground-only in OSM and were
-      // invisible to search before this was widened.
-      if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
+      // No network filter — TfL/Underground/DLR stations surface too,
+      // greyed-out with "TfL station — no data" labels via the
+      // eligibility predicate below. Without this, users searching for
+      // a station name shared with an Underground variant (e.g. typing
+      // "Bank") wouldn't see the Underground row at all.
       const coord = `${lng},${lat}`
-      // For real NR stations, the CRS IS the canonical station ID.
+      // For real NR stations the CRS IS the canonical station ID; for
+      // TfL/etc., the synthetic 4-char ID we put in `ref:crs` already
+      // serves the same role.
       const id = crs
       if (excludedPrimariesSet.has(coord)) continue
       // Same-building OSM duplicates (e.g. PDX = Liz-line Paddington,
@@ -2868,6 +2872,17 @@ export default function HikeMap() {
       // East, etc.) inherit their parent's data status — picking St Pancras
       // redirects to the KX primary, which has data.
       const hasData = hasFullData(primaryAnchor) || hasFullData(id)
+      // For ineligible rows, run the registry-backed predicate to find
+      // the SPECIFIC reason ("TfL station — no data" / "Ghost station" /
+      // "Coming soon"). Cluster members inherit their cluster's status
+      // (e.g. an Underground station that's a member of a destination-
+      // only cluster still labels as "TfL station — no data" via its
+      // own status, not the cluster's).
+      let ineligibleLabel: string | undefined
+      if (!hasData) {
+        const status = getStationStatus(getStation(id), RTT_COVERAGE)
+        ineligibleLabel = status.eligible ? "Coming soon" : status.label
+      }
       out.push({
         // SearchableStation.coord stays in the type for back-compat
         // with the filter-panel prop shape, but its value is now a
@@ -2879,6 +2894,7 @@ export default function HikeMap() {
         primaryCoord: primaryAnchor,
         displayLabel,
         hasData,
+        ineligibleLabel,
       })
     }
     // Synthetic anchors (Central London, Stratford, Windsor, Maidstone…)
@@ -2897,10 +2913,20 @@ export default function HikeMap() {
     // Primary-flagged synthetic clusters (CLON, CSTR) — fully usable as
     // primaries because the cluster covers routing via terminal-matrix
     // even though the synthetic anchor itself has no origin-routes entry.
+    //
+    // CLON gets searchKeywords with each member terminus's displayName
+    // so typing "Paddington" or "Charing Cross" surfaces the "Central
+    // London" row in addition to the member's own row. Other clusters
+    // don't get this — only CLON, by user request.
     for (const anchorId of Object.keys(PRIMARY_ORIGIN_CLUSTER)) {
       seenAnchors.add(anchorId)
       const display = getOriginDisplay(anchorId)
       const label = display?.menuName ?? display?.canonicalName ?? anchorId
+      const searchKeywords = anchorId === "CLON"
+        ? (PRIMARY_ORIGIN_CLUSTER[anchorId] ?? [])
+            .map((m) => getOriginDisplay(m)?.displayName)
+            .filter((n): n is string => !!n)
+        : undefined
       out.push({
         coord: anchorId,
         name: label,           // searchable via "central london" / "stratford"
@@ -2908,10 +2934,18 @@ export default function HikeMap() {
         primaryCoord: anchorId,
         displayLabel: label,
         hasData: true,
+        searchKeywords,
       })
     }
     for (const [anchorId, def] of Object.entries(ALL_CLUSTERS)) {
       if (seenAnchors.has(anchorId)) continue
+      // Cluster-level eligibility — eligible if any member is. The label
+      // (when ineligible) reflects the most-hopeful member status.
+      const status = getClusterStatus(
+        def.members,
+        (id) => getStation(id),
+        RTT_COVERAGE,
+      )
       out.push({
         coord: anchorId,
         name: def.displayName, // searchable via "windsor" / "maidstone"
@@ -2919,9 +2953,11 @@ export default function HikeMap() {
         primaryCoord: anchorId,
         displayLabel: def.displayName,
         // Destination-only clusters can't act as primaries yet — render
-        // disabled so the user knows the cluster exists but isn't
-        // pickable as a home station.
+        // disabled with the predicate's specific reason ("Coming soon"
+        // typically; could be "Ghost station" or a network label if every
+        // member is ineligible for those reasons).
         hasData: false,
+        ineligibleLabel: status.eligible ? "Coming soon" : status.label,
       })
     }
     return out
@@ -2974,6 +3010,16 @@ export default function HikeMap() {
       primaryCoord: string
       displayLabel: string
       hasData: boolean
+      // When hasData is false, the specific reason — "Coming soon" /
+      // "Ghost station" / "TfL station — no data" / etc. Surfaces in
+      // the disabled row's suffix and tooltip; also drives ineligibility
+      // sort rank (Coming soon first, network-only last).
+      ineligibleLabel?: string
+      // Extra search keywords beyond `name` and `displayLabel`. Used
+      // for the CLON-cluster's "Central London" row to ALSO match when
+      // the user types a member name like "Paddington" — typical
+      // London-cluster ergonomics.
+      searchKeywords?: string[]
     }
     // Anchors that have friend-side journey data — the picker uses this
     // to render hasData=true rows as enabled (vs "Coming soon"). Friend
@@ -2996,8 +3042,11 @@ export default function HikeMap() {
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
       if (!crs) continue
-      const network = f.properties?.["network"] as string | undefined
-      if (!network || !/National Rail|Elizabeth line|London Overground/.test(network)) continue
+      // No network filter — TfL/Underground/DLR stations surface too,
+      // greyed-out with "TfL station — no data" labels via the predicate
+      // below. Keeps friend-search consistent with primary-search and
+      // lets users see Underground duplicates of NR stations rather than
+      // wondering why a typed name doesn't match anything.
       const [lng, lat] = f.geometry.coordinates
       const coord = `${lng},${lat}`
       const stationName = f.properties.name as string
@@ -3047,6 +3096,17 @@ export default function HikeMap() {
         const county = rawCounty?.replace(/ City$/, "")
         if (county) displayLabel = `${displayLabel} (${county})`
       }
+      // For ineligible rows, use the registry-backed predicate to find
+      // the SPECIFIC reason (TfL/Ghost/Coming soon). Friend hasData uses
+      // FRIEND_ANCHORS_WITH_DATA (a curated list) — until the eligibility
+      // unification phase lands, a station can be predicate-eligible but
+      // still friend-ineligible (no journey file yet). Default-label
+      // "Coming soon" handles that gap.
+      let ineligibleLabel: string | undefined
+      if (!hasData) {
+        const status = getStationStatus(getStation(crs), RTT_COVERAGE)
+        ineligibleLabel = status.eligible ? "Coming soon" : status.label
+      }
       out.push({
         // SearchableStation.coord stays in the type for back-compat
         // with the filter-panel prop shape, but its value is a
@@ -3057,6 +3117,7 @@ export default function HikeMap() {
         primaryCoord: anchorId,
         displayLabel,
         hasData,
+        ineligibleLabel,
       })
     }
     // Synthetic anchors (Birmingham, Manchester, Edinburgh, Central
@@ -3081,6 +3142,24 @@ export default function HikeMap() {
       seenSyntheticAnchors.add(anchorId)
       const display = getOriginDisplay(anchorId)
       const label = display?.menuName ?? display?.canonicalName ?? anchorId
+      // CLON-only: also match when the user types any member terminus
+      // name ("Paddington", "Charing Cross", …). Surfaces "Central London"
+      // alongside the member's own row — special-case this cluster only.
+      const searchKeywords = anchorId === "CLON"
+        ? (PRIMARY_ORIGIN_CLUSTER[anchorId] ?? [])
+            .map((m) => getOriginDisplay(m)?.displayName)
+            .filter((n): n is string => !!n)
+        : undefined
+      // Ineligible cluster rows label themselves via getClusterStatus.
+      let ineligibleLabel: string | undefined
+      if (!hasData) {
+        const status = getClusterStatus(
+          ALL_CLUSTERS[anchorId]?.members ?? [],
+          (id) => getStation(id),
+          RTT_COVERAGE,
+        )
+        ineligibleLabel = status.eligible ? "Coming soon" : status.label
+      }
       out.push({
         coord: anchorId,
         name: label,
@@ -3088,6 +3167,8 @@ export default function HikeMap() {
         primaryCoord: anchorId,
         displayLabel: label,
         hasData,
+        ineligibleLabel,
+        searchKeywords,
       })
     }
     // Friend-flagged synthetic clusters first — they have friend journey
@@ -3097,7 +3178,7 @@ export default function HikeMap() {
     }
     // Primary-flagged synthetic clusters next (Central London, Stratford)
     // — usable as friends in search, but no friend journey file yet, so
-    // hasData=false renders them as "Coming soon" disabled rows.
+    // hasData=false; the ineligibleLabel comes from getClusterStatus.
     for (const anchorId of Object.keys(PRIMARY_ORIGIN_CLUSTER)) {
       addSyntheticEntry(anchorId, false)
     }
@@ -3115,6 +3196,11 @@ export default function HikeMap() {
       if (def.isPrimaryOrigin || def.isFriendOrigin) continue
       if (def.members.some((m) => friendAnchors.has(m))) continue
       seenSyntheticAnchors.add(coord)
+      const status = getClusterStatus(
+        def.members,
+        (id) => getStation(id),
+        RTT_COVERAGE,
+      )
       out.push({
         coord,
         name: def.displayName,
@@ -3122,6 +3208,7 @@ export default function HikeMap() {
         primaryCoord: coord,
         displayLabel: def.displayName,
         hasData: false,
+        ineligibleLabel: status.eligible ? "Coming soon" : status.label,
       })
     }
     return out
@@ -9080,8 +9167,8 @@ export default function HikeMap() {
         adminMode={devExcludeActive}
         bannerVisible={bannerVisible}
         primaryOrigin={primaryOrigin}
-        // Pinned primary coords — always rendered at the top of the
-        // dropdown, never evicted. Currently just Central London.
+        // Pinned primary IDs — always rendered at the top of the
+        // dropdown, never evicted. Currently just CLON (Central London).
         pinnedPrimaries={PINNED_PRIMARIES}
         onPrimaryOriginChange={setPrimaryOrigin}
         // The filter-panel labels both roles (primary AND friend) with
@@ -9091,9 +9178,9 @@ export default function HikeMap() {
         originMobileDisplayName={(key) => getOriginDisplay(key)?.mobileDisplayName}
         originMenuName={(key) => getOriginDisplay(key)?.menuName ?? key}
         searchableStations={searchableStations}
-        // Merge user picks (prepended naturally by selectCustomPrimary)
-        // with the curated defaults — picking a default just floats it
-        // to the top, the others stay visible.
+        // User picks (prepended via selectCustomPrimary) merged with
+        // the curated defaults — picking a default just floats it to
+        // the top, the rest stay visible.
         recentPrimaries={[
           ...recentCustomPrimaries,
           ...DEFAULT_RECENT_PRIMARIES.filter((c) => !recentCustomPrimaries.includes(c)),
@@ -9101,8 +9188,7 @@ export default function HikeMap() {
         onCustomPrimarySelect={selectCustomPrimary}
         coordToName={coordToName}
         friendOrigin={friendOrigin}
-        // Pinned friend coords — currently empty; reserved for future
-        // always-visible picks.
+        // Pinned friend IDs — currently empty; reserved for future.
         pinnedFriends={PINNED_FRIENDS}
         // Same merge pattern as the primary side.
         recentFriends={[
