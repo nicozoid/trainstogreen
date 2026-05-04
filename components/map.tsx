@@ -327,29 +327,6 @@ const HUB_PRIMARY_IDS: ReadonlySet<string> = new Set([
   "MOG", "LST", "CST", "FST", "BFR", "LBG",
 ])
 
-// For non-primary clusters with multiple eligible members (CMAN /
-// CBIR / CGLA / CCAR / CEDI / CLIV / CPOR), the user expects "pick
-// Manchester" to mean THE Manchester station, not whichever member
-// happens to come first in the OSM iteration order. This map
-// defines the canonical "main" member for each — picked from the
-// cluster's busiest hub. The primary-search builder uses it as a
-// sort tiebreaker so dedupe keeps the right row, and the matching
-// stations.json entries get a displayName override (BHM → "Birmingham"
-// etc.) so the picker trigger reads the cluster name after selection.
-//
-// True cluster-as-primary routing (where primaryOrigin = CMAN routes
-// from any member) is Phase 5b. Until then, this gives the user the
-// "Manchester is one place" UX even though the underlying primary is
-// the member station.
-const CLUSTER_MAIN_MEMBER: Record<string, string> = {
-  CMAN: "MAN",   // Manchester Piccadilly
-  CBIR: "BHM",   // Birmingham New Street
-  CGLA: "GLC",   // Glasgow Central
-  CCAR: "CDF",   // Cardiff Central
-  CEDI: "EDB",   // Edinburgh Waverley
-  CLIV: "LIV",   // Liverpool Lime Street
-  CPOR: "PMS",   // Portsmouth & Southsea
-}
 
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
 // panel's grouped-rendering API still works; each inner array renders as one
@@ -488,11 +465,6 @@ const FRIEND_IDS: readonly string[] = [
   "NOT", "NRW", "OXF", "PBO", "PLY", "PRE", "RDG", "SHF", "SOT", "SOU",
   "SWA", "WVH", "YRK",
 ] as const
-
-// Set of friend IDs that have journey-file data (every entry above). Used
-// by the friend search picker to render hasData=true rows as enabled vs
-// "Coming soon" disabled rows.
-const FRIEND_ANCHORS_WITH_DATA: ReadonlySet<string> = new Set(FRIEND_IDS)
 
 // ID → journey-file slug for every friend. Slugs match the filenames under
 // public/journeys/ that scripts/build-friend-journeys-from-rtt.mjs writes.
@@ -1941,22 +1913,16 @@ export default function HikeMap() {
     // avoids a flicker where the spinner briefly says "Fetching
     // St Pancras train journeys" before the coord gets redirected to
     // Kings Cross.
-    // Cluster-anchor input: keep as-is (user clicked the synthetic
-    // anchor row directly).
-    // Cluster member input: redirect to the cluster anchor ONLY when
-    // the cluster is primary-flagged (CLON, CSTR) — those have routing
-    // of their own via terminal-matrix. Non-primary clusters (CMAN /
-    // CBIR / CEXE / etc.) don't have RTT routing as cluster anchors,
-    // so the member's own ID is the correct primary — picking EXD
-    // (Exeter) routes from EXD via via-direct-hub composition rather
-    // than CEXE which has no origin-routes entry and would yield zero
-    // reachable destinations.
-    const resolved = (() => {
-      if (getOriginDisplay(coord)?.isCluster) return coord
-      const cluster = clusterMemberToPrimary[coord]
-      if (cluster && ALL_CLUSTERS[cluster]?.isPrimaryOrigin) return cluster
-      return coord
-    })()
+    // Cluster-anchor input: keep as-is. Cluster member input: redirect
+    // to the cluster anchor regardless of which cluster — Phase 5b.i's
+    // cluster-aware originRoutes (lib/origin-routes.ts) builds a
+    // synthetic entry for every cluster anchor by aggregating the
+    // fastest member journey per destination, so picking BHM lands on
+    // CBIR with full routing rather than the Phase 5a-era workaround
+    // that kept primary at the member.
+    const resolved = getOriginDisplay(coord)?.isCluster
+      ? coord
+      : (clusterMemberToPrimary[coord] ?? coord)
     setPendingPrimaryCoord(resolved)
     // Clear any stale pendingFriendCoord so the notification pill
     // reads the NEW primary rather than a previously-set friend.
@@ -2122,6 +2088,67 @@ export default function HikeMap() {
   useEffect(() => {
     if (friendOrigin) ensureOriginLoaded(friendOrigin)
   }, [friendOrigin, ensureOriginLoaded])
+  // Phase 5b.ii — friend RTT compose. When the active friend has no
+  // pre-built journey file (no slug in ORIGIN_SLUGS), compute friend
+  // journey times from origin-routes data and stamp them onto
+  // baseStations.features as journeys[friendOrigin]. Direct routes +
+  // 1-change via-hub composition. Only durationMinutes / changes are
+  // populated (no polyline, no leg detail) — modal degrades gracefully.
+  // Scoped to friend only — running this for primary would confuse the
+  // primary routing pipeline, which expects journeys[primaryOrigin] to
+  // be a rich Google Routes journey.
+  const rttFriendComposedRef = useRef<Set<string>>(new Set())
+  useEffect(() => {
+    if (!friendOrigin) return
+    if (ORIGIN_SLUGS[friendOrigin]) return                  // journey file path will handle it
+    if (rttFriendComposedRef.current.has(friendOrigin)) return // already composed once
+    const directReachable = originRoutes[friendOrigin]?.directReachable
+    if (!directReachable) return
+    const out: Record<string, JourneyInfo> = {}
+    for (const [destId, entry] of Object.entries(directReachable)) {
+      if (entry?.minMinutes == null) continue
+      out[destId] = { durationMinutes: entry.minMinutes, changes: 0 } as unknown as JourneyInfo
+    }
+    // 1-change via-hub composition.
+    const HUB_INTERCHANGE_MIN = 5
+    for (const [hubCoord, hubRoutes] of Object.entries(originRoutes)) {
+      if (hubCoord === friendOrigin) continue
+      const hubToFriend = hubRoutes.directReachable?.[friendOrigin]
+      if (!hubToFriend?.minMinutes) continue
+      const friendToHub = hubToFriend.minMinutes // assume RTT times symmetric
+      const dests = hubRoutes.directReachable
+      if (!dests) continue
+      for (const [destId, hubToDest] of Object.entries(dests)) {
+        if (destId === friendOrigin) continue
+        if (hubToDest?.minMinutes == null) continue
+        const total = friendToHub + HUB_INTERCHANGE_MIN + hubToDest.minMinutes
+        const existing = out[destId]
+        if (existing == null || (existing.durationMinutes ?? Infinity) > total) {
+          out[destId] = { durationMinutes: total, changes: 1 } as unknown as JourneyInfo
+        }
+      }
+    }
+    rttFriendComposedRef.current.add(friendOrigin)
+    setBaseStations((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        features: prev.features.map((f) => {
+          const id = f.properties["ref:crs"] as string | undefined
+          const entry = id ? out[id] : undefined
+          if (!entry) return f
+          const existing = (f.properties as Record<string, unknown>).journeys as Record<string, unknown> | undefined
+          return {
+            ...f,
+            properties: {
+              ...f.properties,
+              journeys: { ...(existing ?? {}), [friendOrigin]: entry },
+            } as StationFeature["properties"],
+          }
+        }),
+      }
+    })
+  }, [friendOrigin])
   // Same for the home primary — switching to Farringdon / Kings
   // Cross / Stratford eager-loads that origin's file so the live
   // compute path has the Routes journeys it expects.
@@ -2813,7 +2840,6 @@ export default function HikeMap() {
       hasData: boolean
       ineligibleLabel?: string
       searchKeywords?: string[]
-      isPreferredMember?: boolean
     }
     // Strict hasData definition: a station counts as "fully usable as a
     // primary" only when both RTT and TfL-hop data are available.
@@ -2914,12 +2940,6 @@ export default function HikeMap() {
       const ineligibleLabel = hasData
         ? undefined
         : (idStatus.eligible ? "Coming soon" : idStatus.label)
-      // Cluster-main-member preference: when this row is a cluster member,
-      // mark it as preferred only if it's the cluster's CLUSTER_MAIN_MEMBER
-      // entry (or the cluster has no entry — fall back to whichever
-      // member iterates first). Non-cluster rows are trivially preferred.
-      const mainMember = primaryAnchor !== id ? CLUSTER_MAIN_MEMBER[primaryAnchor] : undefined
-      const isPreferredMember = primaryAnchor === id || mainMember === undefined || mainMember === id
       out.push({
         // SearchableStation.coord stays in the type for back-compat
         // with the filter-panel prop shape, but its value is now a
@@ -2932,7 +2952,6 @@ export default function HikeMap() {
         displayLabel,
         hasData,
         ineligibleLabel,
-        isPreferredMember,
       })
     }
     // Synthetic anchors (Central London, Stratford, Windsor, Maidstone…)
@@ -3050,14 +3069,16 @@ export default function HikeMap() {
       hasData: boolean
       ineligibleLabel?: string
       searchKeywords?: string[]
-      isPreferredMember?: boolean
     }
-    // Anchors that have friend-side journey data — the picker uses this
-    // to render hasData=true rows as enabled (vs "Coming soon"). Friend
-    // journey files live under public/journeys/<slug>.json and the slug
-    // map is ORIGIN_SLUGS (defined inside this component). Anything in
-    // ORIGIN_SLUGS has a journey file and counts as friend-eligible.
-    const friendAnchors = FRIEND_ANCHORS_WITH_DATA
+    // Phase 5b.ii: friend eligibility is unified with primary eligibility.
+    // A station/cluster is friend-eligible iff it has routing data — either
+    // a raw RTT entry or a cluster-aggregated synthetic entry from
+    // lib/origin-routes.ts. The Phase 5b.ii ensureOriginLoaded path computes
+    // friend journey times on the fly for non-curated friends, so any
+    // RTT-eligible station can be picked. Pre-built journey files
+    // (ORIGIN_SLUGS) still get used preferentially when present.
+    const isFriendEligible = (id: string): boolean =>
+      originRoutes[id] != null || ORIGIN_SLUGS[id] != null
     // Synthetic primary clusters (Central London, Stratford) collapse
     // member rows to their anchor for the displayLabel even though they
     // don't have friend journey files yet — hasData stays false so the
@@ -3106,12 +3127,12 @@ export default function HikeMap() {
       if (buildingDuplicates.has(crs)) continue
       const clusterAnchor = friendClusterMemberToPrimary[crs]
       const isClonMember = clusterAnchor === "CLON"
-      if (clusterAnchor && !isClonMember && !friendAnchors.has(crs)) continue
-      const anchorId = (clusterAnchor && !isClonMember && friendAnchors.has(clusterAnchor))
+      if (clusterAnchor && !isClonMember && !isFriendEligible(crs)) continue
+      const anchorId = (clusterAnchor && !isClonMember && isFriendEligible(clusterAnchor))
         ? clusterAnchor
         : crs
       const anchorMenuName = syntheticAnchorMenuName(anchorId)
-      const hasData = friendAnchors.has(anchorId)
+      const hasData = isFriendEligible(anchorId)
       let displayLabel = anchorMenuName ?? stationName
       // Disambiguate name collisions (Charing Cross London vs Glasgow,
       // Waterloo London vs Merseyside, etc.) by appending the county.
@@ -3207,11 +3228,13 @@ export default function HikeMap() {
     for (const anchorId of Object.keys(FRIEND_ORIGIN_CLUSTER)) {
       addSyntheticEntry(anchorId, true)
     }
-    // Primary-flagged synthetic clusters next (Central London, Stratford)
-    // — usable as friends in search, but no friend journey file yet, so
-    // hasData=false; the ineligibleLabel comes from getClusterStatus.
+    // Primary-flagged synthetic clusters next (Central London, Stratford).
+    // Phase 5b.ii unified eligibility means these route from members via
+    // the aggregated originRoutes entry (lib/origin-routes.ts), so they're
+    // friend-eligible just like every other cluster — hasData reflects
+    // that.
     for (const anchorId of Object.keys(PRIMARY_ORIGIN_CLUSTER)) {
-      addSyntheticEntry(anchorId, false)
+      addSyntheticEntry(anchorId, isFriendEligible(anchorId))
     }
     // Destination-only clusters (Windsor, Maidstone, Folkestone,
     // Canterbury) aren't flagged as origins, but still need to be
@@ -3225,7 +3248,7 @@ export default function HikeMap() {
     for (const [coord, def] of Object.entries(ALL_CLUSTERS)) {
       if (seenSyntheticAnchors.has(coord)) continue
       if (def.isPrimaryOrigin || def.isFriendOrigin) continue
-      if (def.members.some((m) => friendAnchors.has(m))) continue
+      if (def.members.some((m) => isFriendEligible(m))) continue
       seenSyntheticAnchors.add(coord)
       const status = getClusterStatus(
         def.members,
@@ -4305,10 +4328,23 @@ export default function HikeMap() {
     type CustomHub = { pCoord: string; pToCustomMins: number; routes: typeof originRoutes[string] }
     const customHubs: CustomHub[] = []
     if (isCustomPrimary) {
+      // For cluster primaries (CMAN / CBIR / CEXE / etc.) the cluster
+      // anchor isn't itself a destination CRS in any station's
+      // directReachable, so we look up against every member instead.
+      // Pick the fastest member-direct-reach as the hub→primary time.
+      // Phase 5a handled this for non-cluster primaries; 5b.i extends
+      // to clusters.
+      const primaryTargetIds = ALL_CLUSTERS[primaryOrigin]?.members ?? [primaryOrigin]
       for (const [pCoord, routes] of Object.entries(originRoutes)) {
-        const entry = routes?.directReachable?.[primaryOrigin]
-        if (entry?.minMinutes != null) {
-          customHubs.push({ pCoord, pToCustomMins: entry.minMinutes, routes })
+        let bestMins: number | undefined
+        for (const targetId of primaryTargetIds) {
+          const entry = routes?.directReachable?.[targetId]
+          if (entry?.minMinutes != null && (bestMins == null || entry.minMinutes < bestMins)) {
+            bestMins = entry.minMinutes
+          }
+        }
+        if (bestMins != null) {
+          customHubs.push({ pCoord, pToCustomMins: bestMins, routes })
         }
       }
     }
