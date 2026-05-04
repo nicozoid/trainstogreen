@@ -46082,61 +46082,37 @@
         "lunchStops": [
           {
             "name": "Queens Head",
-            "location": "Sandridge"
+            "location": "Sandridge",
+            "rating": "poor",
+            "busy": "quiet"
           },
           {
             "name": "Green Man",
-            "location": "Sandridge"
+            "location": "Sandridge",
+            "notes": "very popular; presumably high quality!"
           },
           {
             "name": "Rose & Crown",
-            "location": "Sandridge"
+            "location": "Sandridge",
+            "busy": "quiet"
           },
           {
             "name": "Heartwood Tearooms",
-            "location": "Sandridge"
+            "location": "Sandridge",
+            "notes": "very popular; presumably high quality!",
+            "busy": "busy"
           }
         ],
-        "terrain": "Commons, golf course, new native woodland, wildflower meadows, country estate drive, parkland, historic city streets",
+        "terrain": "Mostly fields and country lanes. Some beautiful new bluebell woods, stunning historic city streeets, commons, golf courses, parkland",
         "sights": [
           {
             "name": "Heartwood Forest"
           },
           {
-            "name": "St Leonard's Church"
-          },
-          {
             "name": "Childwickbury Country Estate"
           },
           {
-            "name": "St Mary's Church"
-          },
-          {
-            "name": "Childwickbury Manor House"
-          },
-          {
-            "name": "Gorehambury"
-          },
-          {
-            "name": "Verulamium Museum"
-          },
-          {
-            "name": "St Michael's Church"
-          },
-          {
             "name": "St Albans Cathedral"
-          },
-          {
-            "name": "Abbey Gatehouse"
-          },
-          {
-            "name": "Ye Olde Fighting Cocks"
-          },
-          {
-            "name": "Roman Wall"
-          },
-          {
-            "name": "St Albans Museum"
           }
         ],
         "miscellany": "Can be muddy",
@@ -46157,7 +46133,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "adapted"
         },
-        "updatedAt": "2026-05-03T13:05:42.092Z"
+        "updatedAt": "2026-05-04T17:26:33.081Z"
       }
     ]
   },
