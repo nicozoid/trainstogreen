@@ -327,6 +327,30 @@ const HUB_PRIMARY_IDS: ReadonlySet<string> = new Set([
   "MOG", "LST", "CST", "FST", "BFR", "LBG",
 ])
 
+// For non-primary clusters with multiple eligible members (CMAN /
+// CBIR / CGLA / CCAR / CEDI / CLIV / CPOR), the user expects "pick
+// Manchester" to mean THE Manchester station, not whichever member
+// happens to come first in the OSM iteration order. This map
+// defines the canonical "main" member for each — picked from the
+// cluster's busiest hub. The primary-search builder uses it as a
+// sort tiebreaker so dedupe keeps the right row, and the matching
+// stations.json entries get a displayName override (BHM → "Birmingham"
+// etc.) so the picker trigger reads the cluster name after selection.
+//
+// True cluster-as-primary routing (where primaryOrigin = CMAN routes
+// from any member) is Phase 5b. Until then, this gives the user the
+// "Manchester is one place" UX even though the underlying primary is
+// the member station.
+const CLUSTER_MAIN_MEMBER: Record<string, string> = {
+  CMAN: "MAN",   // Manchester Piccadilly
+  CBIR: "BHM",   // Birmingham New Street
+  CGLA: "GLC",   // Glasgow Central
+  CCAR: "CDF",   // Cardiff Central
+  CEDI: "EDB",   // Edinburgh Waverley
+  CLIV: "LIV",   // Liverpool Lime Street
+  CPOR: "PMS",   // Portsmouth & Southsea
+}
+
 // Group layout for the filter-panel dropdown. string[][] is kept so filter-
 // panel's grouped-rendering API still works; each inner array renders as one
 // alphabetically-sorted block, with a horizontal rule between groups.
@@ -1917,9 +1941,22 @@ export default function HikeMap() {
     // avoids a flicker where the spinner briefly says "Fetching
     // St Pancras train journeys" before the coord gets redirected to
     // Kings Cross.
-    const resolved = getOriginDisplay(coord)?.isCluster
-      ? coord
-      : (clusterMemberToPrimary[coord] ?? coord)
+    // Cluster-anchor input: keep as-is (user clicked the synthetic
+    // anchor row directly).
+    // Cluster member input: redirect to the cluster anchor ONLY when
+    // the cluster is primary-flagged (CLON, CSTR) — those have routing
+    // of their own via terminal-matrix. Non-primary clusters (CMAN /
+    // CBIR / CEXE / etc.) don't have RTT routing as cluster anchors,
+    // so the member's own ID is the correct primary — picking EXD
+    // (Exeter) routes from EXD via via-direct-hub composition rather
+    // than CEXE which has no origin-routes entry and would yield zero
+    // reachable destinations.
+    const resolved = (() => {
+      if (getOriginDisplay(coord)?.isCluster) return coord
+      const cluster = clusterMemberToPrimary[coord]
+      if (cluster && ALL_CLUSTERS[cluster]?.isPrimaryOrigin) return cluster
+      return coord
+    })()
     setPendingPrimaryCoord(resolved)
     // Clear any stale pendingFriendCoord so the notification pill
     // reads the NEW primary rather than a previously-set friend.
@@ -2774,16 +2811,9 @@ export default function HikeMap() {
       primaryCoord: string
       displayLabel: string
       hasData: boolean
-      // When hasData is false, the specific reason — "Coming soon" /
-      // "Ghost station" / "TfL station — no data" / etc. Surfaces in
-      // the disabled row's suffix and tooltip; also drives ineligibility
-      // sort rank (Coming soon first, network-only last).
       ineligibleLabel?: string
-      // Extra search keywords beyond `name` and `displayLabel`. Used
-      // for the CLON-cluster's "Central London" row to ALSO match when
-      // the user types a member name like "Paddington" — typical
-      // London-cluster ergonomics.
       searchKeywords?: string[]
+      isPreferredMember?: boolean
     }
     // Strict hasData definition: a station counts as "fully usable as a
     // primary" only when both RTT and TfL-hop data are available.
@@ -2811,19 +2841,14 @@ export default function HikeMap() {
       return tflHopNames.has(entry.name ?? "")
     }
     const out: SearchableStation[] = []
-    // Bounding box for the primary-search dropdown. Wide enough to
-    // include every station we have full RTT + TfL hop data for —
-    // outer-belt commuter origins (Reading, Luton, St Albans, Watford
-    // Junction) and airport rail-heads (Gatwick, Stansted) included.
-    // Outliers defining the bounds: Gatwick (south), Stansted (north),
-    // Reading (west), Shenfield (east).
-    const isLondonBox = (lat: number, lng: number) =>
-      lat > 51.10 && lat < 51.95 && lng > -1.05 && lng < 0.40
+    // No bounding-box filter post Phase 5a — primary search shows
+    // UK-wide stations. Eligibility (RTT-coverage "ready") gates which
+    // ones can be picked; everything else surfaces greyed-out with the
+    // appropriate label ("Coming soon" / "TfL station — no data" / etc.).
     for (const f of baseStations.features) {
       const crs = f.properties?.["ref:crs"] as string | undefined
       if (!crs) continue
       const [lng, lat] = f.geometry.coordinates
-      if (!isLondonBox(lat, lng)) continue
       // No network filter — TfL/Underground/DLR stations surface too,
       // greyed-out with "TfL station — no data" labels via the
       // eligibility predicate below. Without this, users searching for
@@ -2868,21 +2893,33 @@ export default function HikeMap() {
         const county = rawCounty?.replace(/ City$/, "")
         if (county) displayLabel = `${displayLabel} (${county})`
       }
-      // Check primaryAnchor first so cluster members (St Pancras, Waterloo
-      // East, etc.) inherit their parent's data status — picking St Pancras
-      // redirects to the KX primary, which has data.
-      const hasData = hasFullData(primaryAnchor) || hasFullData(id)
-      // For ineligible rows, run the registry-backed predicate to find
-      // the SPECIFIC reason ("TfL station — no data" / "Ghost station" /
-      // "Coming soon"). Cluster members inherit their cluster's status
-      // (e.g. an Underground station that's a member of a destination-
-      // only cluster still labels as "TfL station — no data" via its
-      // own status, not the cluster's).
-      let ineligibleLabel: string | undefined
-      if (!hasData) {
-        const status = getStationStatus(getStation(id), RTT_COVERAGE)
-        ineligibleLabel = status.eligible ? "Coming soon" : status.label
-      }
+      // Eligibility: any station with full V2 RTT data + Saturday
+      // morning service (rtt-coverage.json says "ready"). Phase 5a
+      // dropped the stricter hasFullData check — under unified
+      // eligibility, the existing customHubs composition handles
+      // routing for primaries outside London just like it does for
+      // CLJ-style customs. Pre-5a's TfL-hops requirement excluded
+      // Exeter / Plymouth / Bath / Bristol / etc. from being pickable
+      // even though their RTT data is fine.
+      //
+      // Cluster-member rows inherit their cluster anchor's status when
+      // it's eligible (rare case — most cluster members of friend-
+      // eligible clusters aren't redirected on the primary side, since
+      // CLON members are the exception that stay individually selectable).
+      const idStatus = getStationStatus(getStation(id), RTT_COVERAGE)
+      const anchorStatus = primaryAnchor !== id && ALL_CLUSTERS[primaryAnchor]
+        ? getClusterStatus(ALL_CLUSTERS[primaryAnchor].members, (m) => getStation(m), RTT_COVERAGE)
+        : null
+      const hasData = idStatus.eligible || (anchorStatus?.eligible ?? false)
+      const ineligibleLabel = hasData
+        ? undefined
+        : (idStatus.eligible ? "Coming soon" : idStatus.label)
+      // Cluster-main-member preference: when this row is a cluster member,
+      // mark it as preferred only if it's the cluster's CLUSTER_MAIN_MEMBER
+      // entry (or the cluster has no entry — fall back to whichever
+      // member iterates first). Non-cluster rows are trivially preferred.
+      const mainMember = primaryAnchor !== id ? CLUSTER_MAIN_MEMBER[primaryAnchor] : undefined
+      const isPreferredMember = primaryAnchor === id || mainMember === undefined || mainMember === id
       out.push({
         // SearchableStation.coord stays in the type for back-compat
         // with the filter-panel prop shape, but its value is now a
@@ -2895,6 +2932,7 @@ export default function HikeMap() {
         displayLabel,
         hasData,
         ineligibleLabel,
+        isPreferredMember,
       })
     }
     // Synthetic anchors (Central London, Stratford, Windsor, Maidstone…)
@@ -3010,16 +3048,9 @@ export default function HikeMap() {
       primaryCoord: string
       displayLabel: string
       hasData: boolean
-      // When hasData is false, the specific reason — "Coming soon" /
-      // "Ghost station" / "TfL station — no data" / etc. Surfaces in
-      // the disabled row's suffix and tooltip; also drives ineligibility
-      // sort rank (Coming soon first, network-only last).
       ineligibleLabel?: string
-      // Extra search keywords beyond `name` and `displayLabel`. Used
-      // for the CLON-cluster's "Central London" row to ALSO match when
-      // the user types a member name like "Paddington" — typical
-      // London-cluster ergonomics.
       searchKeywords?: string[]
+      isPreferredMember?: boolean
     }
     // Anchors that have friend-side journey data — the picker uses this
     // to render hasData=true rows as enabled (vs "Coming soon"). Friend

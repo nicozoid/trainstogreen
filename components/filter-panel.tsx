@@ -249,6 +249,11 @@ type FilterPanelProps = {
     // ("Central London") to also match when the user types a member
     // name like "Paddington" — only that cluster gets this treatment.
     searchKeywords?: string[]
+    // For cluster members of non-primary clusters (CMAN / CBIR / etc.)
+    // the preferred ("main") member's row is marked true so the
+    // by-primaryCoord dedupe in matchingStations keeps the right
+    // representative — picking "Birmingham" lands on BHM not BSW.
+    isPreferredMember?: boolean
   }[]
   /** Coord keys of custom primaries the user has previously selected via search. Shown as quick-picks beneath the main origin list in admin mode. */
   recentPrimaries?: string[]
@@ -275,6 +280,7 @@ type FilterPanelProps = {
     hasData: boolean
     ineligibleLabel?: string
     searchKeywords?: string[]
+    isPreferredMember?: boolean
   }[]
   /** Switch the friend origin (without deactivating) */
   onFriendOriginChange: (origin: string) => void
@@ -605,8 +611,14 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         && (n.includes(q) || labelN.includes(q)
           || keywordsN.some((k) => k.includes(q)))
       if (!startsMatch && !containsMatch) continue
-      // tier*2 + (starts ? 0 : 1). Lower = better.
-      const sortKey = tierFor(s) * 2 + (startsMatch ? 0 : 1)
+      // tier*4 + (starts ? 0 : 2) + (preferred-cluster-member ? 0 : 1).
+      // Lower = better. Within the same tier and match-strength,
+      // cluster-main-member rows (BHM for Birmingham, MAN for
+      // Manchester, …) win the by-primaryCoord dedupe so the user
+      // gets the canonical lead station rather than whichever
+      // member iterates first.
+      const preferredBit = s.isPreferredMember === false ? 1 : 0
+      const sortKey = tierFor(s) * 4 + (startsMatch ? 0 : 2) + preferredBit
       candidates.push(Object.assign({}, s, { __sortKey: sortKey }))
       if (candidates.length >= 40) break
     }
@@ -1004,7 +1016,7 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                       searchActive={isPrimarySearchActive}
                       searchQuery={primarySearch}
                       onSearchChange={setPrimarySearch}
-                      searchPlaceholder="Other London stations"
+                      searchPlaceholder="Other stations"
                       originMenuName={originMenuName}
                       coordToName={coordToName}
                       // Pinned/recents row clicks for primary go through
