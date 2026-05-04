@@ -1,6 +1,7 @@
 "use client"
 
 import { IconTrainFilled, IconChevronDown, IconPlus, IconX } from "@tabler/icons-react"
+import OriginPickerContent from "@/components/origin-picker-content"
 import SearchBar from "@/components/search-bar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -796,147 +797,27 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // friendOrigin). Cap matches the primary side (12 ≥sm / 8 <sm) —
   // there's no separate "Remove" row eating a slot anymore.
   function renderFriendDropdownContent() {
-    const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
-    // Cap on recents alone (separate from pinned items above) so the
-    // user always sees 12 picks on sm+, regardless of how many slots
-    // pinning takes up. Mobile subtracts pinned to keep the menu compact.
-    const desktopRoom = 12
-    const mobileRoom = Math.max(0, 8 - pinnedFriends.length)
-    // Helper that renders a single friend row. Branches on whether it's
-    // the active friend: active rows get muted text + an X icon and
-    // remove-on-click; inactive rows are normal selectable picks.
-    const renderRow = (coord: string, idx?: number) => {
-      const menu = originMenuName(coord)
-      const label = menu !== coord ? menu : coordToName[coord] ?? coord
-      const isActive = coord === friendOrigin
-      const hiddenOnMobile = idx != null && mobileRoom != null && idx >= mobileRoom
-      if (isActive) {
-        return (
-          <DropdownMenuItem
-            key={coord}
-            onSelect={() => onDeactivateFriend()}
-            className={cn(
-              // flex items-center keeps the label and the X aligned on
-              // the same baseline; justify-between pushes the X to the
-              // right edge of the row. bg-accent/50 gives the row a
-              // persistent half-opacity tint at rest; hover/focus
-              // switches to the destructive (fire-500) bg + white text
-              // to signal that the action is removal, not selection.
-              // group/friend-row exposes the hover state to the X icon
-              // below so it can scale up.
-              "group/friend-row flex items-center justify-between gap-2 whitespace-normal leading-tight cursor-pointer bg-accent/50 hover:bg-destructive focus:bg-destructive hover:text-white focus:text-white",
-              hiddenOnMobile && "hidden sm:flex",
-            )}
-            aria-label={`Remove ${label} as friend's station`}
-          >
-            <span>{label}</span>
-            {/* Hover-only emphasis: thicker stroke + 10% scale-up so
-                the remove affordance pops once the user is over the row.
-                stroke-[2.5] is one step heavier than the default. */}
-            <IconX
-              size={14}
-              className="shrink-0 transition-transform group-hover/friend-row:scale-110 group-hover/friend-row:stroke-[2.5]"
-            />
-          </DropdownMenuItem>
-        )
-      }
-      return (
-        <DropdownMenuItem
-          key={coord}
-          onSelect={() => onFriendOriginChange(coord)}
-          className={cn(
-            "whitespace-normal leading-tight cursor-pointer",
-            hiddenOnMobile && "hidden sm:flex",
-          )}
-        >
-          {label}
-        </DropdownMenuItem>
-      )
-    }
     return (
-      <>
-        {/* Pinned friends first — always visible, never evicted. */}
-        {pinnedFriends.map((coord) => renderRow(coord))}
-        {/* User recents — capped at 12 (≥sm) / 8 (<sm) total INCLUDING
-            any pinned items above. Items past the mobile slice get
-            `hidden sm:flex` so the small-viewport list stays scannable. */}
-        {dedup.slice(0, desktopRoom).map((coord, idx) => renderRow(coord, idx))}
-        {/* Search input + matches. Same pattern as the primary side —
-            stopPropagation keeps Radix's typeahead from hijacking
-            keystrokes. Universe is currently the merged recents list, so
-            typing the name of a friend buried past the cap reveals it. */}
-        <div className="px-1.5 py-1">
-          <Input
-            type="text"
-            placeholder="Other stations"
-            value={friendSearch}
-            onChange={(e) => setFriendSearch(e.target.value)}
-            onKeyDown={(e) => e.stopPropagation()}
-            className="h-7 text-xs px-2"
-          />
-        </div>
-        {isFriendSearchActive && (
-          matchingFriends.length > 0 ? (
-            matchingFriends.map((s) => {
-              const isActive =
-                s.coord === friendOrigin || s.primaryCoord === friendOrigin
-              if (!s.hasData) {
-                // Disabled 'Coming soon' row — same treatment as the
-                // primary search dropdown. Tooltip on desktop hover;
-                // inline suffix on mobile (where tooltips don't fire).
-                // Use displayLabel (e.g. "Central London") rather than
-                // name (e.g. "St Pancras International") so cluster
-                // members fold under their synthetic anchor in the
-                // disabled state too — matches the available-row
-                // rendering below.
-                return (
-                  <Tooltip key={s.primaryCoord}>
-                    <TooltipTrigger asChild>
-                      <span className="block">
-                        <DropdownMenuItem
-                          disabled
-                          onSelect={(e) => e.preventDefault()}
-                          className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
-                        >
-                          <span>{s.displayLabel}</span>
-                          <span className="text-xs text-muted-foreground/70">
-                            {s.ineligibleLabel ?? "Coming soon"}
-                          </span>
-                        </DropdownMenuItem>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                      {s.ineligibleLabel ?? "Coming soon"}
-                    </TooltipContent>
-                  </Tooltip>
-                )
-              }
-              return (
-                <DropdownMenuItem
-                  key={s.primaryCoord}
-                  onSelect={() => {
-                    // Use the cluster anchor (primaryCoord) — picking a
-                    // member like 'Birmingham Moor Street' should
-                    // activate the Birmingham cluster, not just BMO.
-                    onFriendOriginChange(s.primaryCoord)
-                    setFriendSearch("")
-                  }}
-                  className={cn(
-                    "whitespace-normal leading-tight cursor-pointer",
-                    isActive && "bg-accent/50 focus:bg-accent/50"
-                  )}
-                >
-                  {s.displayLabel}
-                </DropdownMenuItem>
-              )
-            })
-          ) : (
-            <div className="px-2 py-1.5 text-sm text-muted-foreground">
-              No matches
-            </div>
-          )
-        )}
-      </>
+      <OriginPickerContent
+        slot="friend"
+        selectedId={friendOrigin}
+        pinnedIds={pinnedFriends}
+        recentIds={recentFriends}
+        matchingStations={matchingFriends}
+        searchActive={isFriendSearchActive}
+        searchQuery={friendSearch}
+        onSearchChange={setFriendSearch}
+        searchPlaceholder="Other stations"
+        originMenuName={originMenuName}
+        coordToName={coordToName}
+        onSelect={onFriendOriginChange}
+        // Picking a search-result row activates the cluster anchor
+        // (primaryCoord) rather than the individual cluster member —
+        // typing "Birmingham Moor Street" should activate the
+        // Birmingham cluster, not just BMO.
+        onSearchResultSelect={(row) => onFriendOriginChange(row.primaryCoord)}
+        onDeactivate={onDeactivateFriend}
+      />
     )
   }
 
@@ -1107,187 +988,51 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         et al. used to have permanent dropdown slots. They
                         no longer do — they're found via search, and promoted
                         into the recents list when picked. */}
-                    {/* Pinned primary items — always shown, always at
-                        top. CLON (Central London) is the canonical
-                        default and lives here forever. Counted against
-                        the cap below: pinned + recents = 12 (≥sm) / 8 (<sm). */}
-                    {pinnedPrimaries.map((origin) => (
-                      <DropdownMenuItem
-                        key={origin}
-                        onSelect={() => onPrimaryOriginChange(origin)}
-                        // Selected state shown via a muted background tint
-                        // (accent colour at 50% opacity) rather than a
-                        // left-side checkmark, which ate horizontal space
-                        // and made long cluster names harder to read.
-                        className={cn(
-                          "whitespace-normal leading-tight cursor-pointer",
-                          origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
-                        )}
-                      >
-                        {originMenuName(origin)}
-                      </DropdownMenuItem>
-                    ))}
-
-                    {/* Recents — user picks (top) merged with curated
-                        defaults (below). Cap on TOTAL items (pinned +
-                        recents) is 12 (≥sm) / 8 (<sm); items past the
-                        mobile slice get `hidden sm:flex`. */}
-                    {(() => {
-                      const dedup = recentPrimaries.filter((c) => !pinnedPrimaries.includes(c))
-                      const desktopRoom = 12
-                      const mobileRoom = Math.max(0, 8 - pinnedPrimaries.length)
-                      return dedup.slice(0, desktopRoom).map((coord, idx) => {
-                        // Label resolution, in order:
-                        //   1. originMenuName(coord) if coord is a known origin
-                        //      — picks up the rich "Kings Cross, St Pancras,
-                        //      & Euston" label instead of just "Kings Cross".
-                        //   2. coordToName[coord] — the station's own name
-                        //      from stations.json (covers Stratford,
-                        //      Farringdon, Kentish Town, etc.).
-                        //   3. raw coord as last-ditch fallback.
-                        const menu = originMenuName(coord)
-                        const label = menu !== coord
-                          ? menu
-                          : coordToName[coord] ?? coord
-                        return (
-                          <DropdownMenuItem
-                            key={coord}
-                            onSelect={() => onCustomPrimarySelect?.(coord)}
-                            className={cn(
-                              "whitespace-normal leading-tight cursor-pointer",
-                              coord === primaryOrigin && "bg-accent/50 focus:bg-accent/50",
-                              idx >= mobileRoom && "hidden sm:flex",
-                            )}
-                          >
-                            {label}
-                          </DropdownMenuItem>
-                        )
-                      })
-                    })()}
-
-                    {/* Search input + matches. Stations without full
-                        RTT/TfL coverage still appear in matches but render
-                        as disabled rows with a "Coming soon" tooltip — see
-                        the !s.hasData branch below. */}
-                    <>
-                        {/* Search input at the bottom of the dropdown.
-                            stopPropagation on keydown keeps Radix's built-in
-                            typeahead from hijacking our keystrokes. */}
-                        <div className="px-1.5 py-1">
-                          <Input
-                            type="text"
-                            placeholder="Other London stations"
-                            value={primarySearch}
-                            onChange={(e) => setPrimarySearch(e.target.value)}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            // On mobile (< sm), open the dedicated search sheet
-                            // and transfer focus to its input SYNCHRONOUSLY
-                            // within this gesture — that's the only reliable
-                            // way iOS will keep the keyboard up and show the
-                            // blinking caret when the sheet renders.
-                            onFocus={() => {
-                              if (typeof window !== "undefined" &&
-                                  window.matchMedia("(max-width: 639px)").matches) {
-                                mobileSheetInputRef.current?.focus()
-                                setPrimaryDropdownOpen(false)
-                                setMobileSearchOpen(true)
-                              }
-                            }}
-                            className="h-7 text-xs px-2"
-                          />
-                        </div>
-
-                        {/* Search matches — rendered BELOW the input so the
-                            list flows naturally from where the user is typing.
-                            Only appears when the search is active (3+ chars);
-                            empty input keeps the dropdown to recents only.
-                            Rows without data are wrapped in a Tooltip with
-                            "Coming soon" content, rendered disabled, and their
-                            onSelect is a no-op. */}
-                        {isPrimarySearchActive && (
-                          matchingStations.length > 0 ? (
-                            matchingStations.map((s) => {
-                          const isActive =
-                            s.coord === primaryOrigin || s.primaryCoord === primaryOrigin
-                          // Disabled rendering path: DropdownMenuItem's
-                          // `disabled` prop handles keyboard/pointer
-                          // selection blocking and applies data-disabled
-                          // styling; we wrap it in a Tooltip for the
-                          // hover hint. asChild on the trigger keeps
-                          // the DOM flat.
-                          if (!s.hasData) {
-                            return (
-                              <Tooltip key={s.primaryCoord}>
-                                <TooltipTrigger asChild>
-                                  {/* span wrapper because disabled
-                                      DropdownMenuItems don't fire
-                                      pointer events — Radix's Tooltip
-                                      needs something focusable/hoverable
-                                      as the trigger. */}
-                                  <span className="block">
-                                    <DropdownMenuItem
-                                      disabled
-                                      onSelect={(e) => e.preventDefault()}
-                                      className="flex items-baseline gap-2 whitespace-normal leading-tight text-muted-foreground opacity-60 data-[disabled]:pointer-events-auto cursor-not-allowed"
-                                    >
-                                      {/* Use displayLabel (e.g. "Windsor")
-                                          rather than name (e.g. "Windsor and
-                                          Eton Riverside") so cluster members
-                                          fold under the cluster's anchor name
-                                          in disabled rows too — matches the
-                                          friend-side rendering and the
-                                          enabled-row case below. */}
-                                      <span>{s.displayLabel}</span>
-                                      {/* Specific reason from the
-                                          eligibility predicate (e.g.
-                                          "TfL station — no data" /
-                                          "Ghost station") — falls back
-                                          to "Coming soon" when absent. */}
-                                      <span className="text-xs text-muted-foreground/70">
-                                        {s.ineligibleLabel ?? "Coming soon"}
-                                      </span>
-                                    </DropdownMenuItem>
-                                  </span>
-                                </TooltipTrigger>
-                                <TooltipContent side="right">
-                                  {s.ineligibleLabel ?? "Coming soon"}
-                                </TooltipContent>
-                              </Tooltip>
-                            )
-                          }
-                          return (
-                            <DropdownMenuItem
-                              // key uses primaryCoord because dedupe collapses
-                              // multiple cluster members into a single row.
-                              key={s.primaryCoord}
-                              onSelect={() => {
-                                // Pass the station's own coord (not primaryCoord) —
-                                // selectCustomPrimary's clusterMemberToPrimary
-                                // redirect handles the rest, and preserves the
-                                // historical behaviour where a cluster-member
-                                // pick routes to its parent primary.
-                                onCustomPrimarySelect?.(s.coord)
-                                setPrimarySearch("")
-                              }}
-                              className={cn(
-                                "whitespace-normal leading-tight cursor-pointer",
-                                // Highlight the row if EITHER the matched
-                                // station's coord OR its cluster primary is
-                                // currently active.
-                                isActive && "bg-accent/50 focus:bg-accent/50"
-                              )}
-                            >
-                              {s.displayLabel}
-                            </DropdownMenuItem>
-                          )
-                        })
-                          ) : (
-                            <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                              No matches
-                            </div>
-                          )
-                        )}
-                    </>
+                    {/* Picker content — pinned + recents + search input
+                        + search results. Shared with the friend picker
+                        below via OriginPickerContent (Phase 4b extraction).
+                        The mobile-search sheet trigger is primary-only:
+                        on a narrow viewport, focusing the input swaps
+                        the dropdown for a full-screen sheet that has its
+                        own input field (mobileSheetInputRef). */}
+                    <OriginPickerContent
+                      slot="primary"
+                      selectedId={primaryOrigin}
+                      pinnedIds={pinnedPrimaries}
+                      recentIds={recentPrimaries}
+                      matchingStations={matchingStations}
+                      searchActive={isPrimarySearchActive}
+                      searchQuery={primarySearch}
+                      onSearchChange={setPrimarySearch}
+                      searchPlaceholder="Other London stations"
+                      originMenuName={originMenuName}
+                      coordToName={coordToName}
+                      // Pinned/recents row clicks for primary go through
+                      // selectCustomPrimary (handles cluster-member-to-
+                      // anchor redirect) — but pinned items use
+                      // onPrimaryOriginChange directly because they're
+                      // already canonical anchor IDs (CLON). Splitting
+                      // them here would require a third callback; in
+                      // practice both paths converge on the same setter.
+                      onSelect={(id) => onCustomPrimarySelect?.(id) ?? onPrimaryOriginChange(id)}
+                      // Search-result picks pass the station's own coord
+                      // (not primaryCoord) — selectCustomPrimary's
+                      // clusterMemberToPrimary redirect handles the rest.
+                      onSearchResultSelect={(row) => onCustomPrimarySelect?.(row.coord)}
+                      onSearchInputFocus={() => {
+                        // On mobile (< sm), open the dedicated search
+                        // sheet and transfer focus to its input
+                        // SYNCHRONOUSLY within this gesture — the only
+                        // reliable way iOS keeps the keyboard up and shows
+                        // the blinking caret when the sheet renders.
+                        if (typeof window !== "undefined" &&
+                            window.matchMedia("(max-width: 639px)").matches) {
+                          mobileSheetInputRef.current?.focus()
+                          setPrimaryDropdownOpen(false)
+                          setMobileSearchOpen(true)
+                        }
+                      }}
+                    />
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
