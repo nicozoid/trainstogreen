@@ -14,13 +14,13 @@
 import type { StationRecord } from "./station-registry"
 
 export type EligibilityLabel =
-  | "TfL only"        // London Underground / Overground / DLR / Elizabeth standalone
-  | "Metro only"      // Tyne & Wear Metro
-  | "Subway only"     // Glasgow Subway
-  | "NIR only"        // Northern Ireland Railways
-  | "No rail data"    // heritage / unknown (Z-prefix synthetic IDs)
-  | "Ghost station"   // fetched, no Saturday morning service
-  | "Coming soon"     // not yet fetched
+  | "TfL station — no data"        // London Underground / Overground / DLR / Elizabeth standalone
+  | "Metro station — no data"      // Tyne & Wear Metro
+  | "Subway station — no data"     // Glasgow Subway
+  | "NIR station — no data"        // Northern Ireland Railways
+  | "Heritage station — no data"   // heritage / unknown (Z-prefix synthetic IDs)
+  | "Ghost station"                // fetched, no Saturday morning service
+  | "Coming soon"                  // not yet fetched
 
 // Discriminated union — when `eligible` is true the label is omitted, so
 // downstream code can't accidentally render a label for a pickable station.
@@ -42,11 +42,25 @@ function nonNrLabel(syntheticId: string): EligibilityLabel {
     case "O":  // London Overground
     case "D":  // Docklands Light Railway
     case "E":  // Elizabeth line standalone
-      return "TfL only"
-    case "M": return "Metro only"   // Tyne & Wear Metro
-    case "G": return "Subway only"  // Glasgow Subway
-    case "N": return "NIR only"     // Northern Ireland Railways
-    default:  return "No rail data" // Z prefix — heritage / unknown
+      return "TfL station — no data"
+    case "M": return "Metro station — no data"     // Tyne & Wear Metro
+    case "G": return "Subway station — no data"    // Glasgow Subway
+    case "N": return "NIR station — no data"       // Northern Ireland Railways
+    default:  return "Heritage station — no data"  // Z prefix — heritage / unknown
+  }
+}
+
+// Sort rank for ineligible search results. Lower = surfaced first.
+// Eligible rows are rank 0 (handled by the picker upstream); ineligibles
+// get bucketed so the user sees the "most likely to become eligible"
+// items first ("Coming soon" pending RTT fetch) and the network-only
+// fallbacks ("TfL station — no data" etc.) last.
+export function ineligibilityRank(label: EligibilityLabel): number {
+  switch (label) {
+    case "Coming soon":               return 1
+    case "Ghost station":             return 2
+    case "Heritage station — no data": return 3
+    default:                          return 4  // TfL / Metro / Subway / NIR
   }
 }
 
@@ -89,7 +103,8 @@ export function getClusterStatus(
 
   // All members ineligible — pick a representative label by priority.
   // Reasoning: a cluster with a Coming-soon member might become eligible
-  // once that member's RTT data lands; saying "TfL only" would mislead.
+  // once that member's RTT data lands; saying "TfL station — no data"
+  // would mislead.
   const labels = memberStatuses
     .map((s) => (s.eligible ? null : s.label))
     .filter((l): l is EligibilityLabel => l != null)

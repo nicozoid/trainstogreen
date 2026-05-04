@@ -210,8 +210,8 @@ type FilterPanelProps = {
   bannerVisible: boolean
   /** Currently selected primary origin station name */
   primaryOrigin: string
-  /** Pinned primary coords — always rendered at the top of the dropdown,
-   *  always present, never evicted. Counted against the cap. */
+  /** Pinned primary IDs — always rendered at the top of the dropdown,
+   *  always present, never evicted. */
   pinnedPrimaries: string[]
   /** Switch the primary origin */
   onPrimaryOriginChange: (origin: string) => void
@@ -237,8 +237,17 @@ type FilterPanelProps = {
     displayLabel: string
     // hasData: whether the station has full RTT origin-routes data.
     // Rows without data render disabled (greyed out, not selectable)
-    // with a "Coming soon" tooltip on desktop hover.
+    // with their ineligibleLabel as the suffix.
     hasData: boolean
+    // When hasData is false, the specific reason — e.g. "Coming soon"
+    // (NR awaiting RTT fetch), "Ghost station" (fetched but no Sat-am
+    // service), or "TfL station — no data" (Underground/DLR/etc., never
+    // pickable). Falls back to "Coming soon" when undefined.
+    ineligibleLabel?: string
+    // Optional extra search keywords. Used for the CLON cluster row
+    // ("Central London") to also match when the user types a member
+    // name like "Paddington" — only that cluster gets this treatment.
+    searchKeywords?: string[]
   }[]
   /** Coord keys of custom primaries the user has previously selected via search. Shown as quick-picks beneath the main origin list in admin mode. */
   recentPrimaries?: string[]
@@ -248,7 +257,7 @@ type FilterPanelProps = {
   coordToName?: Record<string, string>
   /** Friend origin station name, or null if not active */
   friendOrigin: string | null
-  /** Pinned friend coords — same role as pinnedPrimaries on the friend
+  /** Pinned friend IDs — same role as pinnedPrimaries on the friend
    *  side. Currently empty; reserved for future always-visible picks. */
   pinnedFriends: string[]
   /** Friend recents — user picks (top) merged with curated defaults. */
@@ -263,6 +272,8 @@ type FilterPanelProps = {
     primaryCoord: string
     displayLabel: string
     hasData: boolean
+    ineligibleLabel?: string
+    searchKeywords?: string[]
   }[]
   /** Switch the friend origin (without deactivating) */
   onFriendOriginChange: (origin: string) => void
@@ -553,24 +564,30 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         .replace(/\s+/g, " ")
         .trim()
     const q = normalise(primarySearch)
-    // Split matches into four buckets so the final list is ordered:
-    //   1. hasData + starts-with
-    //   2. hasData + contains
-    //   3. disabled + starts-with
-    //   4. disabled + contains
-    // Available stations always appear above disabled ones regardless
-    // of how relevant the match is — the user's intent is to find a
-    // working home station, so offering a weaker-relevance "Richmond"
-    // above a stronger-relevance "Richmond-upon-Rosedale" (if it had
-    // no data) is correct. Within each bucket we still prefer
-    // starts-with over contains, because that ordering felt natural
-    // before we introduced the data tier.
-    const availStarts: typeof searchableStations = []
-    const availContains: typeof searchableStations = []
-    const disabledStarts: typeof searchableStations = []
-    const disabledContains: typeof searchableStations = []
+    // Sort tier per row — lower = surfaced first:
+    //   0 eligible
+    //   1 Coming soon (NR awaiting fetch — likely to become eligible)
+    //   2 Ghost station
+    //   3 Heritage station — no data
+    //   4 TfL/Metro/Subway/NIR — never NR-eligible
+    // Within a tier, starts-with beats contains.
+    const tierFor = (row: typeof searchableStations[number]) => {
+      if (row.hasData) return 0
+      switch (row.ineligibleLabel) {
+        case "Coming soon": return 1
+        case "Ghost station": return 2
+        case "Heritage station — no data": return 3
+        default: return 4
+      }
+    }
+    type Match = typeof searchableStations[number] & { __sortKey: number }
+    const candidates: Match[] = []
     for (const s of searchableStations) {
       const n = normalise(s.name)
+      const labelN = normalise(s.displayLabel)
+      // searchKeywords is set only for the CLON cluster row — typing
+      // a member name like "Paddington" surfaces "Central London" too.
+      const keywordsN = (s.searchKeywords ?? []).map(normalise)
       // Code prefix match. Real NR stations match on `crs` (e.g.
       // "swl" → Swale). Non-NR stations and cluster anchors don't
       // have a CRS but their canonical station ID lives in `coord`
@@ -580,24 +597,26 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
       // so we don't need to run them through normalise().
       const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
       const idMatch = s.coord.toLowerCase().startsWith(q)
-      const startsMatch = crsMatch || idMatch || n.startsWith(q)
-      const containsMatch = !startsMatch && n.includes(q)
+      const startsMatch = crsMatch || idMatch
+        || n.startsWith(q) || labelN.startsWith(q)
+        || keywordsN.some((k) => k.startsWith(q))
+      const containsMatch = !startsMatch
+        && (n.includes(q) || labelN.includes(q)
+          || keywordsN.some((k) => k.includes(q)))
       if (!startsMatch && !containsMatch) continue
-      const bucket = s.hasData
-        ? (startsMatch ? availStarts : availContains)
-        : (startsMatch ? disabledStarts : disabledContains)
-      bucket.push(s)
-      if (availStarts.length + availContains.length + disabledStarts.length + disabledContains.length >= 40) break
+      // tier*2 + (starts ? 0 : 1). Lower = better.
+      const sortKey = tierFor(s) * 2 + (startsMatch ? 0 : 1)
+      candidates.push(Object.assign({}, s, { __sortKey: sortKey }))
+      if (candidates.length >= 40) break
     }
+    candidates.sort((a, b) => a.__sortKey - b.__sortKey)
     // Dedupe by primaryCoord — multiple cluster members matching the
     // same search (e.g. "waterloo" matching both "Waterloo" AND
     // "Waterloo East") collapse to a single row showing the cluster
-    // name. Happens AFTER the name-match step so that searching by
-    // an individual cluster-member name (e.g. "euston") still finds
-    // the right cluster, but only ONE entry shows up.
+    // name. Happens AFTER the sort so the highest-rank row wins.
     const seen = new Set<string>()
     const deduped: typeof searchableStations = []
-    for (const s of [...availStarts, ...availContains, ...disabledStarts, ...disabledContains]) {
+    for (const s of candidates) {
       if (seen.has(s.primaryCoord)) continue
       seen.add(s.primaryCoord)
       deduped.push(s)
@@ -620,34 +639,47 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
         .replace(/\s+/g, " ")
         .trim()
     const q = normalise(friendSearch)
-    type Match = (typeof searchableFriendStations)[number]
-    const availStarts: Match[] = []
-    const availContains: Match[] = []
-    const disabledStarts: Match[] = []
-    const disabledContains: Match[] = []
+    // Same tiering as the primary side — see matchingStations above for
+    // the full rationale.
+    const tierFor = (row: (typeof searchableFriendStations)[number]) => {
+      if (row.hasData) return 0
+      switch (row.ineligibleLabel) {
+        case "Coming soon": return 1
+        case "Ghost station": return 2
+        case "Heritage station — no data": return 3
+        default: return 4
+      }
+    }
+    type Match = (typeof searchableFriendStations)[number] & { __sortKey: number }
+    const candidates: Match[] = []
     for (const s of searchableFriendStations) {
       const n = normalise(s.name)
       const labelN = normalise(s.displayLabel)
+      // CLON-only: also match member terminus names.
+      const keywordsN = (s.searchKeywords ?? []).map(normalise)
       // Same code-match rule as the primary search: crs for real NR
       // stations, canonical station ID (in `coord`) for non-NR /
       // cluster anchors. Lets the user type "cbir" → Birmingham,
       // "clon" → Central London friend, etc.
       const crsMatch = !!s.crs && s.crs.toLowerCase().startsWith(q)
       const idMatch = s.coord.toLowerCase().startsWith(q)
-      const startsMatch = crsMatch || idMatch || n.startsWith(q) || labelN.startsWith(q)
-      const containsMatch = !startsMatch && (n.includes(q) || labelN.includes(q))
+      const startsMatch = crsMatch || idMatch
+        || n.startsWith(q) || labelN.startsWith(q)
+        || keywordsN.some((k) => k.startsWith(q))
+      const containsMatch = !startsMatch
+        && (n.includes(q) || labelN.includes(q)
+          || keywordsN.some((k) => k.includes(q)))
       if (!startsMatch && !containsMatch) continue
-      const bucket = s.hasData
-        ? (startsMatch ? availStarts : availContains)
-        : (startsMatch ? disabledStarts : disabledContains)
-      bucket.push(s)
-      if (availStarts.length + availContains.length + disabledStarts.length + disabledContains.length >= 40) break
+      const sortKey = tierFor(s) * 2 + (startsMatch ? 0 : 1)
+      candidates.push(Object.assign({}, s, { __sortKey: sortKey }))
+      if (candidates.length >= 40) break
     }
+    candidates.sort((a, b) => a.__sortKey - b.__sortKey)
     // Dedupe by primaryCoord — Birmingham + cluster members all collapse
     // to one 'Birmingham' row.
     const seen = new Set<string>()
     const deduped: Match[] = []
-    for (const s of [...availStarts, ...availContains, ...disabledStarts, ...disabledContains]) {
+    for (const s of candidates) {
       if (seen.has(s.primaryCoord)) continue
       seen.add(s.primaryCoord)
       deduped.push(s)
@@ -765,10 +797,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
   // there's no separate "Remove" row eating a slot anymore.
   function renderFriendDropdownContent() {
     const dedup = recentFriends.filter((c) => !pinnedFriends.includes(c))
-    // Cap is on recents alone (separate from pinned items above) so the
+    // Cap on recents alone (separate from pinned items above) so the
     // user always sees 12 picks on sm+, regardless of how many slots
-    // pinning takes up. Mobile still subtracts pinned to keep the menu
-    // compact on small screens.
+    // pinning takes up. Mobile subtracts pinned to keep the menu compact.
     const desktopRoom = 12
     const mobileRoom = Math.max(0, 8 - pinnedFriends.length)
     // Helper that renders a single friend row. Branches on whether it's
@@ -824,11 +855,10 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
     }
     return (
       <>
-        {/* Pinned friends — always shown, always near the top. Currently
-            empty; reserved for future curated picks. */}
+        {/* Pinned friends first — always visible, never evicted. */}
         {pinnedFriends.map((coord) => renderRow(coord))}
-        {/* Recents — capped at 12 (≥sm) / 8 (<sm) total INCLUDING any
-            pinned items above. Items past the mobile slice get
+        {/* User recents — capped at 12 (≥sm) / 8 (<sm) total INCLUDING
+            any pinned items above. Items past the mobile slice get
             `hidden sm:flex` so the small-viewport list stays scannable. */}
         {dedup.slice(0, desktopRoom).map((coord, idx) => renderRow(coord, idx))}
         {/* Search input + matches. Same pattern as the primary side —
@@ -870,13 +900,13 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         >
                           <span>{s.displayLabel}</span>
                           <span className="text-xs text-muted-foreground/70">
-                            Coming soon
+                            {s.ineligibleLabel ?? "Coming soon"}
                           </span>
                         </DropdownMenuItem>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                      Coming soon
+                      {s.ineligibleLabel ?? "Coming soon"}
                     </TooltipContent>
                   </Tooltip>
                 )
@@ -1077,19 +1107,18 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         et al. used to have permanent dropdown slots. They
                         no longer do — they're found via search, and promoted
                         into the recents list when picked. */}
-                    {/* Pinned items (always shown, always at top) — the
-                        first slot is reserved for Central London. Counted
-                        against the cap below: pinned.length + visible
-                        recents = 12 (≥sm) / 8 (<sm). */}
+                    {/* Pinned primary items — always shown, always at
+                        top. CLON (Central London) is the canonical
+                        default and lives here forever. Counted against
+                        the cap below: pinned + recents = 12 (≥sm) / 8 (<sm). */}
                     {pinnedPrimaries.map((origin) => (
                       <DropdownMenuItem
                         key={origin}
                         onSelect={() => onPrimaryOriginChange(origin)}
                         // Selected state shown via a muted background tint
                         // (accent colour at 50% opacity) rather than a
-                        // left-side checkmark, which ate precious horizontal
-                        // space and made long cluster names even harder to
-                        // read on mobile.
+                        // left-side checkmark, which ate horizontal space
+                        // and made long cluster names harder to read.
                         className={cn(
                           "whitespace-normal leading-tight cursor-pointer",
                           origin === primaryOrigin && "bg-accent/50 focus:bg-accent/50"
@@ -1105,11 +1134,6 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                         mobile slice get `hidden sm:flex`. */}
                     {(() => {
                       const dedup = recentPrimaries.filter((c) => !pinnedPrimaries.includes(c))
-                      // Cap is on recents alone (separate from pinned
-                      // items above) so the user always sees 12 picks
-                      // on sm+, regardless of how many slots pinning
-                      // takes up. Mobile still subtracts pinned to
-                      // keep the menu compact on small screens.
                       const desktopRoom = 12
                       const mobileRoom = Math.max(0, 8 - pinnedPrimaries.length)
                       return dedup.slice(0, desktopRoom).map((coord, idx) => {
@@ -1214,19 +1238,19 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                                           friend-side rendering and the
                                           enabled-row case below. */}
                                       <span>{s.displayLabel}</span>
-                                      {/* Inline "Coming soon" suffix —
-                                          smaller + further muted than the
-                                          already-dimmed row text so it reads
-                                          as a secondary status label, not a
-                                          second line of the station name. */}
+                                      {/* Specific reason from the
+                                          eligibility predicate (e.g.
+                                          "TfL station — no data" /
+                                          "Ghost station") — falls back
+                                          to "Coming soon" when absent. */}
                                       <span className="text-xs text-muted-foreground/70">
-                                        Coming soon
+                                        {s.ineligibleLabel ?? "Coming soon"}
                                       </span>
                                     </DropdownMenuItem>
                                   </span>
                                 </TooltipTrigger>
                                 <TooltipContent side="right">
-                                  Coming soon
+                                  {s.ineligibleLabel ?? "Coming soon"}
                                 </TooltipContent>
                               </Tooltip>
                             )
@@ -2010,13 +2034,12 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                           fold under the cluster anchor's name in the mobile
                           disabled state too — matches the desktop path. */}
                       <span>{s.displayLabel}</span>
-                      {/* Same "Coming soon" suffix as the desktop path —
-                          small + further muted than the row text. Mobile
-                          can't show a tooltip on hover, so this inline
-                          label is the only signal for why the row is
-                          disabled. */}
+                      {/* Specific ineligibility reason from the
+                          eligibility predicate. Mobile can't show a
+                          tooltip on hover, so this inline label is the
+                          only signal for why the row is disabled. */}
                       <span className="text-xs text-muted-foreground/70">
-                        Coming soon
+                        {s.ineligibleLabel ?? "Coming soon"}
                       </span>
                     </div>
                   )
