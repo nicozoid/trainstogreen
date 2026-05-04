@@ -13096,8 +13096,8 @@
         "endStation": "TRI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 12.8,
-        "hours": null,
+        "distanceKm": 14.5,
+        "hours": 4.05,
         "lunchStops": [
           {
             "name": "Monument Cafe",
@@ -13119,25 +13119,31 @@
             "name": "Ashridge Estate"
           }
         ],
-        "miscellany": "",
+        "miscellany": "Very hilly and very windy",
         "id": "tritritench",
         "bestSeasons": [
           "apr",
           "may"
         ],
         "source": {
-          "orgSlug": "time-out-country-walks-vol-2",
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
           "pageName": "",
           "pageURL": "",
-          "type": "shorter"
+          "type": "main"
         },
         "suffix": "via Ivinghoe Beacon",
         "relatedSource": {
-          "orgSlug": "saturday-walkers-club",
-          "pageName": "Tring Circular",
-          "pageURL": "https://www.walkingclub.org.uk/walk/tring-circular/",
+          "orgSlug": "time-out-country-walks-vol-2",
+          "pageName": "",
+          "pageURL": "",
           "type": "related"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2925756026",
+        "rating": 2,
+        "uphillMetres": 274.88,
+        "difficulty": "moderate",
+        "name": "Tring Circular via Ivinghoe Beacon",
+        "updatedAt": "2026-05-04T17:20:15.195Z"
       },
       {
         "role": "longer",
@@ -127991,9 +127997,9 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T02:18:38.341Z",
+        "updatedAt": "2026-05-03T23:38:08.169Z",
         "komootUrl": "https://www.komoot.com/tour/2921498612",
-        "rating": 3,
+        "rating": 2,
         "suffix": "via Gothambury House",
         "terrain": "historic city",
         "miscellany": "Much of the walk is through St Albans, but it's a beautiful city so this is no bad thing",
