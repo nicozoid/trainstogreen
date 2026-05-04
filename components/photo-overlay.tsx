@@ -1444,14 +1444,22 @@ export default function StationModal({
                 "Pembrokeshire", "Radnorshire",
               ]
 
-              // Two names "share a root" if one contains the other after
-              // stripping a trailing "shire". Catches "Westmorland and Furness"
-              // ↔ "Westmorland" and "Argyll and Bute" ↔ "Argyllshire".
+              // Two names "share a root" if they're equal or share a
+              // whole-word token (≥4 letters) after stripping a trailing
+              // "shire". Catches "Westmorland and Furness" ↔ "Westmorland"
+              // and "Argyll and Bute" ↔ "Argyllshire", but avoids false
+              // positives where a short historic stem appears mid-word in
+              // an unrelated modern name (e.g. "che" from Cheshire inside
+              // "manchester" of "Greater Manchester").
               const namesShareRoot = (a: string, b: string) => {
                 const strip = (s: string) => s.replace(/shire$/i, "").toLowerCase().trim()
                 const sa = strip(a)
                 const sb = strip(b)
-                return sa === sb || sa.includes(sb) || sb.includes(sa)
+                if (sa === sb) return true
+                const tokens = (s: string) => s.split(/\s+/).filter((t) => t.length >= 4)
+                const ta = tokens(sa)
+                const tb = tokens(sb)
+                return ta.some((t) => tb.includes(t))
               }
               const modernSharesRootWithAnyHistoric = (modern: string) =>
                 ENGLISH_WELSH_HISTORIC_COUNTIES.some((h) => namesShareRoot(modern, h))
