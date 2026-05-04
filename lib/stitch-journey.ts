@@ -357,6 +357,10 @@ export function stitchJourney({
     if (sourceKey === newOriginKey) continue
     const source = journeys[sourceKey]
     if (!source) continue
+    // Skip RTT-derived journey entries that lack a `legs` array — those
+    // come from the friend-RTT-compose path and aren't stitch-eligible
+    // (no leg detail to extract a mainline from).
+    if (!Array.isArray(source.legs)) continue
     // stitchFromSource takes the terminal NAME because the matrix is name-keyed.
     const stitched = stitchFromSource(source, newOrigin.name, matrix, terminals)
     if (!stitched || stitched.durationMinutes == null) continue
@@ -398,7 +402,10 @@ function extractMainline(
   stripped: boolean
 } | null {
   const legs = source.legs
-  if (legs.length === 0) return null
+  // Defensive: RTT-derived journey entries may lack a `legs` array. The
+  // stitcher's main loop already filters those out, but extractMainline
+  // is a public entry point and should be safe on its own.
+  if (!Array.isArray(legs) || legs.length === 0) return null
 
   // Is the first leg a *transfer* that ends at a known terminal, with the
   // second leg departing from that same terminal (or a KX-cluster equivalent)?
