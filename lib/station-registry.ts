@@ -53,6 +53,13 @@ export type StationRecord = {
   mobileDisplayName?: string
   menuName?: string
   overlayName?: string
+  // When this origin has a pre-built journey file under public/journeys/,
+  // its filename slug. Picked up by ensureOriginLoaded in components/map.tsx
+  // to fetch the file lazily on first selection. Cluster anchors and their
+  // main member often share the same slug (CMAN cluster ↔ MAN station both
+  // → "manchester") because the journey file's polylines + leg detail apply
+  // equally to whichever was picked.
+  journeySlug?: string
 }
 
 // ── Synthetic ID generation ──────────────────────────────────────────
@@ -192,6 +199,7 @@ type RawCluster = {
   menuName?: string
   mobileDisplayName?: string
   overlayName?: string
+  journeySlug?: string
 }
 type RawClusters = { CLUSTERS: Record<string, RawCluster> }
 
@@ -267,6 +275,8 @@ function normalizeName(name: string): string {
       typeof props.menuName === "string" ? props.menuName : undefined
     const overlayName =
       typeof props.overlayName === "string" ? props.overlayName : undefined
+    const journeySlug =
+      typeof props.journeySlug === "string" ? props.journeySlug : undefined
 
     const record: StationRecord = {
       id,
@@ -280,6 +290,7 @@ function normalizeName(name: string): string {
       mobileDisplayName,
       menuName,
       overlayName,
+      journeySlug,
     }
     // First-write-wins on ID collisions — the audit script catches
     // these before they cause silent overwrites in production data.
@@ -338,6 +349,7 @@ function normalizeName(name: string): string {
       mobileDisplayName: def.mobileDisplayName,
       menuName: def.menuName,
       overlayName: def.overlayName,
+      journeySlug: def.journeySlug,
     }
     if (!idToStation.has(id)) idToStation.set(id, record)
     coordKeyToId.set(coordKey, id)

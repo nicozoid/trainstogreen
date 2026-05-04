@@ -443,54 +443,12 @@ function getActivePrimaryCoords(primaryOrigin: string): string[] {
 // hexagon uses, so there's no dead code to clean up on either side.
 const PRIMARY_CLICK_BEHAVIOUR: "modal" | "banner" = "modal"
 
-// FRIEND_IDS — the historical "secondary station for meet-a-friend filtering"
-// keyset. 7 cluster anchors (Birmingham, Manchester, Edinburgh, Glasgow,
-// Cardiff, Liverpool, Portsmouth — declared in lib/clusters-data.json with
-// `isFriendOrigin: true`) plus ~33 single-station UK cities. Each ID has a
-// pre-built journey file under public/journeys/<slug>.json (slug = kebab of
-// the registry's canonical name).
-//
-// Listed explicitly so FRIEND_SLUGS can derive its slug list without depending
-// on the deleted FRIEND_ORIGINS constant. Phase 4 of the origin-architecture
-// refactor will rationalise: friend eligibility becomes data-driven (any
-// station/cluster with sufficient RTT data is friend-pickable), at which
-// point this list and DEFAULT_RECENT_FRIENDS below can both be deleted.
-const FRIEND_IDS: readonly string[] = [
-  // Cluster anchors (synthetic centroids) — flagged isFriendOrigin in
-  // lib/clusters-data.json.
-  "CBIR", "CMAN", "CEDI", "CGLA", "CCAR", "CLIV", "CPOR",
-  // Single-station friends, alphabetic by ID.
-  "ABD", "BRI", "BTH", "BTN", "CAR", "CBG", "COV", "CRE", "DBY", "DON",
-  "EXD", "HUL", "INV", "IPS", "LAN", "LDS", "LEI", "MKC", "NCL", "NMP",
-  "NOT", "NRW", "OXF", "PBO", "PLY", "PRE", "RDG", "SHF", "SOT", "SOU",
-  "SWA", "WVH", "YRK",
-] as const
-
-// ID → journey-file slug for every friend. Slugs match the filenames under
-// public/journeys/ that scripts/build-friend-journeys-from-rtt.mjs writes.
-// Without this mapping, ensureOriginLoaded can't fetch the right file when
-// the user picks Leicester (et al.) as a friend, so the map would appear
-// empty even though the data exists on disk.
-const FRIEND_SLUGS: Record<string, string> = (() => {
-  const out: Record<string, string> = {}
-  // Kebab-case the registry's canonical name to match the on-disk slug —
-  // "Stoke-on-Trent" → "stoke-on-trent", "Milton Keynes" → "milton-keynes".
-  // Cluster anchors get their cluster displayName ("Birmingham" not the
-  // member station name).
-  const kebab = (s: string) =>
-    s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
-  for (const id of FRIEND_IDS) {
-    const display = getOriginDisplay(id)
-    // Use displayName not canonicalName — for the 5 friends with
-    // an OSM-vs-display mismatch (Southampton vs "Southampton Central",
-    // Bath vs "Bath Spa", etc.), the on-disk slug matches the curated
-    // displayName. For everyone else displayName === canonicalName so
-    // either works.
-    const name = display?.displayName
-    if (name) out[id] = kebab(name)
-  }
-  return out
-})()
+// Default friend ID stamped when the user clicks "add a friend" without
+// specifying one — Birmingham (CBIR) historically came first in the friend
+// list so it's the no-thought default. The journey-file slug for every
+// friend now lives on the station registry (`journeySlug` field on
+// StationRecord, sourced from public/stations.json + lib/clusters-data.json).
+const DEFAULT_FRIEND_ID = "CBIR"
 
 // Seeded friend recents — same pattern as DEFAULT_RECENT_PRIMARIES
 // above, picked for population catchment + geographic spread.
@@ -2026,7 +1984,7 @@ export default function HikeMap() {
       // No slug → origin isn't one of the pre-fetched Routes origins,
       // so there's nothing to lazy-load. Routing will fall back to
       // RTT direct-reachable data for this origin.
-      const slug = ORIGIN_SLUGS[originCoord]
+      const slug = getStation(originCoord)?.journeySlug
       if (!slug) return
       const p = (async () => {
         try {
@@ -2089,7 +2047,8 @@ export default function HikeMap() {
     if (friendOrigin) ensureOriginLoaded(friendOrigin)
   }, [friendOrigin, ensureOriginLoaded])
   // Phase 5b.ii — friend RTT compose. When the active friend has no
-  // pre-built journey file (no slug in ORIGIN_SLUGS), compute friend
+  // pre-built journey file (no `journeySlug` on the registry entry),
+  // compute friend
   // journey times from origin-routes data and stamp them onto
   // baseStations.features as journeys[friendOrigin]. Direct routes +
   // 1-change via-hub composition. Only durationMinutes / changes are
@@ -2100,7 +2059,7 @@ export default function HikeMap() {
   const rttFriendComposedRef = useRef<Set<string>>(new Set())
   useEffect(() => {
     if (!friendOrigin) return
-    if (ORIGIN_SLUGS[friendOrigin]) return                  // journey file path will handle it
+    if (getStation(friendOrigin)?.journeySlug) return       // journey file path will handle it
     if (rttFriendComposedRef.current.has(friendOrigin)) return // already composed once
     const directReachable = originRoutes[friendOrigin]?.directReachable
     if (!directReachable) return
@@ -2469,30 +2428,6 @@ export default function HikeMap() {
   // react-map-gl import at the top of this file.
   const loadedOriginsRef = useRef<Set<string>>(new Set())
   const pendingOriginsRef = useRef<Record<string, Promise<void>>>({})
-  // Coord → filename-slug mapping for the 5 pre-fetched Routes
-  // origins. Any origin not in this map isn't lazy-loadable and
-  // falls through to the RTT-based routing path.
-  const ORIGIN_SLUGS: Record<string, string> = {
-    // Primary-side journey files (same shape as friend files, just
-    // generated for primaries we want fully precomputed).
-    "ZFD": "farringdon",
-    "UKCR": "kings-cross",
-    "SRA": "stratford",
-    "NOT": "nottingham",
-    "BHM": "birmingham",
-    // Cluster-anchor coords for Stratford / Birmingham / Manchester —
-    // ensureOriginLoaded stamps the loaded journeys under whatever
-    // origin coord we pass in, so passing the synthetic coord makes
-    // journeys[syntheticAnchor] resolve directly without any fallback.
-    "CSTR": "stratford",
-    "CBIR": "birmingham",
-    "CMAN": "manchester",
-    // Every other friend in FRIEND_ORIGINS — its anchor coord maps to
-    // the slug derived from its canonicalName. Without this, picking
-    // Leicester (or any of the 35 other tier-2 friends) would leave the
-    // map empty because no journey file ever gets fetched.
-    ...FRIEND_SLUGS,
-  }
   // `mapReady` flips true on the style's `load` event — style + icons
   // are wired, but tiles / markers may not yet be painted. For the
   // welcome-banner "is the map actually visible?" gate we want a
@@ -3075,10 +3010,10 @@ export default function HikeMap() {
     // a raw RTT entry or a cluster-aggregated synthetic entry from
     // lib/origin-routes.ts. The Phase 5b.ii ensureOriginLoaded path computes
     // friend journey times on the fly for non-curated friends, so any
-    // RTT-eligible station can be picked. Pre-built journey files
-    // (ORIGIN_SLUGS) still get used preferentially when present.
+    // RTT-eligible station can be picked. Pre-built journey files (registry's
+    // journeySlug) still get used preferentially when present.
     const isFriendEligible = (id: string): boolean =>
-      originRoutes[id] != null || ORIGIN_SLUGS[id] != null
+      originRoutes[id] != null || getStation(id)?.journeySlug != null
     // Synthetic primary clusters (Central London, Stratford) collapse
     // member rows to their anchor for the displayLabel even though they
     // don't have friend journey files yet — hasData stays false so the
@@ -4103,7 +4038,8 @@ export default function HikeMap() {
     // rather than as a top-level constant — the broader curated-origin
     // concept is gone post Phase 3, but routing's hub distinction is
     // an internal optimisation that doesn't surface in the UI. Future
-    // cleanup may derive this from data/london-terminals.json + ORIGIN_SLUGS.
+    // cleanup may derive this from data/london-terminals.json + the
+    // registry's `journeySlug` field.
     const isCustomPrimary = !HUB_PRIMARY_IDS.has(primaryOrigin)
     // Per-station interchange buffer at the hub the user changes at.
     // interchangeBufferFor() returns the default 3-min for stations not
@@ -9268,7 +9204,7 @@ export default function HikeMap() {
         onFriendOriginChange={setFriendOriginWithTransition}
         friendMaxMinutes={friendMaxMinutes}
         onFriendMaxMinutesChange={setFriendMaxMinutes}
-        onActivateFriend={() => setFriendOriginWithTransition(FRIEND_IDS[0])}
+        onActivateFriend={() => setFriendOriginWithTransition(DEFAULT_FRIEND_ID)}
         onDeactivateFriend={() => setFriendOriginWithTransition(null)}
         primaryDirectOnly={primaryDirectOnly}
         // Toggling "Direct" clears "Indirect" (and vice-versa below) — they're
