@@ -95,6 +95,33 @@ export type WalkPayload = {
   }
   previousWalkDates?: string[]
   pageTags?: string[]
+  /** Read-only entry-level "hidden metadata" + admin/build flags.
+   *  Surfaced in a collapsed Metadata section on the walk card.
+   *  Only present when the source has at least one populated field. */
+  meta?: WalkMeta
+}
+
+export type WalkMeta = {
+  tagline?: string
+  notes?: string
+  regions?: string[]
+  categories?: string[]
+  features?: string[]
+  places?: {
+    villages?: string[]
+    landmarks?: string[]
+    historic?: string[]
+    modern?: string[]
+    nature?: string[]
+    paths?: string[]
+  }
+  extracted?: boolean
+  onMap?: boolean
+  issues?: boolean
+  outsideMainlandBritain?: boolean
+  resolved?: boolean
+  resolution?: string
+  sourceIndex?: number
 }
 
 // The editable subset — the card's draft state only tracks these. Any
@@ -1811,6 +1838,11 @@ function WalkCard({
             />
           </CollapsibleSection>
 
+          {/* Metadata — read-only entry-level fields from the source
+              scraper plus admin/build flags. Renders nothing when the
+              source has no metadata to show, keeping cards compact. */}
+          <MetadataSection walkId={walk.id} meta={walk.meta} />
+
           {/* Save / delete footer — delete sits on the right and is
               gated behind a ConfirmDialog so a misclick doesn't
               nuke a walk. Delete only renders when the parent wired
@@ -1943,6 +1975,92 @@ function PreviousWalkDatesEditor({
         </button>
       </div>
     </div>
+  )
+}
+
+// Read-only "hidden metadata" section. Surfaces the entry-level
+// fields the source scraper populated (tagline, regions, places, …)
+// plus the admin/build flags (extracted, onMap, issues, …) that
+// otherwise never reach the editor. Display-only — no inputs, no
+// draft state. Section starts collapsed; renders nothing when the
+// payload's `meta` is absent or empty (the API skips emitting `meta`
+// in that case, so the truthiness check covers both).
+function MetadataSection({ walkId, meta }: { walkId: string; meta?: WalkMeta }) {
+  if (!meta) return null
+
+  // Reuse the same chip styles the card header uses so visual weight
+  // matches. The metadata section is read-only context, so neutral
+  // muted chips are right — destructive variants would imply action.
+  const chipBase = "shrink-0 rounded px-1 py-0.5 font-mono text-[10px]"
+  const neutralChip = `${chipBase} bg-muted text-muted-foreground`
+
+  // Field-row helper: label on the left, content on the right.
+  // mb-2 between rows mirrors the spacing used inside other sections.
+  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div className="mb-2 last:mb-0">
+      <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </div>
+      <div className="text-xs text-foreground/90">{children}</div>
+    </div>
+  )
+
+  // Render a string[] as a chip row. Used for the simple list-shaped
+  // metadata fields (regions, categories, features) and the per-bucket
+  // places lists. flex-wrap keeps long lists tidy without overflowing.
+  const ChipRow = ({ items }: { items: string[] }) => (
+    <div className="flex flex-wrap gap-1">
+      {items.map((v) => (
+        <span key={v} className={neutralChip}>{v}</span>
+      ))}
+    </div>
+  )
+
+  // Places get sub-grouped — each populated bucket renders as its own
+  // "label: chips" line. Skip buckets the API filtered out (it omits
+  // empty arrays so the section can mirror that omission here).
+  const placeBuckets = meta.places
+    ? (Object.entries(meta.places) as [keyof NonNullable<WalkMeta["places"]>, string[] | undefined][])
+        .filter(([, list]) => list && list.length > 0)
+    : []
+
+  // Collect the build flags that are explicitly true (or, for
+  // resolution, populated). Render as one chip row at the bottom so
+  // they don't drown out the substantive entry-level fields above.
+  const flagChips: string[] = []
+  if (meta.extracted) flagChips.push("extracted")
+  if (meta.onMap) flagChips.push("onMap")
+  if (meta.issues) flagChips.push("issues")
+  if (meta.outsideMainlandBritain) flagChips.push("outsideMainlandBritain")
+  if (meta.resolved) flagChips.push("resolved")
+
+  return (
+    <CollapsibleSection title="Metadata" bodyId={`metadata-section-${walkId}`}>
+      {meta.tagline && <Row label="Tagline">{meta.tagline}</Row>}
+      {meta.notes && <Row label="Notes">{meta.notes}</Row>}
+      {meta.regions && <Row label="Regions"><ChipRow items={meta.regions} /></Row>}
+      {meta.categories && <Row label="Categories"><ChipRow items={meta.categories} /></Row>}
+      {meta.features && <Row label="Features"><ChipRow items={meta.features} /></Row>}
+      {placeBuckets.length > 0 && (
+        <Row label="Places">
+          <div className="flex flex-col gap-1.5">
+            {placeBuckets.map(([bucket, list]) => (
+              <div key={bucket} className="flex flex-wrap items-center gap-1">
+                <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {bucket}
+                </span>
+                <ChipRow items={list as string[]} />
+              </div>
+            ))}
+          </div>
+        </Row>
+      )}
+      {meta.resolution && <Row label="Resolution">{meta.resolution}</Row>}
+      {typeof meta.sourceIndex === "number" && (
+        <Row label="Source index">{meta.sourceIndex}</Row>
+      )}
+      {flagChips.length > 0 && <Row label="Flags"><ChipRow items={flagChips} /></Row>}
+    </CollapsibleSection>
   )
 }
 

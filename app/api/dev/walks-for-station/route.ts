@@ -107,6 +107,37 @@ type WalkPayload = {
   // Page-level tags (e.g. "TO1:24" for Time Out Book 1, Walk 24).
   // Read-only in the editor — derived from source URL matching.
   pageTags: string[]
+  // Read-only "hidden metadata" surfaced for the editor's Metadata
+  // section. Mostly entry-level fields populated by the source
+  // scraper/extractor (tagline, regions, places…) and admin/build
+  // flags (extracted, onMap, issues, resolved, …). Field-presence is
+  // intentional: only populated values are emitted, so the UI can
+  // render the section only when there's something to show.
+  meta?: WalkMeta
+}
+
+type WalkMeta = {
+  tagline?: string
+  notes?: string
+  regions?: string[]
+  categories?: string[]
+  features?: string[]
+  places?: {
+    villages?: string[]
+    landmarks?: string[]
+    historic?: string[]
+    modern?: string[]
+    nature?: string[]
+    paths?: string[]
+  }
+  // Admin/build flags
+  extracted?: boolean
+  onMap?: boolean
+  issues?: boolean
+  outsideMainlandBritain?: boolean
+  resolved?: boolean
+  resolution?: string
+  sourceIndex?: number
 }
 
 // Walk ordering — automatic, not admin-overridable.
@@ -141,6 +172,52 @@ const RATING_TIERS: Record<string, number> = {
   "1": 3,
   unrated: 4,
 }
+// Pull all the entry-level "hidden metadata" off a walks-file entry
+// into the read-only meta blob. Only emits fields that have a
+// non-empty value so the editor can render the Metadata section
+// conditionally (and skip rendering empty rows inside it).
+function buildMeta(entry: any): WalkMeta | undefined {
+  const meta: WalkMeta = {}
+  const strIfSet = (v: unknown) => (typeof v === "string" && v.trim() ? v : undefined)
+  const arrIfSet = (v: unknown) =>
+    Array.isArray(v) && v.length > 0 ? v.filter((x) => typeof x === "string" && x.trim()) : undefined
+
+  const tagline = strIfSet(entry.tagline)
+  if (tagline) meta.tagline = tagline
+  const notes = strIfSet(entry.notes)
+  if (notes) meta.notes = notes
+
+  const regions = arrIfSet(entry.regions)
+  if (regions?.length) meta.regions = regions
+  const categories = arrIfSet(entry.categories)
+  if (categories?.length) meta.categories = categories
+  const features = arrIfSet(entry.features)
+  if (features?.length) meta.features = features
+
+  if (entry.places && typeof entry.places === "object") {
+    const p: NonNullable<WalkMeta["places"]> = {}
+    for (const k of ["villages", "landmarks", "historic", "modern", "nature", "paths"] as const) {
+      const list = arrIfSet(entry.places[k])
+      if (list?.length) p[k] = list
+    }
+    if (Object.keys(p).length > 0) meta.places = p
+  }
+
+  // Build flags — only emit when explicitly true (or, for the optional
+  // flags, when present). Defaults look the same as "field absent" in
+  // the JSON, so omitting them keeps the UI clean.
+  if (entry.extracted === true) meta.extracted = true
+  if (entry.onMap === true) meta.onMap = true
+  if (entry.issues === true) meta.issues = true
+  if (entry.outsideMainlandBritain === true) meta.outsideMainlandBritain = true
+  if (entry.resolved === true) meta.resolved = true
+  const resolution = strIfSet(entry.resolution)
+  if (resolution) meta.resolution = resolution
+  if (typeof entry.sourceIndex === "number") meta.sourceIndex = entry.sourceIndex
+
+  return Object.keys(meta).length > 0 ? meta : undefined
+}
+
 function ratingTier(rating: number | null | undefined): number {
   if (rating == null) return RATING_TIERS.unrated
   const key = String(Math.round(rating))
@@ -210,6 +287,7 @@ export async function GET(req: NextRequest) {
           relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
           previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
           pageTags: Array.isArray(entry.tags) ? entry.tags : [],
+          meta: buildMeta(entry),
         })
       }
     }
