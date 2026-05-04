@@ -70,7 +70,8 @@
         "BSW"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "birmingham"
     },
     "CBLA": {
       "displayName": "Blackpool",
@@ -172,7 +173,8 @@
         "CDB"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "cardiff"
     },
     "CCAT": {
       "displayName": "Catford",
@@ -313,7 +315,8 @@
         "HYM"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "edinburgh"
     },
     "CEPS": {
       "displayName": "Epsom",
@@ -424,7 +427,8 @@
         "GLQ"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "glasgow"
     },
     "CGRE": {
       "displayName": "Greenock",
@@ -555,7 +559,8 @@
         "LVJ"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "liverpool"
     },
     "CLON": {
       "displayName": "London",
@@ -656,7 +661,8 @@
         "MCO"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "manchester"
     },
     "CMAT": {
       "displayName": "Matlock",
@@ -799,7 +805,8 @@
         "PMH"
       ],
       "isPrimaryOrigin": false,
-      "isFriendOrigin": true
+      "isFriendOrigin": true,
+      "journeySlug": "portsmouth"
     },
     "CPOS": {
       "displayName": "Pollokshields",
@@ -971,7 +978,8 @@
         "SFA"
       ],
       "isPrimaryOrigin": true,
-      "isFriendOrigin": false
+      "isFriendOrigin": false,
+      "journeySlug": "stratford"
     },
     "CSYD": {
       "displayName": "Sydenham",
