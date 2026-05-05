@@ -46127,18 +46127,6 @@
             "types": [
               "pub"
             ]
-          },
-          {
-            "name": "Lower Red Lion",
-            "location": "St Albans",
-            "url": "http://www.thelowerredlion.co.uk/",
-            "lat": 51.751725,
-            "lng": -0.346339,
-            "kmIntoRoute": 12.6,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "pub"
-            ]
           }
         ],
         "terrain": "Mostly fields and country lanes. Some beautiful new bluebell woods, stunning historic city streeets, commons, golf courses, parkland",
@@ -46197,7 +46185,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "adapted"
         },
-        "updatedAt": "2026-05-05T12:22:21.253Z",
+        "updatedAt": "2026-05-05T13:08:11.607Z",
         "destinationStops": [
           {
             "name": "Mad Squirrel Tap",
