@@ -109,6 +109,25 @@ function rank(f) {
 // freed up and/or we'll have a better strategy.
 const DEMOTED = new Set([
   "ZLW", // Whitechapel — Liz/Overground hub, 198 services, 26+ skips per attempt
+  // Added 2026-05-05 after the 208-station Greater London tail run hit
+  // sustained per-minute storms on these. WIM/BDS/TCR each blew the limit
+  // hard enough to bleed 429s into the next 1-2 stations. LSX/PDX/SPL are
+  // the National Rail / tube building-duplicate CRSes for Liverpool Street
+  // / Paddington / St Pancras — same cap-storm shape. VXH is Vauxhall,
+  // major SWR hub. All gave up after 3 retries × 60s.
+  "WIM", // Wimbledon — 96 services, exceeded 30/min on date 2 sample
+  "BDS", // Bond Street — 102 services, Liz line core
+  "LSX", // Liverpool Street (sub-station building duplicate)
+  "PDX", // Paddington (sub-station building duplicate)
+  "SPL", // St Pancras (sub-station building duplicate)
+  "TCR", // Tottenham Court Road — Liz line core, storm bled into UPH/UWL
+  "VXH", // Vauxhall — major SWR hub
+])
+
+// Promoted CRSes — stations of personal/strategic interest that jump to the
+// very front of the queue regardless of region or rank. Mirror of DEMOTED.
+const PROMOTED = new Set([
+  "KTN", // Kentish Town — user station of interest
 ])
 
 // Filter to mainland Britain NR stations not already fetched / queued.
@@ -128,10 +147,14 @@ const candidates = stations.features.filter((f) => {
   return true
 })
 
-// Pull demoted stations out of the main grouping — they get appended at the
-// very end of the queue regardless of region, after Unclassified.
+// Pull promoted + demoted stations out of the main grouping. Promoted go
+// at the absolute top of the queue; demoted at the absolute bottom.
+const promotedFeatures = candidates.filter((f) => PROMOTED.has(f.properties?.["ref:crs"]))
 const demotedFeatures = candidates.filter((f) => DEMOTED.has(f.properties?.["ref:crs"]))
-const mainCandidates = candidates.filter((f) => !DEMOTED.has(f.properties?.["ref:crs"]))
+const mainCandidates = candidates.filter((f) => {
+  const crs = f.properties?.["ref:crs"]
+  return !PROMOTED.has(crs) && !DEMOTED.has(crs)
+})
 
 // Group by region, then sort within region by rank then by name.
 const byRegion = new Map()
@@ -162,7 +185,17 @@ lines.push(`# Workflow: smart runner reads this file, skips lines starting with 
 lines.push(`# and any CRS already in origin-routes.json, fetches each remaining`)
 lines.push(`# CRS until weekly cap hits. Re-running picks up where it left off.`)
 lines.push("")
-let cumulative = 0
+// Promoted stations go absolutely first — fetched before any region.
+if (promotedFeatures.length) {
+  lines.push(`# === Promoted (${promotedFeatures.length}) — user-prioritised, fetch first ===`)
+  for (const f of promotedFeatures) {
+    const crs = f.properties["ref:crs"]
+    const name = f.properties.name
+    lines.push(`${crs}  # ${name}`)
+  }
+  lines.push("")
+}
+let cumulative = promotedFeatures.length
 for (const [region] of regions) {
   const list = byRegion.get(region)
   if (!list || list.length === 0) continue
