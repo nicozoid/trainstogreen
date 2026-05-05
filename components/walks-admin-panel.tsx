@@ -44,6 +44,7 @@ import {
   bucketForRefreshment,
 } from "@/lib/spot-types"
 import { nearestCounty } from "@/lib/nearest-county"
+import type { Place } from "@/lib/places"
 import { MAIN_TERRAINS } from "@/lib/main-terrains"
 import {
   DropdownMenu,
@@ -1284,6 +1285,141 @@ function WalkCard({
   //   - section moves: any sight that ends up with refreshment types
   //     after the cross-check is migrated to Lunch / Destination using
   //     the same 20%-of-route rule the editor's manual auto-move uses
+  // Phase 3 registry-match pass — runs between the Komoot scrape's
+  // row-merge and the Places URL lookup. For every NEW row (placeId
+  // empty, finite coords) we ask /api/dev/places/match for a likely
+  // same-venue registry entry: same normalised name + within 200 m.
+  // Matched rows get their full venue payload replaced from the
+  // registry, with kmIntoRoute (per-walk) preserved from the Komoot
+  // waypoint. Unmatched rows pass through unchanged for the Places
+  // pass to handle. Returns the updated arrays + a count for the
+  // status notice.
+  async function runRegistryMatchPass(snapshot: {
+    sights: SightDraft[]
+    lunchStops: LunchDraft[]
+    destinationStops: LunchDraft[]
+  }): Promise<{
+    sights: SightDraft[]
+    lunchStops: LunchDraft[]
+    destinationStops: LunchDraft[]
+    matchedCount: number
+  }> {
+    type Slot = { kind: "sights" | "lunchStops" | "destinationStops"; index: number }
+    const slots: Slot[] = []
+    type Candidate = { name: string; lat: number; lng: number }
+    const candidates: Candidate[] = []
+
+    // A row is a match candidate when it doesn't already have a
+    // placeId (so freshly added by Pull data — pre-existing rows
+    // with their own placeId are intentionally not re-matched, to
+    // respect the admin's curation).
+    const collect = (kind: Slot["kind"], rows: { placeId: string; name: string; lat: string; lng: string }[]) => {
+      rows.forEach((r, i) => {
+        if (r.placeId) return
+        const name = r.name.trim()
+        if (!name) return
+        const lat = Number(r.lat)
+        const lng = Number(r.lng)
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+        slots.push({ kind, index: i })
+        candidates.push({ name, lat, lng })
+      })
+    }
+    collect("sights", snapshot.sights)
+    collect("lunchStops", snapshot.lunchStops)
+    collect("destinationStops", snapshot.destinationStops)
+
+    if (candidates.length === 0) {
+      return {
+        sights: snapshot.sights,
+        lunchStops: snapshot.lunchStops,
+        destinationStops: snapshot.destinationStops,
+        matchedCount: 0,
+      }
+    }
+
+    type MatchHit = { placeId: string; place: Place }
+    let matches: (MatchHit | null)[]
+    try {
+      const r = await fetch("/api/dev/places/match", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidates }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      matches = (j?.matches ?? []) as typeof matches
+    } catch {
+      // Match endpoint failed — degrade gracefully. Pull data still
+      // works, just without auto-linking. The Places pass downstream
+      // will still mint new entries on save.
+      return {
+        sights: snapshot.sights,
+        lunchStops: snapshot.lunchStops,
+        destinationStops: snapshot.destinationStops,
+        matchedCount: 0,
+      }
+    }
+
+    const nextSights = [...snapshot.sights]
+    const nextLunch = [...snapshot.lunchStops]
+    const nextPubs = [...snapshot.destinationStops]
+    let matchedCount = 0
+
+    slots.forEach((slot, i) => {
+      const hit = matches[i]
+      if (!hit) return
+      matchedCount++
+      const { placeId, place } = hit
+      // Replace venue fields with the registry's curated copy.
+      // kmIntoRoute is per-walk so we keep what Komoot just gave us.
+      const km = slot.kind === "sights"
+        ? nextSights[slot.index].kmIntoRoute
+        : slot.kind === "lunchStops"
+          ? nextLunch[slot.index].kmIntoRoute
+          : nextPubs[slot.index].kmIntoRoute
+      if (slot.kind === "sights") {
+        nextSights[slot.index] = {
+          ...nextSights[slot.index],
+          placeId,
+          name: place.name,
+          location: place.location ?? "",
+          url: place.url ?? "",
+          description: place.description ?? "",
+          lat: typeof place.lat === "number" ? String(place.lat) : "",
+          lng: typeof place.lng === "number" ? String(place.lng) : "",
+          kmIntoRoute: km,
+          businessStatus: place.businessStatus ?? "",
+          types: place.types ?? [],
+        }
+      } else {
+        const target = slot.kind === "lunchStops" ? nextLunch : nextPubs
+        target[slot.index] = {
+          ...target[slot.index],
+          placeId,
+          name: place.name,
+          location: place.location ?? "",
+          url: place.url ?? "",
+          notes: place.notes ?? "",
+          rating: (place.rating ?? "") as LunchRating,
+          busy: (place.busy ?? "") as LunchBusy,
+          lat: typeof place.lat === "number" ? String(place.lat) : "",
+          lng: typeof place.lng === "number" ? String(place.lng) : "",
+          kmIntoRoute: km,
+          businessStatus: place.businessStatus ?? "",
+          types: place.types ?? [],
+        }
+      }
+    })
+
+    return {
+      sights: nextSights,
+      lunchStops: nextLunch,
+      destinationStops: nextPubs,
+      matchedCount,
+    }
+  }
+
   async function runPlacesPass(snapshot: {
     sights: SightDraft[]
     lunchStops: LunchDraft[]
@@ -2169,18 +2305,39 @@ function WalkCard({
                         ]
                       }
                       // Show the freshly-imported rows immediately so
-                      // there's visible progress while Places runs.
+                      // there's visible progress while the registry
+                      // match + Places passes run.
                       setDraft(afterKomoot)
 
-                      // Step 2: Places second-pass against the freshly
-                      // merged rows. Cross-checks Komoot's (often shaky)
+                      // Phase 3: registry-match pass. New rows whose
+                      // name + coords match an existing place (within
+                      // 200 m) get auto-linked to that placeId, with
+                      // their venue fields replaced from the registry.
+                      // Matched rows skip the Places pass below since
+                      // they already have a curated URL.
+                      const matched = await runRegistryMatchPass({
+                        sights: afterKomoot.sights,
+                        lunchStops: afterKomoot.lunchStops,
+                        destinationStops: afterKomoot.destinationStops,
+                      })
+                      if (matched.matchedCount > 0) {
+                        setDraft((d) => ({
+                          ...d,
+                          sights: matched.sights,
+                          lunchStops: matched.lunchStops,
+                          destinationStops: matched.destinationStops,
+                        }))
+                      }
+
+                      // Places second-pass against the post-match
+                      // arrays. Cross-checks Komoot's (often shaky)
                       // type tags against Google's, and migrates any
                       // sight that turns out to be a refreshment into
                       // Lunch or Destination.
                       const placesResult = await runPlacesPass({
-                        sights: afterKomoot.sights,
-                        lunchStops: afterKomoot.lunchStops,
-                        destinationStops: afterKomoot.destinationStops,
+                        sights: matched.sights,
+                        lunchStops: matched.lunchStops,
+                        destinationStops: matched.destinationStops,
                         distanceKm: afterKomoot.distanceKm,
                       })
                       if (placesResult.error) {
@@ -2192,7 +2349,14 @@ function WalkCard({
                           lunchStops: placesResult.lunchStops,
                           destinationStops: placesResult.destinationStops,
                         }))
-                        setPullUrlsNotice(placesResult.notice)
+                        // Combine the two pass-summaries into one notice
+                        // so the admin sees the full pipeline result on
+                        // a single line. Match count comes first since
+                        // it ran first.
+                        const linkedBit = matched.matchedCount > 0
+                          ? `Linked ${matched.matchedCount} to existing place${matched.matchedCount === 1 ? "" : "s"}. `
+                          : ""
+                        setPullUrlsNotice(`${linkedBit}${placesResult.notice ?? ""}`.trim() || null)
                       }
                     } catch (e) {
                       setPullDistanceError((e as Error).message)
