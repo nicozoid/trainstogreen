@@ -2394,27 +2394,27 @@
     "walks": [
       {
         "role": "main",
-        "name": "",
+        "name": "Hurst Green to Penshurst",
         "startPlace": "",
         "endPlace": "",
         "startStation": "HUR",
         "endStation": "PHR",
         "stationToStation": true,
-        "distanceKm": null,
-        "hours": null,
+        "distanceKm": 21.3,
+        "hours": 5.9,
         "lunchStops": [],
-        "terrain": "",
         "sights": [],
-        "miscellany": "",
         "id": "hurphrgean",
-        "suffix": "",
         "source": {
           "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-05T08:24:54.272Z"
+        "updatedAt": "2026-05-05T08:27:36.708Z",
+        "komootUrl": "https://www.komoot.com/tour/2934416642",
+        "uphillMetres": 353.99,
+        "difficulty": "hard"
       }
     ],
     "extracted": true,
