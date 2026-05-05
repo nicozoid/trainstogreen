@@ -25,6 +25,11 @@ const PROJECT_ROOT = join(__dirname, "..")
 // field identifying its origin: "saturday-walkers-club",
 // "leicester-ramblers", "heart-rail-trails", "abbey-line", or "manual".
 const WALKS_PATH = join(PROJECT_ROOT, "data", "walks.json")
+// Phase 1 places-registry data file. Walk rows for sights/lunch/
+// destination are now thin stubs ({ placeId, kmIntoRoute }); the
+// renderer hydrates them by joining against this file. See
+// scripts/migrate-places.mjs and lib/places.ts.
+const PLACES_PATH = join(PROJECT_ROOT, "data", "places.json")
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // Synthetic-cluster topology — read from lib/clusters-data.json so this
@@ -1019,8 +1024,69 @@ function loadAllWalks(overrideWalks) {
   return overrideWalks?.get(WALKS_PATH) ?? JSON.parse(readFileSync(WALKS_PATH, "utf-8"))
 }
 
+// Phase 1 places-registry hydration. Walk rows are stored as
+// { placeId, kmIntoRoute } stubs; we resolve them against
+// data/places.json once at the top of the build so the rest of the
+// pipeline (formatters, sort keys, prose builders) keeps reading
+// flat venue objects exactly like before.
+function loadPlaces(overrideMap) {
+  return overrideMap?.get(PLACES_PATH) ?? JSON.parse(readFileSync(PLACES_PATH, "utf-8"))
+}
+
+function hydrateRow(stub, places) {
+  if (!stub || typeof stub !== "object" || typeof stub.placeId !== "string") return null
+  const p = places[stub.placeId]
+  if (!p) return null
+  // Spread the place fields onto a fresh object so downstream mutators
+  // can't pollute the registry. kmIntoRoute is the only walk-side field
+  // that survives onto the hydrated row.
+  return {
+    ...p,
+    kmIntoRoute: typeof stub.kmIntoRoute === "number" ? stub.kmIntoRoute : null,
+  }
+}
+
+function hydrateWalksFromPlaces(walks, places) {
+  // Returns a NEW walks object whose per-walk venue arrays are
+  // hydrated. The input is left untouched — important when the API
+  // route calls this with the just-mutated walks payload it's about
+  // to commit. A mutating hydration would re-flatten the stub arrays
+  // back to full-row shape, then commitMultipleDataFiles would write
+  // that hydrated mess to walks.json (already-discovered footgun).
+  const out = {}
+  for (const [slug, entry] of Object.entries(walks)) {
+    if (!Array.isArray(entry?.walks)) {
+      out[slug] = entry
+      continue
+    }
+    out[slug] = {
+      ...entry,
+      walks: entry.walks.map((v) => {
+        const next = { ...v }
+        for (const key of ["sights", "lunchStops", "destinationStops"]) {
+          if (Array.isArray(v[key])) {
+            next[key] = v[key].map((stub) => hydrateRow(stub, places)).filter((r) => r !== null)
+          }
+        }
+        return next
+      }),
+    }
+  }
+  return out
+}
+
 function buildRamblerNotes(args) {
-  const walks = loadAllWalks(args?.overrideWalks)
+  const walksRaw = loadAllWalks(args?.overrideWalks)
+  // Hydrate the places-registry stubs into a working copy. Every
+  // downstream formatter reads flat venue objects from
+  // `variant.sights` / `lunchStops` / `destinationStops`, so doing
+  // this at the boundary means none of them needed to learn about
+  // the new shape. We work on the COPY (not the input) because the
+  // API route hands in the just-mutated walks payload it's about
+  // to commit; mutating it would write hydrated full rows to
+  // walks.json instead of the intended stubs.
+  const places = loadPlaces(args?.overrideWalks)
+  const walks = hydrateWalksFromPlaces(walksRaw, places)
   // overrideNotes: same rationale as overrideWalks — the API-route
   // caller already has a fresh copy of station-notes.json (fetched
   // from GitHub on serverless, where the local fs is the deploy-time

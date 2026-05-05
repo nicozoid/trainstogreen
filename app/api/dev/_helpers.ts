@@ -72,25 +72,32 @@ export async function handleAdminWrite(
  * as the build script, just routed through one path.
  */
 export async function commitWalkSave(
-  sourceFile: { path: string; data: unknown },
+  sourceFiles:
+    | { path: string; data: unknown }
+    | Array<{ path: string; data: unknown }>,
   baseMessage: string,
 ): Promise<void> {
+  // Accept either a single source file (legacy callers) or an array
+  // (Phase 1 places-registry callers that pass walks.json + places.json
+  // in one bundle).
+  const files = Array.isArray(sourceFiles) ? sourceFiles : [sourceFiles]
   // returnData: true makes buildRamblerNotes return the computed
   // datasets instead of writing files; the non-null assertion below is
   // safe because of that flag (the script only returns undefined in
   // its CLI/file-write mode).
   //
-  // The build script reads walks.json + station-notes.json via
-  // readFileSync. On Vercel, the serverless function's filesystem is
-  // the deploy-time snapshot — frozen at build time and never updated
-  // by GitHub commits this function makes. The just-mutated walks
-  // payload is in `sourceFile.data`, so pass it in as an override
+  // The build script reads walks.json + places.json + station-notes.json
+  // via readFileSync. On Vercel, the serverless function's filesystem
+  // is the deploy-time snapshot — frozen at build time and never
+  // updated by GitHub commits this function makes. The just-mutated
+  // payloads live in `sourceFiles`, so pass them in as overrides
   // keyed by the absolute path the build script resolves to via
   // path.join — otherwise the rebuild would read the stale on-disk
-  // copy and revert the in-flight edit.
-  const overrideWalks = new Map<string, unknown>([
-    [path.resolve(process.cwd(), WALKS_FILE), sourceFile.data],
-  ])
+  // copies and revert the in-flight edits.
+  const overrideWalks = new Map<string, unknown>()
+  for (const sf of files) {
+    overrideWalks.set(path.resolve(process.cwd(), sf.path), sf.data)
+  }
 
   // station-notes.json is admin-editable independently (the notes
   // endpoint writes it directly), so a stale on-disk copy could revert
@@ -115,7 +122,7 @@ export async function commitWalkSave(
 
   await commitMultipleDataFiles(
     [
-      sourceFile,
+      ...files,
       { path: "data/station-notes.json", data: built.notes },
       { path: "data/station-months.json", data: built.months },
       { path: "data/stations-hiked.json", data: built.hiked },

@@ -80,15 +80,15 @@ export type WalkPayload = {
    *  this is the structured / filterable version. */
   mainTerrains?: string[]
   terrain: string
-  sights: { name: string; location?: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  sights: { placeId: string; name: string; location?: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  lunchStops: { placeId: string; name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   /** Free-text override for the lunch line in the public prose. When
    *  populated, replaces the formatted lunchStops list entirely. */
   lunchOverride: string
   /** Destination pub(s) — same shape as lunchStops. The editor hides
    *  the location field for this section since the walk destination is
    *  implicit. */
-  destinationStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  destinationStops: { placeId: string; name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   /** Free-text override for the destination-pub line, parallels lunchOverride. */
   destinationStopsOverride: string
   miscellany: string
@@ -171,6 +171,11 @@ export type WalkMeta = {
 // nudge them. Stored as strings here so the inputs are controlled
 // even when empty; the server cleaner coerces back to numbers.
 type SightDraft = {
+  /** Phase 1 places-registry id. Round-tripped from the server; empty
+   *  for rows the admin just added (the server mints one on save).
+   *  Hidden from the UI — the editor just hands it back unchanged so
+   *  PATCH lands on the right registry entry. */
+  placeId: string
   name: string
   // Town / suburb / village the sight sits in. Auto-filled by Pull
   // URLs ONLY for Cultural-group types (castle, church, museum,
@@ -201,6 +206,8 @@ type LunchRating = "" | "good" | "fine" | "poor"
 // reuse the same toggle-button pattern. "" = no opinion.
 type LunchBusy = "" | "busy" | "quiet"
 type LunchDraft = {
+  /** See SightDraft.placeId. */
+  placeId: string
   name: string
   location: string
   url: string
@@ -310,6 +317,7 @@ function formatRowCoords(lat: string, lng: string, kmIntoRoute: string): string 
 }
 function sightsToDraft(list: WalkPayload["sights"]): SightDraft[] {
   return list.map((s) => ({
+    placeId: s.placeId ?? "",
     name: s.name ?? "",
     location: s.location ?? "",
     url: s.url ?? "",
@@ -323,6 +331,7 @@ function sightsToDraft(list: WalkPayload["sights"]): SightDraft[] {
 }
 function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
   return list.map((s) => ({
+    placeId: s.placeId ?? "",
     name: s.name ?? "",
     location: s.location ?? "",
     url: s.url ?? "",
@@ -1183,6 +1192,7 @@ function WalkCard({
         typeof total === "number" ? total : undefined,
       )
       const moved: LunchDraft = {
+        placeId: sight.placeId,
         name: sight.name,
         location: sight.location,
         url: sight.url,
@@ -1220,6 +1230,7 @@ function WalkCard({
       // No refreshment tags left — demote to Sights. rating/busy are
       // discarded; admin notes survive as the sight description.
       const moved: SightDraft = {
+        placeId: stop.placeId,
         name: stop.name,
         location: stop.location,
         url: stop.url,
@@ -1416,6 +1427,7 @@ function WalkCard({
         typeof snapshot.distanceKm === "number" ? snapshot.distanceKm : undefined,
       )
       const moved: LunchDraft = {
+        placeId: s.placeId,
         name: s.name,
         location: s.location,
         url: s.url,
@@ -2115,7 +2127,8 @@ function WalkCard({
                             seen.add(k)
                             return true
                           })
-                        const toSight = (w: IncomingWaypoint) => ({
+                        const toSight = (w: IncomingWaypoint): SightDraft => ({
+                          placeId: "",
                           name: w.name,
                           location: "",
                           url: "",
@@ -2126,7 +2139,8 @@ function WalkCard({
                           businessStatus: "",
                           types: w.types ?? [],
                         })
-                        const toRefreshment = (w: IncomingWaypoint) => ({
+                        const toRefreshment = (w: IncomingWaypoint): LunchDraft => ({
+                          placeId: "",
                           name: w.name,
                           location: "",
                           url: "",
@@ -3250,7 +3264,7 @@ function SightsEditor({
       </div>
       <button
         type="button"
-        onClick={() => onChange([...sights, { name: "", location: "", url: "", description: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] }])}
+        onClick={() => onChange([...sights, { placeId: "", name: "", location: "", url: "", description: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] }])}
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
       >
         + Add sight
@@ -3597,7 +3611,7 @@ function RefreshmentStopsEditor({
         onClick={() =>
           onStopsChange([
             ...stops,
-            { name: "", location: "", url: "", notes: "", rating: "", busy: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] },
+            { placeId: "", name: "", location: "", url: "", notes: "", rating: "", busy: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] },
           ])
         }
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
