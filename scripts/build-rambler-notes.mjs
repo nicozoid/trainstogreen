@@ -521,33 +521,160 @@ function variantPhrase(type) {
   }
 }
 
-// Sights: "[Lacey Green Windmill](URL), Roald Dahl Museum, and [Hastings Castle](URL)".
-// No "or" — sights aren't alternatives, they're all worth seeing.
-// Oxford comma + "and" before the last item, matching the terrain-tag
-// formatter's style so the rendered prose reads consistently.
-// Drop venues Google has flagged as permanently closed before any
-// downstream rendering touches them — keeps closed places out of the
-// public prose without needing to remove the row from the JSON.
+// Sights: grouped by location and joined with "and" (sights aren't
+// alternatives — they're all worth seeing — so no "or" here, unlike
+// lunch stops). Drops venues Google has flagged as permanently closed
+// before any downstream rendering touches them, keeping closed places
+// out of the public prose without needing to remove the row from JSON.
+// Hide both permanently AND temporarily closed venues from public
+// prose. Permanent closures are obvious; temporary closures (extended
+// refurbs, seasonal shutdowns flagged on Google) would mis-direct
+// walkers to a locked door, so the public view treats them the same.
+// The admin editor still shows the row with its amber/red tint so the
+// status stays visible behind the scenes.
 function isLive(s) {
-  return s?.businessStatus !== "CLOSED_PERMANENTLY"
+  return s?.businessStatus !== "CLOSED_PERMANENTLY" && s?.businessStatus !== "CLOSED_TEMPORARILY"
 }
 
+// Oxford-style "and" join for sights items and for groups of locations
+// in the multi-group header. 1 item → unchanged; 2 items → "A and B";
+// 3+ → "A, B, …, and Z".
+function joinWithAnd(items) {
+  if (items.length <= 1) return items[0] ?? ""
+  if (items.length === 2) return `${items[0]} and ${items[1]}`
+  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`
+}
+
+// Format a single sight venue — name (linked when a URL is set) plus
+// an optional descriptive blurb in parens. Same trimming rules as
+// the lunch formatter so trailing punctuation in the description
+// doesn't collide with the outer comma/period flow.
+function formatSightVenue(s) {
+  const linked = s.url ? `[${s.name}](${s.url})` : s.name
+  const desc = typeof s.description === "string" ? s.description.trim().replace(/[.!?]+$/, "") : ""
+  return desc ? `${linked} (${desc})` : linked
+}
+
+// Render the full sights prose — one or more sentences, ready to be
+// pushed into the parts array as-is. Mirrors formatLunchStops's
+// grouping shape so located sights share an "in {loc}" clause:
+//
+// All unlocated:
+//   "Sights: Lacey Green Windmill, Roald Dahl Museum, and Hastings Castle."
+//
+// One location:
+//   "Sights in Sandridge: the Heartwood Stones and St Leonard's Church."
+//
+// Multiple locations — header sentence listing the locations, then a
+// sentence per group:
+//   "Sights in Sandridge, Westhumble, and East Humbling. Sandridge
+//    sights: Heartwood Stones and Verulamium Park. Westhumble sight:
+//    Box Hill. East Humbling sights: Old Mill and Manor House."
+//
+// Mixed — unlocated venues fall under a trailing "Other sights:"
+// sentence so they still render in the multi-group case.
 function formatSights(sights) {
   if (!Array.isArray(sights) || sights.length === 0) return null
   sights = sights.filter(isLive)
   if (sights.length === 0) return null
-  const items = sights.map((s) => {
-    const linked = s.url ? `[${s.name}](${s.url})` : s.name
-    // Optional descriptive blurb — surfaces in parentheses after the
-    // sight's name so a reader gets a one-line gloss without leaving
-    // the prose. Trimmed of any trailing sentence punctuation so the
-    // outer comma/period flow stays natural.
-    const desc = typeof s.description === "string" ? s.description.trim().replace(/[.!?]+$/, "") : ""
-    return desc ? `${linked} (${desc})` : linked
-  })
-  if (items.length === 1) return items[0]
-  if (items.length === 2) return `${items[0]} and ${items[1]}`
-  return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}`
+
+  // Self-referential-sight collapse — when a sight's NAME matches some
+  // other sight's LOCATION, the standalone "Wheathampstead" entry is
+  // really just the location naming itself. Suppress it from the sight
+  // list and carry its url/description forward as decoration on the
+  // location's first appearance in the prose. Avoids the awkward
+  // "Sights in Wheathampstead. … Other sight: Wheathampstead." double-
+  // mention in the multi-group form.
+  const norm = (s) => (typeof s === "string" ? s.trim().toLowerCase() : "")
+  const knownLocations = new Set()
+  for (const s of sights) {
+    const loc = norm(s.location)
+    if (loc) knownLocations.add(loc)
+  }
+  // First-match-wins on duplicates; meta gets attached to the location
+  // header only (per-group sentences stay plain to avoid linking the
+  // same word twice in close proximity).
+  const locationMeta = new Map() // norm(location) → { url, description }
+  const survivingSights = []
+  for (const s of sights) {
+    const nameKey = norm(s.name)
+    if (nameKey && knownLocations.has(nameKey) && !locationMeta.has(nameKey)) {
+      const url = typeof s.url === "string" ? s.url.trim() : ""
+      const desc = typeof s.description === "string"
+        ? s.description.trim().replace(/[.!?]+$/, "")
+        : ""
+      locationMeta.set(nameKey, { url, description: desc })
+      continue // suppress this sight from the rendered list
+    }
+    // Idempotency: if a name matched a location we'd already captured
+    // metadata for, drop it silently — the first one wins, the rest
+    // are duplicate self-references.
+    if (nameKey && knownLocations.has(nameKey) && locationMeta.has(nameKey)) continue
+    survivingSights.push(s)
+  }
+
+  // Decorate a location label with the captured url + description,
+  // when we have any. Returns the plain label otherwise.
+  const decorate = (loc) => {
+    const meta = locationMeta.get(norm(loc))
+    if (!meta) return loc
+    const linked = meta.url ? `[${loc}](${meta.url})` : loc
+    return meta.description ? `${linked} (${meta.description})` : linked
+  }
+
+  const groups = new Map() // location → venue strings (preserves order)
+  const noLoc = []
+  for (const s of survivingSights) {
+    const venue = formatSightVenue(s)
+    const loc = typeof s.location === "string" ? s.location.trim() : ""
+    if (loc) {
+      if (!groups.has(loc)) groups.set(loc, [])
+      groups.get(loc).push(venue)
+    } else {
+      noLoc.push(venue)
+    }
+  }
+
+  const locatedGroups = [...groups.entries()] // [[loc, venues], …]
+  const totalGroupCount = locatedGroups.length + (noLoc.length ? 1 : 0)
+
+  // Edge case: every sight got suppressed (e.g. only a self-referential
+  // "Wheathampstead" sight existed, with no other sights at any
+  // location). Nothing to render.
+  if (totalGroupCount === 0) return null
+
+  // Single-group case — one sentence.
+  if (totalGroupCount === 1) {
+    if (locatedGroups.length === 1) {
+      const [loc, venues] = locatedGroups[0]
+      return `Sights in ${decorate(loc)}: ${joinWithAnd(venues)}.`
+    }
+    // No location info on any sight — preserve the long-standing
+    // "Sights: …" phrasing for back-compat with existing data.
+    return `Sights: ${joinWithAnd(noLoc)}.`
+  }
+
+  // Multi-group case — header sentence listing the located groups,
+  // then a per-group sentence. Unlocated venues (when present
+  // alongside located ones) fall under a trailing "Other sights:"
+  // sentence so they still reach the reader.
+  const sentences = []
+  const headerLocations = locatedGroups.map(([loc]) => loc)
+  if (headerLocations.length > 0) {
+    // Decorate each location in the header (the "first appearance"
+    // slot — per-group labels below stay plain so the linked word
+    // doesn't repeat back-to-back).
+    sentences.push(`Sights in ${joinWithAnd(headerLocations.map(decorate))}.`)
+  }
+  for (const [loc, venues] of locatedGroups) {
+    const label = venues.length === 1 ? `${loc} sight` : `${loc} sights`
+    sentences.push(`${label}: ${joinWithAnd(venues)}.`)
+  }
+  if (noLoc.length) {
+    const label = noLoc.length === 1 ? "Other sight" : "Other sights"
+    sentences.push(`${label}: ${joinWithAnd(noLoc)}.`)
+  }
+  return sentences.join(" ")
 }
 
 // Structured bestSeasons → "Best in July and August." / "Best in December,
@@ -765,9 +892,11 @@ function buildSummary(variant, entry, crsIndex, sources) {
   const terrainSentence = formatTerrainTags(variant.terrain)
   if (terrainSentence) parts.push(terrainSentence)
 
-  // Sights — labelled list, no descriptions
+  // Sights — formatSights returns the full prose (one or more
+  // sentences, headers and all when grouped by location), so push it
+  // as-is. Mirrors the formatLunchStops calling convention below.
   const sightsStr = formatSights(variant.sights)
-  if (sightsStr) parts.push(`Sights: ${sightsStr}.`)
+  if (sightsStr) parts.push(sightsStr)
 
   // Structured mud warning — short canonical clause. Only emit if the
   // free-text `miscellany` doesn't mention mud anywhere (avoid duplicates
@@ -822,14 +951,14 @@ function buildSummary(variant, entry, crsIndex, sources) {
     if (dest) parts.push(`End-of-walk rests: ${dest}.`)
   }
 
-  // Book source clause — emitted before distance so the book
-  // attribution reads as a lead-in to the trailing stats rather than
-  // trailing them. Only fires for book-style orgSlugs (Rough Guide
-  // etc); web sources were already handled above.
-  if (orgIsBook) {
-    const bookClause = formatSourceClause(variant, entry, sources)
-    if (bookClause) parts.push(bookClause)
-  }
+  // Book sources (Rough Guide series, Time Out Country Walks vols I+II)
+  // are deliberately NOT mentioned in the public prose at all — no
+  // attribution clause, no link. Rationale: those books are paid
+  // products with no per-walk landing page, so any "From <book>"
+  // sentence either dead-ends in plain text or sends the reader to a
+  // generic publisher page that doesn't help them on the trail. The
+  // attribution still lives in the walk's data file (variant.source)
+  // for admin/audit purposes; we just don't surface it.
 
   // Related source is intentionally NOT rendered in public prose —
   // it stays admin-only as a cross-reference inside the editor. The

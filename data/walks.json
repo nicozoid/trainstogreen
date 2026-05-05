@@ -46075,6 +46075,33 @@
         "hours": 4.52,
         "lunchStops": [
           {
+            "name": "Green Man",
+            "location": "Sandridge",
+            "url": "http://www.greenmansandridge.co.uk/",
+            "rating": "good",
+            "busy": "busy",
+            "lat": 51.780631,
+            "lng": -0.305797,
+            "kmIntoRoute": 7.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Heartwood Tea Rooms",
+            "location": "Sandridge",
+            "url": "http://heartwoodtearooms.com/",
+            "rating": "good",
+            "lat": 51.780641,
+            "lng": -0.30546,
+            "kmIntoRoute": 7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          },
+          {
             "name": "The Queens Head",
             "location": "Sandridge",
             "url": "https://linktr.ee/TheQueensHeadSandridge",
@@ -46087,36 +46114,12 @@
             ]
           },
           {
-            "name": "Heartwood Tea Rooms",
-            "location": "Sandridge",
-            "url": "http://heartwoodtearooms.com/",
-            "lat": 51.780641,
-            "lng": -0.30546,
-            "kmIntoRoute": 7,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "cafe"
-            ]
-          },
-          {
-            "name": "Green Man",
-            "location": "Sandridge",
-            "url": "http://www.greenmansandridge.co.uk/",
-            "lat": 51.780631,
-            "lng": -0.305797,
-            "kmIntoRoute": 7.1,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "pub"
-            ]
-          },
-          {
             "name": "The Rose & Crown",
             "location": "Sandridge",
             "url": "http://www.theroseandcrownsandridge.co.uk/",
-            "lat": 51.780572,
-            "lng": -0.305664,
-            "kmIntoRoute": 7.1,
+            "lat": 51.780582,
+            "lng": -0.305653,
+            "kmIntoRoute": 7.2,
             "businessStatus": "OPERATIONAL",
             "types": [
               "pub"
@@ -46130,7 +46133,7 @@
             "url": "https://heartwood.woodlandtrust.org.uk/",
             "lat": 51.783705,
             "lng": -0.308732,
-            "kmIntoRoute": 5.8,
+            "kmIntoRoute": 5.9,
             "businessStatus": "OPERATIONAL",
             "types": [
               "forest"
@@ -46138,10 +46141,10 @@
           },
           {
             "name": "Childwickbury Estate",
-            "url": "https://www.google.com/maps/place/?q=place_id:ChIJxz4q38U4dkgRO4Z_rruVnV8",
+            "url": "https://www.harpenden-history.org.uk/whats-on/news-notices-archive/recent_talks_visits/childwickbury_-_a_short_history_of_the_estate_the_stud_and_its_owners",
             "lat": 51.783599,
             "lng": -0.346885,
-            "kmIntoRoute": 9.7,
+            "kmIntoRoute": 9.8,
             "businessStatus": "OPERATIONAL",
             "types": [
               "village",
@@ -46149,16 +46152,32 @@
             ]
           },
           {
+            "name": "St Mary's Church",
+            "url": "https://www.parishofstmichaels.org.uk/st-marys",
+            "lat": 51.78359,
+            "lng": -0.347307,
+            "kmIntoRoute": 9.9,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "church"
+            ]
+          },
+          {
             "name": "St Albans Cathedral and Abbey Church of St Alban",
+            "location": "St Albans",
             "url": "https://www.stalbanscathedral.org/",
             "lat": 51.751136,
             "lng": -0.343661,
-            "kmIntoRoute": 12.9,
+            "kmIntoRoute": 13,
             "businessStatus": "OPERATIONAL",
             "types": [
               "historic_site",
               "church"
             ]
+          },
+          {
+            "name": "Wheathampstead",
+            "url": "http://www.wheathampsteadheritage.org.uk/"
           }
         ],
         "miscellany": "Can be muddy",
@@ -46171,7 +46190,7 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2930623590",
-        "uphillMetres": 137.43,
+        "uphillMetres": 137.42,
         "difficulty": "moderate",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
@@ -46179,39 +46198,15 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "related"
         },
-        "updatedAt": "2026-05-05T13:23:46.765Z",
+        "updatedAt": "2026-05-05T20:16:22.454Z",
         "destinationStops": [
-          {
-            "name": "Mad Squirrel Tap",
-            "location": "St Albans",
-            "url": "https://www.madsquirrelstalbans.co.uk/",
-            "lat": 51.750812,
-            "lng": -0.341363,
-            "kmIntoRoute": 13.4,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "pub"
-            ]
-          },
-          {
-            "name": "Abigail's Cafe",
-            "location": "St Albans",
-            "url": "https://www.google.com/maps/place/?q=place_id:ChIJfy5BmiM_dkgRUNtX7o50Yx4",
-            "lat": 51.750701,
-            "lng": -0.34061,
-            "kmIntoRoute": 13.6,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "cafe"
-            ]
-          },
           {
             "name": "The Peahen",
             "location": "St Albans",
             "url": "https://www.mcmullens.co.uk/local-pub/peahen/",
             "lat": 51.750804,
             "lng": -0.339672,
-            "kmIntoRoute": 13.9,
+            "kmIntoRoute": 13.8,
             "businessStatus": "OPERATIONAL",
             "types": [
               "pub"
@@ -46219,8 +46214,8 @@
           },
           {
             "name": "The Snug",
-            "location": "Redbourn",
-            "url": "https://www.google.com/maps/place/?q=place_id:ChIJmT8rc8JHdkgR6s4QOCS4Wkw",
+            "location": "St Albans",
+            "url": "http://www.fightingcockssa.com/",
             "lat": 51.751459,
             "lng": -0.340651,
             "kmIntoRoute": 14.5,
@@ -46240,6 +46235,42 @@
             "types": [
               "pub"
             ]
+          },
+          {
+            "name": "Abigail's Cafe",
+            "location": "St Albans",
+            "url": "https://www.tripadvisor.co.uk/Restaurant_Review-g186306-d3192057-Reviews-Abigail_s_Tea_Room-St_Albans_Hertfordshire_England.html",
+            "lat": 51.750691,
+            "lng": -0.340564,
+            "kmIntoRoute": 13.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          },
+          {
+            "name": "Mad Squirrel Tap",
+            "location": "St Albans",
+            "url": "https://www.madsquirrelstalbans.co.uk/",
+            "lat": 51.750806,
+            "lng": -0.341344,
+            "kmIntoRoute": 13.4,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Lower Red Lion",
+            "location": "St Albans",
+            "url": "http://www.thelowerredlion.co.uk/",
+            "lat": 51.751725,
+            "lng": -0.346339,
+            "kmIntoRoute": 12.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           }
         ],
         "rating": 2,
@@ -46249,7 +46280,8 @@
         "bestSeasons": [
           "apr"
         ],
-        "bestSeasonsNote": "bluebell season"
+        "bestSeasonsNote": "bluebell season",
+        "ratingExplanation": "bluebell season"
       }
     ],
     "source": "saturday-walkers-club"
@@ -128470,8 +128502,8 @@
         "startStation": "HPD",
         "endStation": "HPD",
         "stationToStation": true,
-        "distanceKm": 16,
-        "hours": 3.4,
+        "distanceKm": 15.6,
+        "hours": 3.32,
         "lunchStops": [
           {
             "name": "The Swan",
@@ -128499,15 +128531,28 @@
           },
           {
             "name": "The Wicked Lady",
-            "location": "St Albans",
+            "location": "Wheathampstead",
             "url": "https://www.thewickedladypub.co.uk/?utm_source=google&utm_medium=organic&utm_campaign=gmb-homepage",
             "lat": 51.799839,
             "lng": -0.296874,
-            "kmIntoRoute": 11.6,
+            "kmIntoRoute": 11.2,
             "businessStatus": "OPERATIONAL",
             "types": [
               "restaurant",
               "pub"
+            ]
+          },
+          {
+            "name": "The Bull",
+            "location": "Wheathampstead",
+            "url": "https://www.millerandcarter.co.uk/restaurants/east-of-england/millerandcarterwheathampstead?utm_source=google&utm_medium=organic&utm_campaign=gmb-homepage",
+            "notes": "aka Miller & Carter",
+            "lat": 51.813409,
+            "lng": -0.29327,
+            "kmIntoRoute": 7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "restaurant"
             ]
           }
         ],
@@ -128515,10 +128560,9 @@
           {
             "name": "Elephant & Castle Pub",
             "location": "St Albans",
-            "url": "https://www.google.com/maps/place/?q=place_id:ChIJG79Tu3Q5dkgRasV49kl6eFc",
             "lat": 51.804942,
             "lng": -0.307922,
-            "kmIntoRoute": 12.9,
+            "kmIntoRoute": 12.5,
             "businessStatus": "CLOSED_TEMPORARILY",
             "types": [
               "pub",
@@ -128531,7 +128575,7 @@
             "url": "https://www.omgmog.pub/",
             "lat": 51.820195,
             "lng": -0.334997,
-            "kmIntoRoute": 15.3,
+            "kmIntoRoute": 14.9,
             "businessStatus": "OPERATIONAL",
             "types": [
               "pub"
@@ -128543,7 +128587,7 @@
             "url": "http://www.theambleinn.co.uk/",
             "lat": 51.821876,
             "lng": -0.339709,
-            "kmIntoRoute": 16,
+            "kmIntoRoute": 15.6,
             "businessStatus": "OPERATIONAL",
             "types": [
               "pub"
@@ -128552,36 +128596,33 @@
         ],
         "sights": [
           {
-            "name": "Wheathampstead",
-            "url": "https://www.enjoystalbans.com/listing/wheathampstead-heritage-trail/",
-            "lat": 51.813859,
-            "lng": -0.293104,
-            "kmIntoRoute": 7.2,
-            "businessStatus": "OPERATIONAL",
-            "types": [
-              "village"
-            ]
-          },
-          {
             "name": "St Helen's Church",
+            "location": "Wheathampstead",
             "url": "http://www.sth-stp.org/",
             "lat": 51.812337,
             "lng": -0.294837,
-            "kmIntoRoute": 6.4,
+            "kmIntoRoute": 6.3,
             "businessStatus": "OPERATIONAL",
             "types": [
               "church"
             ]
           },
           {
-            "name": "Miller & Carter",
-            "url": "https://www.millerandcarter.co.uk/restaurants/east-of-england/millerandcarterwheathampstead?utm_source=google&utm_medium=organic&utm_campaign=gmb-homepage",
-            "lat": 51.813409,
-            "lng": -0.29327,
-            "kmIntoRoute": 7.1,
-            "businessStatus": "OPERATIONAL",
+            "name": "Devil's Dyke",
+            "location": "Wheathampstead",
+            "url": "https://wheathampstead-pc.gov.uk/devils-dyke/",
+            "lat": 51.806888,
+            "lng": -0.285591,
+            "kmIntoRoute": 9.5,
             "types": [
-              "pub"
+              "historic_site"
+            ]
+          },
+          {
+            "name": "Wheathampstead",
+            "url": "http://www.wheathampsteadheritage.org.uk/",
+            "types": [
+              "village"
             ]
           }
         ],
@@ -128592,9 +128633,9 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-05T16:56:43.968Z",
+        "updatedAt": "2026-05-05T19:58:00.936Z",
         "komootUrl": "https://www.komoot.com/tour/849724061",
-        "uphillMetres": 163.33,
+        "uphillMetres": 160.03,
         "difficulty": "moderate"
       }
     ],

@@ -36,7 +36,15 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 // changes rarely. Importing directly lets the admin UI render the
 // dropdown without a separate fetch round-trip.
 import sourcesJson from "@/data/sources.json"
-import { SPOT_TYPES, SPOT_TYPE_LABELS } from "@/lib/spot-types"
+import {
+  SPOT_TYPES,
+  SPOT_TYPE_LABELS,
+  REFRESHMENT_SPOT_TYPES,
+  LOCATIONABLE_SPOT_TYPES,
+  bucketForRefreshment,
+} from "@/lib/spot-types"
+import { nearestCounty } from "@/lib/nearest-county"
+import { MAIN_TERRAINS } from "@/lib/main-terrains"
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -66,8 +74,13 @@ export type WalkPayload = {
   hours: number | null
   uphillMetres: number | null
   difficulty: "easy" | "moderate" | "hard" | null
+  /** Closed-vocabulary terrain tags drawn from lib/main-terrains
+   *  (mountains / hills / coastal / waterways / woodland /
+   *  historic_urban). Distinct from the free-text `terrain` field —
+   *  this is the structured / filterable version. */
+  mainTerrains?: string[]
   terrain: string
-  sights: { name: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  sights: { name: string; location?: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   /** Free-text override for the lunch line in the public prose. When
    *  populated, replaces the formatted lunchStops list entirely. */
@@ -101,6 +114,9 @@ export type WalkPayload = {
   rating: number | null
   /** Admin-authored sentence rendered after the rating flourish. */
   ratingExplanation: string
+  /** Footfall on a 1–5 scale (1 = isolated, 5 = busy). Descriptive,
+   *  not curatorial — separate from `rating`. Null when unset. */
+  busyness?: number | null
   source?: {
     orgSlug: string
     pageName: string
@@ -156,6 +172,13 @@ export type WalkMeta = {
 // even when empty; the server cleaner coerces back to numbers.
 type SightDraft = {
   name: string
+  // Town / suburb / village the sight sits in. Auto-filled by Pull
+  // URLs ONLY for Cultural-group types (castle, church, museum,
+  // historic_site, monument) where naming the location actually adds
+  // info; admins can also set it by hand for any sight. Drives the
+  // grouped public-prose layout in scripts/build-rambler-notes.mjs
+  // (sights with the same location share an "in {loc}" clause).
+  location: string
   url: string
   description: string
   lat: string
@@ -208,11 +231,13 @@ type EditableFields = {
   privateNote: string
   rating: number | null
   ratingExplanation: string
+  busyness: number | null
   // Admin-only log of when this walk was personally completed —
   // each entry is a `YYYY-MM-DD` ISO date. Drives the
   // "Undiscovered" admin filter on the map (any non-empty array
   // marks the station as "hiked").
   previousWalkDates: string[]
+  mainTerrains: string[]
   terrain: string
   distanceKm: number | null
   hours: number | null
@@ -286,6 +311,7 @@ function formatRowCoords(lat: string, lng: string, kmIntoRoute: string): string 
 function sightsToDraft(list: WalkPayload["sights"]): SightDraft[] {
   return list.map((s) => ({
     name: s.name ?? "",
+    location: s.location ?? "",
     url: s.url ?? "",
     description: s.description ?? "",
     lat: num(s.lat),
@@ -410,6 +436,17 @@ const RATING_LABELS: Record<1 | 2 | 3 | 4, string> = {
   2: "Pleasant",
   3: "Charming",
   4: "Sublime",
+}
+
+// Footfall scale for the walk's busyness — descriptive, not curatorial.
+// 1 = empty paths, 5 = high-traffic. Stored as a number on the walk so
+// these labels can be reworded freely without a data migration.
+const BUSYNESS_LABELS: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: "Isolated",
+  2: "Secluded",
+  3: "Moderate",
+  4: "Steady",
+  5: "Busy",
 }
 
 const MONTHS = [
@@ -977,11 +1014,11 @@ function WalkCard({
   // appear publicly after the next deploy.
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
-  // Pull URLs — bulk Places API resolve for any sight/lunch stop/
-  // destination pub that has lat/lng but no URL yet. `pullingUrls` is
-  // the spinner; `pullUrlsNotice` shows a short success or
-  // "no candidates found" line; `pullUrlsError` shows a hard failure.
-  const [pullingUrls, setPullingUrls] = useState(false)
+  // Places lookup state — populated by the unified Pull data flow.
+  // `pullUrlsNotice` reports filled-vs-attempted + any unmatched rows;
+  // `pullUrlsError` shows a hard failure. The Komoot side has its own
+  // `pullingDistance` spinner + `pullDistanceError`; the Places step
+  // shares the spinner since it runs as a continuation of Pull data.
   const [pullUrlsNotice, setPullUrlsNotice] = useState<string | null>(null)
   const [pullUrlsError, setPullUrlsError] = useState<string | null>(null)
   // Brief flash state for the "click id to copy" affordance — flips
@@ -1015,7 +1052,9 @@ function WalkCard({
       privateNote: walk.privateNote ?? "",
       rating: walk.rating,
       ratingExplanation: walk.ratingExplanation ?? "",
+      busyness: typeof walk.busyness === "number" ? walk.busyness : null,
       previousWalkDates: Array.isArray(walk.previousWalkDates) ? walk.previousWalkDates : [],
+      mainTerrains: Array.isArray(walk.mainTerrains) ? walk.mainTerrains : [],
       terrain: walk.terrain,
       distanceKm: walk.distanceKm,
       hours: walk.hours,
@@ -1045,7 +1084,7 @@ function WalkCard({
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.bestSeasonsNote, walk.mudWarning,
-      walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
+      walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.busyness, walk.previousWalkDates, walk.mainTerrains, walk.terrain,
       walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
       walk.sights, walk.lunchStops, walk.lunchOverride,
       walk.destinationStops, walk.destinationStopsOverride,
@@ -1071,7 +1110,9 @@ function WalkCard({
       draft.privateNote.trim() !== serverState.privateNote.trim() ||
       draft.rating !== serverState.rating ||
       draft.ratingExplanation.trim() !== serverState.ratingExplanation.trim() ||
+      draft.busyness !== serverState.busyness ||
       JSON.stringify(draft.previousWalkDates) !== JSON.stringify(serverState.previousWalkDates) ||
+      JSON.stringify(draft.mainTerrains) !== JSON.stringify(serverState.mainTerrains) ||
       draft.terrain.trim() !== serverState.terrain.trim() ||
       draft.distanceKm !== serverState.distanceKm ||
       draft.hours !== serverState.hours ||
@@ -1110,29 +1151,146 @@ function WalkCard({
     })
   }, [])
 
-  // Pull URLs handler — bulk Google Places resolve. Iterates over the
-  // three spot lists, picks rows that have lat/lng but no URL yet,
-  // sends the batch to /api/dev/place-url, and merges the results
-  // into the draft. URL is only filled when blank; location (on lunch
-  // stops) is only filled when blank; businessStatus is overwritten
-  // unconditionally because a fresh fetch is always the best source
-  // of truth for that field.
-  const onPullUrls = useCallback(async () => {
-    if (pullingUrls) return
-    setPullUrlsError(null)
-    setPullUrlsNotice(null)
+  // Auto-move handlers — fired when the admin changes the `types` of
+  // a row in any of the three lists. The rule: a row tagged with any
+  // refreshment type (pub / restaurant / cafe / tearoom) belongs in
+  // Lunch stops or Destination pubs; everything else belongs in Sights.
+  // The lunch-vs-destination split uses the same route-distance
+  // threshold as the Komoot importer (DESTINATION_STOP_KM).
+  //
+  // Field carry-over across sections:
+  //   sight.description  ↔  refreshment.notes  (both freeform)
+  //   location / url / lat / lng / kmIntoRoute / businessStatus / types
+  //                       — preserved verbatim
+  //   rating / busy       — dropped on move to Sights, blank on arrival
+  //                         in Lunch / Destination (no equivalent slot)
+  const onSightTypesChange = useCallback((index: number, nextTypes: string[]) => {
+    setDraft((d) => {
+      const sight = d.sights[index]
+      if (!sight) return d
+      const becomesRefreshment = nextTypes.some((t) => (REFRESHMENT_SPOT_TYPES as Set<string>).has(t))
+      if (!becomesRefreshment) {
+        // Stays a sight — just update types in place.
+        const sights = [...d.sights]
+        sights[index] = { ...sights[index], types: nextTypes }
+        return { ...d, sights }
+      }
+      // Promote to lunch / destination based on route-distance to end.
+      const km = Number(sight.kmIntoRoute)
+      const total = d.distanceKm
+      const bucket = bucketForRefreshment(
+        Number.isFinite(km) ? km : undefined,
+        typeof total === "number" ? total : undefined,
+      )
+      const moved: LunchDraft = {
+        name: sight.name,
+        location: sight.location,
+        url: sight.url,
+        notes: sight.description,
+        rating: "",
+        busy: "",
+        lat: sight.lat,
+        lng: sight.lng,
+        kmIntoRoute: sight.kmIntoRoute,
+        businessStatus: sight.businessStatus,
+        types: nextTypes,
+      }
+      const sights = d.sights.filter((_, j) => j !== index)
+      return bucket === "destination"
+        ? { ...d, sights, destinationStops: [...d.destinationStops, moved] }
+        : { ...d, sights, lunchStops: [...d.lunchStops, moved] }
+    })
+  }, [])
 
+  // Demote a refreshment row to Sights when the admin removes its
+  // refreshment tags. Shared between Lunch stops and Destination pubs;
+  // `kind` selects which list to read/mutate.
+  const onRefreshmentTypesChange = useCallback((kind: "lunchStops" | "destinationStops", index: number, nextTypes: string[]) => {
+    setDraft((d) => {
+      const list = d[kind]
+      const stop = list[index]
+      if (!stop) return d
+      const staysRefreshment = nextTypes.some((t) => (REFRESHMENT_SPOT_TYPES as Set<string>).has(t))
+      if (staysRefreshment) {
+        // Keep it where it is — just update types.
+        const next = [...list]
+        next[index] = { ...next[index], types: nextTypes }
+        return { ...d, [kind]: next }
+      }
+      // No refreshment tags left — demote to Sights. rating/busy are
+      // discarded; admin notes survive as the sight description.
+      const moved: SightDraft = {
+        name: stop.name,
+        location: stop.location,
+        url: stop.url,
+        description: stop.notes,
+        lat: stop.lat,
+        lng: stop.lng,
+        kmIntoRoute: stop.kmIntoRoute,
+        businessStatus: stop.businessStatus,
+        types: nextTypes,
+      }
+      const remaining = list.filter((_, j) => j !== index)
+      return { ...d, [kind]: remaining, sights: [...d.sights, moved] }
+    })
+  }, [])
+
+  // Manual swap between Lunch ↔ Destination. Mirrors the auto-move
+  // logic in `onRefreshmentTypesChange`, but skips the refreshment-tag
+  // check since the admin is overriding bucketing on purpose (e.g.
+  // Lower Red Lion was bucketed lunch by the 30% rule but the admin
+  // knows it's a destination pub for the way they actually walk it).
+  // The row is appended to the end of the target list — order arrows
+  // are right there for fine-tuning.
+  const onSwitchKind = useCallback((from: "lunchStops" | "destinationStops", index: number) => {
+    setDraft((d) => {
+      const fromList = d[from]
+      const stop = fromList[index]
+      if (!stop) return d
+      const to: "lunchStops" | "destinationStops" = from === "lunchStops" ? "destinationStops" : "lunchStops"
+      const remaining = fromList.filter((_, j) => j !== index)
+      return { ...d, [from]: remaining, [to]: [...d[to], stop] }
+    })
+  }, [])
+
+  // Run the Places second-pass against an explicit snapshot of the
+  // three spot lists (sights / lunch / destination). Pure-ish: no
+  // setState inside, returns the new arrays + a notice string and any
+  // hard error. Called by the unified Pull data flow immediately after
+  // the Komoot scrape merges new waypoints into the draft, so Places
+  // sees the freshly-imported rows alongside any pre-existing ones.
+  //
+  // Behaviour:
+  //   - URL: filled only when blank (preserves admin overrides)
+  //   - businessStatus: always overwritten (fresh-fetch wins)
+  //   - location: lunch/destination unconditional, sights only when
+  //     the merged type tags include a Cultural value
+  //   - types: filled when the row's types are empty; ALSO overridden
+  //     when Google detects a refreshment (pub/restaurant/cafe/tearoom)
+  //     and the row currently has no refreshment tag — this catches
+  //     mistakes like Komoot tagging a pub literally called
+  //     "St Helen's Church" as a religious_building
+  //   - section moves: any sight that ends up with refreshment types
+  //     after the cross-check is migrated to Lunch / Destination using
+  //     the same 20%-of-route rule the editor's manual auto-move uses
+  async function runPlacesPass(snapshot: {
+    sights: SightDraft[]
+    lunchStops: LunchDraft[]
+    destinationStops: LunchDraft[]
+    distanceKm: number | null
+  }): Promise<{
+    sights: SightDraft[]
+    lunchStops: LunchDraft[]
+    destinationStops: LunchDraft[]
+    notice: string | null
+    error: string | null
+  }> {
     type Slot = { kind: "sights" | "lunchStops" | "destinationStops"; index: number }
     const slots: Slot[] = []
     type Spot = { name: string; lat: number; lng: number }
     const spots: Spot[] = []
 
-    // Build the work list. A row is eligible when:
-    //   - it has a non-empty name
-    //   - it has finite lat/lng (Komoot Pull data already populated)
-    //   - it has no URL set
-    // Rows missing any of those are silently skipped — the admin can
-    // populate the URL by hand or fill in coords first and re-pull.
+    // Eligible rows: non-empty name + finite lat/lng + no URL yet.
     const collect = (kind: Slot["kind"], rows: { name: string; url: string; lat: string; lng: string }[]) => {
       rows.forEach((r, i) => {
         const name = r.name.trim()
@@ -1145,15 +1303,23 @@ function WalkCard({
         spots.push({ name, lat, lng })
       })
     }
-    collect("sights", draft.sights)
-    collect("lunchStops", draft.lunchStops)
-    collect("destinationStops", draft.destinationStops)
+    collect("sights", snapshot.sights)
+    collect("lunchStops", snapshot.lunchStops)
+    collect("destinationStops", snapshot.destinationStops)
 
+    // Nothing eligible — return the snapshot unchanged with a quiet
+    // notice. Common when every row already has a URL set.
     if (spots.length === 0) {
-      setPullUrlsNotice("No empty-URL rows with coordinates to look up.")
-      return
+      return {
+        sights: snapshot.sights,
+        lunchStops: snapshot.lunchStops,
+        destinationStops: snapshot.destinationStops,
+        notice: "URL pass: nothing to look up.",
+        error: null,
+      }
     }
-    setPullingUrls(true)
+
+    let results: ({ url: string; location?: string; businessStatus?: string; types?: string[] } | null)[]
     try {
       const r = await fetch("/api/dev/place-url", {
         method: "POST",
@@ -1162,70 +1328,125 @@ function WalkCard({
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
-      const results = (j?.results ?? []) as ({ url: string; location?: string; businessStatus?: string; types?: string[] } | null)[]
-
-      let filled = 0
-      // Track unmatched rows so the status banner can name them. Each
-      // entry is "{Section} {1-based index} ({venue name})" so the
-      // admin sees exactly which rows need manual attention rather
-      // than a bare "3 not matched".
-      const missedRows: string[] = []
-      // Section labels matching the visible editor headings, used in
-      // the unmatched-row report below.
-      const SECTION_LABEL: Record<typeof slots[number]["kind"], string> = {
-        sights: "Sight",
-        lunchStops: "Lunch stop",
-        destinationStops: "Destination stop",
-      }
-      // Apply by kind. We mutate copies of each list so we can build
-      // the next draft in one pass.
-      const nextSights = [...draft.sights]
-      const nextLunch = [...draft.lunchStops]
-      const nextPubs = [...draft.destinationStops]
-      slots.forEach((slot, i) => {
-        const res = results[i]
-        if (!res) {
-          // Identify the row by section + 1-based index + venue name
-          // so the banner reads e.g. "Destination stop 3 (The Two
-          // Brewers)" rather than an opaque "3 not matched".
-          missedRows.push(`${SECTION_LABEL[slot.kind]} ${slot.index + 1} (${spots[i].name})`)
-          return
-        }
-        filled++
-        const apply = <T extends { url: string; businessStatus: string; location?: string; types: string[] }>(row: T): T => ({
-          ...row,
-          // Only fill URL when blank — preserves admin-entered overrides.
-          url: row.url.trim() ? row.url : res.url,
-          // Always overwrite businessStatus — a re-pull should reflect
-          // the current state of the world, not last week's.
-          businessStatus: res.businessStatus ?? row.businessStatus,
-          // Only fill location when blank, and only on rows that have
-          // a location field at all (sights don't). Server returns
-          // just the village/town/suburb (NOT the full address), so
-          // this slots in cleanly as a prose-friendly placename.
-          ...(typeof row.location === "string" && !row.location.trim() && res.location
-            ? { location: res.location }
-            : {}),
-          // Only fill types when the row's types array is empty —
-          // never overwrite manual edits.
-          types: row.types.length === 0 && res.types?.length ? res.types : row.types,
-        })
-        if (slot.kind === "sights") nextSights[slot.index] = apply(nextSights[slot.index])
-        else if (slot.kind === "lunchStops") nextLunch[slot.index] = apply(nextLunch[slot.index])
-        else nextPubs[slot.index] = apply(nextPubs[slot.index])
-      })
-      setDraft((d) => ({ ...d, sights: nextSights, lunchStops: nextLunch, destinationStops: nextPubs }))
-      setPullUrlsNotice(
-        missedRows.length > 0
-          ? `Filled ${filled} of ${spots.length}. Couldn't match: ${missedRows.join(", ")}.`
-          : `Filled ${filled} of ${spots.length}.`,
-      )
+      results = (j?.results ?? []) as typeof results
     } catch (e) {
-      setPullUrlsError((e as Error).message)
-    } finally {
-      setPullingUrls(false)
+      // On hard failure, return the snapshot's arrays unchanged so the
+      // caller can blanket-apply without a null check; error string
+      // tells the UI to surface a destructive banner.
+      return {
+        sights: snapshot.sights,
+        lunchStops: snapshot.lunchStops,
+        destinationStops: snapshot.destinationStops,
+        notice: null,
+        error: (e as Error).message,
+      }
     }
-  }, [pullingUrls, draft.sights, draft.lunchStops, draft.destinationStops])
+
+    let filled = 0
+    const missedRows: string[] = []
+    const SECTION_LABEL: Record<Slot["kind"], string> = {
+      sights: "Sight",
+      lunchStops: "Lunch stop",
+      destinationStops: "Destination stop",
+    }
+    const nextSights = [...snapshot.sights]
+    const nextLunch = [...snapshot.lunchStops]
+    const nextPubs = [...snapshot.destinationStops]
+
+    // Predicate: any of these tags marks the row as a refreshment
+    // venue, regardless of which list it currently lives in.
+    const hasRefreshment = (types: string[]) =>
+      types.some((t) => (REFRESHMENT_SPOT_TYPES as Set<string>).has(t))
+
+    slots.forEach((slot, i) => {
+      const res = results[i]
+      if (!res) {
+        missedRows.push(`${SECTION_LABEL[slot.kind]} ${slot.index + 1} (${spots[i].name})`)
+        return
+      }
+      filled++
+      const baseApply = <T extends { url: string; businessStatus: string; types: string[] }>(row: T): T => {
+        const googleSaysRefreshment = (res.types?.length ?? 0) > 0 && hasRefreshment(res.types ?? [])
+        const rowAlreadyRefreshment = hasRefreshment(row.types)
+        // Two paths to overwrite types:
+        //   (1) row.types is empty — fill from Google
+        //   (2) Google says refreshment, row's tags don't — override
+        //       (the (b) cross-check; preserves admin tags otherwise)
+        let mergedTypes = row.types
+        if (row.types.length === 0 && res.types?.length) {
+          mergedTypes = res.types
+        } else if (googleSaysRefreshment && !rowAlreadyRefreshment && res.types?.length) {
+          mergedTypes = res.types
+        }
+        return {
+          ...row,
+          url: row.url.trim() ? row.url : res.url,
+          businessStatus: res.businessStatus ?? row.businessStatus,
+          types: mergedTypes,
+        }
+      }
+      const applyRefreshment = (row: LunchDraft): LunchDraft => {
+        const next = baseApply(row)
+        if (!next.location.trim() && res.location) next.location = res.location
+        return next
+      }
+      const applySight = (row: SightDraft): SightDraft => {
+        const next = baseApply(row)
+        const isLocationable = next.types.some((t) => (LOCATIONABLE_SPOT_TYPES as Set<string>).has(t))
+        if (isLocationable && !next.location.trim() && res.location) next.location = res.location
+        return next
+      }
+      if (slot.kind === "sights") nextSights[slot.index] = applySight(nextSights[slot.index])
+      else if (slot.kind === "lunchStops") nextLunch[slot.index] = applyRefreshment(nextLunch[slot.index])
+      else nextPubs[slot.index] = applyRefreshment(nextPubs[slot.index])
+    })
+
+    // Section migration — sights that ended up with refreshment tags
+    // after the cross-check move to Lunch or Destination based on
+    // route-distance. Walk in REVERSE so we can splice from
+    // nextSights without invalidating earlier indexes. Same field
+    // mapping the manual auto-move uses (sight.description ↔ notes).
+    let migrated = 0
+    for (let idx = nextSights.length - 1; idx >= 0; idx--) {
+      const s = nextSights[idx]
+      if (!hasRefreshment(s.types)) continue
+      const km = Number(s.kmIntoRoute)
+      const bucket = bucketForRefreshment(
+        Number.isFinite(km) ? km : undefined,
+        typeof snapshot.distanceKm === "number" ? snapshot.distanceKm : undefined,
+      )
+      const moved: LunchDraft = {
+        name: s.name,
+        location: s.location,
+        url: s.url,
+        notes: s.description,
+        rating: "",
+        busy: "",
+        lat: s.lat,
+        lng: s.lng,
+        kmIntoRoute: s.kmIntoRoute,
+        businessStatus: s.businessStatus,
+        types: s.types,
+      }
+      nextSights.splice(idx, 1)
+      if (bucket === "destination") nextPubs.push(moved)
+      else nextLunch.push(moved)
+      migrated++
+    }
+
+    // Build the notice. "filled" counts rows that got a Places result;
+    // "migrated" reports the cross-check fix-ups (typically zero).
+    const summary = `URL pass: filled ${filled} of ${spots.length}.`
+    const moveBit = migrated > 0 ? ` Reclassified ${migrated} sight${migrated === 1 ? "" : "s"} as refreshment.` : ""
+    const missedBit = missedRows.length > 0 ? ` Couldn't match: ${missedRows.join(", ")}.` : ""
+    return {
+      sights: nextSights,
+      lunchStops: nextLunch,
+      destinationStops: nextPubs,
+      notice: summary + moveBit + missedBit,
+      error: null,
+    }
+  }
 
   const onSave = useCallback(async () => {
     setSaving(true)
@@ -1251,7 +1472,9 @@ function WalkCard({
           privateNote: draft.privateNote,
           rating: draft.rating,
           ratingExplanation: draft.ratingExplanation,
+          busyness: draft.busyness,
           previousWalkDates: draft.previousWalkDates,
+          mainTerrains: draft.mainTerrains,
           terrain: draft.terrain,
           distanceKm: draft.distanceKm,
           hours: draft.hours,
@@ -1496,9 +1719,9 @@ function WalkCard({
                   Trains-to-Green main walk. Used when we're taking
                   ownership of a walk that started life as someone
                   else's route (e.g. a Saturday Walkers Club page
-                  we've rewritten). The Related Source `type` is
-                  preserved so the admin can pre-set it (e.g.
-                  "Adapted from") before clicking. */}
+                  we've rewritten). The Related Source `type` defaults
+                  to "related" ("Related to"); the admin can change
+                  it after the fact (e.g. to "Adapted from"). */}
               <button
                 type="button"
                 onClick={() => {
@@ -1506,6 +1729,7 @@ function WalkCard({
                     ...d,
                     relatedSource: {
                       ...d.relatedSource,
+                      type: "related",
                       orgSlug: d.source.orgSlug,
                       pageName: d.source.pageName,
                       pageURL: d.source.pageURL,
@@ -1827,6 +2051,8 @@ function WalkCard({
                   onClick={async () => {
                     if (pullingDistance) return
                     setPullDistanceError(null)
+                    setPullUrlsError(null)
+                    setPullUrlsNotice(null)
                     setPullingDistance(true)
                     try {
                       const r = await fetch("/api/dev/komoot-distance", {
@@ -1846,95 +2072,114 @@ function WalkCard({
                           .replace(/['‘’ʼ]/g, "")
                           .replace(/\s+/g, " ")
                           .trim()
-                      setDraft((d) => {
-                        const next = {
-                          ...d,
-                          distanceKm: Math.round(j.distanceKm * 100) / 100,
-                          hours: j.hours,
-                          // Uphill, difficulty, and name are optional — only
-                          // overwrite when the API returned a value.
-                          ...(typeof j.uphillMetres === "number" ? { uphillMetres: Math.round(j.uphillMetres * 100) / 100 } : {}),
-                          ...(j.difficulty ? { difficulty: j.difficulty } : {}),
-                          ...(j.name ? { name: j.name } : {}),
-                        }
-                        // Merge auto-extracted waypoints into the three
-                        // venue lists. Dedup ACROSS all three (so a name
-                        // already saved as a sight won't get re-added as a
-                        // lunch stop, and vice versa) using the apostrophe-
-                        // insensitive normaliser above.
-                        type IncomingWaypoint = {
-                          name: string
-                          lat: number
-                          lng: number
-                          kmIntoRoute: number
-                          /** Canonical types pre-mapped server-side from Komoot's
-                           *  category vocabulary. May be empty when no recognised
-                           *  tag was present on the waypoint. */
-                          types?: string[]
-                        }
-                        const wp = j?.waypoints as
-                          | undefined
-                          | {
-                              destinationStops: IncomingWaypoint[]
-                              lunchStops: IncomingWaypoint[]
-                              sights: IncomingWaypoint[]
-                            }
-                        if (wp) {
-                          const seen = new Set([
-                            ...next.sights.map((x) => normName(x.name)),
-                            ...next.lunchStops.map((x) => normName(x.name)),
-                            ...next.destinationStops.map((x) => normName(x.name)),
-                          ])
-                          // Filter incoming waypoints, mutating `seen` so
-                          // duplicates within the same Pull-data batch
-                          // also collapse (e.g. if Komoot lists the same
-                          // venue twice, only one gets added).
-                          const filterNew = <T extends { name: string }>(arr: T[]) =>
-                            arr.filter((w) => {
-                              const k = normName(w.name)
-                              if (seen.has(k)) return false
-                              seen.add(k)
-                              return true
-                            })
-                          const toSight = (w: IncomingWaypoint) => ({
-                            name: w.name,
-                            url: "",
-                            description: "",
-                            lat: String(w.lat),
-                            lng: String(w.lng),
-                            kmIntoRoute: String(w.kmIntoRoute),
-                            businessStatus: "",
-                            // Auto-populate types from the upstream mapping. For
-                            // brand-new rows there's nothing to preserve, so we
-                            // can take the incoming list verbatim. (The "don't
-                            // overwrite manual edits" rule kicks in only on
-                            // re-pulls against existing rows — those are blocked
-                            // by the name-dedup above.)
-                            types: w.types ?? [],
+
+                      // Build the post-Komoot draft synchronously off the
+                      // current `draft` ref so we can both setDraft AND
+                      // hand the merged arrays to the Places pass below.
+                      // Doing the merge inline (rather than inside the
+                      // setDraft updater) keeps a stable reference we can
+                      // pass along — async work done after a setDraft
+                      // can't read the next state directly.
+                      const afterKomoot: EditableFields = {
+                        ...draft,
+                        distanceKm: Math.round(j.distanceKm * 100) / 100,
+                        hours: j.hours,
+                        ...(typeof j.uphillMetres === "number" ? { uphillMetres: Math.round(j.uphillMetres * 100) / 100 } : {}),
+                        ...(j.difficulty ? { difficulty: j.difficulty } : {}),
+                        ...(j.name ? { name: j.name } : {}),
+                      }
+                      type IncomingWaypoint = {
+                        name: string
+                        lat: number
+                        lng: number
+                        kmIntoRoute: number
+                        types?: string[]
+                      }
+                      const wp = j?.waypoints as
+                        | undefined
+                        | {
+                            destinationStops: IncomingWaypoint[]
+                            lunchStops: IncomingWaypoint[]
+                            sights: IncomingWaypoint[]
+                          }
+                      if (wp) {
+                        const seen = new Set([
+                          ...afterKomoot.sights.map((x) => normName(x.name)),
+                          ...afterKomoot.lunchStops.map((x) => normName(x.name)),
+                          ...afterKomoot.destinationStops.map((x) => normName(x.name)),
+                        ])
+                        const filterNew = <T extends { name: string }>(arr: T[]) =>
+                          arr.filter((w) => {
+                            const k = normName(w.name)
+                            if (seen.has(k)) return false
+                            seen.add(k)
+                            return true
                           })
-                          const toRefreshment = (w: IncomingWaypoint) => ({
-                            name: w.name,
-                            location: "",
-                            url: "",
-                            notes: "",
-                            rating: "" as LunchRating,
-                            busy: "" as LunchBusy,
-                            lat: String(w.lat),
-                            lng: String(w.lng),
-                            kmIntoRoute: String(w.kmIntoRoute),
-                            businessStatus: "",
-                            types: w.types ?? [],
-                          })
-                          // Order: destinationStops → lunchStops → sights so
-                          // food venues claim a name before sights would.
-                          // Within each bucket, Komoot's order (by km along
-                          // the route) is preserved.
-                          next.destinationStops = [...next.destinationStops, ...filterNew(wp.destinationStops).map(toRefreshment)]
-                          next.lunchStops = [...next.lunchStops, ...filterNew(wp.lunchStops).map(toRefreshment)]
-                          next.sights = [...next.sights, ...filterNew(wp.sights).map(toSight)]
-                        }
-                        return next
+                        const toSight = (w: IncomingWaypoint) => ({
+                          name: w.name,
+                          location: "",
+                          url: "",
+                          description: "",
+                          lat: String(w.lat),
+                          lng: String(w.lng),
+                          kmIntoRoute: String(w.kmIntoRoute),
+                          businessStatus: "",
+                          types: w.types ?? [],
+                        })
+                        const toRefreshment = (w: IncomingWaypoint) => ({
+                          name: w.name,
+                          location: "",
+                          url: "",
+                          notes: "",
+                          rating: "" as LunchRating,
+                          busy: "" as LunchBusy,
+                          lat: String(w.lat),
+                          lng: String(w.lng),
+                          kmIntoRoute: String(w.kmIntoRoute),
+                          businessStatus: "",
+                          types: w.types ?? [],
+                        })
+                        // Order: destinationStops → lunchStops → sights so
+                        // food venues claim a name before sights would.
+                        afterKomoot.destinationStops = [
+                          ...afterKomoot.destinationStops,
+                          ...filterNew(wp.destinationStops).map(toRefreshment),
+                        ]
+                        afterKomoot.lunchStops = [
+                          ...afterKomoot.lunchStops,
+                          ...filterNew(wp.lunchStops).map(toRefreshment),
+                        ]
+                        afterKomoot.sights = [
+                          ...afterKomoot.sights,
+                          ...filterNew(wp.sights).map(toSight),
+                        ]
+                      }
+                      // Show the freshly-imported rows immediately so
+                      // there's visible progress while Places runs.
+                      setDraft(afterKomoot)
+
+                      // Step 2: Places second-pass against the freshly
+                      // merged rows. Cross-checks Komoot's (often shaky)
+                      // type tags against Google's, and migrates any
+                      // sight that turns out to be a refreshment into
+                      // Lunch or Destination.
+                      const placesResult = await runPlacesPass({
+                        sights: afterKomoot.sights,
+                        lunchStops: afterKomoot.lunchStops,
+                        destinationStops: afterKomoot.destinationStops,
+                        distanceKm: afterKomoot.distanceKm,
                       })
+                      if (placesResult.error) {
+                        setPullUrlsError(placesResult.error)
+                      } else {
+                        setDraft((d) => ({
+                          ...d,
+                          sights: placesResult.sights,
+                          lunchStops: placesResult.lunchStops,
+                          destinationStops: placesResult.destinationStops,
+                        }))
+                        setPullUrlsNotice(placesResult.notice)
+                      }
                     } catch (e) {
                       setPullDistanceError((e as Error).message)
                     } finally {
@@ -1943,7 +2188,7 @@ function WalkCard({
                   }}
                   disabled={pullingDistance || !draft.komootUrl.trim()}
                   className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
-                  title="Fetch distance, duration, uphill, difficulty, name, and waypoints (sights / lunch stops / destination pubs) from the Komoot tour page"
+                  title="Scrape the Komoot tour page (distance, duration, uphill, difficulty, name, waypoints), then run a Google Places second-pass to fill URLs / locations / business status / type tags. Cross-checks Komoot's tags against Google's so a misclassified pub-named-after-a-saint ends up in Lunch instead of Sights."
                 >
                   {pullingDistance ? (
                     <span className="inline-flex items-center gap-1">
@@ -2136,6 +2381,119 @@ function WalkCard({
               />
             </div>
 
+            {/* Main terrains — closed-vocabulary toggle row mirroring
+                the Best-months pattern (flex-wrap, single-line tags,
+                pressed state in the same orange palette so the two
+                rows scan as a pair). Stored as a string[] of canonical
+                values from lib/main-terrains; the server cleaner
+                drops unknowns and re-sorts to the canonical display
+                order, so we don't need to keep the draft sorted on
+                every toggle. Distinct from the free-text Terrain row
+                below — that one stays free-form for nuance the
+                vocabulary doesn't cover. */}
+            <div className="mb-3">
+              <Label className="mb-1.5 block text-xs text-muted-foreground">Main terrains</Label>
+              <div className="flex flex-wrap gap-1">
+                {MAIN_TERRAINS.map((t) => {
+                  const active = draft.mainTerrains.includes(t.value)
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          mainTerrains: active
+                            ? d.mainTerrains.filter((v) => v !== t.value)
+                            : [...d.mainTerrains, t.value],
+                        }))
+                      }
+                      aria-pressed={active}
+                      className={
+                        "h-6 rounded px-2 text-[11px] font-medium transition-colors " +
+                        (active
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                      }
+                    >
+                      {t.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Busyness — descriptive footfall scale, 1–5. Mirrors
+                the existing Rating control's interaction model:
+                circular Unrated button + numeric tier buttons,
+                clicking the active tier clears it. Active palette
+                matches Best months / Main terrains for cohesion (this
+                row sits with the descriptive walk-character fields,
+                not the curatorial Key-info Rating). The selected
+                tier's label renders to the right in muted text. */}
+            <div className="mb-3">
+              <Label className="mb-1 block text-xs text-muted-foreground">Busyness</Label>
+              <div className="flex items-center gap-1.5">
+                {(() => {
+                  const active = draft.busyness == null
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setDraft((d) => ({ ...d, busyness: null }))}
+                      title="Unrated"
+                      aria-label="Unrated"
+                      aria-pressed={active}
+                      className={
+                        "flex h-7 w-7 items-center justify-center rounded transition-colors " +
+                        (active
+                          ? "bg-orange-50 text-orange-600 dark:bg-orange-950/20"
+                          : "text-muted-foreground hover:bg-muted/50")
+                      }
+                    >
+                      {/* Open circle — same affordance as the Rating
+                          row's Unrated button so the two controls
+                          read as a parallel pair. */}
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none"
+                        stroke={active ? "var(--primary)" : "currentColor"} strokeWidth={1.5}>
+                        <circle cx="12" cy="12" r="9" />
+                      </svg>
+                    </button>
+                  )
+                })()}
+                {([1, 2, 3, 4, 5] as const).map((n) => {
+                  const active = draft.busyness === n
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() =>
+                        setDraft((d) => ({
+                          ...d,
+                          busyness: d.busyness === n ? null : n,
+                        }))
+                      }
+                      title={`${BUSYNESS_LABELS[n]} (${n}/5)`}
+                      aria-label={`${BUSYNESS_LABELS[n]} — ${n} of 5`}
+                      aria-pressed={active}
+                      className={
+                        "h-7 w-7 rounded text-[11px] font-medium transition-colors " +
+                        (active
+                          ? "bg-orange-500 text-white hover:bg-orange-600"
+                          : "border border-border bg-background text-muted-foreground hover:bg-muted/60")
+                      }
+                    >
+                      {n}
+                    </button>
+                  )
+                })}
+                {typeof draft.busyness === "number" && (
+                  <span className="ml-1 text-[11px] text-muted-foreground">
+                    {BUSYNESS_LABELS[draft.busyness as 1 | 2 | 3 | 4 | 5]}
+                  </span>
+                )}
+              </div>
+            </div>
+
             {/* Terrain — comma-separated short tags. Renderer joins
                 with commas + "and" + period. */}
             <div className="mb-3">
@@ -2194,6 +2552,7 @@ function WalkCard({
             walkId={walk.id}
             sights={draft.sights}
             onChange={(sights) => setDraft((d) => ({ ...d, sights }))}
+            onTypesChange={onSightTypesChange}
           />
 
           {/* Lunch stops — name + location + url + notes + rating.
@@ -2209,6 +2568,8 @@ function WalkCard({
             addLabel="+ Add lunch stop"
             stops={draft.lunchStops}
             onStopsChange={(lunchStops) => setDraft((d) => ({ ...d, lunchStops }))}
+            onTypesChange={(i, t) => onRefreshmentTypesChange("lunchStops", i, t)}
+            onSwitchKind={(i) => onSwitchKind("lunchStops", i)}
             override={draft.lunchOverride}
             onOverrideChange={(lunchOverride) => setDraft((d) => ({ ...d, lunchOverride }))}
           />
@@ -2229,6 +2590,8 @@ function WalkCard({
             showLocation={false}
             stops={draft.destinationStops}
             onStopsChange={(destinationStops) => setDraft((d) => ({ ...d, destinationStops }))}
+            onTypesChange={(i, t) => onRefreshmentTypesChange("destinationStops", i, t)}
+            onSwitchKind={(i) => onSwitchKind("destinationStops", i)}
             override={draft.destinationStopsOverride}
             onOverrideChange={(destinationStopsOverride) => setDraft((d) => ({ ...d, destinationStopsOverride }))}
           />
@@ -2284,29 +2647,13 @@ function WalkCard({
                 rebuildPending came back from the server (production
                 save with deferred rebuild). */}
             {saveNotice && <span className="text-xs text-muted-foreground">{saveNotice}</span>}
-            {/* Pull URLs status — same muted-banner pattern as save
-                notices, mirrored to error styling on hard failures. */}
+            {/* Places second-pass status — emitted by Pull data after
+                its Komoot scrape. Muted banner for the success summary
+                ("filled X of Y, reclassified N sights"); destructive
+                styling for hard failures. */}
             {pullUrlsNotice && <span className="text-xs text-muted-foreground">{pullUrlsNotice}</span>}
             {pullUrlsError && <span className="text-xs text-destructive">{pullUrlsError}</span>}
             <div className="ml-auto flex items-center gap-2">
-              {/* Pull URLs — bulk Google Places resolve for any spot
-                  that has lat/lng but no URL. Disabled when there's
-                  nothing eligible (or a pull is already in flight). */}
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={onPullUrls}
-                disabled={
-                  pullingUrls ||
-                  ![...draft.sights, ...draft.lunchStops, ...draft.destinationStops].some(
-                    (r) => r.name.trim() && !r.url.trim() && r.lat.trim() && r.lng.trim(),
-                  )
-                }
-                className="h-7 text-xs"
-                title="Look up each spot on Google Places (uses lat/lng) and fill its URL + address. Skips rows that already have a URL."
-              >
-                {pullingUrls ? "Pulling URLs…" : "Pull URLs"}
-              </Button>
               {/* Clear spots — wipes Sights / Lunch stops / Destination
                   pubs in the draft. Disabled when all three are empty
                   to avoid a no-op click. No confirm dialog: nothing
@@ -2593,8 +2940,17 @@ function SpotTypesSelect({
         </button>
       </DropdownMenuTrigger>
       {/* className overrides the default min-w so the popover is
-          wide enough for two-word labels like "Nature reserve". */}
-      <DropdownMenuContent align="end" className="min-w-[12rem]">
+          wide enough for two-word labels like "Nature reserve".
+          max-h + overflow-y-auto cap the height so the menu scrolls
+          rather than spilling off-screen on short viewports (the list
+          has 20 items across six groups + dividers). collisionPadding
+          gives Radix's positioner an 8px buffer from each edge so the
+          flip / shift logic kicks in before clipping the bottom row. */}
+      <DropdownMenuContent
+        align="end"
+        collisionPadding={8}
+        className="max-h-[60vh] min-w-[12rem] overflow-y-auto"
+      >
         {SPOT_TYPES.map((t, i) => {
           // Insert a Separator at the start of each new group except
           // the very first. SPOT_TYPES is pre-sorted by group order
@@ -2620,6 +2976,64 @@ function SpotTypesSelect({
         })}
       </DropdownMenuContent>
     </DropdownMenu>
+  )
+}
+
+// One-click "Search Google" affordance — lives next to the URL input
+// on each spot row. Builds a query of name + (location?) + (county?)
+// and opens it in a new tab. The county is the nearest entry from
+// data/region-labels.json based on the row's lat/lng — gives Google
+// enough context to return walker-relevant pages instead of a same-
+// named place elsewhere in the country (the underlying motivation:
+// Pull URLs sometimes returns nothing useful for natural features
+// like Ivinghoe Beacon, but a hand-search returns plenty of good
+// pages, so this just speeds up that hand-search).
+//
+// Disabled when name is blank — there's nothing to search for. The
+// disabled state still renders a faded button for layout stability.
+function WebSearchButton({
+  name,
+  location,
+  lat,
+  lng,
+}: {
+  name: string
+  location?: string
+  lat?: string
+  lng?: string
+}) {
+  const trimmedName = name.trim()
+  const disabled = !trimmedName
+  const handleClick = () => {
+    if (disabled) return
+    const latNum = lat !== undefined && lat !== "" ? Number(lat) : undefined
+    const lngNum = lng !== undefined && lng !== "" ? Number(lng) : undefined
+    const county = nearestCounty(latNum, lngNum)
+    const parts = [trimmedName, location?.trim() || "", county || ""].filter(Boolean)
+    const query = parts.join(" ")
+    const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`
+    // noopener+noreferrer is the standard target=_blank safety pair —
+    // prevents the search tab from being able to navigate the editor
+    // tab via window.opener.
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={disabled}
+      title={disabled ? "Add a name to enable search" : "Search Google for this venue"}
+      aria-label="Search Google for this venue"
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-input bg-input/30 text-muted-foreground hover:bg-muted/40 disabled:opacity-40 disabled:hover:bg-input/30"
+    >
+      {/* Magnifying-glass glyph as inline SVG. Inline avoids a Lucide
+          import for a single icon and keeps the component dependency-
+          free. 14px to match the row's [11px] text density. */}
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+    </button>
   )
 }
 
@@ -2655,10 +3069,17 @@ function SightsEditor({
   walkId,
   sights,
   onChange,
+  onTypesChange,
 }: {
   walkId: string
   sights: SightDraft[]
   onChange: (next: SightDraft[]) => void
+  // Specialised types-change handler that decides whether the row
+  // stays a Sight or gets promoted to Lunch / Destination based on
+  // the new tag list. Lives on the parent because the move needs to
+  // mutate sibling lists this editor can't reach. When omitted the
+  // editor falls back to a plain in-place update.
+  onTypesChange?: (index: number, nextTypes: string[]) => void
 }) {
   // Sights live inside their own CollapsibleSection so the styling
   // matches the new top-level sections (Key info / Tips / Private).
@@ -2724,10 +3145,12 @@ function SightsEditor({
               </div>
             </div>
             <div className="space-y-1.5">
-              {/* Name + URL on one row. Name takes more horizontal
-                  space than URL — sights names tend to be shorter
-                  than URLs but this matches the way users scan the
-                  fields (label first). */}
+              {/* Name + Location + URL on one row, mirroring the
+                  Lunch-stops layout. Location is auto-filled by Pull
+                  URLs only for Cultural-group sights (castle, church,
+                  museum, historic_site, monument); admins can fill it
+                  in by hand for any sight. Sights sharing a location
+                  group together in the public prose. */}
               <div className="flex gap-1.5">
                 <Input
                   value={s.name}
@@ -2740,6 +3163,16 @@ function SightsEditor({
                   className="h-7 flex-1 text-xs"
                 />
                 <Input
+                  value={s.location}
+                  onChange={(e) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], location: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="Location"
+                  className="h-7 flex-1 text-xs"
+                />
+                <Input
                   type="url"
                   value={s.url}
                   onChange={(e) => {
@@ -2749,6 +3182,12 @@ function SightsEditor({
                   }}
                   placeholder="URL (optional)"
                   className="h-7 flex-1 text-xs"
+                />
+                <WebSearchButton
+                  name={s.name}
+                  location={s.location}
+                  lat={s.lat}
+                  lng={s.lng}
                 />
               </div>
               <div className="flex gap-1.5">
@@ -2773,6 +3212,15 @@ function SightsEditor({
                 <SpotTypesSelect
                   value={s.types}
                   onChange={(types) => {
+                    // Delegate to the parent move-aware handler when
+                    // provided so a refreshment-tag change can promote
+                    // this row out of the sights list. Falls back to a
+                    // plain in-place update for any caller that omits
+                    // the handler.
+                    if (onTypesChange) {
+                      onTypesChange(i, types)
+                      return
+                    }
                     const next = [...sights]
                     next[i] = { ...next[i], types }
                     onChange(next)
@@ -2802,7 +3250,7 @@ function SightsEditor({
       </div>
       <button
         type="button"
-        onClick={() => onChange([...sights, { name: "", url: "", description: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] }])}
+        onClick={() => onChange([...sights, { name: "", location: "", url: "", description: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] }])}
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
       >
         + Add sight
@@ -2851,6 +3299,8 @@ function RefreshmentStopsEditor({
   showLocation = true,
   stops,
   onStopsChange,
+  onTypesChange,
+  onSwitchKind,
   override,
   onOverrideChange,
 }: {
@@ -2868,6 +3318,16 @@ function RefreshmentStopsEditor({
   showLocation?: boolean
   stops: LunchDraft[]
   onStopsChange: (next: LunchDraft[]) => void
+  // Specialised types-change handler — symmetric to SightsEditor's
+  // version. Gives the parent a hook to demote the row to Sights when
+  // its refreshment tags are removed. Optional: omitted callers get
+  // plain in-place updates.
+  onTypesChange?: (index: number, nextTypes: string[]) => void
+  // Manual Lunch ↔ Destination swap for the row at `index`. Lives on
+  // the parent because the move target is a sibling list this editor
+  // can't reach. When provided, a small ⇄ button appears alongside
+  // the reorder arrows.
+  onSwitchKind?: (index: number) => void
   override: string
   onOverrideChange: (next: string) => void
 }) {
@@ -2938,6 +3398,25 @@ function RefreshmentStopsEditor({
                 >
                   ▼
                 </button>
+                {/* Swap kind — moves this row to the OTHER refreshment
+                    list (Lunch ↔ Destination). Only renders when the
+                    parent wired the swap callback. Tooltip + aria
+                    label name the target so the action is unambiguous
+                    (e.g. "Move to Destination" on a Lunch row). */}
+                {onSwitchKind && (() => {
+                  const otherLabel = kind === "lunch" ? "Destination" : "Lunch"
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => onSwitchKind(i)}
+                      className="ml-0.5 rounded px-1 text-muted-foreground hover:bg-muted/60"
+                      aria-label={`Move ${itemLabel} ${i + 1} to ${otherLabel}`}
+                      title={`Move to ${otherLabel}`}
+                    >
+                      ⇄
+                    </button>
+                  )
+                })()}
                 <button
                   type="button"
                   onClick={() => onStopsChange(stops.filter((_, j) => j !== i))}
@@ -2990,6 +3469,12 @@ function RefreshmentStopsEditor({
                   placeholder="URL (optional)"
                   className="h-7 flex-1 text-xs"
                 />
+                <WebSearchButton
+                  name={s.name}
+                  location={s.location}
+                  lat={s.lat}
+                  lng={s.lng}
+                />
               </div>
               <div className="flex gap-1.5">
                 <Input
@@ -3013,6 +3498,14 @@ function RefreshmentStopsEditor({
                 <SpotTypesSelect
                   value={s.types}
                   onChange={(types) => {
+                    // Delegate to the parent move-aware handler when
+                    // provided so removing every refreshment tag can
+                    // demote this row to Sights. Falls back to a plain
+                    // in-place update otherwise.
+                    if (onTypesChange) {
+                      onTypesChange(i, types)
+                      return
+                    }
                     const next = [...stops]
                     next[i] = { ...next[i], types }
                     onStopsChange(next)
