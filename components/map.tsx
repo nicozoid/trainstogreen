@@ -8,7 +8,6 @@ import FilterPanel from "@/components/filter-panel"
 import { WelcomeBanner, type WelcomeBannerHandle } from "@/components/welcome-banner"
 import { LogoSpinner } from "@/components/logo-spinner"
 import { HelpButton } from "@/components/help-button"
-import { RTTStatusPanel } from "@/components/rtt-status-panel"
 import StationModal, { type FlickrPhoto, type JourneyInfo } from "@/components/photo-overlay"
 import { MAX_GALLERY_PHOTOS } from "@/lib/flickr"
 // Synthetic-cluster topology — declared in a shared module so build
@@ -2337,11 +2336,7 @@ export default function HikeMap() {
   // uses, rather than setting bannerVisible=false directly (which
   // would unmount without animation).
   const welcomeBannerRef = useRef<WelcomeBannerHandle>(null)
-  // RTT status panel visibility — admin-only. Opened via the "RTT"
-  // button next to the admin close (bottom-centre) when admin is active.
-  const [rttStatusOpen, setRttStatusOpen] = useState(false)
   // Edits dialog (audit log + outbox queue) visibility — admin-only.
-  // Opened via the "edits" button next to the RTT one.
   const [editsDialogOpen, setEditsDialogOpen] = useState(false)
   // Screen-pixel origin of the London icon — null on initial page load (no icon click)
   const [bannerOrigin, setBannerOrigin] = useState<{ x: number; y: number } | null>(null)
@@ -9383,18 +9378,6 @@ export default function HikeMap() {
               {cursorCoord.lng.toFixed(2)},{cursorCoord.lat.toFixed(2)}
             </div>
           )}
-          {/* RTT status panel trigger — admin-only. Opens a modal
-              showing the live origin-routes.json summary (destinations,
-              journeys, sampled Saturdays per primary). Auto-refreshes
-              every 4s so admins can watch in-flight fetches land. */}
-          {devExcludeActive && (
-            <button
-              onClick={() => setRttStatusOpen(true)}
-              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
-            >
-              rtt
-            </button>
-          )}
           {/* Edits button — opens the audit dialog showing the local
               outbox (pending/sending/failed admin saves) + the most
               recent admin commits to main. Admin-only. */}
@@ -9417,6 +9400,20 @@ export default function HikeMap() {
               className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
             >
               ds
+            </a>
+          )}
+          {/* Walks-manager entry — admin-only. Opens the table view
+              of every Komoot-routed walk in a new tab. Mirrors the
+              `ds` button's pattern (anchor, target=_blank) so the
+              two read as siblings in the admin bar. */}
+          {devExcludeActive && (
+            <a
+              href="/walks-manager"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
+            >
+              walks
             </a>
           )}
           {/* Clear-session step is now part of the combined
@@ -9822,12 +9819,8 @@ export default function HikeMap() {
         </div>
       )}
 
-      {/* RTT status modal — mounted always so its Dialog's portal is
-          ready, but `open` is driven by the admin-only button above. */}
-      <RTTStatusPanel open={rttStatusOpen} onOpenChange={setRttStatusOpen} />
-
-      {/* Admin edits dialog — same pattern: mounted always, gated by
-          state. Surfaces the outbox queue and recent commits. */}
+      {/* Admin edits dialog — mounted always, gated by state. Surfaces
+          the outbox queue and recent commits. */}
       <AdminEditsDialog open={editsDialogOpen} onOpenChange={setEditsDialogOpen} />
 
       <Map

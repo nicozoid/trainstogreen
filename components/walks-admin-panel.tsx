@@ -134,6 +134,16 @@ export type WalkPayload = {
     walkNumber?: string
   }>
   previousWalkDates?: string[]
+  /** ISO timestamp of the most recent edit to this walk (creation +
+   *  every PATCH stamp it). Null/undefined for extractor-imported
+   *  walks that have never been touched in this lifecycle. Used by
+   *  the walks-manager table's default sort. */
+  updatedAt?: string | null
+  /** ISO timestamp of the last successful "Pull data" run on this
+   *  walk. Null/undefined when never pulled. Recorded immediately
+   *  after the Komoot scrape returns — independent of whether the
+   *  admin then clicks Save. */
+  lastPullAt?: string | null
   pageTags?: string[]
   /** Read-only entry-level "hidden metadata" + admin/build flags.
    *  Surfaced in a collapsed Metadata section on the walk card.
@@ -1290,7 +1300,9 @@ function NameField({
 // Single walk card. Collapsed by default — click the header to expand.
 // Drafts are kept in local state so keystrokes don't round-trip until
 // the user hits Save.
-function WalkCard({
+// Exported so the standalone /walks-manager/[walkId] page can render the
+// same per-walk editor UI without being wrapped in WalksAdminPanel.
+export function WalkCard({
   walk,
   onSaved,
   onDelete,
@@ -2465,6 +2477,17 @@ function WalkCard({
                       })
                       const j = await r.json()
                       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+                      // Stamp lastPullAt server-side immediately. Fire-
+                      // and-forget — this is the canonical "data was
+                      // pulled" signal, recorded even if the admin
+                      // bails out of the registry/Places passes below.
+                      // Errors are swallowed: a failed timestamp PATCH
+                      // mustn't derail the visible Pull data flow.
+                      void fetch(`/api/dev/walk/${walk.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ lastPullAt: new Date().toISOString() }),
+                      }).catch(() => { /* best-effort */ })
                       // Normalise a venue name for fuzzy dedup: lowercase,
                       // whitespace collapsed, and apostrophes stripped
                       // (straight, curly, modifier-letter — Komoot mixes

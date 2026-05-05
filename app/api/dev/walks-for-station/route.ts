@@ -103,6 +103,10 @@ type WalkPayload = {
   // renderer adds it.
   ratingExplanation: string
   updatedAt: string | null
+  // ISO timestamp of the most recent successful "Pull data" action
+  // on this walk. Null when never pulled. Surfaced in the walks-
+  // manager table as the "Last pull" column + default sort key.
+  lastPullAt: string | null
   // Provenance — list of organisations that have documented this walk.
   // Each row carries its own type (main / shorter / longer / alternative
   // / variant) and optional walk-specific page link. The public render
@@ -320,6 +324,7 @@ export async function GET(req: NextRequest) {
         rating: typeof v.rating === "number" ? v.rating : null,
         ratingExplanation: typeof v.ratingExplanation === "string" ? v.ratingExplanation : "",
         updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
+        lastPullAt: typeof v.lastPullAt === "string" ? v.lastPullAt : null,
         orgs: Array.isArray(v.orgs) ? v.orgs : undefined,
         previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
         pageTags: Array.isArray(entry.tags) ? entry.tags : [],
