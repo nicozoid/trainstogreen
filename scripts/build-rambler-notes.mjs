@@ -288,28 +288,133 @@ function formatDifficulty(difficulty) {
   return null
 }
 
-// Lunch stops: "the Gun Inn in Keyhaven, or the Marine in Milford".
-// Commas separate items only (not item-from-location — that uses "in").
-// URLs, when present, wrap the name: "the [Gun Inn](URL) in Keyhaven".
-// Always prepends a lowercase "the " — we strip any existing leading
-// "The/the " from the extractor's name to avoid "the The Swan".
+// Oxford-style "or" join used for both venue items inside a group and
+// for the groups themselves. 1 item → unchanged; 2 items → "A, or B"
+// (note: comma before "or" even on 2-item joins, per the project's
+// preferred Oxford convention, NOT the strict-Oxford-only-on-3+ rule);
+// 3+ items → "A, B, …, or Z".
+function joinWithOr(items) {
+  if (items.length <= 1) return items[0] ?? ""
+  return items.slice(0, -1).join(", ") + ", or " + items[items.length - 1]
+}
+
+// Format a single lunch-stop venue (the inner item — no "in {location}"
+// suffix; that's handled at group level so multiple venues at the same
+// location share one clause). Strips a leading "the/The" from the name
+// because we always prepend a lowercase "the " ourselves; produces
+// "the [Gun Inn](url) (charming; reservations recommended)" etc.
+function formatLunchVenue(s) {
+  const cleanedName = s.name.replace(/^the\s+/i, "")
+  const linked = s.url ? `[${cleanedName}](${s.url})` : cleanedName
+  const base = `the ${linked}`
+  // Parenthetical bits: optional admin notes ("good Sunday roast",
+  // "no kitchen on Mondays") + a "reservations recommended" tag when
+  // busy === "busy" (the UI relabels this as Yes/No; stored value is
+  // unchanged). Joined by "; " so both fit in one paren.
+  // Strip trailing "." and "?" from notes so they merge cleanly into
+  // the surrounding sentence, but PRESERVE "!" — exclamation marks
+  // carry tone the admin chose deliberately ("(lovely!)").
+  const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.?]+$/, "") : ""
+  const reservations = s.busy === "busy" ? "reservations recommended" : ""
+  const parens = [note, reservations].filter(Boolean).join("; ")
+  return parens ? `${base} (${parens})` : base
+}
+
+// Lunch-stop list, grouped by location. Returns the full prose (one
+// or more sentences) — caller pushes the result into the parts array
+// as-is.
+//
+// One location:
+//   "Lunch in Sandridge: the Heartwood Tearooms (lovely!), the Green
+//    Man (okay), or the Magpie."
+//
+// Multiple locations — header sentence listing the locations, then a
+// sentence per group:
+//   "Lunch in Sandridge, Westhumble, or East Humbling. Sandridge
+//    lunch stops: the Heartwood Tearooms (lovely!), the Green Man
+//    (okay), or the Magpie. Westhumble lunch stop: the Dead Dog. East
+//    Humbling lunch stops: the Axe & Crumbe, or Fairy's Demise
+//    (reservations recommended)."
+//
+// Insertion order is preserved across groups (first-seen location
+// keeps its slot). Venues with no location fall back to a flat
+// "Lunch at A, or B." sentence (or appear under an "Other lunch
+// stops:" trailing sentence in the multi-location case).
 function formatLunchStops(stops) {
   if (!stops?.length) return null
-  const fmts = stops.map((s) => {
-    const cleanedName = s.name.replace(/^the\s+/i, "")
-    const linked = s.url ? `[${cleanedName}](${s.url})` : cleanedName
-    const base = `the ${linked}`
+  const groups = new Map() // location → venue strings (preserves order)
+  const noLoc = []
+  for (const s of stops) {
+    const venue = formatLunchVenue(s)
     const loc = s.location?.trim()
-    const main = loc ? `${base} in ${loc}` : base
-    // Optional admin notes about the stop (e.g. "good Sunday roast",
-    // "no kitchen on Mondays"). Renders in parentheses so the prose
-    // surfaces the colour without bloating the main clause.
-    const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.!?]+$/, "") : ""
-    return note ? `${main} (${note})` : main
+    if (loc) {
+      if (!groups.has(loc)) groups.set(loc, [])
+      groups.get(loc).push(venue)
+    } else {
+      noLoc.push(venue)
+    }
+  }
+  const locatedGroups = [...groups.entries()] // [[loc, venues], …]
+  const totalGroupCount = locatedGroups.length + (noLoc.length ? 1 : 0)
+
+  // Single-group case — one sentence.
+  if (totalGroupCount === 1) {
+    if (locatedGroups.length === 1) {
+      const [loc, venues] = locatedGroups[0]
+      return `Lunch in ${loc}: ${joinWithOr(venues)}.`
+    }
+    // No location info on any stop — fall back to flat phrasing so
+    // pre-existing data without locations still reads as a sentence.
+    return `Lunch at ${joinWithOr(noLoc)}.`
+  }
+
+  // Multi-group case — header + one sentence per group.
+  const sentences = []
+  // Header lists only the located groups (unlocated venues are
+  // covered by the trailing "Other lunch stop(s):" sentence). If
+  // there's only one located group plus an unlocated bucket, the
+  // header still mentions the located group in case the admin scans
+  // it; the unlocated bucket falls under "Other".
+  const headerLocations = locatedGroups.map(([loc]) => loc)
+  if (headerLocations.length > 0) {
+    sentences.push(`Lunch in ${joinWithOr(headerLocations)}.`)
+  }
+  for (const [loc, venues] of locatedGroups) {
+    const label = venues.length === 1 ? `${loc} lunch stop` : `${loc} lunch stops`
+    sentences.push(`${label}: ${joinWithOr(venues)}.`)
+  }
+  if (noLoc.length) {
+    const label = noLoc.length === 1 ? "Other lunch stop" : "Other lunch stops"
+    sentences.push(`${label}: ${joinWithOr(noLoc)}.`)
+  }
+  return sentences.join(" ")
+}
+
+// Destination-pub list. Same data shape as lunch stops, but the prose
+// convention differs: the location is implicit (the walk destination),
+// so we don't render "in {location}" or prepend "the ". The venue name
+// is rendered as-is — including any leading "The" — because the typical
+// sentence reads "Destination pub: The Queens Head."
+//
+// URLs (when present) wrap the name as a markdown link, mirroring the
+// lunch-stop formatter. Optional admin notes go in trailing parens.
+function formatDestinationPubs(stops) {
+  if (!stops?.length) return null
+  const fmts = stops.map((s) => {
+    const linked = s.url ? `[${s.name}](${s.url})` : s.name
+    // Parenthetical bits — admin notes + "reservations recommended"
+    // when busy === "busy" (the UI relabels this as Yes/No, but the
+    // stored value is unchanged). Joined by "; " so both fit
+    // naturally in one paren.
+    // Strip trailing "." and "?" from notes so they merge cleanly into
+  // the surrounding sentence, but PRESERVE "!" — exclamation marks
+  // carry tone the admin chose deliberately ("(lovely!)").
+  const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.?]+$/, "") : ""
+    const reservations = s.busy === "busy" ? "reservations recommended" : ""
+    const parens = [note, reservations].filter(Boolean).join("; ")
+    return parens ? `${linked} (${parens})` : linked
   })
-  if (fmts.length === 1) return fmts[0]
-  if (fmts.length === 2) return `${fmts[0]}, or ${fmts[1]}`
-  return fmts.slice(0, -1).join(", ") + ", or " + fmts[fmts.length - 1]
+  return joinWithOr(fmts)
 }
 
 // Source-link clause. Every walk gets one, positioned right after the
@@ -488,36 +593,6 @@ function withPeriod(s) {
 // scraped. It no longer drives rendering or any user-visible
 // hierarchy, but may be useful later for filtering or showing the
 // "canonical" version of a page's walks.
-// relatedSource → "Adapted from [<Org> walk](url)." (or "Similar to …").
-//
-// Emitted as a sentence between the lunch line and the distance line
-// in the rendered prose. Triggered solely by relatedSource.orgSlug
-// being populated; pageURL is optional — when missing, the link
-// collapses to plain text. Falls back to the slug itself when the
-// org isn't registered in sources.json (avoids a broken summary if
-// an admin adds a new orgSlug without registering it first).
-function formatRelatedSourceClause(variant, sources) {
-  const rs = variant.relatedSource
-  if (!rs || typeof rs.orgSlug !== "string" || rs.orgSlug.trim() === "") return null
-  const orgName = sources?.[rs.orgSlug]?.name || rs.orgSlug
-  const linkText = `${orgName} walk`
-  const pageURL = typeof rs.pageURL === "string" ? rs.pageURL.trim() : ""
-  const labelled = pageURL ? `[${linkText}](${pageURL})` : linkText
-  let phrase
-  switch (rs.type) {
-    case "main":        phrase = "From"; break
-    case "shorter":     phrase = "A shorter variant of"; break
-    case "longer":      phrase = "A longer variant of"; break
-    case "alternative": phrase = "An alternative variant of"; break
-    case "variant":     phrase = "A variant of"; break
-    case "similar":     phrase = "Similar to"; break
-    case "related":     phrase = "Related to"; break
-    // Unknown / unset types fall back to the most generic phrasing.
-    case "adapted":
-    default:            phrase = "Adapted from"; break
-  }
-  return `${phrase} ${labelled}.`
-}
 
 function buildSummary(variant, entry, crsIndex, sources) {
   const start = crsIndex.get(variant.startStation)
@@ -662,9 +737,33 @@ function buildSummary(variant, entry, crsIndex, sources) {
   const structuredSeasons = formatBestSeasons(variant.bestSeasons)
   if (structuredSeasons) parts.push(structuredSeasons)
 
-  // Lunch stops — compact list
-  const lunch = formatLunchStops(variant.lunchStops)
-  if (lunch) parts.push(`Lunch at ${lunch}.`)
+  // Lunch — admin override (free text) takes precedence over the
+  // structured lunchStops list. Override rendered verbatim (with
+  // trailing period). Otherwise formatLunchStops returns the full
+  // prose (one or more sentences, headers and all), so we push it
+  // as-is rather than wrapping it.
+  const lunchOverride = typeof variant.lunchOverride === "string" ? variant.lunchOverride.trim() : ""
+  if (lunchOverride) {
+    parts.push(withPeriod(lunchOverride))
+  } else {
+    const lunch = formatLunchStops(variant.lunchStops)
+    if (lunch) parts.push(lunch)
+  }
+
+  // Destination pub(s) — same override-beats-list rule as lunch.
+  // Uses its own formatter because the prose convention differs:
+  // no "in {Location}" (the walk destination is implicit). Header
+  // pluralises with the venue count.
+  const destinationPubsOverride = typeof variant.destinationPubsOverride === "string" ? variant.destinationPubsOverride.trim() : ""
+  if (destinationPubsOverride) {
+    parts.push(withPeriod(destinationPubsOverride))
+  } else {
+    const dest = formatDestinationPubs(variant.destinationPubs)
+    if (dest) {
+      const label = (variant.destinationPubs?.length ?? 0) > 1 ? "Destination pubs" : "Destination pub"
+      parts.push(`${label}: ${dest}.`)
+    }
+  }
 
   // Book source clause — emitted before distance so the book
   // attribution reads as a lead-in to the trailing stats rather than
@@ -675,12 +774,9 @@ function buildSummary(variant, entry, crsIndex, sources) {
     if (bookClause) parts.push(bookClause)
   }
 
-  // Related source — admin cross-reference rendered as a short
-  // "Adapted from [<Org> walk](url)." clause. Sits alongside the
-  // book source clause so any external attribution is grouped
-  // together just before the distance/time stats.
-  const relatedClause = formatRelatedSourceClause(variant, sources)
-  if (relatedClause) parts.push(relatedClause)
+  // Related source is intentionally NOT rendered in public prose —
+  // it stays admin-only as a cross-reference inside the editor. The
+  // formatter still exists for any admin-side surfaces that want it.
 
   // Distance, uphill, hours, difficulty — each their own sentence.
   // Always emitted when present, including alongside a Komoot route

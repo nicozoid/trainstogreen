@@ -61,6 +61,15 @@ export type WalkPayload = {
   terrain: string
   sights: { name: string; url?: string | null; description?: string }[]
   lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
+  /** Free-text override for the lunch line in the public prose. When
+   *  populated, replaces the formatted lunchStops list entirely. */
+  lunchOverride: string
+  /** Destination pub(s) — same shape as lunchStops. The editor hides
+   *  the location field for this section since the walk destination is
+   *  implicit. */
+  destinationPubs: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
+  /** Free-text override for the destination-pub line, parallels lunchOverride. */
+  destinationPubsOverride: string
   miscellany: string
   trainTips: string
   /** Admin-only free-text scratchpad, never rendered to the public. */
@@ -168,6 +177,9 @@ type EditableFields = {
   difficulty: "easy" | "moderate" | "hard" | null
   sights: SightDraft[]
   lunchStops: LunchDraft[]
+  lunchOverride: string
+  destinationPubs: LunchDraft[]
+  destinationPubsOverride: string
   // Source provenance — all four fields editable. orgSlug comes from
   // sources.json (organisation registry); type is a small enum
   // (main/shorter/longer/alternative/variant). We default missing
@@ -811,8 +823,11 @@ function CollapsibleSection({
   rightSlot?: React.ReactNode
   // Optional count rendered as "(n)" after the title — useful for
   // sections backed by an array (Sights, Lunch stops) so the admin
-  // sees the row count without expanding.
-  count?: number
+  // sees the row count without expanding. Accepts a string so callers
+  // can render a status word instead of a number (e.g. "(override)"
+  // for the refreshment-stops section when its override-text mode is
+  // active and the venue list is moot).
+  count?: number | string
   open?: boolean
   onOpenChange?: (open: boolean) => void
   children: React.ReactNode
@@ -847,7 +862,10 @@ function CollapsibleSection({
             ▸
           </span>
           {title}
-          {count !== undefined && count > 0 && (
+          {/* Render when a number > 0 OR a non-empty string. Numbers
+              render as "(3)"; strings render verbatim ("(override)"). */}
+          {((typeof count === "number" && count > 0) ||
+            (typeof count === "string" && count.length > 0)) && (
             <span className="italic text-muted-foreground/70 normal-case">({count})</span>
           )}
         </button>
@@ -891,13 +909,11 @@ function WalkCard({
   // "Copied!" feedback in place of the id.
   const [idCopied, setIdCopied] = useState(false)
   // Sources section — single collapsible holding both Main source
-  // and Related source. Collapsed by default (provenance is rarely
-  // edited) but auto-opens when a related source is already set so
-  // the admin sees it on open. The Subordinate button stays in the
-  // header so it remains reachable without expanding.
-  const [sourcesExpanded, setSourcesExpanded] = useState(
-    !!(walk.relatedSource && (walk.relatedSource.orgSlug || walk.relatedSource.pageName || walk.relatedSource.pageURL)),
-  )
+  // and Related source. Always collapsed by default; provenance is
+  // rarely edited so the section starts out of the way. Subordinate
+  // button stays in the header so it remains reachable without
+  // expanding the section.
+  const [sourcesExpanded, setSourcesExpanded] = useState(false)
   // "Pull data" button next to the komoot URL field. Spinner +
   // ephemeral error string while the scrape runs. Error is cleared
   // by the next attempt or by editing the URL.
@@ -926,6 +942,10 @@ function WalkCard({
       difficulty: walk.difficulty,
       sights: sightsToDraft(walk.sights),
       lunchStops: lunchToDraft(walk.lunchStops),
+      lunchOverride: walk.lunchOverride ?? "",
+      // lunchToDraft works for both lists since they share the same shape.
+      destinationPubs: lunchToDraft(walk.destinationPubs ?? []),
+      destinationPubsOverride: walk.destinationPubsOverride ?? "",
       source: {
         orgSlug: walk.source?.orgSlug ?? "",
         pageName: walk.source?.pageName ?? "",
@@ -946,7 +966,8 @@ function WalkCard({
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
       walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
       walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
-      walk.sights, walk.lunchStops,
+      walk.sights, walk.lunchStops, walk.lunchOverride,
+      walk.destinationPubs, walk.destinationPubsOverride,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
       walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
     ],
@@ -985,6 +1006,9 @@ function WalkCard({
       // via useMemo above.
       JSON.stringify(draft.sights) !== JSON.stringify(serverState.sights) ||
       JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops) ||
+      draft.lunchOverride.trim() !== serverState.lunchOverride.trim() ||
+      JSON.stringify(draft.destinationPubs) !== JSON.stringify(serverState.destinationPubs) ||
+      draft.destinationPubsOverride.trim() !== serverState.destinationPubsOverride.trim() ||
       JSON.stringify(draft.source) !== JSON.stringify(serverState.source) ||
       JSON.stringify(draft.relatedSource) !== JSON.stringify(serverState.relatedSource)
     )
@@ -1038,6 +1062,9 @@ function WalkCard({
           // drafts as-is and trust the server-side filter.
           sights: draft.sights,
           lunchStops: draft.lunchStops,
+          lunchOverride: draft.lunchOverride,
+          destinationPubs: draft.destinationPubs,
+          destinationPubsOverride: draft.destinationPubsOverride,
           source: draft.source,
           relatedSource: draft.relatedSource,
         }),
@@ -1827,11 +1854,39 @@ function WalkCard({
 
           {/* Lunch stops — name + location + url + notes + rating.
               notes/rating are admin-only; renderer shows only the
-              first three. The component owns its collapsible header. */}
-          <LunchStopsEditor
+              first three. The component owns its collapsible header.
+              Override field replaces the formatted venue list in the
+              public prose entirely when populated. */}
+          <RefreshmentStopsEditor
             walkId={walk.id}
+            kind="lunch"
+            sectionTitle="Lunch stops"
+            itemLabel="Lunch"
+            addLabel="+ Add lunch stop"
             stops={draft.lunchStops}
-            onChange={(lunchStops) => setDraft((d) => ({ ...d, lunchStops }))}
+            onStopsChange={(lunchStops) => setDraft((d) => ({ ...d, lunchStops }))}
+            override={draft.lunchOverride}
+            onOverrideChange={(lunchOverride) => setDraft((d) => ({ ...d, lunchOverride }))}
+          />
+
+          {/* Destination pubs — venue(s) at the walk's end. Same shape
+              and behaviour as Lunch stops, but the editor hides the
+              location field (the location is implicit — it's the walk
+              destination) and the public prose renders "Destination
+              pub: <name>" rather than "Lunch at the X in Y". Override
+              field replaces the venue list verbatim, same rule as
+              lunch. */}
+          <RefreshmentStopsEditor
+            walkId={walk.id}
+            kind="destinationPubs"
+            sectionTitle="Destination pubs"
+            itemLabel="Destination pub"
+            addLabel="+ Add destination pub"
+            showLocation={false}
+            stops={draft.destinationPubs}
+            onStopsChange={(destinationPubs) => setDraft((d) => ({ ...d, destinationPubs }))}
+            override={draft.destinationPubsOverride}
+            onOverrideChange={(destinationPubsOverride) => setDraft((d) => ({ ...d, destinationPubsOverride }))}
           />
 
           {/* Private — admin-only fields, never rendered publicly:
@@ -2227,28 +2282,78 @@ const LUNCH_RATINGS: Array<{ value: "good" | "fine" | "poor"; label: string; cla
   { value: "poor", label: "Poor", classes: "bg-red-500 text-white hover:bg-red-600" },
 ]
 
-// Busy is a tri-state (busy / quiet / no opinion). Active tints
-// borrow the rating palette so the visual language stays consistent:
-// "busy" reads as a warning amber, "quiet" as a positive green.
+// "Reservations recommended?" tri-state (yes / no / no opinion).
+// The stored values stay "busy"/"quiet" — same data shape as before,
+// just relabelled in the UI. "busy" → "Yes" (popular enough that you
+// should book ahead), "quiet" → "No" (walk-up is fine). Active tints
+// keep the rating-palette parallel so the controls read as a pair.
 const LUNCH_BUSY_OPTIONS: Array<{ value: "busy" | "quiet"; label: string; classes: string }> = [
-  { value: "busy",  label: "Busy",  classes: "bg-amber-400 text-white hover:bg-amber-500" },
-  { value: "quiet", label: "Quiet", classes: "bg-green-500 text-white hover:bg-green-600" },
+  { value: "busy",  label: "Yes", classes: "bg-amber-400 text-white hover:bg-amber-500" },
+  { value: "quiet", label: "No",  classes: "bg-green-500 text-white hover:bg-green-600" },
 ]
 
-function LunchStopsEditor({
+// Refreshment-stop editor shared between Lunch stops and Last orders.
+// Both sections store the same data shape (LunchDraft[]) and present
+// the same controls — only the labels change. The optional override
+// field at the top, when populated, replaces the formatted venue list
+// in the public prose entirely (the rendered text becomes the override
+// verbatim). The venue rows below stay editable so the admin can keep
+// them as scratch notes when an override is in use.
+function RefreshmentStopsEditor({
   walkId,
+  kind,
+  sectionTitle,
+  itemLabel,
+  addLabel,
+  showLocation = true,
   stops,
-  onChange,
+  onStopsChange,
+  override,
+  onOverrideChange,
 }: {
   walkId: string
+  // Used as a stable id-prefix so the two instances on the same card
+  // produce unique DOM ids (lunch-body-XXXX vs destinationPubs-body-XXXX).
+  kind: "lunch" | "destinationPubs"
+  sectionTitle: string
+  // Per-row prefix shown in each row's header ("Lunch 1", "Destination pub 1").
+  itemLabel: string
+  addLabel: string
+  // Whether to render the per-row Location input. False for destination
+  // pubs (the location is implicit — the walk destination — so the prose
+  // builder doesn't need it and an extra input would just be noise).
+  showLocation?: boolean
   stops: LunchDraft[]
-  onChange: (next: LunchDraft[]) => void
+  onStopsChange: (next: LunchDraft[]) => void
+  override: string
+  onOverrideChange: (next: string) => void
 }) {
-  // Lunch stops live inside their own CollapsibleSection so the
-  // styling matches the new top-level sections. Same pattern as
-  // SightsEditor above.
+  // Display badge on the section header. Shows "(override)" when the
+  // free-text override is set, otherwise the venue count — so the
+  // admin can spot at a glance which mode the section is in without
+  // expanding it.
+  const headerCount = override.trim() ? "override" : stops.length
   return (
-    <CollapsibleSection title="Lunch stops" bodyId={`lunch-body-${walkId}`} count={stops.length}>
+    <CollapsibleSection title={sectionTitle} bodyId={`${kind}-body-${walkId}`} count={headerCount}>
+      {/* Override sentence — sits at the TOP of the section so the
+          dominant signal (when set, the venue list is moot in public
+          prose) reads first. Empty by default; populated value replaces
+          the formatted venue list verbatim in the public output. */}
+      <div className="mb-3 rounded border border-border/60 bg-background/40 px-2 py-2">
+        <Label htmlFor={`${kind}-override-${walkId}`} className="mb-1 block text-[10px] uppercase tracking-wide text-muted-foreground">
+          Override sentence
+          <span className="ml-1 font-normal italic text-muted-foreground/70">
+            replaces the venue list in the public prose when populated
+          </span>
+        </Label>
+        <Input
+          id={`${kind}-override-${walkId}`}
+          value={override}
+          onChange={(e) => onOverrideChange(e.target.value)}
+          placeholder='e.g. "BYO — there are no good options on this walk."'
+          className="h-7 text-xs"
+        />
+      </div>
       <div className="flex flex-col gap-2">
         {stops.map((s, i) => (
           <div
@@ -2257,44 +2362,44 @@ function LunchStopsEditor({
           >
             <div className="mb-1 flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Lunch {i + 1}
+                {itemLabel} {i + 1}
               </span>
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
-                  onClick={() => onChange(arrayMove(stops, i, 0))}
+                  onClick={() => onStopsChange(arrayMove(stops, i, 0))}
                   disabled={i === 0}
                   className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
-                  aria-label={`Move lunch ${i + 1} to top`}
+                  aria-label={`Move ${itemLabel} ${i + 1} to top`}
                   title="Move to top"
                 >
                   ⇈
                 </button>
                 <button
                   type="button"
-                  onClick={() => onChange(arrayMove(stops, i, i - 1))}
+                  onClick={() => onStopsChange(arrayMove(stops, i, i - 1))}
                   disabled={i === 0}
                   className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
-                  aria-label={`Move lunch ${i + 1} up`}
+                  aria-label={`Move ${itemLabel} ${i + 1} up`}
                   title="Move up"
                 >
                   ▲
                 </button>
                 <button
                   type="button"
-                  onClick={() => onChange(arrayMove(stops, i, i + 1))}
+                  onClick={() => onStopsChange(arrayMove(stops, i, i + 1))}
                   disabled={i === stops.length - 1}
                   className="rounded px-1 text-muted-foreground hover:bg-muted/60 disabled:opacity-30 disabled:hover:bg-transparent"
-                  aria-label={`Move lunch ${i + 1} down`}
+                  aria-label={`Move ${itemLabel} ${i + 1} down`}
                   title="Move down"
                 >
                   ▼
                 </button>
                 <button
                   type="button"
-                  onClick={() => onChange(stops.filter((_, j) => j !== i))}
+                  onClick={() => onStopsChange(stops.filter((_, j) => j !== i))}
                   className="ml-0.5 rounded px-1 text-muted-foreground hover:text-destructive"
-                  aria-label={`Delete lunch stop ${i + 1}`}
+                  aria-label={`Delete ${itemLabel} ${i + 1}`}
                   title="Delete"
                 >
                   ×
@@ -2302,37 +2407,42 @@ function LunchStopsEditor({
               </div>
             </div>
             <div className="space-y-1.5">
-              {/* Name + Location + URL on one row. Three equal flex
-                  cells keep the row scannable; longer values truncate
-                  inside their input rather than wrapping the row. */}
+              {/* Name (+ optional Location) + URL on one row. Three
+                  equal flex cells when Location is shown; two cells
+                  when it isn't (destination pubs hide the location
+                  since the walk destination is implicit). Longer
+                  values truncate inside their input rather than
+                  wrapping the row. */}
               <div className="flex gap-1.5">
                 <Input
                   value={s.name}
                   onChange={(e) => {
                     const next = [...stops]
                     next[i] = { ...next[i], name: e.target.value }
-                    onChange(next)
+                    onStopsChange(next)
                   }}
                   placeholder="Name (required)"
                   className="h-7 flex-1 text-xs"
                 />
-                <Input
-                  value={s.location}
-                  onChange={(e) => {
-                    const next = [...stops]
-                    next[i] = { ...next[i], location: e.target.value }
-                    onChange(next)
-                  }}
-                  placeholder="Location"
-                  className="h-7 flex-1 text-xs"
-                />
+                {showLocation && (
+                  <Input
+                    value={s.location}
+                    onChange={(e) => {
+                      const next = [...stops]
+                      next[i] = { ...next[i], location: e.target.value }
+                      onStopsChange(next)
+                    }}
+                    placeholder="Location"
+                    className="h-7 flex-1 text-xs"
+                  />
+                )}
                 <Input
                   type="url"
                   value={s.url}
                   onChange={(e) => {
                     const next = [...stops]
                     next[i] = { ...next[i], url: e.target.value }
-                    onChange(next)
+                    onStopsChange(next)
                   }}
                   placeholder="URL (optional)"
                   className="h-7 flex-1 text-xs"
@@ -2343,7 +2453,7 @@ function LunchStopsEditor({
                 onChange={(e) => {
                   const next = [...stops]
                   next[i] = { ...next[i], notes: e.target.value }
-                  onChange(next)
+                  onStopsChange(next)
                 }}
                 placeholder="Notes (optional, admin-only for now)"
                 className="h-7 text-xs"
@@ -2366,7 +2476,7 @@ function LunchStopsEditor({
                         onClick={() => {
                           const next = [...stops]
                           next[i] = { ...next[i], rating: active ? "" : r.value }
-                          onChange(next)
+                          onStopsChange(next)
                         }}
                         className={
                           "rounded px-1.5 py-0.5 text-[10px] transition-colors " +
@@ -2382,7 +2492,7 @@ function LunchStopsEditor({
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Busy
+                    Reservations recommended?
                   </span>
                   {LUNCH_BUSY_OPTIONS.map((b) => {
                     const active = s.busy === b.value
@@ -2393,7 +2503,7 @@ function LunchStopsEditor({
                         onClick={() => {
                           const next = [...stops]
                           next[i] = { ...next[i], busy: active ? "" : b.value }
-                          onChange(next)
+                          onStopsChange(next)
                         }}
                         className={
                           "rounded px-1.5 py-0.5 text-[10px] transition-colors " +
@@ -2415,16 +2525,16 @@ function LunchStopsEditor({
       <button
         type="button"
         onClick={() =>
-          onChange([
+          onStopsChange([
             ...stops,
             { name: "", location: "", url: "", notes: "", rating: "", busy: "" },
           ])
         }
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
       >
-        + Add lunch stop
+        {addLabel}
       </button>
-      <span id={`lunch-${walkId}`} className="sr-only" />
+      <span id={`${kind}-${walkId}`} className="sr-only" />
     </CollapsibleSection>
   )
 }
