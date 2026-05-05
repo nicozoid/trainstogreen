@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { KOMOOT_TO_SPOT_TYPES, VIEWPOINT_SUPERSEDED_BY, type SpotTypeValue } from "@/lib/spot-types"
 
 // Scrape tour data from a public komoot tour page.
 //
@@ -40,6 +41,232 @@ function decodeHtmlEntities(s: string): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&amp;/g, "&")
+}
+
+// Categories on Komoot Highlights that should bucket as a refreshment
+// venue (pub / lunch stop / destination pub). Anything else maps to a
+// "sight". Komoot's highlight `categories` field is a string array
+// like ["cafe","pub","settlement","family_friendly"]; POIs only carry
+// a numeric `category` we have to decode via POI_CATEGORY_TAGS below.
+const FOOD_CATEGORIES = new Set(["pub", "restaurant", "cafe"])
+
+// Tags that mean "this waypoint is navigation, not a destination" —
+// dropped from all buckets entirely. Train stations are the obvious
+// case (Komoot loves to drop them at the start/end of rail-served
+// walks). Add any other navigational categories here as we encounter
+// them.
+const NON_DESTINATION_TAGS = new Set(["train_station"])
+
+// Empirically-built lookup from Komoot's numeric POI category IDs to
+// the equivalent highlight-string tag(s). Komoot doesn't ship this
+// mapping in the page or any public API — entries are added as we
+// encounter new categories on real walks. Unknown IDs → no tags
+// (defaults to a "sight" bucket).
+//
+//    21 — summit         (Otford Mount and similar named hills)
+//    41 — cafe           (Abigail's Cafe)
+//    61 — pub            (Queens Head, Rose & Crown, Peahen, …)
+//    72 — religious_building (St Peter & St Paul, parish churches)
+//   191 — forest         (Back Wood, Courtfield Wood, Great Wood, …)
+//   219 — train_station  (Bow Brickhill, St Albans City)
+//
+// Add new entries here when a POI gets misclassified. The values use
+// the same vocabulary as Komoot's highlight `categories` array, so
+// FOOD_CATEGORIES + KOMOOT_TO_SPOT_TYPES + NON_DESTINATION_TAGS all
+// match against this same string set.
+const POI_CATEGORY_TAGS: Record<number, string[]> = {
+  21: ["mountain_summits"],
+  41: ["cafe"],
+  61: ["pub"],
+  72: ["religious_building"],
+  191: ["forest"],
+  219: ["train_station"],
+}
+
+// Threshold for "near the end of the walk" — food venues whose
+// position ALONG THE ROUTE is within this many km of the end are
+// tagged as destination pubs; venues farther back are lunch stops.
+// Measured as route-distance (totalKm − kmIntoRoute), not haversine,
+// so a venue that's geographically close to the end station but
+// chronologically mid-walk (e.g. a pub the route passes through, then
+// loops away from before returning) doesn't get mis-bucketed.
+const DESTINATION_STOP_KM = 4
+
+type Waypoint = {
+  name: string
+  lat: number
+  lng: number
+  /** Approx. km along the route at this waypoint's index. Linear
+   *  interpolation (totalKm × index / maxIndex) — close enough for the
+   *  admin to see at a glance, not survey-accurate. */
+  kmIntoRoute: number
+  /** Canonical spot types derived from the raw Komoot categories
+   *  (highlight `categories[]` strings + POI numeric `category`). The
+   *  frontend fills the row's `types` field with these only when it's
+   *  currently empty. */
+  types: SpotTypeValue[]
+}
+
+// Map raw Komoot category strings (already normalised — POI numeric
+// codes are decoded upstream) into our canonical SpotTypeValue
+// vocabulary, deduped + order-preserved. Tags not in the lookup are
+// silently dropped (most Komoot tags are non-classification metadata
+// like "trail" or "wheelchair_accessible").
+//
+// Special case: drop `viewpoint` when a more specific nature tag is
+// also present (forest / lakes_rivers / coastline / mountain_summits
+// / waterfall). See VIEWPOINT_SUPERSEDED_BY for the full rule.
+function mapKomootTypes(categories: string[]): SpotTypeValue[] {
+  const hasSupersedingNature = categories.some((c) => VIEWPOINT_SUPERSEDED_BY.has(c))
+  const out: SpotTypeValue[] = []
+  const seen = new Set<SpotTypeValue>()
+  for (const c of categories) {
+    if (c === "viewpoint" && hasSupersedingNature) continue
+    const v = KOMOOT_TO_SPOT_TYPES[c]
+    if (!v || seen.has(v)) continue
+    seen.add(v)
+    out.push(v)
+  }
+  return out
+}
+
+type WaypointBuckets = {
+  destinationStops: Waypoint[]
+  lunchStops: Waypoint[]
+  sights: Waypoint[]
+}
+
+// Parse the embedded `way_points` block from Komoot's HTML and bucket
+// each named waypoint into destinationStops / lunchStops / sights.
+//
+// Komoot embeds tour state in the page as a stringified JSON blob with
+// escaped quotes (\"). We unescape a chunk around the way_points key,
+// then walk through each `{"type":...,"index":...}` item and pull
+// out name + location + categories with scoped sub-regexes.
+//
+// Skipped:
+//  - type === "point" items (route shaping, no name)
+//  - the smallest- and largest-index named items (start + end)
+//
+// Limitation: POI items have only a numeric `category` (Komoot
+// internal lookup); we can't tell from the data alone if a POI is a
+// pub. POIs always bucket as sights — admin can re-categorise.
+function parseWaypoints(html: string, totalKm: number): WaypointBuckets | null {
+  const blockStart = html.indexOf('"way_points\\":{\\"_links\\":{}')
+  if (blockStart < 0) return null
+  // 250KB window. Each waypoint item embeds nested image metadata
+  // (Wikipedia/Geograph attributions, photo URLs, captions) which can
+  // run a few KB per item — so a tour with ~20 POIs easily blows past
+  // 50KB. 250KB covers every tour we've encountered with margin to
+  // spare without scanning the whole 500KB+ HTML payload.
+  const raw = html.slice(blockStart, blockStart + 250_000)
+  const unesc = raw.replace(/\\"/g, '"').replace(/\\\//g, "/").replace(/\\\\/g, "\\")
+
+  // Iterate item starts. Each item begins with `{"type":"X","index":N`
+  // — we slice to the next item start (or end of window) to scope the
+  // sub-regexes so a later item's name can't leak into the current.
+  const itemStarts: number[] = []
+  const startRe = /\{"type":"(?:poi|highlight|point)","index":/g
+  let m: RegExpExecArray | null
+  while ((m = startRe.exec(unesc)) !== null) itemStarts.push(m.index)
+  if (itemStarts.length === 0) return null
+
+  type Item = {
+    type: "poi" | "highlight" | "point"
+    index: number
+    name: string | null
+    location: { lat: number; lng: number } | null
+    categories: string[]
+  }
+  const items: Item[] = []
+  for (let i = 0; i < itemStarts.length; i++) {
+    const body = unesc.slice(itemStarts[i], itemStarts[i + 1] ?? itemStarts[i] + 5_000)
+    const typeM = /^\{"type":"(poi|highlight|point)"/.exec(body)
+    const idxM = /"index":(\d+)/.exec(body)
+    if (!typeM || !idxM) continue
+    const nameM = /"name":"([^"]+)"/.exec(body)
+    const locM = /"location":\{"lat":(-?[\d.]+),"lng":(-?[\d.]+)/.exec(body)
+    // Highlight categories: string array.
+    // POI category: a single numeric ID; we map it via POI_CATEGORY_TAGS
+    // to the same string vocabulary so downstream code treats both
+    // shapes uniformly.
+    const catsM = /"categories":\[([^\]]+)\]/.exec(body)
+    const numericCatM = /"category":(\d+)/.exec(body)
+    const categories: string[] = catsM
+      ? Array.from(catsM[1].matchAll(/"([a-z_]+)"/g)).map((c) => c[1])
+      : numericCatM
+        ? POI_CATEGORY_TAGS[parseInt(numericCatM[1], 10)] ?? []
+        : []
+    items.push({
+      type: typeM[1] as Item["type"],
+      index: parseInt(idxM[1], 10),
+      name: nameM ? nameM[1] : null,
+      location: locM ? { lat: parseFloat(locM[1]), lng: parseFloat(locM[2]) } : null,
+      categories,
+    })
+  }
+
+  // Every named, located waypoint is a candidate. We deliberately
+  // DON'T exclude the smallest or largest index any more — Komoot's
+  // route start/end are the unnamed `point` markers, not the named
+  // POIs/highlights that happen to sit at the lowest/highest index.
+  // Excluding by index used to drop genuine waypoints near the end of
+  // the walk (e.g. "The Woodman", a pub the route literally finishes
+  // at).
+  //
+  // Train-station POIs (category 219 → "train_station") are filtered
+  // out separately — they're navigational landmarks, not destinations
+  // worth showing as sights/lunch stops/pubs. Same for any future
+  // category we add to NON_DESTINATION_TAGS.
+  if (items.length === 0) return null
+  // Use the maximum overall index as the route's end position for
+  // kmIntoRoute interpolation (still correct: indices count up
+  // monotonically along the route polyline).
+  let maxIndex = 0
+  for (const it of items) if (it.index > maxIndex) maxIndex = it.index
+  if (maxIndex <= 0) return null
+
+  const middle = items
+    .filter(
+      (it) =>
+        it.type !== "point" &&
+        it.name &&
+        it.location &&
+        !it.categories.some((c) => NON_DESTINATION_TAGS.has(c)),
+    )
+    .sort((a, b) => a.index - b.index)
+  if (middle.length === 0) return { destinationStops: [], lunchStops: [], sights: [] }
+
+  const buckets: WaypointBuckets = {
+    destinationStops: [],
+    lunchStops: [],
+    sights: [],
+  }
+  for (const it of middle) {
+    const isFood = it.categories.some((c) => FOOD_CATEGORIES.has(c))
+    const wp: Waypoint = {
+      name: decodeHtmlEntities(it.name!),
+      lat: it.location!.lat,
+      lng: it.location!.lng,
+      // Linear interp via index. Round to 1dp — the value's only
+      // accurate to ±10% anyway since waypoint indices aren't evenly
+      // distributed along the route. Uses the OVERALL maxIndex
+      // (across all items including unnamed points) as the route end.
+      kmIntoRoute: Math.round(((totalKm * it.index) / maxIndex) * 10) / 10,
+      types: mapKomootTypes(it.categories),
+    }
+    if (isFood) {
+      // Route-distance from the end (along the path), using the same
+      // linear-interp approximation as kmIntoRoute. Within threshold
+      // → destination pub; beyond → lunch stop.
+      const routeKmFromEnd = Math.max(0, totalKm - wp.kmIntoRoute)
+      if (routeKmFromEnd <= DESTINATION_STOP_KM) buckets.destinationStops.push(wp)
+      else buckets.lunchStops.push(wp)
+    } else {
+      buckets.sights.push(wp)
+    }
+  }
+  return buckets
 }
 
 export async function POST(req: NextRequest) {
@@ -123,5 +350,12 @@ export async function POST(req: NextRequest) {
     ? decodeHtmlEntities(titleMatch[1]).replace(/\s*\|.*$/, "").trim()
     : null
 
-  return NextResponse.json({ distanceKm, hours, uphillMetres, difficulty, name })
+  // Waypoints — bucketed into destinationStops / lunchStops / sights.
+  // Returns null when the page doesn't expose the way_points JSON
+  // (very old tours, or pages that ship a different shape); the
+  // admin UI treats null/missing as "no waypoints to merge in" and
+  // applies the rest of the response normally.
+  const waypoints = parseWaypoints(html, distanceKm)
+
+  return NextResponse.json({ distanceKm, hours, uphillMetres, difficulty, name, waypoints })
 }

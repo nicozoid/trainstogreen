@@ -25,7 +25,7 @@
 // view-only for now — list editors are a bigger lift and haven't been
 // scoped into Phase 5 v1.
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,14 @@ import { ConfirmDialog } from "@/components/confirm-dialog"
 // changes rarely. Importing directly lets the admin UI render the
 // dropdown without a separate fetch round-trip.
 import sourcesJson from "@/data/sources.json"
+import { SPOT_TYPES, SPOT_TYPE_LABELS } from "@/lib/spot-types"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 // Shape matches the payload from /api/dev/walks-for-station.
 export type WalkPayload = {
@@ -59,17 +67,17 @@ export type WalkPayload = {
   uphillMetres: number | null
   difficulty: "easy" | "moderate" | "hard" | null
   terrain: string
-  sights: { name: string; url?: string | null; description?: string }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
+  sights: { name: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   /** Free-text override for the lunch line in the public prose. When
    *  populated, replaces the formatted lunchStops list entirely. */
   lunchOverride: string
   /** Destination pub(s) — same shape as lunchStops. The editor hides
    *  the location field for this section since the walk destination is
    *  implicit. */
-  destinationPubs: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
+  destinationStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   /** Free-text override for the destination-pub line, parallels lunchOverride. */
-  destinationPubsOverride: string
+  destinationStopsOverride: string
   miscellany: string
   trainTips: string
   /** Admin-only free-text scratchpad, never rendered to the public. */
@@ -137,7 +145,26 @@ export type WalkMeta = {
 // other field on WalkPayload is read-only, so drift between server and
 // UI stays impossible.
 // Editable sight row — mirrors the server-side cleanSight() shape.
-type SightDraft = { name: string; url: string; description: string }
+// lat/lng/kmIntoRoute are populated by the Komoot Pull-data button
+// (auto-extracted from way_points) and stay editable so the admin can
+// nudge them. Stored as strings here so the inputs are controlled
+// even when empty; the server cleaner coerces back to numbers.
+type SightDraft = {
+  name: string
+  url: string
+  description: string
+  lat: string
+  lng: string
+  kmIntoRoute: string
+  /** OPERATIONAL / CLOSED_TEMPORARILY / CLOSED_PERMANENTLY (or "" when
+   *  unknown). Populated by the Places API "Pull URLs" button. Drives
+   *  the public-prose filter — CLOSED_PERMANENTLY rows are hidden. */
+  businessStatus: string
+  /** Multi-select tags drawn from lib/spot-types — pub / cafe /
+   *  viewpoint / etc. Auto-filled by Komoot Pull data and Pull URLs
+   *  ONLY when the array is empty; manual edits are never overwritten. */
+  types: string[]
+}
 // Editable lunch stop — mirrors cleanLunchStop() shape. `rating` is
 // "" when unset so the same empty-string → unset pattern covers all
 // the optional text fields uniformly.
@@ -152,6 +179,15 @@ type LunchDraft = {
   notes: string
   rating: LunchRating
   busy: LunchBusy
+  // Same auto-fill from Komoot Pull data as SightDraft above —
+  // stored as strings on the draft so inputs stay controlled.
+  lat: string
+  lng: string
+  kmIntoRoute: string
+  /** See SightDraft. */
+  businessStatus: string
+  /** See SightDraft. */
+  types: string[]
 }
 
 type EditableFields = {
@@ -178,8 +214,8 @@ type EditableFields = {
   sights: SightDraft[]
   lunchStops: LunchDraft[]
   lunchOverride: string
-  destinationPubs: LunchDraft[]
-  destinationPubsOverride: string
+  destinationStops: LunchDraft[]
+  destinationStopsOverride: string
   // Source provenance — all four fields editable. orgSlug comes from
   // sources.json (organisation registry); type is a small enum
   // (main/shorter/longer/alternative/variant). We default missing
@@ -220,11 +256,36 @@ function arrayMove<T>(arr: T[], from: number, to: number): T[] {
 // empty strings for optional fields so the form inputs always have a
 // controlled value, mirroring the pattern used for the scalar fields
 // above. cleanSight/cleanLunchStop on the server strip them back out.
+// Numbers serialise to "" when missing/null so empty inputs stay
+// controlled. The server cleaner accepts either an empty string or a
+// numeric string and normalises to undefined on save.
+function num(n: number | null | undefined): string {
+  return typeof n === "number" && Number.isFinite(n) ? String(n) : ""
+}
+
+// Render a row's lat/lng/km as a single read-only string for the
+// bottom-right corner of the spot card. Returns "" when none of the
+// three is set, so the consumer can render conditionally without
+// ending up with an empty chip. The "·" separator + monospace
+// styling are applied at the consumer site.
+function formatRowCoords(lat: string, lng: string, kmIntoRoute: string): string {
+  const parts: string[] = []
+  if (lat.trim() && lng.trim()) parts.push(`${lat.trim()}, ${lng.trim()}`)
+  else if (lat.trim()) parts.push(`lat ${lat.trim()}`)
+  else if (lng.trim()) parts.push(`lng ${lng.trim()}`)
+  if (kmIntoRoute.trim()) parts.push(`${kmIntoRoute.trim()}km`)
+  return parts.join(" · ")
+}
 function sightsToDraft(list: WalkPayload["sights"]): SightDraft[] {
   return list.map((s) => ({
     name: s.name ?? "",
     url: s.url ?? "",
     description: s.description ?? "",
+    lat: num(s.lat),
+    lng: num(s.lng),
+    kmIntoRoute: num(s.kmIntoRoute),
+    businessStatus: s.businessStatus ?? "",
+    types: Array.isArray(s.types) ? s.types : [],
   }))
 }
 function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
@@ -237,6 +298,11 @@ function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
       ? s.rating
       : "") as LunchRating,
     busy: (s.busy === "busy" || s.busy === "quiet" ? s.busy : "") as LunchBusy,
+    lat: num(s.lat),
+    lng: num(s.lng),
+    kmIntoRoute: num(s.kmIntoRoute),
+    businessStatus: s.businessStatus ?? "",
+    types: Array.isArray(s.types) ? s.types : [],
   }))
 }
 
@@ -904,6 +970,13 @@ function WalkCard({
   // appear publicly after the next deploy.
   const [saveNotice, setSaveNotice] = useState<string | null>(null)
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  // Pull URLs — bulk Places API resolve for any sight/lunch stop/
+  // destination pub that has lat/lng but no URL yet. `pullingUrls` is
+  // the spinner; `pullUrlsNotice` shows a short success or
+  // "no candidates found" line; `pullUrlsError` shows a hard failure.
+  const [pullingUrls, setPullingUrls] = useState(false)
+  const [pullUrlsNotice, setPullUrlsNotice] = useState<string | null>(null)
+  const [pullUrlsError, setPullUrlsError] = useState<string | null>(null)
   // Brief flash state for the "click id to copy" affordance — flips
   // true for ~1.2s after a successful copy so the chip can render
   // "Copied!" feedback in place of the id.
@@ -944,8 +1017,8 @@ function WalkCard({
       lunchStops: lunchToDraft(walk.lunchStops),
       lunchOverride: walk.lunchOverride ?? "",
       // lunchToDraft works for both lists since they share the same shape.
-      destinationPubs: lunchToDraft(walk.destinationPubs ?? []),
-      destinationPubsOverride: walk.destinationPubsOverride ?? "",
+      destinationStops: lunchToDraft(walk.destinationStops ?? []),
+      destinationStopsOverride: walk.destinationStopsOverride ?? "",
       source: {
         orgSlug: walk.source?.orgSlug ?? "",
         pageName: walk.source?.pageName ?? "",
@@ -967,7 +1040,7 @@ function WalkCard({
       walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
       walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
       walk.sights, walk.lunchStops, walk.lunchOverride,
-      walk.destinationPubs, walk.destinationPubsOverride,
+      walk.destinationStops, walk.destinationStopsOverride,
       walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
       walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
     ],
@@ -1007,8 +1080,8 @@ function WalkCard({
       JSON.stringify(draft.sights) !== JSON.stringify(serverState.sights) ||
       JSON.stringify(draft.lunchStops) !== JSON.stringify(serverState.lunchStops) ||
       draft.lunchOverride.trim() !== serverState.lunchOverride.trim() ||
-      JSON.stringify(draft.destinationPubs) !== JSON.stringify(serverState.destinationPubs) ||
-      draft.destinationPubsOverride.trim() !== serverState.destinationPubsOverride.trim() ||
+      JSON.stringify(draft.destinationStops) !== JSON.stringify(serverState.destinationStops) ||
+      draft.destinationStopsOverride.trim() !== serverState.destinationStopsOverride.trim() ||
       JSON.stringify(draft.source) !== JSON.stringify(serverState.source) ||
       JSON.stringify(draft.relatedSource) !== JSON.stringify(serverState.relatedSource)
     )
@@ -1027,6 +1100,123 @@ function WalkCard({
       return { ...d, bestSeasons: next }
     })
   }, [])
+
+  // Pull URLs handler — bulk Google Places resolve. Iterates over the
+  // three spot lists, picks rows that have lat/lng but no URL yet,
+  // sends the batch to /api/dev/place-url, and merges the results
+  // into the draft. URL is only filled when blank; location (on lunch
+  // stops) is only filled when blank; businessStatus is overwritten
+  // unconditionally because a fresh fetch is always the best source
+  // of truth for that field.
+  const onPullUrls = useCallback(async () => {
+    if (pullingUrls) return
+    setPullUrlsError(null)
+    setPullUrlsNotice(null)
+
+    type Slot = { kind: "sights" | "lunchStops" | "destinationStops"; index: number }
+    const slots: Slot[] = []
+    type Spot = { name: string; lat: number; lng: number }
+    const spots: Spot[] = []
+
+    // Build the work list. A row is eligible when:
+    //   - it has a non-empty name
+    //   - it has finite lat/lng (Komoot Pull data already populated)
+    //   - it has no URL set
+    // Rows missing any of those are silently skipped — the admin can
+    // populate the URL by hand or fill in coords first and re-pull.
+    const collect = (kind: Slot["kind"], rows: { name: string; url: string; lat: string; lng: string }[]) => {
+      rows.forEach((r, i) => {
+        const name = r.name.trim()
+        if (!name) return
+        if (r.url.trim()) return
+        const lat = Number(r.lat)
+        const lng = Number(r.lng)
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return
+        slots.push({ kind, index: i })
+        spots.push({ name, lat, lng })
+      })
+    }
+    collect("sights", draft.sights)
+    collect("lunchStops", draft.lunchStops)
+    collect("destinationStops", draft.destinationStops)
+
+    if (spots.length === 0) {
+      setPullUrlsNotice("No empty-URL rows with coordinates to look up.")
+      return
+    }
+    setPullingUrls(true)
+    try {
+      const r = await fetch("/api/dev/place-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spots }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
+      const results = (j?.results ?? []) as ({ url: string; location?: string; businessStatus?: string; types?: string[] } | null)[]
+
+      let filled = 0
+      // Track unmatched rows so the status banner can name them. Each
+      // entry is "{Section} {1-based index} ({venue name})" so the
+      // admin sees exactly which rows need manual attention rather
+      // than a bare "3 not matched".
+      const missedRows: string[] = []
+      // Section labels matching the visible editor headings, used in
+      // the unmatched-row report below.
+      const SECTION_LABEL: Record<typeof slots[number]["kind"], string> = {
+        sights: "Sight",
+        lunchStops: "Lunch stop",
+        destinationStops: "Destination stop",
+      }
+      // Apply by kind. We mutate copies of each list so we can build
+      // the next draft in one pass.
+      const nextSights = [...draft.sights]
+      const nextLunch = [...draft.lunchStops]
+      const nextPubs = [...draft.destinationStops]
+      slots.forEach((slot, i) => {
+        const res = results[i]
+        if (!res) {
+          // Identify the row by section + 1-based index + venue name
+          // so the banner reads e.g. "Destination stop 3 (The Two
+          // Brewers)" rather than an opaque "3 not matched".
+          missedRows.push(`${SECTION_LABEL[slot.kind]} ${slot.index + 1} (${spots[i].name})`)
+          return
+        }
+        filled++
+        const apply = <T extends { url: string; businessStatus: string; location?: string; types: string[] }>(row: T): T => ({
+          ...row,
+          // Only fill URL when blank — preserves admin-entered overrides.
+          url: row.url.trim() ? row.url : res.url,
+          // Always overwrite businessStatus — a re-pull should reflect
+          // the current state of the world, not last week's.
+          businessStatus: res.businessStatus ?? row.businessStatus,
+          // Only fill location when blank, and only on rows that have
+          // a location field at all (sights don't). Server returns
+          // just the village/town/suburb (NOT the full address), so
+          // this slots in cleanly as a prose-friendly placename.
+          ...(typeof row.location === "string" && !row.location.trim() && res.location
+            ? { location: res.location }
+            : {}),
+          // Only fill types when the row's types array is empty —
+          // never overwrite manual edits.
+          types: row.types.length === 0 && res.types?.length ? res.types : row.types,
+        })
+        if (slot.kind === "sights") nextSights[slot.index] = apply(nextSights[slot.index])
+        else if (slot.kind === "lunchStops") nextLunch[slot.index] = apply(nextLunch[slot.index])
+        else nextPubs[slot.index] = apply(nextPubs[slot.index])
+      })
+      setDraft((d) => ({ ...d, sights: nextSights, lunchStops: nextLunch, destinationStops: nextPubs }))
+      setPullUrlsNotice(
+        missedRows.length > 0
+          ? `Filled ${filled} of ${spots.length}. Couldn't match: ${missedRows.join(", ")}.`
+          : `Filled ${filled} of ${spots.length}.`,
+      )
+    } catch (e) {
+      setPullUrlsError((e as Error).message)
+    } finally {
+      setPullingUrls(false)
+    }
+  }, [pullingUrls, draft.sights, draft.lunchStops, draft.destinationStops])
 
   const onSave = useCallback(async () => {
     setSaving(true)
@@ -1063,8 +1253,8 @@ function WalkCard({
           sights: draft.sights,
           lunchStops: draft.lunchStops,
           lunchOverride: draft.lunchOverride,
-          destinationPubs: draft.destinationPubs,
-          destinationPubsOverride: draft.destinationPubsOverride,
+          destinationStops: draft.destinationStops,
+          destinationStopsOverride: draft.destinationStopsOverride,
           source: draft.source,
           relatedSource: draft.relatedSource,
         }),
@@ -1087,8 +1277,13 @@ function WalkCard({
     }
   }, [walk.id, draft, onSaved])
 
+  // Ref on the card root so the Clear-spots button can scrollIntoView
+  // back to the top of THIS walk after wiping the spot lists. Without
+  // this, the button stays put under the user's cursor and they lose
+  // the visual landmark of where the walk starts.
+  const cardRootRef = useRef<HTMLDivElement | null>(null)
   return (
-    <div className="rounded border border-border bg-background">
+    <div ref={cardRootRef} className="rounded border border-border bg-background">
       {/* Card header — click to expand. Walk ordering is automatic
           (rating tier → komoot → most-recently-edited) and can't be
           overridden from here, so the row is purely a toggle. */}
@@ -1601,16 +1796,105 @@ function WalkCard({
                       })
                       const j = await r.json()
                       if (!r.ok) throw new Error(j?.error || `HTTP ${r.status}`)
-                      setDraft((d) => ({
-                        ...d,
-                        distanceKm: Math.round(j.distanceKm * 100) / 100,
-                        hours: j.hours,
-                        // Uphill, difficulty, and name are optional — only
-                        // overwrite when the API returned a value.
-                        ...(typeof j.uphillMetres === "number" ? { uphillMetres: Math.round(j.uphillMetres * 100) / 100 } : {}),
-                        ...(j.difficulty ? { difficulty: j.difficulty } : {}),
-                        ...(j.name ? { name: j.name } : {}),
-                      }))
+                      // Normalise a venue name for fuzzy dedup: lowercase,
+                      // whitespace collapsed, and apostrophes stripped
+                      // (straight, curly, modifier-letter — Komoot mixes
+                      // them up). Lets "St Mary's Church" and "St Marys
+                      // Church" collapse to the same key.
+                      const normName = (s: string) =>
+                        s.toLowerCase()
+                          .replace(/['‘’ʼ]/g, "")
+                          .replace(/\s+/g, " ")
+                          .trim()
+                      setDraft((d) => {
+                        const next = {
+                          ...d,
+                          distanceKm: Math.round(j.distanceKm * 100) / 100,
+                          hours: j.hours,
+                          // Uphill, difficulty, and name are optional — only
+                          // overwrite when the API returned a value.
+                          ...(typeof j.uphillMetres === "number" ? { uphillMetres: Math.round(j.uphillMetres * 100) / 100 } : {}),
+                          ...(j.difficulty ? { difficulty: j.difficulty } : {}),
+                          ...(j.name ? { name: j.name } : {}),
+                        }
+                        // Merge auto-extracted waypoints into the three
+                        // venue lists. Dedup ACROSS all three (so a name
+                        // already saved as a sight won't get re-added as a
+                        // lunch stop, and vice versa) using the apostrophe-
+                        // insensitive normaliser above.
+                        type IncomingWaypoint = {
+                          name: string
+                          lat: number
+                          lng: number
+                          kmIntoRoute: number
+                          /** Canonical types pre-mapped server-side from Komoot's
+                           *  category vocabulary. May be empty when no recognised
+                           *  tag was present on the waypoint. */
+                          types?: string[]
+                        }
+                        const wp = j?.waypoints as
+                          | undefined
+                          | {
+                              destinationStops: IncomingWaypoint[]
+                              lunchStops: IncomingWaypoint[]
+                              sights: IncomingWaypoint[]
+                            }
+                        if (wp) {
+                          const seen = new Set([
+                            ...next.sights.map((x) => normName(x.name)),
+                            ...next.lunchStops.map((x) => normName(x.name)),
+                            ...next.destinationStops.map((x) => normName(x.name)),
+                          ])
+                          // Filter incoming waypoints, mutating `seen` so
+                          // duplicates within the same Pull-data batch
+                          // also collapse (e.g. if Komoot lists the same
+                          // venue twice, only one gets added).
+                          const filterNew = <T extends { name: string }>(arr: T[]) =>
+                            arr.filter((w) => {
+                              const k = normName(w.name)
+                              if (seen.has(k)) return false
+                              seen.add(k)
+                              return true
+                            })
+                          const toSight = (w: IncomingWaypoint) => ({
+                            name: w.name,
+                            url: "",
+                            description: "",
+                            lat: String(w.lat),
+                            lng: String(w.lng),
+                            kmIntoRoute: String(w.kmIntoRoute),
+                            businessStatus: "",
+                            // Auto-populate types from the upstream mapping. For
+                            // brand-new rows there's nothing to preserve, so we
+                            // can take the incoming list verbatim. (The "don't
+                            // overwrite manual edits" rule kicks in only on
+                            // re-pulls against existing rows — those are blocked
+                            // by the name-dedup above.)
+                            types: w.types ?? [],
+                          })
+                          const toRefreshment = (w: IncomingWaypoint) => ({
+                            name: w.name,
+                            location: "",
+                            url: "",
+                            notes: "",
+                            rating: "" as LunchRating,
+                            busy: "" as LunchBusy,
+                            lat: String(w.lat),
+                            lng: String(w.lng),
+                            kmIntoRoute: String(w.kmIntoRoute),
+                            businessStatus: "",
+                            types: w.types ?? [],
+                          })
+                          // Order: destinationStops → lunchStops → sights so
+                          // food venues claim a name before sights would.
+                          // Within each bucket, Komoot's order (by km along
+                          // the route) is preserved.
+                          next.destinationStops = [...next.destinationStops, ...filterNew(wp.destinationStops).map(toRefreshment)]
+                          next.lunchStops = [...next.lunchStops, ...filterNew(wp.lunchStops).map(toRefreshment)]
+                          next.sights = [...next.sights, ...filterNew(wp.sights).map(toSight)]
+                        }
+                        return next
+                      })
                     } catch (e) {
                       setPullDistanceError((e as Error).message)
                     } finally {
@@ -1619,7 +1903,7 @@ function WalkCard({
                   }}
                   disabled={pullingDistance || !draft.komootUrl.trim()}
                   className="shrink-0 rounded border border-border bg-muted/40 px-2 py-0.5 text-[11px] text-foreground hover:bg-muted disabled:opacity-40"
-                  title="Fetch distance, duration, uphill, difficulty, and name from the Komoot tour page"
+                  title="Fetch distance, duration, uphill, difficulty, name, and waypoints (sights / lunch stops / destination pubs) from the Komoot tour page"
                 >
                   {pullingDistance ? (
                     <span className="inline-flex items-center gap-1">
@@ -1869,24 +2153,24 @@ function WalkCard({
             onOverrideChange={(lunchOverride) => setDraft((d) => ({ ...d, lunchOverride }))}
           />
 
-          {/* Destination pubs — venue(s) at the walk's end. Same shape
-              and behaviour as Lunch stops, but the editor hides the
-              location field (the location is implicit — it's the walk
-              destination) and the public prose renders "Destination
-              pub: <name>" rather than "Lunch at the X in Y". Override
-              field replaces the venue list verbatim, same rule as
-              lunch. */}
+          {/* Destination stops — venue(s) at the walk's end. Same
+              shape and behaviour as Lunch stops, but the editor hides
+              the location field (it's implicit — the walk
+              destination) and the public prose renders "End-of-walk
+              rests: <name>" rather than "Lunch at the X in Y".
+              Override field replaces the venue list verbatim, same
+              rule as lunch. */}
           <RefreshmentStopsEditor
             walkId={walk.id}
-            kind="destinationPubs"
-            sectionTitle="Destination pubs"
-            itemLabel="Destination pub"
-            addLabel="+ Add destination pub"
+            kind="destinationStops"
+            sectionTitle="Destination stops"
+            itemLabel="Destination stop"
+            addLabel="+ Add destination stop"
             showLocation={false}
-            stops={draft.destinationPubs}
-            onStopsChange={(destinationPubs) => setDraft((d) => ({ ...d, destinationPubs }))}
-            override={draft.destinationPubsOverride}
-            onOverrideChange={(destinationPubsOverride) => setDraft((d) => ({ ...d, destinationPubsOverride }))}
+            stops={draft.destinationStops}
+            onStopsChange={(destinationStops) => setDraft((d) => ({ ...d, destinationStops }))}
+            override={draft.destinationStopsOverride}
+            onOverrideChange={(destinationStopsOverride) => setDraft((d) => ({ ...d, destinationStopsOverride }))}
           />
 
           {/* Private — admin-only fields, never rendered publicly:
@@ -1919,10 +2203,12 @@ function WalkCard({
               source has no metadata to show, keeping cards compact. */}
           <MetadataSection walkId={walk.id} meta={walk.meta} />
 
-          {/* Save / delete footer — delete sits on the right and is
-              gated behind a ConfirmDialog so a misclick doesn't
-              nuke a walk. Delete only renders when the parent wired
-              onDelete (it's the only surface that knows how to
+          {/* Save / delete footer — destructive controls cluster on the
+              right. Delete is gated behind a ConfirmDialog (it nukes
+              the walk for real); Clear spots is unconfirmed because
+              it only mutates draft state — Save still has to be
+              clicked to persist. Delete only renders when the parent
+              wired onDelete (it's the only surface that knows how to
               refresh the list afterwards). */}
           <div className="mt-3 flex items-center gap-2">
             <Button
@@ -1938,16 +2224,71 @@ function WalkCard({
                 rebuildPending came back from the server (production
                 save with deferred rebuild). */}
             {saveNotice && <span className="text-xs text-muted-foreground">{saveNotice}</span>}
-            {onDelete && (
+            {/* Pull URLs status — same muted-banner pattern as save
+                notices, mirrored to error styling on hard failures. */}
+            {pullUrlsNotice && <span className="text-xs text-muted-foreground">{pullUrlsNotice}</span>}
+            {pullUrlsError && <span className="text-xs text-destructive">{pullUrlsError}</span>}
+            <div className="ml-auto flex items-center gap-2">
+              {/* Pull URLs — bulk Google Places resolve for any spot
+                  that has lat/lng but no URL. Disabled when there's
+                  nothing eligible (or a pull is already in flight). */}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onPullUrls}
+                disabled={
+                  pullingUrls ||
+                  ![...draft.sights, ...draft.lunchStops, ...draft.destinationStops].some(
+                    (r) => r.name.trim() && !r.url.trim() && r.lat.trim() && r.lng.trim(),
+                  )
+                }
+                className="h-7 text-xs"
+                title="Look up each spot on Google Places (uses lat/lng) and fill its URL + address. Skips rows that already have a URL."
+              >
+                {pullingUrls ? "Pulling URLs…" : "Pull URLs"}
+              </Button>
+              {/* Clear spots — wipes Sights / Lunch stops / Destination
+                  pubs in the draft. Disabled when all three are empty
+                  to avoid a no-op click. No confirm dialog: nothing
+                  is lost until the user hits Save, so they can still
+                  reload the card to recover. */}
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={() => setConfirmDeleteOpen(true)}
-                className="ml-auto h-7 text-xs"
+                onClick={() => {
+                  setDraft((d) => ({
+                    ...d,
+                    sights: [],
+                    lunchStops: [],
+                    destinationStops: [],
+                  }))
+                  // Scroll the user back to the top of this walk so
+                  // they can immediately verify the lists collapsed
+                  // and start re-curating from the top of the card,
+                  // rather than staying parked at the footer.
+                  cardRootRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }}
+                disabled={
+                  draft.sights.length === 0 &&
+                  draft.lunchStops.length === 0 &&
+                  draft.destinationStops.length === 0
+                }
+                className="h-7 text-xs"
+                title="Clear all sights, lunch stops, and destination pubs (not saved until you click Save)"
               >
-                Delete walk
+                Clear spots
               </Button>
-            )}
+              {onDelete && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => setConfirmDeleteOpen(true)}
+                  className="h-7 text-xs"
+                >
+                  Delete walk
+                </Button>
+              )}
+            </div>
           </div>
           {onDelete && (
             <ConfirmDialog
@@ -2143,6 +2484,113 @@ function MetadataSection({ walkId, meta }: { walkId: string; meta?: WalkMeta }) 
 // Sights: a simple repeatable list with name (required), URL and
 // description (both optional). Rows with empty names are silently
 // dropped server-side, so there's no validation UI in the client.
+// Small select for the venue's businessStatus. Shared by all three
+// list editors (Sights / Lunch stops / Destination pubs). Empty value
+// = "(unknown)" — the default for rows that haven't had Pull URLs run
+// against them. Permanently-closed venues are hidden from the public
+// prose by the build script (see formatLunchStops/Sights/Pubs).
+//
+// Border tint shifts to amber/red when the row is closed so the admin
+// can spot dead venues at a glance without expanding rows.
+// Multi-select dropdown for the canonical SPOT_TYPES vocabulary.
+// Renders a single button labelled "Types: …" or "Types: pub, café"
+// (truncating long lists). Click opens a checkbox list grouped by
+// the bands defined in lib/spot-types (Refreshments / Natural /
+// Outdoor / Cultural / Settlement / Other) with Separator dividers
+// between bands. Toggle order in the source list = visual order in
+// the dropdown.
+function SpotTypesSelect({
+  value,
+  onChange,
+}: {
+  value: string[]
+  onChange: (next: string[]) => void
+}) {
+  // Build the trigger label. Empty selection reads "Types: …" so the
+  // button still has a visible affordance; otherwise we render the
+  // selected labels comma-joined, truncated to fit narrow row widths.
+  const triggerLabel = useMemo(() => {
+    if (value.length === 0) return "Types: …"
+    const labels = value
+      .map((v) => SPOT_TYPE_LABELS[v])
+      .filter((l): l is string => Boolean(l))
+    return labels.length > 0 ? labels.join(", ") : "Types: …"
+  }, [value])
+  // Toggle a single value in the selection. Preserves existing order
+  // for unchanged items so the rendered chip list stays stable.
+  const toggle = (v: string) => {
+    onChange(value.includes(v) ? value.filter((x) => x !== v) : [...value, v])
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title="Tag this spot with one or more types — auto-filled by Pull data when empty"
+          className="h-7 min-w-[250px] max-w-[20rem] truncate rounded-lg border border-input bg-input/30 px-2 text-left text-[11px] hover:bg-muted/40"
+        >
+          {triggerLabel}
+        </button>
+      </DropdownMenuTrigger>
+      {/* className overrides the default min-w so the popover is
+          wide enough for two-word labels like "Nature reserve". */}
+      <DropdownMenuContent align="end" className="min-w-[12rem]">
+        {SPOT_TYPES.map((t, i) => {
+          // Insert a Separator at the start of each new group except
+          // the very first. SPOT_TYPES is pre-sorted by group order
+          // so this works as a single-pass walk.
+          const prevGroup = i > 0 ? SPOT_TYPES[i - 1].group : t.group
+          const groupChanged = i > 0 && t.group !== prevGroup
+          return (
+            <div key={t.value}>
+              {groupChanged && <DropdownMenuSeparator />}
+              <DropdownMenuCheckboxItem
+                checked={value.includes(t.value)}
+                // Radix would close the menu on every checkbox click
+                // by default; preventDefault keeps it open so admins
+                // can pick multiple types in one go.
+                onSelect={(e) => e.preventDefault()}
+                onCheckedChange={() => toggle(t.value)}
+                className="text-xs"
+              >
+                {t.label}
+              </DropdownMenuCheckboxItem>
+            </div>
+          )
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function BusinessStatusSelect({
+  value,
+  onChange,
+}: {
+  value: string
+  onChange: (next: string) => void
+}) {
+  const tint =
+    value === "CLOSED_PERMANENTLY"
+      ? "border-destructive/60 bg-destructive/5 text-destructive"
+      : value === "CLOSED_TEMPORARILY"
+        ? "border-amber-500/60 bg-amber-50 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+        : "border-input bg-input/30"
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      title="Business status (auto-filled by Pull URLs; CLOSED_PERMANENTLY hides the venue from public prose)"
+      className={`h-7 rounded-lg border px-2 text-[11px] ${tint}`}
+    >
+      <option value="">Status unknown</option>
+      <option value="OPERATIONAL">Operational</option>
+      <option value="CLOSED_TEMPORARILY">Closed temporarily</option>
+      <option value="CLOSED_PERMANENTLY">Closed permanently</option>
+    </select>
+  )
+}
+
 function SightsEditor({
   walkId,
   sights,
@@ -2243,23 +2691,58 @@ function SightsEditor({
                   className="h-7 flex-1 text-xs"
                 />
               </div>
-              <Input
-                value={s.description}
-                onChange={(e) => {
-                  const next = [...sights]
-                  next[i] = { ...next[i], description: e.target.value }
-                  onChange(next)
-                }}
-                placeholder="Description (optional, admin-only for now)"
-                className="h-7 text-xs"
-              />
+              <div className="flex gap-1.5">
+                <Input
+                  value={s.description}
+                  onChange={(e) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], description: e.target.value }
+                    onChange(next)
+                  }}
+                  placeholder="Description (optional, admin-only for now)"
+                  className="h-7 flex-1 text-xs"
+                />
+                <BusinessStatusSelect
+                  value={s.businessStatus}
+                  onChange={(businessStatus) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], businessStatus }
+                    onChange(next)
+                  }}
+                />
+                <SpotTypesSelect
+                  value={s.types}
+                  onChange={(types) => {
+                    const next = [...sights]
+                    next[i] = { ...next[i], types }
+                    onChange(next)
+                  }}
+                />
+              </div>
+              {/* Read-only coords block — bottom-right of the row,
+                  same role as the matching block on lunch / dest
+                  rows. Auto-populated by Komoot Pull data; admins
+                  don't edit these by hand. */}
+              {(() => {
+                const coords = formatRowCoords(s.lat, s.lng, s.kmIntoRoute)
+                return coords ? (
+                  <div className="flex justify-end">
+                    <span
+                      className="select-text font-mono text-[10px] text-muted-foreground"
+                      title="Auto-populated by Pull data — read-only"
+                    >
+                      {coords}
+                    </span>
+                  </div>
+                ) : null
+              })()}
             </div>
           </div>
         ))}
       </div>
       <button
         type="button"
-        onClick={() => onChange([...sights, { name: "", url: "", description: "" }])}
+        onClick={() => onChange([...sights, { name: "", url: "", description: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] }])}
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"
       >
         + Add sight
@@ -2313,8 +2796,8 @@ function RefreshmentStopsEditor({
 }: {
   walkId: string
   // Used as a stable id-prefix so the two instances on the same card
-  // produce unique DOM ids (lunch-body-XXXX vs destinationPubs-body-XXXX).
-  kind: "lunch" | "destinationPubs"
+  // produce unique DOM ids (lunch-body-XXXX vs destinationStops-body-XXXX).
+  kind: "lunch" | "destinationStops"
   sectionTitle: string
   // Per-row prefix shown in each row's header ("Lunch 1", "Destination pub 1").
   itemLabel: string
@@ -2448,16 +2931,34 @@ function RefreshmentStopsEditor({
                   className="h-7 flex-1 text-xs"
                 />
               </div>
-              <Input
-                value={s.notes}
-                onChange={(e) => {
-                  const next = [...stops]
-                  next[i] = { ...next[i], notes: e.target.value }
-                  onStopsChange(next)
-                }}
-                placeholder="Notes (optional, admin-only for now)"
-                className="h-7 text-xs"
-              />
+              <div className="flex gap-1.5">
+                <Input
+                  value={s.notes}
+                  onChange={(e) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], notes: e.target.value }
+                    onStopsChange(next)
+                  }}
+                  placeholder="Notes (optional, admin-only for now)"
+                  className="h-7 flex-1 text-xs"
+                />
+                <BusinessStatusSelect
+                  value={s.businessStatus}
+                  onChange={(businessStatus) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], businessStatus }
+                    onStopsChange(next)
+                  }}
+                />
+                <SpotTypesSelect
+                  value={s.types}
+                  onChange={(types) => {
+                    const next = [...stops]
+                    next[i] = { ...next[i], types }
+                    onStopsChange(next)
+                  }}
+                />
+              </div>
               {/* Rating + busy — small toggle-button rows. Clicking
                   the active button clears it back to "no opinion".
                   Both fields share the same button-row shape so the
@@ -2517,6 +3018,22 @@ function RefreshmentStopsEditor({
                     )
                   })}
                 </div>
+                {/* Read-only coords block — bottom-right of the row,
+                    aligned with the rating/reservations buttons.
+                    Auto-populated by Komoot Pull data; admins don't
+                    edit these by hand. Empty when no coords/km set,
+                    so brand-new manual rows don't render a stray dot. */}
+                {(() => {
+                  const coords = formatRowCoords(s.lat, s.lng, s.kmIntoRoute)
+                  return coords ? (
+                    <span
+                      className="ml-auto select-text font-mono text-[10px] text-muted-foreground"
+                      title="Auto-populated by Pull data — read-only"
+                    >
+                      {coords}
+                    </span>
+                  ) : null
+                })()}
               </div>
             </div>
           </div>
@@ -2527,7 +3044,7 @@ function RefreshmentStopsEditor({
         onClick={() =>
           onStopsChange([
             ...stops,
-            { name: "", location: "", url: "", notes: "", rating: "", busy: "" },
+            { name: "", location: "", url: "", notes: "", rating: "", busy: "", lat: "", lng: "", kmIntoRoute: "", businessStatus: "", types: [] },
           ])
         }
         className="mt-2 w-full rounded border border-dashed border-border px-2 py-1 text-xs text-muted-foreground hover:bg-muted/40"

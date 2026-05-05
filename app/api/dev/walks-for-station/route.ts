@@ -56,8 +56,8 @@ type WalkPayload = {
   uphillMetres: number | null
   difficulty: "easy" | "moderate" | "hard" | null
   terrain: string
-  sights: { name: string; url?: string | null; description?: string }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
+  sights: { name: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   // Free-text override for the lunch line in the public prose. When
   // populated, the build script emits this verbatim instead of
   // formatting the lunchStops list. Lets the admin write a single
@@ -69,8 +69,8 @@ type WalkPayload = {
   // implicit — the walk destination). The editor hides the location
   // input for this section; the field is preserved on the data shape
   // for type compatibility with the shared editor and stays empty.
-  destinationPubs: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet" }[]
-  destinationPubsOverride: string
+  destinationStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  destinationStopsOverride: string
   // editable
   miscellany: string
   trainTips: string
@@ -286,8 +286,8 @@ export async function GET(req: NextRequest) {
           sights: v.sights ?? [],
           lunchStops: v.lunchStops ?? [],
           lunchOverride: typeof v.lunchOverride === "string" ? v.lunchOverride : "",
-          destinationPubs: Array.isArray(v.destinationPubs) ? v.destinationPubs : [],
-          destinationPubsOverride: typeof v.destinationPubsOverride === "string" ? v.destinationPubsOverride : "",
+          destinationStops: Array.isArray(v.destinationStops) ? v.destinationStops : [],
+          destinationStopsOverride: typeof v.destinationStopsOverride === "string" ? v.destinationStopsOverride : "",
           miscellany: v.miscellany ?? "",
           trainTips: v.trainTips ?? "",
           privateNote: v.privateNote ?? "",

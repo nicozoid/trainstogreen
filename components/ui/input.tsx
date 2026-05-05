@@ -15,11 +15,23 @@ import { cn } from "@/lib/utils"
  *
  * When the clear button is visible, the input automatically reserves pr-8
  * so typed text never slides underneath the button.
+ *
+ * `hideClear` opts an individual call site out of the clear button without
+ * affecting the rest of the design system — useful for narrow numeric or
+ * structural fields where the X would steal valuable horizontal space.
  */
-function Input({ className, type, value, onChange, ...props }: React.ComponentProps<"input">) {
+function Input({
+  className,
+  type,
+  value,
+  onChange,
+  hideClear,
+  ...props
+}: React.ComponentProps<"input"> & { hideClear?: boolean }) {
   // Only render the clear button for controlled inputs with a non-empty
   // string value. Number inputs or files aren't cleared through this path.
-  const hasClearableValue = typeof value === "string" && value.length > 0
+  // `hideClear` lets callers force-disable the button regardless.
+  const hasClearableValue = !hideClear && typeof value === "string" && value.length > 0
 
   const handleClear = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
