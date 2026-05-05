@@ -572,7 +572,7 @@ function formatSights(sights) {
 // gap between selected months (circularly) and starts listing
 // immediately after it. Dedupes; empty/invalid → null so the caller
 // Empty/invalid → null.
-function formatBestSeasons(months) {
+function formatBestSeasons(months, note) {
   if (!Array.isArray(months) || months.length === 0) return null
   const set = new Set()
   for (const m of months) {
@@ -592,7 +592,6 @@ function formatBestSeasons(months) {
   for (let i = 0; i < indices.length; i++) {
     const cur = indices[i]
     const next = indices[(i + 1) % indices.length]
-    // Gap size going forward from cur to next (modulo 12).
     const gap = ((next - cur + 12) % 12) || 12
     if (gap > maxGap) {
       maxGap = gap
@@ -600,34 +599,40 @@ function formatBestSeasons(months) {
     }
   }
 
-  // Rotate the list so it begins at startAt.
   const rotated = []
   let idx = indices.indexOf(startAt)
   for (let k = 0; k < indices.length; k++) {
     rotated.push(indices[(idx + k) % indices.length])
   }
 
-  // If the rotated sequence is a contiguous run — each adjacent pair
-  // one calendar month apart (modulo 12) — collapse it to
-  // "{first}–{last}" with an en-dash instead of listing each month.
-  // Examples:
-  //   [mar, apr, may]        → "Mar–May"
-  //   [oct, nov, dec, jan]   → "Oct–Jan"
-  //   [mar, apr, jun]        → "Mar, Apr and Jun"  (gap, no collapse)
-  const isContiguous = rotated.length >= 2 && rotated.every((m, k) => {
-    if (k === 0) return true
-    return (m - rotated[k - 1] + 12) % 12 === 1
-  })
-  if (isContiguous) {
-    const first = MONTH_FULL[MONTH_ORDER[rotated[0]]]
-    const last = MONTH_FULL[MONTH_ORDER[rotated[rotated.length - 1]]]
-    return `Best in ${first}\u2013${last}.`
+  // Single month -> "Best in April" using the FULL month name (reads
+  // more naturally than abbreviated for an isolated entry).
+  // Multi-month contiguous run -> "Best Mar-Apr" / "Best Oct-Jan"
+  // with abbreviated names + ASCII hyphen.
+  // Multi-month non-contiguous -> "Best Mar, Apr, Jun" — abbreviated,
+  // comma-joined, no "and" / no oxford comma (matches the admin spec).
+  let phrase
+  if (rotated.length === 1) {
+    phrase = `Best in ${MONTH_NAMES[rotated[0]]}`
+  } else {
+    const isContiguous = rotated.every((m, k) => {
+      if (k === 0) return true
+      return (m - rotated[k - 1] + 12) % 12 === 1
+    })
+    if (isContiguous) {
+      const first = MONTH_FULL[MONTH_ORDER[rotated[0]]]
+      const last = MONTH_FULL[MONTH_ORDER[rotated[rotated.length - 1]]]
+      phrase = `Best ${first}-${last}`
+    } else {
+      const names = rotated.map((i) => MONTH_FULL[MONTH_ORDER[i]])
+      phrase = `Best ${names.join(", ")}`
+    }
   }
-
-  const names = rotated.map((i) => MONTH_FULL[MONTH_ORDER[i]])
-  if (names.length === 1) return `Best in ${names[0]}.`
-  if (names.length === 2) return `Best in ${names[0]} and ${names[1]}.`
-  return `Best in ${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}.`
+  // Optional admin rationale ("bluebell season", "wildflowers in
+  // bloom"). Strip trailing "." and "?" so the outer period reads
+  // cleanly; "!" is preserved (matches lunch-stop notes convention).
+  const trimmedNote = typeof note === "string" ? note.trim().replace(/[.?]+$/, "") : ""
+  return trimmedNote ? `${phrase} (${trimmedNote}).` : `${phrase}.`
 }
 
 // Ensure a string ends with a period. Trims trailing whitespace and
@@ -795,9 +800,10 @@ function buildSummary(variant, entry, crsIndex, sources) {
   const trainTipsText = variant.trainTips?.trim() ?? ""
   if (trainTipsText) parts.push(withPeriod(trainTipsText))
 
-  // Best seasons — the structured month-code array. Legacy free-text
-  // bestTime has been migrated into miscellany and the field removed.
-  const structuredSeasons = formatBestSeasons(variant.bestSeasons)
+  // Best seasons — structured month-code array + optional free-text
+  // rationale. Renders as "Best Mar-Apr." or "Best Mar-Apr (bluebell
+  // season)." when the admin has populated the rationale field.
+  const structuredSeasons = formatBestSeasons(variant.bestSeasons, variant.bestSeasonsNote)
   if (structuredSeasons) parts.push(structuredSeasons)
 
   // Lunch — admin override (free text) takes precedence over the
