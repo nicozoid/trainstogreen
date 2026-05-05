@@ -1142,6 +1142,11 @@ function WalkCard({
           // external product, not the app's own visual language. Dark-mode pair
           // keeps contrast acceptable on the dark muted bg.
           const komootChip = `${chipBase} bg-lime-100 text-lime-800 dark:bg-lime-900/30 dark:text-lime-300`
+          // Amber chip for the Saturday Walkers Club favourite marker.
+          // Echoes the ★ mental model (warm yellow/amber = starred) and
+          // keeps it distinct from the green seasonality and lime komoot
+          // chips so the row stays scannable.
+          const swcFavChip = `${chipBase} bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300`
           const bookTags = (walk.pageTags ?? []).filter((t: string) => t.startsWith("TO1:") || t.startsWith("TO2:"))
           return (
             <>
@@ -1150,7 +1155,23 @@ function WalkCard({
                   bus
                 </span>
               )}
+              {/* main / variant identity. Previously "main" was implicit
+                  (no chip rendered) on the theory that main is the
+                  default — but that made it hard to spot at a glance
+                  whether a card was a main walk or just a card with no
+                  source.type set. Render both explicitly now. */}
+              {walkType === "main" && <span className={neutralChip} title="Source type: main">main</span>}
               {isVariant && <span className={neutralChip} title={`Source type: ${walkType}`}>{walkType}</span>}
+              {/* SWC favourite — set at the entry level by
+                  seed-rambler-walks.mjs when the source page row
+                  carries title="My Favourites" (the ★ marker on
+                  walkingclub.org.uk). Same flag also shows up as the
+                  "My Favourites" category in the entry's metadata. */}
+              {walk.favourite && (
+                <span className={swcFavChip} title="Marked as a Saturday Walkers Club favourite (★ My Favourites)">
+                  swc_fav
+                </span>
+              )}
               {walk.komootUrl && <span className={komootChip} title="Has a Komoot tour URL">komoot</span>}
               {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (
