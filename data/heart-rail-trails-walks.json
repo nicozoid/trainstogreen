@@ -652,14 +652,6 @@
         "miscellany": "Can be muddy",
         "id": "tlktlkwren",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "The Lakes Circular Walk",
@@ -1663,11 +1655,6 @@
         ],
         "miscellany": "Narrow path sections",
         "id": "htnhtnheather",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Hatton to Lapworth Walk",
@@ -1755,11 +1742,6 @@
         "miscellany": "Can be muddy",
         "id": "ewdewdlimpet",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Earlswood to Wythall",
@@ -2235,11 +2217,6 @@
         ],
         "miscellany": "Electric fence near stables",
         "id": "berberdragonfly",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Bearley to Claverdon",
@@ -2751,11 +2728,6 @@
         "miscellany": "Can be muddy",
         "id": "dzydzycoaltit",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Danzey Circular Walk",

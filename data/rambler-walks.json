@@ -91,14 +91,6 @@
         ],
         "miscellany": "",
         "id": "nulnulgull",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "The 7 Hanging Valleys Karst Limestone Coast",
@@ -3891,14 +3883,6 @@
         ],
         "miscellany": "Seasonal path closure",
         "id": "gorgorivy",
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "mar",
-          "oct",
-          "nov",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Goring Circular",
@@ -4290,11 +4274,6 @@
         ],
         "miscellany": "Riverside can flood",
         "id": "maimlwhedgehog",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4360,11 +4339,6 @@
         ],
         "miscellany": "Riverside can flood",
         "id": "maibnewormwood",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4430,11 +4404,6 @@
         ],
         "miscellany": "Riverside can be slithery",
         "id": "maicoofen",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4493,11 +4462,6 @@
         ],
         "miscellany": "Riverside can be slithery",
         "id": "mlwmlwsloe",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4541,11 +4505,6 @@
         ],
         "miscellany": "Riverside can be slithery",
         "id": "coocoomole",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4604,11 +4563,6 @@
         ],
         "miscellany": "",
         "id": "maicoolichen",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4642,11 +4596,6 @@
         ],
         "miscellany": "",
         "id": "coomlwbroom",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4703,11 +4652,6 @@
         ],
         "miscellany": "",
         "id": "maibnewillow",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -4769,11 +4713,6 @@
         ],
         "miscellany": "",
         "id": "maimlwpochard",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Maidenhead to Marlow",
@@ -5518,10 +5457,6 @@
         ],
         "miscellany": "",
         "id": "sngwnranemone",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -5606,10 +5541,6 @@
         ],
         "miscellany": "",
         "id": "sngsnswoodlouse",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -5697,10 +5628,6 @@
         ],
         "miscellany": "",
         "id": "sngwncstarfish",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -10529,11 +10456,6 @@
         ],
         "miscellany": "",
         "id": "lnycoosnowdrop",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "West Drayton to Cookham",
@@ -11252,10 +11174,6 @@
         ],
         "miscellany": "Can flood after rain",
         "id": "clwzcmragwort",
-        "bestSeasons": [
-          "mar",
-          "apr"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chorleywood to Chesham",
@@ -11300,10 +11218,6 @@
         ],
         "miscellany": "",
         "id": "clwcfobat",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chorleywood to Chesham",
@@ -11466,9 +11380,6 @@
         "miscellany": "Can be muddy",
         "id": "gercooswift",
         "mudWarning": true,
-        "bestSeasons": [
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -11612,11 +11523,6 @@
         "miscellany": "Can be muddy",
         "id": "gmnamrsorrel",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -11738,11 +11644,6 @@
         "miscellany": "Can be muddy",
         "id": "amrgmncuckoo",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -12375,10 +12276,6 @@
         "sights": [],
         "miscellany": "Bring a compass",
         "id": "ltksdrmussel",
-        "bestSeasons": [
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Little Kimble to Saunderton",
@@ -12505,10 +12402,6 @@
         "miscellany": "Can be muddy",
         "id": "prrgmncelandine",
         "mudWarning": true,
-        "bestSeasons": [
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -13068,10 +12961,6 @@
           }
         ],
         "id": "tritrimink",
-        "bestSeasons": [
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13121,10 +13010,6 @@
         ],
         "miscellany": "Very hilly and very windy",
         "id": "tritritench",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "rough-guide-walks-london-south-east-3rd",
           "pageName": "",
@@ -13183,10 +13068,6 @@
         ],
         "miscellany": "",
         "id": "tribkmmoss",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13513,11 +13394,6 @@
         "miscellany": "Can be muddy",
         "id": "wndwndsorbus",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13563,11 +13439,6 @@
         "miscellany": "Can be muddy",
         "id": "wndwndelm",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13613,11 +13484,6 @@
         "miscellany": "Can be muddy",
         "id": "wndmrstwite",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13667,11 +13533,6 @@
         "miscellany": "Can be muddy",
         "id": "mrswndmaple",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13710,11 +13571,6 @@
         ],
         "miscellany": "",
         "id": "wndwndmidge",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -13821,11 +13677,6 @@
         ],
         "miscellany": "Steep descents",
         "id": "wndwndbee",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular via The Lee and Swan Bottom",
@@ -13864,11 +13715,6 @@
         ],
         "miscellany": "",
         "id": "wndgmnlavender",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wendover Circular via The Lee and Swan Bottom",
@@ -14341,11 +14187,6 @@
         ],
         "miscellany": "Prone to flooding",
         "id": "hunhunswift",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Huntingdon Circular",
@@ -14463,11 +14304,6 @@
         ],
         "miscellany": "Prone to flooding",
         "id": "hunhunwhinchat",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Huntingdon Circular",
@@ -16335,14 +16171,6 @@
         ],
         "miscellany": "MOD firing ranges apply",
         "id": "okeokechanterelle",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ten Tors",
@@ -16440,15 +16268,6 @@
         ],
         "miscellany": "Steep clifftop edges",
         "id": "nulnulsquirrel",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lundy Island Circular",
@@ -16556,14 +16375,6 @@
         "miscellany": "Muddy and slippery when wet",
         "id": "nulnulbumblebee",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "mar",
-          "apr",
-          "may",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Seaton to Lyme Regis via the Undercliff",
@@ -17301,15 +17112,6 @@
         ],
         "miscellany": "Check firing times",
         "id": "nulnulwillow",
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "mar",
-          "sep",
-          "oct",
-          "nov",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chesil Beach Spit",
@@ -20898,10 +20700,6 @@
         "miscellany": "Can be muddy",
         "id": "ahsegroak",
         "mudWarning": true,
-        "bestSeasons": [
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ashurst to Forest Row and East Grinstead",
@@ -22422,14 +22220,6 @@
         ],
         "miscellany": "Can be overgrown",
         "id": "bipbiphedgerow",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Bishopstone Circular",
@@ -23023,11 +22813,6 @@
         ],
         "miscellany": "Steep climb onto Beachy Head",
         "id": "ebnnulwillowherb",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Eastbourne to East Dean",
@@ -23090,11 +22875,6 @@
         ],
         "miscellany": "Strenuous clifftop section",
         "id": "ebnnulvole",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Eastbourne to East Dean",
@@ -23728,11 +23508,6 @@
         "miscellany": "Can be muddy",
         "id": "ahserisorbus",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Eridge Circular",
@@ -24210,11 +23985,6 @@
         "miscellany": "Can be muddy",
         "id": "etcwadsorbus",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Etchingham to Wadhurst via Ticehurst",
@@ -24260,11 +24030,6 @@
         "miscellany": "Can be muddy",
         "id": "rbrwadmouse",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Etchingham to Wadhurst via Ticehurst",
@@ -24354,10 +24119,6 @@
         ],
         "miscellany": "Easy to get lost",
         "id": "nulnulperch",
-        "bestSeasons": [
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Forest Row Circular",
@@ -24391,10 +24152,6 @@
         ],
         "miscellany": "Easy to get lost",
         "id": "nulnulaspen",
-        "bestSeasons": [
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Forest Row Circular",
@@ -24422,10 +24179,6 @@
         ],
         "miscellany": "Easy to get lost",
         "id": "nulnulwalnut",
-        "bestSeasons": [
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Forest Row Circular",
@@ -26816,14 +26569,6 @@
         ],
         "miscellany": "Steep climbs",
         "id": "glysefermine",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lewes to Seaford via West Firle",
@@ -30390,11 +30135,6 @@
         "miscellany": "Can be muddy",
         "id": "sogrbrwillow",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Stonegate to Robertsbridge",
@@ -30511,10 +30251,6 @@
         "miscellany": "Can be muddy",
         "id": "uckbxddrinker",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Uckfield to Buxted",
@@ -30558,10 +30294,6 @@
         "miscellany": "Can be muddy",
         "id": "uckbxdmagpie",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Uckfield to Buxted",
@@ -31426,11 +31158,6 @@
         ],
         "miscellany": "Can be boggy",
         "id": "wadtbwptarmigan",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst to Tunbridge Wells",
@@ -31502,11 +31229,6 @@
         ],
         "miscellany": "Can be boggy",
         "id": "wadtbwgrayling",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wadhurst to Tunbridge Wells",
@@ -31821,14 +31543,6 @@
         ],
         "miscellany": "Steep cliff climbs",
         "id": "wsehgsfir",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
@@ -31906,14 +31620,6 @@
         ],
         "miscellany": "Steep cliff climbs",
         "id": "ryehgswillowherb",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
@@ -32635,14 +32341,6 @@
         "miscellany": "Can be muddy",
         "id": "befbefdogwood",
         "mudWarning": true,
-        "bestSeasons": [
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Benfleet Circular via Leigh on Sea",
@@ -32683,14 +32381,6 @@
         "miscellany": "Can be muddy",
         "id": "befleswarbler",
         "mudWarning": true,
-        "bestSeasons": [
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Benfleet Circular via Leigh on Sea",
@@ -33004,11 +32694,6 @@
         "sights": [],
         "miscellany": "",
         "id": "cltwongannet",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Clacton-on-Sea to Walton-on-the-Naze",
@@ -34764,10 +34449,6 @@
         "miscellany": "Can be muddy",
         "id": "sofnfamagpie",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "South Woodham Ferrers to North Fambridge",
@@ -36848,11 +36529,6 @@
         ],
         "miscellany": "Check tide timings",
         "id": "brylwmmink",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Barry to Llantwit Major",
@@ -37899,10 +37575,6 @@
         ],
         "miscellany": "Can be boggy",
         "id": "kgmmimshingle",
-        "bestSeasons": [
-          "jun",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kingham to Moreton in Marsh via Adelstrop",
@@ -43127,11 +42799,6 @@
         ],
         "miscellany": "",
         "id": "winnulwoodlouse",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchester to West Meon or Hinton Ampner",
@@ -43231,11 +42898,6 @@
         ],
         "miscellany": "Very limited bus service",
         "id": "winexnbullfinch",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Winchester to West Meon or Hinton Ampner",
@@ -46185,7 +45847,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "adapted"
         },
-        "updatedAt": "2026-05-05T13:08:11.607Z",
+        "updatedAt": "2026-05-05T13:23:46.765Z",
         "destinationStops": [
           {
             "name": "Mad Squirrel Tap",
@@ -46251,7 +45913,11 @@
         "rating": 2,
         "previousWalkDates": [
           "2026-05-04"
-        ]
+        ],
+        "bestSeasons": [
+          "apr"
+        ],
+        "bestSeasonsNote": "bluebell season"
       }
     ]
   },
@@ -46573,11 +46239,6 @@
         "miscellany": "Can be muddy",
         "id": "kbwkbwadmiral",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knebworth Circular",
@@ -46658,11 +46319,6 @@
         "miscellany": "Can be muddy",
         "id": "kbwkbwgoldfinch",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knebworth Circular",
@@ -46739,10 +46395,6 @@
         ],
         "miscellany": "Inquisitive cattle",
         "id": "kbwhitbroom",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knebworth Circular",
@@ -46880,11 +46532,6 @@
         "miscellany": "Can be muddy",
         "id": "kbwwgcredpoll",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knebworth to Welwyn Garden City",
@@ -46941,11 +46588,6 @@
         "miscellany": "Can be muddy",
         "id": "kbwwgcwren",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knebworth to Welwyn Garden City",
@@ -47476,11 +47118,6 @@
         "miscellany": "Can be muddy",
         "id": "tribkmcomfrey",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tring to Berkhamsted via Tom's Hill",
@@ -48413,10 +48050,6 @@
         ],
         "miscellany": "Very steep climbs",
         "id": "lkeshnwoodcock",
-        "bestSeasons": [
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lake to Shanklin via Ventnor",
@@ -48503,10 +48136,6 @@
         ],
         "miscellany": "Very steep climbs",
         "id": "nulshnviper",
-        "bestSeasons": [
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Lake to Shanklin via Ventnor",
@@ -49854,11 +49483,6 @@
         ],
         "miscellany": "",
         "id": "cbecbeslowworm",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -49914,11 +49538,6 @@
         ],
         "miscellany": "",
         "id": "cbestubream",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -49974,11 +49593,6 @@
         ],
         "miscellany": "",
         "id": "bkscbedamselfly",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -50035,11 +49649,6 @@
         ],
         "miscellany": "",
         "id": "bksstuwhinchat",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -50092,11 +49701,6 @@
         ],
         "miscellany": "",
         "id": "stustucricket",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -50148,11 +49752,6 @@
         ],
         "miscellany": "",
         "id": "stucbewagtail",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -50209,11 +49808,6 @@
         ],
         "miscellany": "",
         "id": "bksbksclover",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Canterbury Circular via Bekesbourne and Sturry",
@@ -50305,10 +49899,6 @@
         ],
         "miscellany": "",
         "id": "cilcilmussel",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Chilham Circular",
@@ -51122,10 +50712,6 @@
         ],
         "miscellany": "Some strenuous climbs",
         "id": "cuxsorfox",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cuxton to Sole Street",
@@ -51160,10 +50746,6 @@
         "sights": [],
         "miscellany": "Some strenuous climbs",
         "id": "cuxsorbilberry",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cuxton to Sole Street",
@@ -51421,10 +51003,6 @@
         ],
         "miscellany": "Mobile may switch networks",
         "id": "dvpdeadaffodil",
-        "bestSeasons": [
-          "may",
-          "jun"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
@@ -51541,10 +51119,6 @@
         ],
         "miscellany": "Mobile may switch networks",
         "id": "deadvprussula",
-        "bestSeasons": [
-          "may",
-          "jun"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
@@ -52501,10 +52075,6 @@
         ],
         "miscellany": "Quite a few steep hills",
         "id": "ebrnulslug",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Edenbridge to Westerham",
@@ -52581,10 +52151,6 @@
         ],
         "miscellany": "Quite a few steep hills",
         "id": "ebtnulparasol",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Edenbridge to Westerham",
@@ -52661,10 +52227,6 @@
         ],
         "miscellany": "Steep escarpment climb",
         "id": "hurnulgannet",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Edenbridge to Westerham",
@@ -52731,10 +52293,6 @@
         ],
         "miscellany": "Some short steep sections",
         "id": "ebrnulrudd",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Edenbridge to Westerham",
@@ -54983,10 +54541,6 @@
         ],
         "miscellany": "Waymarking can disappear",
         "id": "yalsevbuttercup",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
@@ -55088,10 +54642,6 @@
         ],
         "miscellany": "",
         "id": "yalnulptarmigan",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Yalding to Sutton Valence",
@@ -55134,10 +54684,6 @@
         ],
         "miscellany": "",
         "id": "yalhrmgentian",
-        "bestSeasons": [
-          "mar",
-          "apr"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Yalding to Sutton Valence",
@@ -55220,10 +54766,6 @@
         "miscellany": "Can be muddy",
         "id": "hrmplcgentian",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Harrietsham or Sutton Valence to Pluckley",
@@ -55253,10 +54795,6 @@
         "miscellany": "Can be muddy",
         "id": "nulplcrush",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Harrietsham or Sutton Valence to Pluckley",
@@ -55390,11 +54928,6 @@
         "miscellany": "Can be muddy",
         "id": "hmtapdchanterelle",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ham Street to Appledore",
@@ -56989,14 +56522,6 @@
         "miscellany": "Can be muddy",
         "id": "hgmgrvpipit",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Higham to Gravesend",
@@ -57574,10 +57099,6 @@
         "miscellany": "Can be muddy",
         "id": "hurnulpike",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -57849,10 +57370,6 @@
         ],
         "miscellany": "Numerous stiles throughout",
         "id": "kckkckpainted",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knockholt Circular",
@@ -57953,14 +57470,6 @@
         ],
         "miscellany": "Descents can be slippery",
         "id": "kckotfadder",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Knockholt to Otford",
@@ -59541,11 +59050,6 @@
         "miscellany": "Can be muddy",
         "id": "sdgwyewormwood",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sandling to Wye",
@@ -59580,11 +59084,6 @@
         "miscellany": "Can be muddy",
         "id": "wyesdgbluetit",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sandling to Wye",
@@ -61180,10 +60679,6 @@
         ],
         "miscellany": "",
         "id": "plcplcspinney",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -61854,11 +61349,6 @@
         ],
         "miscellany": "Two steep hill climbs",
         "id": "sdgfkclupin",
-        "bestSeasons": [
-          "jul",
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sandling to Folkestone via the Sea",
@@ -61943,11 +61433,6 @@
         ],
         "miscellany": "Two steep hill climbs",
         "id": "sdgfkcpolecat",
-        "bestSeasons": [
-          "jul",
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sandling to Folkestone via the Sea",
@@ -62073,10 +61558,6 @@
         "miscellany": "Some mud inevitable",
         "id": "sevsevjellyfish",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
@@ -62186,10 +61667,6 @@
         "miscellany": "Can be muddy",
         "id": "sevnullongtail",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sevenoaks to Westerham",
@@ -62774,10 +62251,6 @@
         ],
         "miscellany": "",
         "id": "sorsorbuttercup",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -62871,10 +62344,6 @@
         "miscellany": "Can be muddy",
         "id": "spuhcncurlew",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Staplehurst to Headcorn or Cranbrook",
@@ -62908,10 +62377,6 @@
         ],
         "miscellany": "Bus Mon–Sat only",
         "id": "spunulcrab",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Staplehurst to Headcorn or Cranbrook",
@@ -62949,10 +62414,6 @@
         ],
         "miscellany": "Bus Mon–Sat only",
         "id": "spucbkteal",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Staplehurst to Headcorn or Cranbrook",
@@ -64378,11 +63839,6 @@
         "miscellany": "Can be muddy",
         "id": "tbwtbwredshank",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tunbridge Wells Circular",
@@ -64460,11 +63916,6 @@
         "miscellany": "Can be muddy",
         "id": "tbwtbwcampion",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tunbridge Wells Circular",
@@ -64531,11 +63982,6 @@
         ],
         "miscellany": "Busy road at start",
         "id": "frttbwcentipede",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tunbridge Wells Circular",
@@ -64591,11 +64037,6 @@
         ],
         "miscellany": "Busy road at start",
         "id": "frttbwpine",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Tunbridge Wells Circular",
@@ -67080,11 +66521,6 @@
         "miscellany": "Can be muddy",
         "id": "yalbrgbroom",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -67134,11 +66570,6 @@
         "miscellany": "Can be muddy",
         "id": "yalbrgsparrow",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -67189,11 +66620,6 @@
         "miscellany": "Can be muddy",
         "id": "yalbrgfallow",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -71559,11 +70985,6 @@
         "miscellany": "Can be muddy",
         "id": "klycatblackcap",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kenley to Caterham",
@@ -71622,11 +71043,6 @@
         "miscellany": "Can be muddy",
         "id": "klycatnatterjack",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kenley to Caterham",
@@ -71750,12 +71166,6 @@
         "miscellany": "Can be muddy",
         "id": "zlezlopochard",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Leytonstone to Loughton",
@@ -71794,12 +71204,6 @@
         "miscellany": "Can be muddy",
         "id": "zlechiroach",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Leytonstone to Loughton",
@@ -71846,10 +71250,6 @@
         "miscellany": "Can be muddy",
         "id": "zlezegsycamore",
         "mudWarning": true,
-        "bestSeasons": [
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Leytonstone to Loughton",
@@ -72118,14 +71518,6 @@
         "miscellany": "Can be muddy",
         "id": "rnmpflsnipe",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "sep",
-          "oct",
-          "nov",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rainham to Purfleet via RSPB Rainham Marshes",
@@ -72178,14 +71570,6 @@
         "miscellany": "Can be muddy",
         "id": "rnmrnmtruffle",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "sep",
-          "oct",
-          "nov",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rainham to Purfleet via RSPB Rainham Marshes",
@@ -72228,14 +71612,6 @@
         "miscellany": "Can be muddy",
         "id": "zhurnmmistle",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "sep",
-          "oct",
-          "nov",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rainham to Purfleet via RSPB Rainham Marshes",
@@ -72351,14 +71727,6 @@
         "miscellany": "Can be muddy",
         "id": "zlozegjuniper",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "mar",
-          "apr",
-          "may",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Loughton to Epping",
@@ -73192,11 +72560,6 @@
         ],
         "miscellany": "",
         "id": "nbtzhamoss",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Norbiton to Hammersmith or Putney",
@@ -73281,11 +72644,6 @@
         ],
         "miscellany": "",
         "id": "nbtzpbdandelion",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Norbiton to Hammersmith or Putney",
@@ -73350,11 +72708,6 @@
         ],
         "miscellany": "",
         "id": "nbtchktufted",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Norbiton to Hammersmith or Putney",
@@ -73424,11 +72777,6 @@
         ],
         "miscellany": "",
         "id": "nbtztucelandine",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Norbiton to Hammersmith or Putney",
@@ -73473,11 +72821,6 @@
         ],
         "miscellany": "",
         "id": "nbtbnivetch",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Norbiton to Hammersmith or Putney",
@@ -74377,11 +73720,6 @@
         ],
         "miscellany": "",
         "id": "putrmdbluebell",
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Putney to Richmond",
@@ -75880,11 +75218,6 @@
         "miscellany": "Can be muddy",
         "id": "ztwztwlapwing",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Totteridge Circular",
@@ -75934,11 +75267,6 @@
         "miscellany": "Can be muddy",
         "id": "ztwztwcornflower",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Totteridge Circular",
@@ -75988,11 +75316,6 @@
         "miscellany": "Can be muddy",
         "id": "ztwztwblackbird",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Totteridge Circular",
@@ -76046,11 +75369,6 @@
         "miscellany": "Can be muddy",
         "id": "ztwzhbshelduck",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Totteridge Circular",
@@ -76115,11 +75433,6 @@
         "miscellany": "Can be muddy",
         "id": "ztwzckprawn",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Totteridge Circular",
@@ -76401,11 +75714,6 @@
         "miscellany": "Can be muddy",
         "id": "wimwimkingfisher",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wimbledon Circular",
@@ -76619,11 +75927,6 @@
         "miscellany": "Can be muddy",
         "id": "wimkngrudd",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wimbledon to Kingston",
@@ -76696,11 +75999,6 @@
         ],
         "miscellany": "",
         "id": "wimtwispeckled",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Wimbledon to Kingston",
@@ -79035,14 +78333,6 @@
         ],
         "miscellany": "",
         "id": "chogorgatekeeper",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cholsey to Goring",
@@ -79156,14 +78446,6 @@
         ],
         "miscellany": "Long, exposed walk",
         "id": "chogormarsh",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "jun",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Cholsey to Goring via Wallingford",
@@ -79336,11 +78618,6 @@
         ],
         "miscellany": "",
         "id": "coomaichanterelle",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -79870,10 +79147,6 @@
         "miscellany": "Muddy after rain",
         "id": "gorgorheather",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Goring Circular via Hill Bottom",
@@ -80009,9 +79282,6 @@
         "miscellany": "Can be muddy",
         "id": "hndcbyweasel",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -80284,11 +79554,6 @@
         "miscellany": "Can be muddy",
         "id": "hothotorchid",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "dec"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
@@ -80815,9 +80080,6 @@
         ],
         "miscellany": "",
         "id": "hothotwren",
-        "bestSeasons": [
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -80875,9 +80137,6 @@
         ],
         "miscellany": "",
         "id": "hotmlwcampion",
-        "bestSeasons": [
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -80943,9 +80202,6 @@
         ],
         "miscellany": "",
         "id": "hothotsparrow",
-        "bestSeasons": [
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -81064,11 +80320,6 @@
         "miscellany": "Can be muddy",
         "id": "hothotmallard",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -81172,11 +80423,6 @@
         ],
         "miscellany": "",
         "id": "hothotcentipede",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Henley via Turville Circular",
@@ -81442,12 +80688,6 @@
         "miscellany": "Can be very muddy",
         "id": "kgmcbywren",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Kingham to Charlbury",
@@ -82787,10 +82027,6 @@
         ],
         "miscellany": "Can flood after rain",
         "id": "shihotredshank",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -82857,10 +82093,6 @@
         ],
         "miscellany": "",
         "id": "shihottit",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -83272,11 +82504,6 @@
         "miscellany": "Can be muddy",
         "id": "nulnulringlet",
         "mudWarning": true,
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Goring to Wantage",
@@ -83373,11 +82600,6 @@
         ],
         "miscellany": "No Sunday buses",
         "id": "nulnuldotterel",
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Goring to Wantage",
@@ -87894,11 +87116,6 @@
         ],
         "miscellany": "Very exposed when windy",
         "id": "nulnulbolete",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Mam Tor to Kinder Low",
@@ -88233,11 +87450,6 @@
         "miscellany": "Can be muddy",
         "id": "shfnulkittiwake",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sheffield Circular via Porter and Gleadless",
@@ -88294,11 +87506,6 @@
         ],
         "miscellany": "",
         "id": "shfnulraven",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sheffield Circular via Porter and Gleadless",
@@ -88373,11 +87580,6 @@
         ],
         "miscellany": "",
         "id": "shfdorroach",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Sheffield Circular via Porter and Gleadless",
@@ -91149,11 +90351,6 @@
         ],
         "miscellany": "MOD range closures apply",
         "id": "ashashbuzzard",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Circular via the MOD Ranges",
@@ -91304,11 +90501,6 @@
         ],
         "miscellany": "MOD firing range closures",
         "id": "ahvahvplover",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Vale Circular via North Downs Way",
@@ -91360,11 +90552,6 @@
         ],
         "miscellany": "MOD firing range closures",
         "id": "ashahvscallop",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Vale Circular via North Downs Way",
@@ -91411,11 +90598,6 @@
         ],
         "miscellany": "MOD firing range closures",
         "id": "ahvashroach",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Vale Circular via North Downs Way",
@@ -91462,11 +90644,6 @@
         ],
         "miscellany": "MOD firing range closures",
         "id": "wanahvmagpie",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Vale Circular via North Downs Way",
@@ -91514,11 +90691,6 @@
         "miscellany": "Can be muddy",
         "id": "ahvwantreecreeper",
         "mudWarning": true,
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Ash Vale Circular via North Downs Way",
@@ -93709,10 +92881,6 @@
         ],
         "miscellany": "Steep descents, can be slippery",
         "id": "bxwbxwhedgerow",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -94291,10 +93459,6 @@
         ],
         "miscellany": "",
         "id": "dkgdkgcockle",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Dorking via Brockham Circular",
@@ -95485,13 +94649,6 @@
         ],
         "miscellany": "",
         "id": "effbxwsparrow",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -95544,13 +94701,6 @@
         ],
         "miscellany": "",
         "id": "effdkgdeer",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -95598,13 +94748,6 @@
         ],
         "miscellany": "",
         "id": "bxwbxwcapercaillie",
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -96437,11 +95580,6 @@
         "miscellany": "Can be muddy",
         "id": "wtyhslslug",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Witley to Haslemere via Thursley, Surrey Hills",
@@ -96988,10 +96126,6 @@
         "miscellany": "Can be muddy",
         "id": "eldoxtivy",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Earlswood to Oxted",
@@ -97036,10 +96170,6 @@
         "sights": [],
         "miscellany": "",
         "id": "nufoxtptarmigan",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Earlswood to Oxted",
@@ -97636,11 +96766,6 @@
         "miscellany": "Can be muddy",
         "id": "gldfnhwillowherb",
         "mudWarning": true,
-        "bestSeasons": [
-          "jul",
-          "aug",
-          "sep"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -97940,14 +97065,6 @@
         "miscellany": "Can be muddy",
         "id": "gldgomslug",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -98332,10 +97449,6 @@
         ],
         "miscellany": "Steep hill climbs",
         "id": "gldhsyshrew",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Guildford to Horsley",
@@ -98575,10 +97688,6 @@
         "miscellany": "Can be muddy",
         "id": "gldgldkingfisher",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "rating": 3,
         "source": {
           "orgSlug": "saturday-walkers-club",
@@ -98798,11 +97907,6 @@
         "miscellany": "Can be muddy",
         "id": "hslhsldragonfly",
         "mudWarning": true,
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -99270,11 +98374,6 @@
         "miscellany": "Can be muddy",
         "id": "hlmgomswallow",
         "mudWarning": true,
-        "bestSeasons": [
-          "may",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -99486,11 +98585,6 @@
         "miscellany": "Can be muddy",
         "id": "hlmnulnettle",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Holmwood to Shamley Green",
@@ -99544,11 +98638,6 @@
         "miscellany": "Can be muddy",
         "id": "hlmgldcapercaillie",
         "mudWarning": true,
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Holmwood to Shamley Green",
@@ -100563,11 +99652,6 @@
         ],
         "id": "mlfgodcornflower",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -100622,11 +99706,6 @@
         "miscellany": "Can be muddy",
         "id": "wtygodbracken",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -100681,11 +99760,6 @@
         "miscellany": "Can be muddy",
         "id": "mlffncvole",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -100806,10 +99880,6 @@
         "miscellany": "Can be muddy",
         "id": "mlfhslcarp",
         "mudWarning": true,
-        "bestSeasons": [
-          "jul",
-          "aug"
-        ],
         "komootUrl": "https://www.komoot.com/tour/2905513618",
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
@@ -101035,11 +100105,6 @@
         ],
         "miscellany": "Hilly, multiple ascents",
         "id": "bxwmhmlizard",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Merstham and Caterham",
@@ -101094,11 +100159,6 @@
         ],
         "miscellany": "Hilly, multiple ascents",
         "id": "bxwcatgull",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Merstham and Caterham",
@@ -101154,11 +100214,6 @@
         ],
         "miscellany": "Hilly, multiple ascents",
         "id": "dktmhmlarch",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Box Hill to Merstham and Caterham",
@@ -101576,11 +100631,6 @@
         "miscellany": "Can be muddy",
         "id": "olywnhcarp",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -101639,11 +100689,6 @@
         "miscellany": "Can be muddy",
         "id": "olyhrhsallow",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -102652,11 +101697,6 @@
         "miscellany": "Can be muddy",
         "id": "oxtlfdbeech",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Oxted to Lingfield",
@@ -102708,11 +101748,6 @@
         "miscellany": "Can be muddy",
         "id": "oxtgdndunnock",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Oxted to Lingfield",
@@ -102787,11 +101822,6 @@
         "miscellany": "Can be muddy",
         "id": "hurlfdwillow",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Oxted to Lingfield",
@@ -102839,11 +101869,6 @@
         "miscellany": "Can be muddy",
         "id": "hurgdnpike",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Oxted to Lingfield",
@@ -103391,14 +102416,6 @@
         ],
         "miscellany": "",
         "id": "rddcdspainted",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -103454,14 +102471,6 @@
         ],
         "miscellany": "",
         "id": "cdscdsraven",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -103523,14 +102532,6 @@
         ],
         "miscellany": "",
         "id": "rddkndwhinchat",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -104682,10 +103683,6 @@
         "miscellany": "Can be muddy",
         "id": "uwluwlslug",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Warlingham Circular",
@@ -104741,10 +103738,6 @@
         "miscellany": "Can be muddy",
         "id": "uwluwlringlet",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Warlingham Circular",
@@ -104821,10 +103814,6 @@
         "miscellany": "Can be muddy",
         "id": "uwlwohyew",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Warlingham Circular",
@@ -104897,10 +103886,6 @@
         "miscellany": "Can be muddy",
         "id": "uwlwohlimpet",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Warlingham Circular",
@@ -106647,11 +105632,6 @@
           }
         ],
         "id": "amyaruweasel",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-2",
           "pageName": "",
@@ -108939,11 +107919,6 @@
         "miscellany": "Can be muddy",
         "id": "babbabchanterelle",
         "mudWarning": true,
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Balcombe Circular via Ardingly Reservoir",
@@ -109005,10 +107980,6 @@
         ],
         "miscellany": "Steep climbs and descents",
         "id": "babbabparasol",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Balcombe Circular via Ardingly Reservoir",
@@ -109318,11 +108289,6 @@
         "miscellany": "Can be very muddy",
         "id": "babegrseal",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "time-out-country-walks-vol-1",
           "pageName": "",
@@ -109575,10 +108541,6 @@
         "sights": [],
         "miscellany": "Stiff hill climb",
         "id": "bigamybluetit",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Billingshurst to Amberley",
@@ -110148,17 +109110,6 @@
         "miscellany": "Can be muddy",
         "id": "egregrparasol",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead Circular",
@@ -110226,10 +109177,6 @@
         ],
         "miscellany": "Road section with traffic",
         "id": "egregrswallow",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead Circular",
@@ -110292,17 +109239,6 @@
         "miscellany": "Can be muddy",
         "id": "egregreagle",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "jun",
-          "jul",
-          "aug",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead Circular",
@@ -110539,11 +109475,6 @@
         "miscellany": "Mud and flood prone",
         "id": "egrwvflizard",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead to Wivelsfield or Sheffield Park",
@@ -110599,11 +109530,6 @@
         "miscellany": "Mud and flood prone",
         "id": "egrnulmidge",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead to Wivelsfield or Sheffield Park",
@@ -110640,11 +109566,6 @@
         "miscellany": "Can be muddy",
         "id": "nulwvfmarsh",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead to Wivelsfield or Sheffield Park",
@@ -110686,11 +109607,6 @@
         "miscellany": "Mud and flood prone",
         "id": "egrnulgoldfinch",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "East Grinstead to Wivelsfield or Sheffield Park",
@@ -110947,13 +109863,6 @@
         "miscellany": "Can be muddy",
         "id": "hslnulfirecrest",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haslemere to Midhurst via Henley",
@@ -111005,13 +109914,6 @@
         "miscellany": "Can be muddy",
         "id": "hslnulspinney",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haslemere to Midhurst via Henley",
@@ -111063,13 +109965,6 @@
         "miscellany": "Can be muddy",
         "id": "hslnulbat",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haslemere to Midhurst via Henley",
@@ -111121,13 +110016,6 @@
         "miscellany": "Can be muddy",
         "id": "hslnulchanterelle",
         "mudWarning": true,
-        "bestSeasons": [
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haslemere to Midhurst via Henley",
@@ -111976,11 +110864,6 @@
         ],
         "miscellany": "Taxi likely needed",
         "id": "hhenulowl",
-        "bestSeasons": [
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Haywards Heath Circular via Lindfield",
@@ -114818,11 +113701,6 @@
         ],
         "miscellany": "Steep climbs and descents",
         "id": "rlnrlndock",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rowlands Castle Circular",
@@ -114879,11 +113757,6 @@
         ],
         "miscellany": "Steep climbs and descents",
         "id": "rlnrlnoyster",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rowlands Castle Circular",
@@ -115040,10 +113913,6 @@
         ],
         "miscellany": "Steep climbs throughout",
         "id": "rlnrlnrowan",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rowlands Castle Grand Circular",
@@ -115102,10 +113971,6 @@
         ],
         "miscellany": "Steep climbs throughout",
         "id": "rlnptrcrab",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rowlands Castle Grand Circular",
@@ -115159,10 +114024,6 @@
         ],
         "miscellany": "Steep climbs throughout",
         "id": "rlnptrwoodlouse",
-        "bestSeasons": [
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Rowlands Castle Grand Circular",
@@ -115736,14 +114597,6 @@
         ],
         "miscellany": "",
         "id": "ptrnulhedgerow",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Petersfield to Cocking",
@@ -115830,11 +114683,6 @@
         "sights": [],
         "miscellany": "",
         "id": "amynulprawn",
-        "bestSeasons": [
-          "jan",
-          "feb",
-          "dec"
-        ],
         "source": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Amberley to Cocking",
@@ -121453,9 +120301,6 @@
         ],
         "miscellany": "",
         "id": "athathtwite",
-        "bestSeasons": [
-          "apr"
-        ],
         "source": {
           "orgSlug": "leicester-ramblers",
           "pageName": "Atherstone — Bluebells & Beer",
@@ -123367,14 +122212,6 @@
         "miscellany": "Can be muddy",
         "id": "tlktlkwren",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may",
-          "sep",
-          "oct",
-          "nov"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "The Lakes Circular Walk",
@@ -124378,11 +123215,6 @@
         ],
         "miscellany": "Narrow path sections",
         "id": "htnhtnheather",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Hatton to Lapworth Walk",
@@ -124470,11 +123302,6 @@
         "miscellany": "Can be muddy",
         "id": "ewdewdlimpet",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Earlswood to Wythall",
@@ -124950,11 +123777,6 @@
         ],
         "miscellany": "Electric fence near stables",
         "id": "berberdragonfly",
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Bearley to Claverdon",
@@ -125466,11 +124288,6 @@
         "miscellany": "Can be muddy",
         "id": "dzydzycoaltit",
         "mudWarning": true,
-        "bestSeasons": [
-          "mar",
-          "apr",
-          "may"
-        ],
         "source": {
           "orgSlug": "heart-rail-trails",
           "pageName": "Danzey Circular Walk",
@@ -127081,11 +125898,6 @@
         "miscellany": "Best on sunny high summer days when the chalk is gleaming. Seven Sisters extremely busy on Summer weekends/bank holidays",
         "previousWalkDates": [
           "2024-03-18"
-        ],
-        "bestSeasons": [
-          "may",
-          "jun",
-          "jul"
         ],
         "ratingExplanation": "Spectacular white cliffs in a well-protected national landscape",
         "uphillMetres": 298.06,

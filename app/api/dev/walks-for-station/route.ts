@@ -80,6 +80,8 @@ type WalkPayload = {
   privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
+  /** Free-text rationale appended after the public "Best …" sentence. */
+  bestSeasonsNote: string
   komootUrl: string
   // Entry-level GPX URL (shared across all variants on the same page).
   // Undefined when the source doesn't publish one.
@@ -293,6 +295,7 @@ export async function GET(req: NextRequest) {
           privateNote: v.privateNote ?? "",
           mudWarning: !!v.mudWarning,
           bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
+          bestSeasonsNote: typeof v.bestSeasonsNote === "string" ? v.bestSeasonsNote : "",
           komootUrl: v.komootUrl ?? "",
           gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
           requiresBus: !!v.requiresBus,

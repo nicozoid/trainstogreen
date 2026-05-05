@@ -19,6 +19,7 @@ const WALKS_FILES = [
 const EDITABLE_FIELDS = [
   "komootUrl",
   "bestSeasons",
+  "bestSeasonsNote",
   "mudWarning",
   "miscellany",
   "trainTips",
@@ -98,7 +99,8 @@ function cleanField(key: string, value: unknown): unknown | undefined {
     case "name":
     case "suffix":
     case "lunchOverride":
-    case "destinationStopsOverride": {
+    case "destinationStopsOverride":
+    case "bestSeasonsNote": {
       if (typeof value !== "string") return undefined
       const trimmed = value.trim()
       return trimmed === "" ? undefined : trimmed

@@ -84,6 +84,11 @@ export type WalkPayload = {
   privateNote: string
   mudWarning: boolean
   bestSeasons: string[]
+  /** Free-text rationale for the chosen months ("bluebell season",
+   *  "wildflowers in bloom", etc.). Public prose appends it as a
+   *  parenthetical after the month range: "Best Mar-Apr (bluebell
+   *  season)." Empty string when unset. */
+  bestSeasonsNote: string
   komootUrl: string
   // Entry-level GPX URL (shared across every variant of this walk's
   // source page). Undefined when the source doesn't publish one.
@@ -195,6 +200,8 @@ type EditableFields = {
   suffix: string     // appended to derived title: "{start} to {end} {suffix}"
   komootUrl: string
   bestSeasons: string[]
+  /** Free-text rationale appended to the public "Best …" sentence. */
+  bestSeasonsNote: string
   mudWarning: boolean
   miscellany: string
   trainTips: string
@@ -1001,6 +1008,7 @@ function WalkCard({
       suffix: walk.suffix,
       komootUrl: walk.komootUrl,
       bestSeasons: walk.bestSeasons,
+      bestSeasonsNote: walk.bestSeasonsNote ?? "",
       mudWarning: walk.mudWarning,
       miscellany: walk.miscellany,
       trainTips: walk.trainTips,
@@ -1036,7 +1044,7 @@ function WalkCard({
       },
     }),
     [
-      walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.mudWarning,
+      walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.bestSeasonsNote, walk.mudWarning,
       walk.miscellany, walk.trainTips, walk.privateNote, walk.rating, walk.ratingExplanation, walk.previousWalkDates, walk.terrain,
       walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
       walk.sights, walk.lunchStops, walk.lunchOverride,
@@ -1072,6 +1080,7 @@ function WalkCard({
       // Array compare — order-sensitive but the server returns them in
       // calendar order, so both sides are stable.
       JSON.stringify(draft.bestSeasons) !== JSON.stringify(serverState.bestSeasons) ||
+      draft.bestSeasonsNote.trim() !== serverState.bestSeasonsNote.trim() ||
       // List editors: deep-compare via JSON. The drafts carry empty
       // strings for absent optionals (see sightsToDraft/lunchToDraft)
       // and the server shape strips them, so we compare drafts to
@@ -1235,6 +1244,7 @@ function WalkCard({
           suffix: draft.suffix,
           komootUrl: draft.komootUrl,
           bestSeasons: draft.bestSeasons,
+          bestSeasonsNote: draft.bestSeasonsNote,
           mudWarning: draft.mudWarning,
           miscellany: draft.miscellany,
           trainTips: draft.trainTips,
@@ -1369,7 +1379,21 @@ function WalkCard({
           // keeps it distinct from the green seasonality and lime komoot
           // chips so the row stays scannable.
           const swcFavChip = `${chipBase} bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300`
+          // Sky-blue chip for the "previously hiked" marker. Distinct
+          // hue from the green seasonality / amber swc_fav / lime
+          // komoot chips so the row stays scannable. Communicates
+          // "completed" without implying ongoing/active status.
+          const hikedChip = `${chipBase} bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300`
           const bookTags = (walk.pageTags ?? []).filter((t: string) => t.startsWith("TO1:") || t.startsWith("TO2:"))
+          // Latest valid YYYY-MM-DD entry in previousWalkDates. ISO
+          // strings sort lexically = chronologically. null when none
+          // present so the chip renders conditionally.
+          const latestHikedDate = (() => {
+            const valid = (walk.previousWalkDates ?? [])
+              .filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d))
+              .sort()
+            return valid.length > 0 ? valid[valid.length - 1] : null
+          })()
           return (
             <>
               {walk.requiresBus && (
@@ -1394,6 +1418,22 @@ function WalkCard({
                   swc_fav
                 </span>
               )}
+              {/* Last hiked — sky-blue chip with the most recent
+                  YYYY-MM-DD from previousWalkDates rendered as
+                  "Hiked 25 May 2025". Hover shows every date in
+                  the log so admins can scan history without
+                  expanding the card. */}
+              {latestHikedDate && (() => {
+                const [yyyy, mm, dd] = latestHikedDate.split("-").map((p) => parseInt(p, 10))
+                const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+                const label = `Hiked ${dd} ${months[mm - 1]} ${yyyy}`
+                const allDates = (walk.previousWalkDates ?? []).join(", ")
+                return (
+                  <span className={hikedChip} title={`Most recent hike date. All dates: ${allDates}`}>
+                    {label}
+                  </span>
+                )
+              })()}
               {walk.komootUrl && <span className={komootChip} title="Has a Komoot tour URL">komoot</span>}
               {walk.gpx && <span className={neutralChip} title="Source page publishes a GPX track">GPX</span>}
               {typeof walk.distanceKm === "number" && (
@@ -2041,6 +2081,26 @@ function WalkCard({
                     )
                   })}
                 </div>
+              </div>
+              {/* Best-months rationale — sits between the month chips
+                  and the Mud warning checkbox on the same row. When
+                  populated, the public prose appends it as a paren:
+                  "Best Mar-Apr (bluebell season)." Empty string =
+                  no parenthetical. Fixed-ish width so it doesn't
+                  swallow the row's flex space when long. */}
+              <div className="shrink-0 self-end">
+                <Label htmlFor={`best-seasons-note-${walk.id}`} className="mb-1 block text-xs text-muted-foreground">
+                  Rationale
+                  <span className="ml-1 font-normal italic text-muted-foreground/70">
+                    e.g. &quot;bluebell season&quot;
+                  </span>
+                </Label>
+                <Input
+                  id={`best-seasons-note-${walk.id}`}
+                  value={draft.bestSeasonsNote}
+                  onChange={(e) => setDraft((d) => ({ ...d, bestSeasonsNote: e.target.value }))}
+                  className="h-7 w-56 text-xs"
+                />
               </div>
               {/* Mud warning — single boolean. When true the build
                   emits "Can be muddy." and suppresses any duplicate
