@@ -3,22 +3,13 @@ import { readDataFile } from "@/lib/github-data"
 import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { WALK_ID_WORDS } from "@/scripts/walk-id-words.mjs"
 
-// All walk files — we read them all to ensure the generated id is
-// globally unique across sources, not just within manual-walks.json.
-// Keep in sync with app/api/dev/walk/[id]/route.ts.
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-  "data/manual-walks.json",
-]
-
-const MANUAL_FILE = "data/manual-walks.json"
+// Single unified walks file. New manual entries are stamped with
+// `source: "manual"` so seeders can leave them alone.
+const WALKS_FILE = "data/walks.json"
 
 type WalkVariant = { id?: string; [k: string]: unknown }
 type WalkEntry = { slug?: string; walks?: WalkVariant[]; [k: string]: unknown }
-type ManualFile = { _readme?: string; [slug: string]: WalkEntry | string | undefined }
+type WalksFile = Record<string, WalkEntry>
 
 // Mint a memorable id in the `[startCRS][endCRS][word]` format used by
 // scripts/assign-walk-ids.mjs — e.g. "cohcohfox" for a Crowborough
@@ -42,20 +33,12 @@ function mintWalkId(startCrs: string, endCrs: string, taken: Set<string>): strin
   throw new Error(`exhausted all ids for prefix ${prefix}`)
 }
 
-async function collectExistingIds(): Promise<Set<string>> {
+async function collectExistingIds(data: Record<string, WalkEntry>): Promise<Set<string>> {
   const ids = new Set<string>()
-  for (const path of WALKS_FILES) {
-    let read
-    try {
-      read = await readDataFile<Record<string, WalkEntry>>(path)
-    } catch {
-      continue
-    }
-    for (const entry of Object.values(read.data)) {
-      if (!Array.isArray(entry.walks)) continue
-      for (const v of entry.walks) {
-        if (typeof v.id === "string") ids.add(v.id)
-      }
+  for (const entry of Object.values(data)) {
+    if (!Array.isArray(entry.walks)) continue
+    for (const v of entry.walks) {
+      if (typeof v.id === "string") ids.add(v.id)
     }
   }
   return ids
@@ -78,13 +61,13 @@ export async function POST(req: NextRequest) {
   }
 
   return handleAdminWrite(async () => {
+  const { data } = await readDataFile<WalksFile>(WALKS_FILE)
   // Generate a non-colliding `[start][end][word]` id by passing every
   // existing id in as the "taken" set so the picker avoids them.
-  const existingIds = await collectExistingIds()
+  const existingIds = await collectExistingIds(data)
   const id = mintWalkId(startStation, endStation, existingIds)
 
   const slug = `manual-${id}`
-  const { data } = await readDataFile<ManualFile>(MANUAL_FILE)
 
   // Circular when start === end; this drives the derived title
   // ("X Circular" vs "X to Y") in scripts/build-rambler-notes.mjs.
@@ -135,11 +118,14 @@ export async function POST(req: NextRequest) {
     issues: false,
     notes: "",
     outsideMainlandBritain: false,
+    // Top-level provenance — used by seeders to skip foreign entries
+    // when re-scraping. See data/walks.json.
+    source: "manual",
   }
 
-  // Single atomic commit: source manual-walks.json + rebuilt derived
-  // station-* files. See commitWalkSave for why one bundled commit.
-  await commitWalkSave({ path: MANUAL_FILE, data }, `Create manual walk ${id} at ${startStation}`)
+  // Single atomic commit: walks.json + rebuilt derived station-*
+  // files. See commitWalkSave for why one bundled commit.
+  await commitWalkSave({ path: WALKS_FILE, data }, `Create manual walk ${id} at ${startStation}`)
 
   return NextResponse.json({ message: "ok", id })
   })

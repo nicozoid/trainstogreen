@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
 
-// Every file that contributes walk entries. Mirrors EXTRA_WALKS_PATHS
-// in scripts/build-rambler-notes.mjs — keep in sync when adding
-// new sources.
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-  "data/manual-walks.json",
-]
+// Single unified walks file (each entry carries a top-level `source`
+// field identifying its origin).
+const WALKS_FILE = "data/walks.json"
 
 // Build a CRS → station name lookup from public/stations.json so the
 // admin UI can render derived walk titles ("Milford to Haslemere")
@@ -246,80 +239,66 @@ export async function GET(req: NextRequest) {
   const crsName = await loadCrsNameIndex()
 
   const out: WalkPayload[] = []
-  for (const file of WALKS_FILES) {
-    let data: Record<string, any>
-    try {
-      const { data: d } = await readDataFile<Record<string, any>>(file)
-      data = d
-    } catch {
-      // Missing file is fine (some sources are optional)
-      continue
-    }
-    for (const entry of Object.values(data)) {
-      if (!Array.isArray(entry.walks)) continue
-      for (const v of entry.walks) {
-        // Each walk attaches to BOTH its endpoints — admin gets every
-        // walk that touches this station, whether it starts or ends
-        // here, mixed in a single list. Circular walks (start === end)
-        // still appear once because there's no duplicate filter loop;
-        // the OR below matches the same walk variant only once per CRS.
-        if (v.startStation !== crs && v.endStation !== crs) continue
-        out.push({
-          slug: entry.slug,
-          pageTitle: entry.title,
-          pageUrl: entry.url,
-          favourite: !!entry.favourite,
-          id: v.id,
-          role: v.role,
-          name: v.name ?? "",
-          suffix: v.suffix ?? "",
-          startStation: v.startStation ?? null,
-          endStation: v.endStation ?? null,
-          startStationName: v.startStation ? (crsName.get(v.startStation) ?? null) : null,
-          endStationName: v.endStation ? (crsName.get(v.endStation) ?? null) : null,
-          startPlace: v.startPlace ?? "",
-          endPlace: v.endPlace ?? "",
-          stationToStation: !!v.stationToStation,
-          distanceKm: v.distanceKm ?? null,
-          hours: v.hours ?? null,
-          uphillMetres: typeof v.uphillMetres === "number" ? v.uphillMetres : null,
-          difficulty: typeof v.difficulty === "string" && ["easy", "moderate", "hard"].includes(v.difficulty) ? v.difficulty : null,
-          terrain: v.terrain ?? "",
-          sights: v.sights ?? [],
-          lunchStops: v.lunchStops ?? [],
-          lunchOverride: typeof v.lunchOverride === "string" ? v.lunchOverride : "",
-          destinationStops: Array.isArray(v.destinationStops) ? v.destinationStops : [],
-          destinationStopsOverride: typeof v.destinationStopsOverride === "string" ? v.destinationStopsOverride : "",
-          miscellany: v.miscellany ?? "",
-          trainTips: v.trainTips ?? "",
-          privateNote: v.privateNote ?? "",
-          mudWarning: !!v.mudWarning,
-          bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
-          bestSeasonsNote: typeof v.bestSeasonsNote === "string" ? v.bestSeasonsNote : "",
-          komootUrl: v.komootUrl ?? "",
-          gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
-          requiresBus: !!v.requiresBus,
-          rating: typeof v.rating === "number" ? v.rating : null,
-          ratingExplanation: typeof v.ratingExplanation === "string" ? v.ratingExplanation : "",
-          updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
-          source: v.source && typeof v.source === "object" ? v.source : undefined,
-          relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
-          previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
-          pageTags: Array.isArray(entry.tags) ? entry.tags : [],
-          meta: buildMeta(entry),
-        })
-      }
+  const { data } = await readDataFile<Record<string, any>>(WALKS_FILE)
+  for (const entry of Object.values(data)) {
+    if (!Array.isArray(entry.walks)) continue
+    for (const v of entry.walks) {
+      // Each walk attaches to BOTH its endpoints — admin gets every
+      // walk that touches this station, whether it starts or ends
+      // here, mixed in a single list. Circular walks (start === end)
+      // still appear once because there's no duplicate filter loop;
+      // the OR below matches the same walk variant only once per CRS.
+      if (v.startStation !== crs && v.endStation !== crs) continue
+      out.push({
+        slug: entry.slug,
+        pageTitle: entry.title,
+        pageUrl: entry.url,
+        favourite: !!entry.favourite,
+        id: v.id,
+        role: v.role,
+        name: v.name ?? "",
+        suffix: v.suffix ?? "",
+        startStation: v.startStation ?? null,
+        endStation: v.endStation ?? null,
+        startStationName: v.startStation ? (crsName.get(v.startStation) ?? null) : null,
+        endStationName: v.endStation ? (crsName.get(v.endStation) ?? null) : null,
+        startPlace: v.startPlace ?? "",
+        endPlace: v.endPlace ?? "",
+        stationToStation: !!v.stationToStation,
+        distanceKm: v.distanceKm ?? null,
+        hours: v.hours ?? null,
+        uphillMetres: typeof v.uphillMetres === "number" ? v.uphillMetres : null,
+        difficulty: typeof v.difficulty === "string" && ["easy", "moderate", "hard"].includes(v.difficulty) ? v.difficulty : null,
+        terrain: v.terrain ?? "",
+        sights: v.sights ?? [],
+        lunchStops: v.lunchStops ?? [],
+        lunchOverride: typeof v.lunchOverride === "string" ? v.lunchOverride : "",
+        destinationStops: Array.isArray(v.destinationStops) ? v.destinationStops : [],
+        destinationStopsOverride: typeof v.destinationStopsOverride === "string" ? v.destinationStopsOverride : "",
+        miscellany: v.miscellany ?? "",
+        trainTips: v.trainTips ?? "",
+        privateNote: v.privateNote ?? "",
+        mudWarning: !!v.mudWarning,
+        bestSeasons: Array.isArray(v.bestSeasons) ? v.bestSeasons : [],
+        bestSeasonsNote: typeof v.bestSeasonsNote === "string" ? v.bestSeasonsNote : "",
+        komootUrl: v.komootUrl ?? "",
+        gpx: typeof entry.gpx === "string" && entry.gpx ? entry.gpx : undefined,
+        requiresBus: !!v.requiresBus,
+        rating: typeof v.rating === "number" ? v.rating : null,
+        ratingExplanation: typeof v.ratingExplanation === "string" ? v.ratingExplanation : "",
+        updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
+        source: v.source && typeof v.source === "object" ? v.source : undefined,
+        relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
+        previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
+        pageTags: Array.isArray(entry.tags) ? entry.tags : [],
+        meta: buildMeta(entry),
+      })
     }
   }
 
-  // Dedupe by id — the same walk variant can appear in multiple data
-  // files (110 such duplicates exist between rambler-walks.json and the
-  // per-source files). The build script's "later file overrides on slug
-  // collision" rule means the LAST occurrence is authoritative; mirror
-  // that here so the editor displays the same copy that gets rendered
-  // into public prose. Without this dedupe the editor would show two
-  // identical cards and saves would appear to "lose" data when the
-  // refetch surfaces the un-edited duplicate.
+  // Dedupe by id — defensive against the unlikely case of a walk id
+  // appearing on multiple entries (e.g. an extractor bug). Last
+  // occurrence wins.
   const dedup = new Map<string, WalkPayload>()
   for (const w of out) dedup.set(w.id, w)
   const deduped = [...dedup.values()]

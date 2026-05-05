@@ -12,8 +12,7 @@
 //   • station-months.json:       top-level keys (coordKeys).
 //   • stations-by-source.json:   every coordKey in the source arrays.
 //   • clusters-data.json:        anchor coordKeys + every member.
-//   • manual-walks.json:         startStation / endStation (CRS).
-//   • rambler-walks.json:        startStation / endStation per walk.
+//   • walks.json:                startStation / endStation per walk.
 //   • crs-to-naptan.json:        keys (CRS).
 //   • oyster-stations.json:      nrStations (array of CRS).
 //
@@ -196,22 +195,21 @@ for (const [anchorId, def] of Object.entries(clusters)) {
   }
 }
 
-// Walks: both manual-walks.json and rambler-walks.json keep entries
-// keyed by slug, each with a `walks` array of actual walks. The walk
-// objects have startStation/endStation (CRS codes, or null when the
-// walk doesn't fit a clean station-to-station shape).
-function auditWalkBundle(file) {
+// walks.json keeps entries keyed by slug, each with a `walks` array of
+// actual walks. The walk objects have startStation/endStation (CRS
+// codes, or null when the walk doesn't fit a clean station-to-station
+// shape).
+{
+  const file = "walks.json"
   const data = JSON.parse(fs.readFileSync(path.join(ROOT, "data", file), "utf8"))
   for (const [slug, entry] of Object.entries(data)) {
-    if (slug.startsWith("_")) continue   // skip "_readme" etc.
+    if (slug.startsWith("_")) continue
     for (const w of entry.walks ?? []) {
       if (w.startStation) checkId(file, "startStation", w.startStation, entry.title ?? slug)
       if (w.endStation) checkId(file, "endStation", w.endStation, entry.title ?? slug)
     }
   }
 }
-auditWalkBundle("manual-walks.json")
-auditWalkBundle("rambler-walks.json")
 
 // crs-to-naptan.json wraps the lookup in a `naptan` field, with a
 // sibling `_` containing the schema comment.

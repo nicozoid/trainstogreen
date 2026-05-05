@@ -103,13 +103,7 @@ console.log(
 //   3. otherwise, any walk rated 1 → 1 (downward deviation overrides default)
 //   4. otherwise → 2 (default for any station-with-walks)
 function deriveRatings() {
-  const WALK_FILES = [
-    "data/rambler-walks.json",
-    "data/leicester-ramblers-walks.json",
-    "data/heart-rail-trails-walks.json",
-    "data/abbey-line-walks.json",
-    "data/manual-walks.json",
-  ]
+  const WALK_FILES = ["data/walks.json"]
   // Build CRS → coordKey index from stations.json.
   const crsToCoord = new Map()
   for (const f of stationData.features) {

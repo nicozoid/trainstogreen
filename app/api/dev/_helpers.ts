@@ -3,16 +3,10 @@ import { NextResponse } from "next/server"
 import { ConflictError, commitMultipleDataFiles, readDataFile } from "@/lib/github-data"
 import { buildRamblerNotes } from "@/scripts/build-rambler-notes.mjs"
 
-// Mirrors WALKS_FILES in app/api/dev/walk/[id]/route.ts and
-// WALKS_PATH + EXTRA_WALKS_PATHS in scripts/build-rambler-notes.mjs.
-// Keep all three in sync if walk source files are added or removed.
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-  "data/manual-walks.json",
-]
+// Single unified walks file. Each entry carries a top-level `source`
+// field identifying its origin (saturday-walkers-club, leicester-
+// ramblers, heart-rail-trails, abbey-line, manual).
+const WALKS_FILE = "data/walks.json"
 const NOTES_FILE = "data/station-notes.json"
 
 /**
@@ -86,40 +80,17 @@ export async function commitWalkSave(
   // safe because of that flag (the script only returns undefined in
   // its CLI/file-write mode).
   //
-  // The build script reads every walk source file plus station-notes.
-  // json via readFileSync. On Vercel, the serverless function's
-  // filesystem is the deploy-time snapshot — frozen at build time and
-  // never updated by GitHub commits this function makes. So in a
-  // sequential admin loop ("pull all" Komoot, etc.) every PATCH after
-  // the first would rebuild prose from STALE copies of every walk
-  // file except the one currently being mutated, silently reverting
-  // earlier walks' updates in station-notes.json. To prevent that,
-  // fetch fresh copies of every walk file + station-notes.json from
-  // GitHub here and pass them into the build as overrides. Map keys
-  // are absolute paths because that's what the build resolves
-  // WALKS_PATH / EXTRA_WALKS_PATHS to via path.join.
-  const overrideWalks = new Map<string, unknown>()
-  await Promise.all(
-    WALKS_FILES.map(async (file) => {
-      const abs = path.resolve(process.cwd(), file)
-      if (file === sourceFile.path) {
-        // Just-mutated file — use the in-memory edit directly. The
-        // PATCH handler already read the fresh GitHub version before
-        // applying its mutation, so this carries the latest committed
-        // state of every OTHER walk in the same file.
-        overrideWalks.set(abs, sourceFile.data)
-        return
-      }
-      try {
-        const { data } = await readDataFile<unknown>(file)
-        overrideWalks.set(abs, data)
-      } catch {
-        // Optional walk files (manual-walks.json etc.) may legitimately
-        // be missing in some envs. The build's loadAllWalks already
-        // tolerates ENOENT for the same files, so skipping is fine.
-      }
-    }),
-  )
+  // The build script reads walks.json + station-notes.json via
+  // readFileSync. On Vercel, the serverless function's filesystem is
+  // the deploy-time snapshot — frozen at build time and never updated
+  // by GitHub commits this function makes. The just-mutated walks
+  // payload is in `sourceFile.data`, so pass it in as an override
+  // keyed by the absolute path the build script resolves to via
+  // path.join — otherwise the rebuild would read the stale on-disk
+  // copy and revert the in-flight edit.
+  const overrideWalks = new Map<string, unknown>([
+    [path.resolve(process.cwd(), WALKS_FILE), sourceFile.data],
+  ])
 
   // station-notes.json is admin-editable independently (the notes
   // endpoint writes it directly), so a stale on-disk copy could revert

@@ -25,12 +25,7 @@ import { dirname, join } from "path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 
-const FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-]
+const FILES = ["data/walks.json"]
 
 // CRS → station name. Mirrors the build-script lookup so derived
 // titles here match exactly what the build emits.

@@ -18,12 +18,7 @@ import { dirname, join } from "path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 
-const FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-]
+const FILES = ["data/walks.json"]
 
 // Named entities we've seen in the data plus the handful that are
 // ubiquitous in HTML-encoded prose. Anything else falls through to

@@ -7,8 +7,9 @@
 // circular, with a consistent layout: title, distance, hours,
 // description, named sights with URLs, and recommended pubs/cafes.
 //
-// Output shape matches data/rambler-walks.json (one entry per walk)
-// so build-rambler-notes.mjs can merge the two without code changes.
+// Output is written into the unified data/walks.json (one entry per
+// walk, stamped with `source: "heart-rail-trails"`). Entries owned by
+// other sources are preserved.
 //
 // Usage:
 //   export ANTHROPIC_API_KEY=sk-ant-…
@@ -25,7 +26,8 @@ import Anthropic from "@anthropic-ai/sdk"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
-const OUT_PATH = join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json")
+const OUT_PATH = join(PROJECT_ROOT, "data", "walks.json")
+const OWN_SOURCE = "heart-rail-trails"
 
 const MODEL = "claude-sonnet-4-6"
 
@@ -318,6 +320,7 @@ function buildEntry(station, url, x) {
     notes: notesText,
     outsideMainlandBritain: false,
     sourceIndex: INDEX_URL,
+    source: OWN_SOURCE,
   }
 }
 

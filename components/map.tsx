@@ -8867,21 +8867,15 @@ export default function HikeMap() {
     })
   }, [devExcludeActive, setMaxMinutes, setVisibleRatings, stations, primaryOrigin, originCoords, isTouchDevice])
 
-  // Deep-link support: when the URL carries `?station=<station-id>`
-  // (used by the admin rambler-walks page to link station names
-  // straight to their overlay), jump to that station and open its
-  // modal on mount. The param holds a canonical station ID (CRS or
-  // 4-char synthetic) post Phase 3 — older bookmarks with coordKey
-  // values no longer resolve.
-  // Runs once per (mapReady, stations, route) trio — the `stations`
-  // dep also covers routedStations being available. We then strip the
-  // param from the URL so a reload doesn't silently re-open it.
-  // URL-param handling for deep-links from the /admin/rambler-walks page.
+  // Deep-link support: when the URL carries `?station=<station-id>`,
+  // jump to that station and open its modal on mount. The param holds
+  // a canonical station ID (CRS or 4-char synthetic) post Phase 3 —
+  // older bookmarks with coordKey values no longer resolve.
   // Split across two effects so the admin-enable fires immediately on
-  // mount (it doesn't need stations data) while the station modal waits
-  // for the stations memo to populate. Otherwise ?admin=1 would only
-  // take effect after the heavy routing memo finished, which can take
-  // 5-10s on a cold page load and is wasted time.
+  // mount (it doesn't need stations data) while the station modal
+  // waits for the stations memo to populate. Otherwise ?admin=1 would
+  // only take effect after the heavy routing memo finished, which can
+  // take 5-10s on a cold page load and is wasted time.
   useEffect(() => {
     // Dev-only deep-link: `?admin=1` flips admin on at mount. Ignored in
     // production so that sharing an admin URL with someone doesn't give
@@ -9412,19 +9406,6 @@ export default function HikeMap() {
             >
               edits
             </button>
-          )}
-          {/* Rambler walks admin page trigger — admin-only. Opens a
-              standalone page showing extraction status for every walk
-              on walkingclub.org.uk (extracted / onMap / issues). */}
-          {devExcludeActive && (
-            <a
-              href="/admin/rambler-walks"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded bg-black/40 px-2 py-1 font-mono text-xs text-white transition-colors hover:bg-black/60"
-            >
-              walks
-            </a>
           )}
           {/* Design-system mini-app entry — admin-only. Opens the
               isolated /design-system route tree (sibling of the main

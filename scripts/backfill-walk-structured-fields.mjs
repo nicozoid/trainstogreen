@@ -24,12 +24,7 @@ import { dirname, join } from "path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 
-const WALKS_FILES = [
-  join(PROJECT_ROOT, "data", "rambler-walks.json"),
-  join(PROJECT_ROOT, "data", "leicester-ramblers-walks.json"),
-  join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json"),
-  join(PROJECT_ROOT, "data", "abbey-line-walks.json"),
-]
+const WALKS_FILES = [join(PROJECT_ROOT, "data", "walks.json")]
 
 // ── Month/season parsing ──────────────────────────────────────────────────
 

@@ -3,14 +3,9 @@ import { readDataFile } from "@/lib/github-data"
 import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { VALID_SPOT_TYPES } from "@/lib/spot-types"
 
-// Files that hold walk entries — mirrors scripts/build-rambler-notes.mjs.
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-  "data/manual-walks.json",
-]
+// Single unified walks file (each entry carries a top-level `source`
+// field identifying its origin).
+const WALKS_FILE = "data/walks.json"
 
 // Whitelist of editable fields. Anything outside this set is ignored
 // (can't set arbitrary keys via the PATCH body).
@@ -55,39 +50,21 @@ const VALID_MONTHS = new Set([
 type WalkVariant = Record<string, unknown>
 type WalkEntry = { slug?: string; walks?: WalkVariant[]; [k: string]: unknown }
 
-// Finds the file + walks entry + variant index for a given walk id.
+// Finds the walks entry + variant index for a given walk id.
 // Returns null if nothing matches.
-//
-// Returns the LAST occurrence across files — important when the same
-// walk id (or slug) appears in multiple data files. The build script
-// (scripts/build-rambler-notes.mjs) merges files in WALKS_FILES order
-// with later files overriding earlier ones on slug collision, so the
-// LAST file's entry is the authoritative copy used to render the
-// public prose. We mirror that here so save updates the same file
-// the build reads from — otherwise saves go to a "stale" copy and
-// the public view never updates. (Pre-existing data has 110 such
-// duplicates between rambler-walks.json and the per-source files.)
 async function locateWalk(id: string): Promise<
   | { file: string; data: Record<string, WalkEntry>; sha: string | null; slug: string; variantIndex: number }
   | null
 > {
-  let lastHit: { file: string; data: Record<string, WalkEntry>; sha: string | null; slug: string; variantIndex: number } | null = null
-  for (const file of WALKS_FILES) {
-    let read
-    try {
-      read = await readDataFile<Record<string, WalkEntry>>(file)
-    } catch {
-      continue // optional files
-    }
-    for (const [slug, entry] of Object.entries(read.data)) {
-      if (!Array.isArray(entry.walks)) continue
-      const idx = entry.walks.findIndex((v) => (v as WalkVariant).id === id)
-      if (idx >= 0) {
-        lastHit = { file, data: read.data, sha: read.sha, slug, variantIndex: idx }
-      }
+  const read = await readDataFile<Record<string, WalkEntry>>(WALKS_FILE)
+  for (const [slug, entry] of Object.entries(read.data)) {
+    if (!Array.isArray(entry.walks)) continue
+    const idx = entry.walks.findIndex((v) => (v as WalkVariant).id === id)
+    if (idx >= 0) {
+      return { file: WALKS_FILE, data: read.data, sha: read.sha, slug, variantIndex: idx }
     }
   }
-  return lastHit
+  return null
 }
 
 // Apply/clean one editable field. Returns the value we should actually
