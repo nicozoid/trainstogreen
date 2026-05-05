@@ -26,12 +26,16 @@ export type SpotTypeValue =
   | "nature_reserve"
   // Cultural / built
   | "castle"
+  | "stately_home"
   | "church"
   | "museum"
   | "historic_site"
+  | "historic_street"
   | "monument"
   // Settlement
   | "village"
+  | "historic_town"
+  | "historic_city"
   // Other
   | "farm_shop"
 
@@ -54,17 +58,73 @@ export const SPOT_TYPES: { value: SpotTypeValue; label: string; group: string }[
   { value: "garden", label: "Garden", group: "Outdoor" },
   { value: "nature_reserve", label: "Nature reserve", group: "Outdoor" },
   { value: "castle", label: "Castle / fort", group: "Cultural" },
+  { value: "stately_home", label: "Stately home", group: "Cultural" },
   { value: "church", label: "Church / chapel", group: "Cultural" },
   { value: "museum", label: "Museum / gallery", group: "Cultural" },
   { value: "historic_site", label: "Historic site", group: "Cultural" },
+  { value: "historic_street", label: "Historic street", group: "Cultural" },
   { value: "monument", label: "Monument", group: "Cultural" },
   { value: "village", label: "Village / hamlet", group: "Settlement" },
+  { value: "historic_town", label: "Historic town", group: "Settlement" },
+  { value: "historic_city", label: "Historic city", group: "Settlement" },
   { value: "farm_shop", label: "Farm shop", group: "Other" },
 ]
 
 // Set of valid values, used by the server cleaner to drop unknown
 // strings on save.
 export const VALID_SPOT_TYPES = new Set<string>(SPOT_TYPES.map((t) => t.value))
+
+// Refreshment-style types — a venue tagged with any of these belongs
+// in the Lunch stops or Destination pubs section, never Sights. The
+// walk editor watches this set when types change on a row and moves
+// the row between sections automatically.
+export const REFRESHMENT_SPOT_TYPES = new Set<SpotTypeValue>([
+  "pub", "restaurant", "cafe", "tearoom",
+])
+
+// Sight types that get their `location` field auto-populated by Pull
+// URLs (Google Places). Other sight types are left blank unless an
+// admin types a location in by hand.
+//
+// Inclusion rule: the type names a discrete venue inside a recognisable
+// town/suburb where prefixing "in {loc}" actually adds info — castles,
+// churches, museums, historic sites, monuments, plus historic streets
+// (which always sit inside a named town).
+//
+// Notable exclusions:
+//   - stately_home — typically sits out of any settlement, so a town
+//     label rarely fits.
+//   - village / historic_town / historic_city (Settlement group) — the
+//     venue IS the location; "in {sub-locality}" reads redundantly.
+//   - viewpoints / forests / coast / etc. — too vague for a town label
+//     to add useful framing.
+export const LOCATIONABLE_SPOT_TYPES = new Set<SpotTypeValue>([
+  "castle", "church", "museum", "historic_site", "historic_street", "monument",
+])
+
+// Threshold for "near the end of the walk", expressed as a fraction
+// of the total route. A refreshment venue whose route-distance from
+// the end is within this fraction of totalKm buckets as a destination
+// stop; venues farther back are lunch stops. Relative-rather-than-
+// absolute (the previous rule was a flat 4 km cutoff) so the split
+// scales with walk length: a 20 km walk's "near the end" zone is
+// 4 km, but a 5 km walk's is only 1 km — matching how the admin
+// thinks about "the pub at the end" on short vs long routes.
+export const DESTINATION_STOP_FRACTION = 0.3
+
+// Pick the right refreshment section for a venue at `kmIntoRoute` on a
+// walk of `totalKm`. Either input may be undefined / not-a-number — in
+// which case we fall back to "lunch", on the basis that an unknown
+// distance is more likely mid-walk than end-of-walk.
+export function bucketForRefreshment(
+  kmIntoRoute: number | undefined,
+  totalKm: number | undefined,
+): "destination" | "lunch" {
+  if (typeof totalKm !== "number" || !Number.isFinite(totalKm) || totalKm <= 0) return "lunch"
+  const km = typeof kmIntoRoute === "number" && Number.isFinite(kmIntoRoute) ? kmIntoRoute : 0
+  const fractionFromEnd = Math.max(0, (totalKm - km) / totalKm)
+  return fractionFromEnd <= DESTINATION_STOP_FRACTION ? "destination" : "lunch"
+}
 
 // Lookup: canonical value → human label, for the admin chip display.
 export const SPOT_TYPE_LABELS: Record<string, string> = SPOT_TYPES.reduce(

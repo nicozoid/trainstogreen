@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
 import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { VALID_SPOT_TYPES } from "@/lib/spot-types"
+import { MAIN_TERRAINS, VALID_MAIN_TERRAINS } from "@/lib/main-terrains"
 
 // Single unified walks file (each entry carries a top-level `source`
 // field identifying its origin).
@@ -21,7 +22,9 @@ const EDITABLE_FIELDS = [
   "privateNote",
   "rating",
   "ratingExplanation",
+  "busyness",
   "previousWalkDates",
+  "mainTerrains",
   "terrain",
   "distanceKm",
   "hours",
@@ -105,6 +108,15 @@ function cleanField(key: string, value: unknown): unknown | undefined {
       if (rounded < 1 || rounded > 4) return undefined
       return rounded
     }
+    case "busyness": {
+      // Footfall scale, 1 = isolated → 5 = busy. Stored numerically so
+      // the labels can be reworded in the UI without a data migration.
+      // Any non-finite / out-of-range value drops the field.
+      if (typeof value !== "number" || !Number.isFinite(value)) return undefined
+      const rounded = Math.round(value)
+      if (rounded < 1 || rounded > 5) return undefined
+      return rounded
+    }
     case "distanceKm":
     case "hours":
     case "uphillMetres": {
@@ -131,6 +143,24 @@ case "mudWarning": {
           .map((m) => (typeof m === "string" ? m.toLowerCase() : null))
           .filter((m): m is string => !!m && VALID_MONTHS.has(m)),
       )]
+      return cleaned.length === 0 ? undefined : cleaned
+    }
+    // Closed-vocabulary multi-select (mountains / hills / coastal /
+    // waterways / woodland / historic_urban). Drop unknowns, dedupe,
+    // and re-sort into the canonical display order from MAIN_TERRAINS
+    // so file diffs stay stable regardless of which order the admin
+    // toggled them in.
+    case "mainTerrains": {
+      if (!Array.isArray(value)) return undefined
+      const set = new Set<string>()
+      for (const m of value) {
+        if (typeof m !== "string") continue
+        const lower = m.toLowerCase()
+        if (VALID_MAIN_TERRAINS.has(lower)) set.add(lower)
+      }
+      const cleaned = MAIN_TERRAINS
+        .map((t) => t.value as string)
+        .filter((v) => set.has(v))
       return cleaned.length === 0 ? undefined : cleaned
     }
     // Admin-only log of when this walk was personally completed.
@@ -241,12 +271,13 @@ function cleanTypes(raw: unknown): string[] | undefined {
   return out.length === 0 ? undefined : out
 }
 
-function cleanSight(raw: unknown): { name: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } | null {
+function cleanSight(raw: unknown): { name: string; location?: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
   const name = typeof r.name === "string" ? r.name.trim() : ""
   if (!name) return null
-  const out: { name: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } = { name }
+  const out: { name: string; location?: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } = { name }
+  if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
   if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
   if (typeof r.description === "string" && r.description.trim()) out.description = r.description.trim()
   const lat = coerceFiniteNumber(r.lat)

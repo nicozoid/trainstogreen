@@ -164,20 +164,120 @@ async function resolveOne(spot: Spot, apiKey: string): Promise<Result> {
   } | null
   const top = json?.places?.[0]
   if (!top?.id) return null
-  // Prefer the venue's own homepage when Google has it; fall back to
-  // a place_id-based Maps URL otherwise. Lots of small pubs/cafes
-  // don't publish a website, so the fallback keeps coverage close to
-  // 100% — no row stays blank just because the venue isn't online.
-  const url =
-    top.websiteUri && top.websiteUri.trim()
-      ? top.websiteUri.trim()
-      : `https://www.google.com/maps/place/?q=place_id:${top.id}`
+  // URL fallback ladder:
+  //   1. Venue's own homepage (websiteUri from Google Places)
+  //   2. Wikipedia article — geo-verified within 5 km of the pin so we
+  //      don't surface a same-named place from another county
+  //   3. Google Maps place profile — last resort, since the Maps page
+  //      is usually thin (just the pin + photos + reviews) but it's
+  //      better than a blank URL for venues that publish nothing
+  //      anywhere else
+  let url = ""
+  if (top.websiteUri && top.websiteUri.trim()) {
+    url = top.websiteUri.trim()
+  } else {
+    const wiki = await tryWikipediaUrl(name, spot.lat, spot.lng)
+    if (wiki) url = wiki
+    else url = `https://www.google.com/maps/place/?q=place_id:${top.id}`
+  }
   return {
     url,
     location: pickLocation(top.addressComponents),
     businessStatus: top.businessStatus,
     types: mapGoogleTypes(top.types),
   }
+}
+
+// Wikipedia second-pass — when Google Places returns a place but no
+// websiteUri, search Wikipedia for an article matching the venue
+// name and verify it sits geographically near the row's pin. Returns
+// the article URL on a confident hit, undefined otherwise.
+//
+// Uses two API calls (free, no key needed):
+//   1. opensearch — fast title-similarity search; gives the top match
+//      without the heavier full-text relevance machinery.
+//   2. query?prop=coordinates — fetch the article's geocoords so we
+//      can sanity-check it's the right place. A "Smith's Mill"
+//      article 200 km away from our pin is almost certainly the
+//      wrong Smith's Mill; we'd rather leave the URL blank than
+//      surface that.
+//
+// Distance threshold: 5 km. Wikipedia articles for natural features
+// often place the pin at the centre / peak while the row's lat/lng
+// could be anywhere on the feature, so we want some slack — but a
+// totally different town's pub by the same name should fall outside.
+const WIKI_API = "https://en.wikipedia.org/w/api.php"
+const WIKI_MAX_DISTANCE_KM = 5
+
+async function tryWikipediaUrl(name: string, lat: number, lng: number): Promise<string | undefined> {
+  // Step 1: opensearch returns [query, [titles], [descriptions], [urls]].
+  // Limit 3 so we have alternates if the top match has no coords.
+  const searchUrl = `${WIKI_API}?action=opensearch&format=json&limit=3&search=${encodeURIComponent(name)}`
+  let titles: string[] = []
+  try {
+    const r = await fetch(searchUrl, {
+      // Wikipedia asks for a real User-Agent — the default fetch one
+      // can get rate-limited. Identify the project here.
+      headers: { "User-Agent": "trainstogreen/1.0 (https://trainstogreen.vercel.app)" },
+      signal: AbortSignal.timeout(5_000),
+    })
+    if (!r.ok) return undefined
+    const j = (await r.json().catch(() => null)) as unknown
+    if (!Array.isArray(j) || !Array.isArray(j[1])) return undefined
+    titles = (j[1] as unknown[]).filter((t): t is string => typeof t === "string").slice(0, 3)
+  } catch {
+    return undefined
+  }
+  if (titles.length === 0) return undefined
+
+  // Step 2: fetch coordinates for the candidate titles in one call —
+  // ?titles= accepts a pipe-joined list. Articles without coords are
+  // omitted from the response (no `coordinates` key on the page).
+  const coordUrl = `${WIKI_API}?action=query&format=json&prop=coordinates&titles=${encodeURIComponent(titles.join("|"))}`
+  try {
+    const r = await fetch(coordUrl, {
+      headers: { "User-Agent": "trainstogreen/1.0 (https://trainstogreen.vercel.app)" },
+      signal: AbortSignal.timeout(5_000),
+    })
+    if (!r.ok) return undefined
+    const j = (await r.json().catch(() => null)) as {
+      query?: { pages?: Record<string, { title?: string; coordinates?: { lat: number; lon: number }[] }> }
+    } | null
+    const pages = j?.query?.pages
+    if (!pages) return undefined
+    // Walk titles in opensearch-rank order; pick the FIRST one whose
+    // coords are within threshold. A name match without coords gets
+    // skipped — we'd rather drop a possibly-correct article than
+    // surface a confidently-wrong one.
+    for (const title of titles) {
+      const page = Object.values(pages).find((p) => p.title === title)
+      const c = page?.coordinates?.[0]
+      if (!c) continue
+      const km = haversineKm(lat, lng, c.lat, c.lon)
+      if (km <= WIKI_MAX_DISTANCE_KM) {
+        // Wikipedia URLs use underscored titles. encodeURIComponent
+        // covers everything else (apostrophes, accents, parens).
+        const slug = encodeURIComponent(title.replace(/ /g, "_"))
+        return `https://en.wikipedia.org/wiki/${slug}`
+      }
+    }
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+
+// Great-circle distance in km. Used for the Wikipedia article match
+// sanity-check. ±0.5% accurate at this radius — plenty for a 5 km
+// threshold check.
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLng = ((lng2 - lng1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
+  return 2 * R * Math.asin(Math.sqrt(a))
 }
 
 export async function POST(req: NextRequest) {

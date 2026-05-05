@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { KOMOOT_TO_SPOT_TYPES, VIEWPOINT_SUPERSEDED_BY, type SpotTypeValue } from "@/lib/spot-types"
+import { KOMOOT_TO_SPOT_TYPES, VIEWPOINT_SUPERSEDED_BY, bucketForRefreshment, type SpotTypeValue } from "@/lib/spot-types"
 
 // Scrape tour data from a public komoot tour page.
 //
@@ -57,6 +57,15 @@ const FOOD_CATEGORIES = new Set(["pub", "restaurant", "cafe"])
 // them.
 const NON_DESTINATION_TAGS = new Set(["train_station"])
 
+// Name-based filter for navigation waypoints. Komoot's HIGHLIGHT
+// items often skip the `train_station` category and just carry a name
+// like "Tring Railway Station" — those slip past NON_DESTINATION_TAGS
+// and end up listed as sights. Match the trailing "<modifier> station"
+// pattern so a highlight named "Tring Railway Station" is dropped
+// while a pub literally called "The Old Station" survives (modifier
+// is required).
+const NON_DESTINATION_NAME_RE = /\b(?:railway|train|rail|tube|underground|metro|subway|bus|coach|tram)\s+station\s*$/i
+
 // Empirically-built lookup from Komoot's numeric POI category IDs to
 // the equivalent highlight-string tag(s). Komoot doesn't ship this
 // mapping in the page or any public API — entries are added as we
@@ -82,15 +91,6 @@ const POI_CATEGORY_TAGS: Record<number, string[]> = {
   191: ["forest"],
   219: ["train_station"],
 }
-
-// Threshold for "near the end of the walk" — food venues whose
-// position ALONG THE ROUTE is within this many km of the end are
-// tagged as destination pubs; venues farther back are lunch stops.
-// Measured as route-distance (totalKm − kmIntoRoute), not haversine,
-// so a venue that's geographically close to the end station but
-// chronologically mid-walk (e.g. a pub the route passes through, then
-// loops away from before returning) doesn't get mis-bucketed.
-const DESTINATION_STOP_KM = 4
 
 type Waypoint = {
   name: string
@@ -232,7 +232,11 @@ function parseWaypoints(html: string, totalKm: number): WaypointBuckets | null {
         it.type !== "point" &&
         it.name &&
         it.location &&
-        !it.categories.some((c) => NON_DESTINATION_TAGS.has(c)),
+        !it.categories.some((c) => NON_DESTINATION_TAGS.has(c)) &&
+        // Decode entities before the regex check — Komoot occasionally
+        // emits "&amp;" inside station names ("Tring &amp; Tring Park")
+        // which would otherwise survive the suffix match unscathed.
+        !NON_DESTINATION_NAME_RE.test(decodeHtmlEntities(it.name!)),
     )
     .sort((a, b) => a.index - b.index)
   if (middle.length === 0) return { destinationStops: [], lunchStops: [], sights: [] }
@@ -256,11 +260,13 @@ function parseWaypoints(html: string, totalKm: number): WaypointBuckets | null {
       types: mapKomootTypes(it.categories),
     }
     if (isFood) {
-      // Route-distance from the end (along the path), using the same
-      // linear-interp approximation as kmIntoRoute. Within threshold
-      // → destination pub; beyond → lunch stop.
-      const routeKmFromEnd = Math.max(0, totalKm - wp.kmIntoRoute)
-      if (routeKmFromEnd <= DESTINATION_STOP_KM) buckets.destinationStops.push(wp)
+      // Use the shared helper so import-time bucketing agrees with
+      // the editor's auto-move logic when an admin changes a row's
+      // types. The helper looks at fractional distance from the end
+      // (DESTINATION_STOP_FRACTION) rather than an absolute cutoff,
+      // so the split scales with route length.
+      const bucket = bucketForRefreshment(wp.kmIntoRoute, totalKm)
+      if (bucket === "destination") buckets.destinationStops.push(wp)
       else buckets.lunchStops.push(wp)
     } else {
       buckets.sights.push(wp)

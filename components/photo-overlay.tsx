@@ -532,13 +532,21 @@ function isInOysterZone(crs: string | undefined): boolean {
 
 // Formats minutes as human-readable text, pluralising "hour"/"minute" correctly.
 // Edge cases handled: "1 minute", "1 hour", "2 hours", "1 hour and 1 minute".
-function formatMinutes(minutes: number): string {
-  const pluralMin = (m: number) => `${m} ${m === 1 ? "minute" : "minutes"}`
+//
+// `roundToFive` rounds to the nearest 5-minute interval before formatting —
+// passed `true` from public-view callers so journey times read as round
+// numbers ("45 minutes", "1 hour and 10 minutes") rather than the exact
+// readouts admins see ("47 minutes", "1 hour and 12 minutes"). Clamped
+// to a minimum of 5 so a 2-minute journey doesn't render as "0 minutes".
+function formatMinutes(minutes: number, roundToFive: boolean = false): string {
+  let m = minutes
+  if (roundToFive) m = Math.max(5, Math.round(m / 5) * 5)
+  const pluralMin = (n: number) => `${n} ${n === 1 ? "minute" : "minutes"}`
   const pluralHr = (h: number) => `${h} ${h === 1 ? "hour" : "hours"}`
-  if (minutes < 60) return pluralMin(minutes)
-  const h = Math.floor(minutes / 60)
-  const m = minutes % 60
-  return m === 0 ? pluralHr(h) : `${pluralHr(h)} and ${pluralMin(m)}`
+  if (m < 60) return pluralMin(m)
+  const h = Math.floor(m / 60)
+  const rem = m % 60
+  return rem === 0 ? pluralHr(h) : `${pluralHr(h)} and ${pluralMin(rem)}`
 }
 
 // Formats a single origin's journey, e.g.
@@ -547,9 +555,9 @@ function formatMinutes(minutes: number): string {
 // strips the initial tube hop so the reported time and change count reflect
 // starting at the actual train's departure station (e.g. "1 hour from Euston"
 // rather than "1 hour and 10 minutes from Kings Cross, one change: Euston").
-function singleOriginDescription(origin: string, journey: JourneyInfo): string {
+function singleOriginDescription(origin: string, journey: JourneyInfo, roundToFive: boolean = false): string {
   const effective = getEffectiveJourney(journey, origin)
-  const time = formatMinutes(effective.effectiveMinutes)
+  const time = formatMinutes(effective.effectiveMinutes, roundToFive)
   const displayOrigin = effective.effectiveOrigin
   const changes = effective.effectiveChanges
   // When cluster adjustment fired, we only want the changes AFTER the stripped
@@ -1613,8 +1621,8 @@ export default function StationModal({
                 {highlightTermini(
                   journeys?.[primaryOrigin]
                     ? (syntheticJourneyMember?.primary
-                        ? `${syntheticJourneyMember.primary} is ${singleOriginDescription(primaryOrigin, journeys[primaryOrigin])}`
-                        : singleOriginDescription(primaryOrigin, journeys[primaryOrigin]))
+                        ? `${syntheticJourneyMember.primary} is ${singleOriginDescription(primaryOrigin, journeys[primaryOrigin], !adminMode)}`
+                        : singleOriginDescription(primaryOrigin, journeys[primaryOrigin], !adminMode))
                     // No pre-stored journey for this primary → happens for
                     // custom primaries (any NR station picked via the search
                     // bar — e.g. Kentish Town). Fall back to the primary's
@@ -1640,7 +1648,7 @@ export default function StationModal({
                         ?? "No travel times — destination outside our journey-data coverage from this origin.")
                       : (stationCrs && GHOST_STATIONS.has(stationCrs))
                         ? GHOST_STATION_MESSAGE
-                        : `${formatMinutes(minutes)} from ${primaryOrigin}.`,
+                        : `${formatMinutes(minutes, !adminMode)} from ${primaryOrigin}.`,
                   isLondonHome,
                   // extraBold home origin when friend mode is on, so
                   // the home/friend sentences visually distinguish.
@@ -1817,8 +1825,8 @@ export default function StationModal({
                 <p className="mt-[var(--para-gap)] text-sm">
                   {highlightTermini(
                     syntheticJourneyMember?.friend
-                      ? `${syntheticJourneyMember.friend} is ${singleOriginDescription(friendOrigin, journeys[friendOrigin])}`
-                      : singleOriginDescription(friendOrigin, journeys[friendOrigin]),
+                      ? `${syntheticJourneyMember.friend} is ${singleOriginDescription(friendOrigin, journeys[friendOrigin], !adminMode)}`
+                      : singleOriginDescription(friendOrigin, journeys[friendOrigin], !adminMode),
                     isLondonHome,
                     // Friend origin always extraBold so it stands out
                     // from the home journey paragraph above. Termini
@@ -1878,10 +1886,10 @@ export default function StationModal({
                   const terminusLabel = prettifyStationLabel(alt.terminusName)
                   const changeLabels = (alt.changeStations ?? []).map(prettifyStationLabel)
                   const mainSentence = alt.changes === 0
-                    ? `${formatMinutes(alt.durationMinutes)} direct from ${terminusLabel}.`
+                    ? `${formatMinutes(alt.durationMinutes, !adminMode)} direct from ${terminusLabel}.`
                     : alt.changes === 1 && changeLabels.length > 0
-                      ? `${formatMinutes(alt.durationMinutes)} from ${terminusLabel}. Change at ${changeLabels[0]}.`
-                      : `${formatMinutes(alt.durationMinutes)} from ${terminusLabel} with ${alt.changes} changes at ${changeLabels.join(", ")}.`
+                      ? `${formatMinutes(alt.durationMinutes, !adminMode)} from ${terminusLabel}. Change at ${changeLabels[0]}.`
+                      : `${formatMinutes(alt.durationMinutes, !adminMode)} from ${terminusLabel} with ${alt.changes} changes at ${changeLabels.join(", ")}.`
                   return (
                     <p
                       key={`${alt.terminusName}-${idx}`}
