@@ -309,8 +309,8 @@ type FilterPanelProps = {
   primaryFeatureFilter: "off" | "alt-routes" | "private-notes" | "sloppy-pics" | "all-sloppy-pics" | "undiscovered" | "hiked" | "komoot" | "no-komoot" | "potential-month-data" | "issues" | "placemark" | "no-travel-data" | "oyster"
   onPrimaryFeatureFilterChange: (value: FilterPanelProps["primaryFeatureFilter"]) => void
   /** Admin-only Source filter — keeps only stations with at least one
-   *  attached walk whose source.orgSlug or relatedSource.orgSlug
-   *  matches. Value is "off" or an orgSlug from data/sources.json. */
+   *  attached walk whose orgs[] contains the picked org. Value is "off"
+   *  or an orgSlug from data/sources.json. */
   sourceFilter: string
   onSourceFilterChange: (value: string) => void
   /** Admin-only month filter — hides destinations whose recommended
@@ -1244,11 +1244,11 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
 
           {/* Admin-only: "Source" filter. Slices destinations by which
               walk-source organisation contributes ≥1 walk to the
-              station — checks both source.orgSlug AND relatedSource.orgSlug
-              on every attached variant (including non-public ones). The
-              option list is generated from data/sources.json, alphabetised
-              by display name. Distinct from the Feature dropdown because
-              this is a one-vs-many lookup that doesn't fit cleanly under
+              station — checks orgs[].orgSlug on every attached variant
+              (including non-public ones). The option list is generated
+              from data/sources.json, alphabetised by display name.
+              Distinct from the Feature dropdown because this is a
+              one-vs-many lookup that doesn't fit cleanly under
               "feature toggles". */}
           {adminMode && (() => {
             // Resolve the human-readable label for the currently selected
@@ -1291,10 +1291,9 @@ export default function FilterPanel({ maxMinutes, onChange, minMinutes, onMinCha
                     <option value="off">—</option>
                     {/* "No source" — sentinel value matching the build
                         script's "none" key. Surfaces stations where ≥1
-                        attached walk has neither source.orgSlug nor
-                        relatedSource.orgSlug populated. Hand-coded above
-                        the registered orgs because there's no entry for
-                        it in sources.json. */}
+                        attached walk has an empty orgs[] array.
+                        Hand-coded above the registered orgs because
+                        there's no entry for it in sources.json. */}
                     <option value="none">No source</option>
                     {SOURCE_ORGS.map((o) => (
                       <option key={o.slug} value={o.slug}>{o.name}</option>

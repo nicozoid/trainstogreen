@@ -2284,9 +2284,9 @@ export default function HikeMap() {
   type MonthFilter = "off" | MonthCode | "None"
   const [monthFilter, setMonthFilter] = useState<MonthFilter>("off")
   // Admin-only "Source" dropdown — slice destinations to those with at
-  // least one attached walk whose source.orgSlug or relatedSource.orgSlug
-  // matches the picked org. "off" = no filter. The string value is an
-  // orgSlug from data/sources.json. Cleared on admin-off (below).
+  // least one attached walk whose orgs[] contains the picked org. "off"
+  // = no filter. The string value is an orgSlug from data/sources.json.
+  // Cleared on admin-off (below).
   const [sourceFilter, setSourceFilter] = useState<string>("off")
   // orgSlug → Set<coordKey>. Hydrated from /api/dev/stations-by-source
   // on mount; the admin-only "Source" filter does Set.has(coordKey)
@@ -6362,10 +6362,9 @@ export default function HikeMap() {
         // above for the per-option criteria.
         if (!passesFeatureFilter()) return false
         // Admin-only Source filter — keeps only stations whose attached
-        // walks include at least one variant from the picked source org
-        // (matches either source.orgSlug or relatedSource.orgSlug). The
-        // index is built once at server build-time; here we just do a
-        // Set.has lookup.
+        // walks include at least one variant whose orgs[] contains the
+        // picked org. The index is built once at server build-time;
+        // here we just do a Set.has lookup.
         if (sourceFilter !== "off") {
           const set = stationsBySource[sourceFilter]
           if (!set || !set.has(f.properties["ref:crs"] as string)) return false
