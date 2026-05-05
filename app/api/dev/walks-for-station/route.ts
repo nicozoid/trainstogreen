@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
+import type { Place, PlaceRegistry } from "@/lib/places"
 
 // Single unified walks file (each entry carries a top-level `source`
 // field identifying its origin).
 const WALKS_FILE = "data/walks.json"
+// Phase 1 places-registry data file. Walk rows for sights/lunch/
+// destination are now { placeId, kmIntoRoute } stubs; we hydrate
+// them here so the editor receives the same flat venue shape it
+// always saw. Hydrated rows also carry placeId so the editor can
+// round-trip it back on save.
+const PLACES_FILE = "data/places.json"
 
 // Build a CRS → station name lookup from public/stations.json so the
 // admin UI can render derived walk titles ("Milford to Haslemere")
@@ -49,8 +56,11 @@ type WalkPayload = {
   uphillMetres: number | null
   difficulty: "easy" | "moderate" | "hard" | null
   terrain: string
-  sights: { name: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
-  lunchStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  // Each row carries its `placeId` round-trip so the editor can
+  // POST it back unchanged on save (the server uses it to find the
+  // right registry entry to update).
+  sights: { placeId: string; name: string; location?: string; url?: string | null; description?: string; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  lunchStops: { placeId: string; name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   // Free-text override for the lunch line in the public prose. When
   // populated, the build script emits this verbatim instead of
   // formatting the lunchStops list. Lets the admin write a single
@@ -62,7 +72,7 @@ type WalkPayload = {
   // implicit — the walk destination). The editor hides the location
   // input for this section; the field is preserved on the data shape
   // for type compatibility with the shared editor and stays empty.
-  destinationStops: { name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
+  destinationStops: { placeId: string; name: string; location?: string; url?: string | null; notes?: string; rating?: string; busy?: "busy" | "quiet"; lat?: number | null; lng?: number | null; kmIntoRoute?: number | null; businessStatus?: string | null; types?: string[] | null }[]
   destinationStopsOverride: string
   // editable
   miscellany: string
@@ -240,6 +250,33 @@ export async function GET(req: NextRequest) {
 
   const out: WalkPayload[] = []
   const { data } = await readDataFile<Record<string, any>>(WALKS_FILE)
+  const { data: placesData } = await readDataFile<PlaceRegistry>(PLACES_FILE)
+  // Hydrate a stub array (sights / lunchStops / destinationStops)
+  // into full venue rows. Stubs whose placeId can't be resolved are
+  // dropped — the migration is exhaustive so this only fires if the
+  // registry got out of sync (e.g. a walk references a place that's
+  // since been deleted). Carrying placeId on the hydrated row lets
+  // the editor send it back unchanged on save.
+  const hydrate = (
+    list: unknown,
+  ): Array<Place & { placeId: string; kmIntoRoute: number | null }> => {
+    if (!Array.isArray(list)) return []
+    const out: Array<Place & { placeId: string; kmIntoRoute: number | null }> = []
+    for (const stub of list) {
+      if (!stub || typeof stub !== "object") continue
+      const placeId = (stub as { placeId?: unknown }).placeId
+      if (typeof placeId !== "string") continue
+      const place = placesData[placeId]
+      if (!place) continue
+      const km = (stub as { kmIntoRoute?: unknown }).kmIntoRoute
+      out.push({
+        ...place,
+        placeId,
+        kmIntoRoute: typeof km === "number" && Number.isFinite(km) ? km : null,
+      })
+    }
+    return out
+  }
   for (const entry of Object.values(data)) {
     if (!Array.isArray(entry.walks)) continue
     for (const v of entry.walks) {
@@ -270,10 +307,10 @@ export async function GET(req: NextRequest) {
         uphillMetres: typeof v.uphillMetres === "number" ? v.uphillMetres : null,
         difficulty: typeof v.difficulty === "string" && ["easy", "moderate", "hard"].includes(v.difficulty) ? v.difficulty : null,
         terrain: v.terrain ?? "",
-        sights: v.sights ?? [],
-        lunchStops: v.lunchStops ?? [],
+        sights: hydrate(v.sights) as WalkPayload["sights"],
+        lunchStops: hydrate(v.lunchStops) as WalkPayload["lunchStops"],
         lunchOverride: typeof v.lunchOverride === "string" ? v.lunchOverride : "",
-        destinationStops: Array.isArray(v.destinationStops) ? v.destinationStops : [],
+        destinationStops: hydrate(v.destinationStops) as WalkPayload["destinationStops"],
         destinationStopsOverride: typeof v.destinationStopsOverride === "string" ? v.destinationStopsOverride : "",
         miscellany: v.miscellany ?? "",
         trainTips: v.trainTips ?? "",

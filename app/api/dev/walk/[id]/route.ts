@@ -3,10 +3,15 @@ import { readDataFile } from "@/lib/github-data"
 import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { VALID_SPOT_TYPES } from "@/lib/spot-types"
 import { MAIN_TERRAINS, VALID_MAIN_TERRAINS } from "@/lib/main-terrains"
+import { buildPlaceSlug, reserveSlug, type Place, type PlaceRegistry } from "@/lib/places"
 
 // Single unified walks file (each entry carries a top-level `source`
 // field identifying its origin).
 const WALKS_FILE = "data/walks.json"
+// Phase 1 places-registry data file. The PATCH route reads + mutates
+// this alongside walks.json so venue field edits update the canonical
+// place entry rather than living on the walk row.
+const PLACES_FILE = "data/places.json"
 
 // Whitelist of editable fields. Anything outside this set is ignored
 // (can't set arbitrary keys via the PATCH body).
@@ -176,27 +181,13 @@ case "mudWarning": {
       )].sort()
       return cleaned.length === 0 ? undefined : cleaned
     }
-    case "sights": {
-      if (!Array.isArray(value)) return undefined
-      const cleaned = value
-        .map((raw) => cleanSight(raw))
-        .filter((x): x is NonNullable<ReturnType<typeof cleanSight>> => x !== null)
-      // Preserve an empty array explicitly — the admin may have
-      // deleted the last sight intentionally. Storing `[]` vs dropping
-      // the key is a minor distinction; we keep the empty array so
-      // the intent is visible in the file diff.
-      return cleaned
-    }
+    // sights / lunchStops / destinationStops are handled by
+    // cleanRowArrayWithRegistry in the PATCH loop below — they need
+    // access to the places registry which cleanField doesn't see.
+    case "sights":
     case "lunchStops":
-    case "destinationStops": {
-      // Both lists store the same shape (name + location/url/notes/
-      // rating/busy), so they share the same row-level cleaner.
-      if (!Array.isArray(value)) return undefined
-      const cleaned = value
-        .map((raw) => cleanLunchStop(raw))
-        .filter((x): x is NonNullable<ReturnType<typeof cleanLunchStop>> => x !== null)
-      return cleaned
-    }
+    case "destinationStops":
+      return undefined
     // `source` is handled separately in the PATCH loop so invalid
     // payloads can be a no-op rather than deleting the field.
     default:
@@ -271,86 +262,84 @@ function cleanTypes(raw: unknown): string[] | undefined {
   return out.length === 0 ? undefined : out
 }
 
-function cleanSight(raw: unknown): { name: string; location?: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } | null {
-  if (!raw || typeof raw !== "object") return null
-  const r = raw as Record<string, unknown>
-  const name = typeof r.name === "string" ? r.name.trim() : ""
-  if (!name) return null
-  const out: { name: string; location?: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } = { name }
-  if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
-  if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
-  if (typeof r.description === "string" && r.description.trim()) out.description = r.description.trim()
-  const lat = coerceFiniteNumber(r.lat)
-  if (lat !== undefined) out.lat = lat
-  const lng = coerceFiniteNumber(r.lng)
-  if (lng !== undefined) out.lng = lng
-  const km = coerceFiniteNumber(r.kmIntoRoute)
-  if (km !== undefined) out.kmIntoRoute = km
-  if (typeof r.businessStatus === "string" && BUSINESS_STATUSES.has(r.businessStatus)) {
-    out.businessStatus = r.businessStatus
-  }
-  const types = cleanTypes(r.types)
-  if (types !== undefined) out.types = types
-  return out
-}
-
 // `busy` is a tri-state matching the rating field's shape:
 // "busy" (popular / loud), "quiet" (calm / room to spare), or absent
 // (no opinion). Stored as a string so it parallels rating's enum
 // rather than the legacy boolean.
 const LUNCH_BUSY = new Set(["busy", "quiet"])
 
-function cleanLunchStop(raw: unknown): {
-  name: string
-  location?: string
-  url?: string
-  notes?: string
-  rating?: "good" | "fine" | "poor"
-  busy?: "busy" | "quiet"
-  lat?: number
-  lng?: number
-  kmIntoRoute?: number
-  businessStatus?: string
-  types?: string[]
-} | null {
-  if (!raw || typeof raw !== "object") return null
-  const r = raw as Record<string, unknown>
-  const name = typeof r.name === "string" ? r.name.trim() : ""
+// Build a cleaned Place entry from an editor row (which still carries
+// a flat venue shape from the round-trip hydration). `kind` selects
+// which freeform commentary field is read (`description` for sights,
+// `notes` for lunch / destination); the unused field is omitted from
+// the resulting Place so the JSON stays compact.
+function rowToPlace(
+  raw: Record<string, unknown>,
+  kind: "sights" | "lunchStops" | "destinationStops",
+): Place | null {
+  const name = typeof raw.name === "string" ? raw.name.trim() : ""
   if (!name) return null
-  const out: {
-    name: string
-    location?: string
-    url?: string
-    notes?: string
-    rating?: "good" | "fine" | "poor"
-    busy?: "busy" | "quiet"
-    lat?: number
-    lng?: number
-    kmIntoRoute?: number
-    businessStatus?: string
-    types?: string[]
-  } = { name }
-  if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
-  if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
-  if (typeof r.notes === "string" && r.notes.trim()) out.notes = r.notes.trim()
-  if (typeof r.rating === "string" && LUNCH_RATINGS.has(r.rating)) {
-    out.rating = r.rating as "good" | "fine" | "poor"
-  }
-  if (typeof r.busy === "string" && LUNCH_BUSY.has(r.busy)) {
-    out.busy = r.busy as "busy" | "quiet"
-  }
-  const lat = coerceFiniteNumber(r.lat)
+  const out: Place = { name }
+  if (typeof raw.location === "string" && raw.location.trim()) out.location = raw.location.trim()
+  if (typeof raw.url === "string" && raw.url.trim()) out.url = raw.url.trim()
+  const lat = coerceFiniteNumber(raw.lat)
   if (lat !== undefined) out.lat = lat
-  const lng = coerceFiniteNumber(r.lng)
+  const lng = coerceFiniteNumber(raw.lng)
   if (lng !== undefined) out.lng = lng
-  const km = coerceFiniteNumber(r.kmIntoRoute)
-  if (km !== undefined) out.kmIntoRoute = km
-  if (typeof r.businessStatus === "string" && BUSINESS_STATUSES.has(r.businessStatus)) {
-    out.businessStatus = r.businessStatus
-  }
-  const types = cleanTypes(r.types)
+  const types = cleanTypes(raw.types)
   if (types !== undefined) out.types = types
+  if (typeof raw.businessStatus === "string" && BUSINESS_STATUSES.has(raw.businessStatus)) {
+    out.businessStatus = raw.businessStatus
+  }
+  if (kind === "sights") {
+    if (typeof raw.description === "string" && raw.description.trim()) {
+      out.description = raw.description.trim()
+    }
+  } else {
+    if (typeof raw.notes === "string" && raw.notes.trim()) out.notes = raw.notes.trim()
+    if (typeof raw.rating === "string" && LUNCH_RATINGS.has(raw.rating)) {
+      out.rating = raw.rating as Place["rating"]
+    }
+    if (typeof raw.busy === "string" && LUNCH_BUSY.has(raw.busy)) {
+      out.busy = raw.busy as Place["busy"]
+    }
+  }
   return out
+}
+
+// Walk a row array from the editor and build the corresponding stub
+// array for walks.json. Mutates `registry` in place: existing places
+// get updated; new rows (no placeId, or stale placeId) get a fresh
+// entry with a unique slug. Rows with empty names are dropped — the
+// place is left untouched in the registry (no GC at this layer; a
+// future cleanup tool can sweep unreferenced entries).
+function cleanRowArrayWithRegistry(
+  raw: unknown,
+  kind: "sights" | "lunchStops" | "destinationStops",
+  registry: PlaceRegistry,
+): Array<{ placeId: string; kmIntoRoute?: number }> | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const stubs: Array<{ placeId: string; kmIntoRoute?: number }> = []
+  for (const rowRaw of raw) {
+    if (!rowRaw || typeof rowRaw !== "object") continue
+    const row = rowRaw as Record<string, unknown>
+    const place = rowToPlace(row, kind)
+    if (!place) continue // empty name → drop
+    // Determine the placeId. Editor sends back the round-tripped id
+    // for existing rows; brand-new rows (added via Pull data or the
+    // "+ Add" button) have no placeId yet, so we mint one.
+    let placeId = typeof row.placeId === "string" && row.placeId in registry ? row.placeId : ""
+    if (!placeId) {
+      const base = buildPlaceSlug({ name: place.name, location: place.location, types: place.types })
+      placeId = reserveSlug(base, registry)
+    }
+    registry[placeId] = place
+    const stub: { placeId: string; kmIntoRoute?: number } = { placeId }
+    const km = coerceFiniteNumber(row.kmIntoRoute)
+    if (km !== undefined) stub.kmIntoRoute = km
+    stubs.push(stub)
+  }
+  return stubs
 }
 
 // New-format ids: `[startCRS][endCRS][word]` (9+ chars, e.g. "hunhunfox").
@@ -376,6 +365,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const entry = data[slug]
   const variant = entry.walks![variantIndex] as WalkVariant
 
+  // Phase 1 places-registry: read the current registry so the row-
+  // array cleaners below can mutate it (update existing place fields
+  // / mint new entries for brand-new rows). We write places.json
+  // back alongside walks.json in the bundled commit at the end.
+  const placesRead = await readDataFile<PlaceRegistry>(PLACES_FILE)
+  const placesData = placesRead.data
+  let placesChanged = false
+
   // Apply every whitelisted field present in the body. Fields not in
   // the body are left alone — PATCH is partial, not PUT. Track
   // whether anything actually changed so we only stamp updatedAt (and
@@ -383,6 +380,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let changed = false
   for (const key of EDITABLE_FIELDS) {
     if (!(key in body)) continue
+
+    // sights / lunchStops / destinationStops route through the
+    // registry-aware cleaner — venue fields land on places.json,
+    // walks.json gets the thin stubs.
+    if (key === "sights" || key === "lunchStops" || key === "destinationStops") {
+      const placesBefore = JSON.stringify(placesData)
+      const stubs = cleanRowArrayWithRegistry(body[key], key, placesData)
+      if (stubs === undefined) continue
+      // Compare stub array against the existing walk-side array so we
+      // only flag walks.json as changed when the row references
+      // actually moved. Place-fields-only edits are caught separately
+      // via placesChanged below.
+      if (JSON.stringify(variant[key]) !== JSON.stringify(stubs)) {
+        variant[key] = stubs
+        changed = true
+      }
+      if (JSON.stringify(placesData) !== placesBefore) placesChanged = true
+      continue
+    }
 
     // `source` is special-cased: invalid payloads are a no-op (the
     // field stays intact). All other fields treat an undefined clean
@@ -433,15 +449,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Stamp updatedAt on every successful edit so the build script + UI
   // can order walks by "most recently touched first" within a tier.
   // ISO string is precise enough (ms) for the tiebreaker to be stable.
-  if (changed) {
+  if (changed || placesChanged) {
     variant.updatedAt = new Date().toISOString()
   }
 
-  // Single atomic commit: source walk file + rebuilt derived station-*
-  // files. One commit → one Vercel preview deploy → public view stays
-  // in sync because there's no intermediate state where the source
-  // changed but the derived files haven't caught up yet.
-  await commitWalkSave({ path: file, data }, `Update walk ${id} (${slug})`)
+  // Bundle walks.json + places.json (when changed) in the same commit
+  // so the source walk file + the venue registry stay in lockstep with
+  // the derived station-* files. Skip the places-only commit when
+  // nothing actually moved — small cost saving on no-op saves.
+  const sourceFiles: Array<{ path: string; data: unknown }> = [{ path: file, data }]
+  if (placesChanged) sourceFiles.push({ path: PLACES_FILE, data: placesData })
+  await commitWalkSave(sourceFiles, `Update walk ${id} (${slug})`)
 
   return NextResponse.json({ message: "ok", id })
   })
