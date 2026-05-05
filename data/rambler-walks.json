@@ -46077,43 +46077,106 @@
         "endStation": "SAC",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 16.5,
-        "hours": 4.33,
+        "distanceKm": 17.2,
+        "hours": 4.52,
         "lunchStops": [
           {
-            "name": "Heartwood Tearooms",
+            "name": "The Queens Head",
             "location": "Sandridge",
-            "notes": "if you can find a spot"
+            "url": "https://linktr.ee/TheQueensHeadSandridge",
+            "lat": 51.781415,
+            "lng": -0.304136,
+            "kmIntoRoute": 6.7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Heartwood Tea Rooms",
+            "location": "Sandridge",
+            "url": "http://heartwoodtearooms.com/",
+            "lat": 51.780641,
+            "lng": -0.30546,
+            "kmIntoRoute": 7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
           },
           {
             "name": "Green Man",
             "location": "Sandridge",
-            "busy": "busy"
+            "url": "http://www.greenmansandridge.co.uk/",
+            "lat": 51.780631,
+            "lng": -0.305797,
+            "kmIntoRoute": 7.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           },
           {
-            "name": "Queens Head",
+            "name": "The Rose & Crown",
             "location": "Sandridge",
-            "notes": "not great; consider as backup",
-            "rating": "poor",
-            "busy": "quiet"
+            "url": "http://www.theroseandcrownsandridge.co.uk/",
+            "lat": 51.780572,
+            "lng": -0.305664,
+            "kmIntoRoute": 7.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           },
           {
-            "name": "Rose & Crown",
-            "location": "Sandridge",
-            "notes": "didn't look promising",
-            "busy": "quiet"
+            "name": "Lower Red Lion",
+            "location": "St Albans",
+            "url": "http://www.thelowerredlion.co.uk/",
+            "lat": 51.751725,
+            "lng": -0.346339,
+            "kmIntoRoute": 12.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           }
         ],
         "terrain": "Mostly fields and country lanes. Some beautiful new bluebell woods, stunning historic city streeets, commons, golf courses, parkland",
         "sights": [
           {
-            "name": "Heartwood Forest"
+            "name": "Bluebell Woods in Heartwood Forest",
+            "url": "https://heartwood.woodlandtrust.org.uk/",
+            "lat": 51.783705,
+            "lng": -0.308732,
+            "kmIntoRoute": 5.8,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "forest"
+            ]
           },
           {
-            "name": "Childwickbury Country Estate"
+            "name": "Childwickbury Estate",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJxz4q38U4dkgRO4Z_rruVnV8",
+            "lat": 51.783599,
+            "lng": -0.346885,
+            "kmIntoRoute": 9.7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "village",
+              "historic_site"
+            ]
           },
           {
-            "name": "St Albans Cathedral"
+            "name": "St Albans Cathedral and Abbey Church of St Alban",
+            "url": "https://www.stalbanscathedral.org/",
+            "lat": 51.751136,
+            "lng": -0.343661,
+            "kmIntoRoute": 12.9,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "historic_site",
+              "church"
+            ]
           }
         ],
         "miscellany": "Can be muddy",
@@ -46126,7 +46189,7 @@
           "type": "main"
         },
         "komootUrl": "https://www.komoot.com/tour/2930623590",
-        "uphillMetres": 136.06,
+        "uphillMetres": 137.43,
         "difficulty": "moderate",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
@@ -46134,7 +46197,73 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "adapted"
         },
-        "updatedAt": "2026-05-05T10:04:36.719Z"
+        "updatedAt": "2026-05-05T12:22:21.253Z",
+        "destinationStops": [
+          {
+            "name": "Mad Squirrel Tap",
+            "location": "St Albans",
+            "url": "https://www.madsquirrelstalbans.co.uk/",
+            "lat": 51.750812,
+            "lng": -0.341363,
+            "kmIntoRoute": 13.4,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Abigail's Cafe",
+            "location": "St Albans",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJfy5BmiM_dkgRUNtX7o50Yx4",
+            "lat": 51.750701,
+            "lng": -0.34061,
+            "kmIntoRoute": 13.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          },
+          {
+            "name": "The Peahen",
+            "location": "St Albans",
+            "url": "https://www.mcmullens.co.uk/local-pub/peahen/",
+            "lat": 51.750804,
+            "lng": -0.339672,
+            "kmIntoRoute": 13.9,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "The Snug",
+            "location": "Redbourn",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJmT8rc8JHdkgR6s4QOCS4Wkw",
+            "lat": 51.751459,
+            "lng": -0.340651,
+            "kmIntoRoute": 14.5,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "The Boot",
+            "location": "St Albans",
+            "url": "http://www.bootcantina.com/",
+            "lat": 51.751302,
+            "lng": -0.340194,
+            "kmIntoRoute": 14.8,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          }
+        ],
+        "rating": 2,
+        "previousWalkDates": [
+          "2026-05-04"
+        ]
       }
     ]
   },
@@ -59721,56 +59850,157 @@
         "endStation": "OTF",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 10.5,
-        "hours": 3,
+        "distanceKm": 13.4,
+        "hours": 3.75,
         "lunchStops": [
           {
-            "name": "Rising Sun",
-            "location": "Cotman's Ash"
+            "name": "The Two Brewers",
+            "location": "Shoreham",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJAQBsKfaZdUgRZoNDt7xtxCI",
+            "lat": 51.334823,
+            "lng": 0.177833,
+            "kmIntoRoute": 4.8,
+            "businessStatus": "CLOSED_TEMPORARILY",
+            "types": [
+              "pub"
+            ]
           },
           {
-            "name": "King's Arms",
-            "location": "Shoreham"
+            "name": "The Kings Arms",
+            "location": "Shoreham",
+            "url": "https://www.facebook.com/thekingsarmsshoreham/",
+            "lat": 51.333327,
+            "lng": 0.180404,
+            "kmIntoRoute": 5.3,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           },
           {
-            "name": "Crown",
-            "location": "Shoreham"
+            "name": "The Mount Vineyard",
+            "location": "Shoreham",
+            "url": "http://www.themountvineyard.co.uk/",
+            "lat": 51.333166,
+            "lng": 0.182446,
+            "kmIntoRoute": 5.7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe",
+              "restaurant"
+            ]
           },
           {
-            "name": "Samuel Palmer",
-            "location": "Shoreham"
-          },
-          {
-            "name": "Shoreham Aircraft Museum Tea Room",
-            "location": "Shoreham"
-          },
-          {
-            "name": "Honey Pot",
-            "location": "Shoreham"
-          },
-          {
-            "name": "Mount Vineyard",
-            "location": "Shoreham"
+            "name": "The Samuel Palmer",
+            "location": "Shoreham",
+            "url": "http://www.thesamuelpalmer.com/",
+            "lat": 51.332961,
+            "lng": 0.183197,
+            "kmIntoRoute": 5.8,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
           }
         ],
         "terrain": "North Downs hills, chalk woodland, bluebell woods, open commons, grassy fields, disused golf course, Darent Valley riverbank, quaint village",
         "sights": [
           {
-            "name": "The Ancients",
-            "url": "http://www.tate.org.uk/collections/glossary/definition.jsp?entryId=332"
+            "name": "St Peter & St Paul",
+            "url": "http://www.shorehamchurchkent.org/",
+            "lat": 51.333032,
+            "lng": 0.184518,
+            "kmIntoRoute": 2.9,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "church"
+            ]
           },
           {
-            "name": "Pre-Raphaelite",
-            "url": "http://www.tate.org.uk/collections/glossary/definition.jsp?entryId=231"
+            "name": "Samuel Palmer's House",
+            "url": "http://www.thesamuelpalmer.com/",
+            "lat": 51.333935,
+            "lng": 0.181104,
+            "kmIntoRoute": 3.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "historic_site"
+            ]
           },
           {
-            "name": "Church of St Peter and St Paul"
+            "name": "Courtfield Wood",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJ8-ihPCJN30cRsncmFIGq9Ac",
+            "lat": 51.327068,
+            "lng": 0.222703,
+            "kmIntoRoute": 8.6,
+            "types": [
+              "forest"
+            ]
           },
           {
-            "name": "Otford Palace"
+            "name": "Great Wood",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJ8xIYMxdN30cRGh7pczEHEQA",
+            "lat": 51.320531,
+            "lng": 0.219271,
+            "kmIntoRoute": 9.4,
+            "types": [
+              "forest"
+            ]
           },
           {
-            "name": "Otford Solar System"
+            "name": "Otford Mount",
+            "url": "https://explorekent.org/activities/otford-walk/",
+            "lat": 51.315846,
+            "lng": 0.208015,
+            "kmIntoRoute": 10.2,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "summit"
+            ]
+          },
+          {
+            "name": "Flatdeal Wood",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJCSbrYm1N30cRu1QCvQBT3zI",
+            "lat": 51.314863,
+            "lng": 0.205077,
+            "kmIntoRoute": 10.4,
+            "types": [
+              "forest"
+            ]
+          },
+          {
+            "name": "Church Field Roman Villa Site",
+            "url": "https://explorekent.org/activities/otford-walk/",
+            "lat": 51.312048,
+            "lng": 0.194538,
+            "kmIntoRoute": 11.7,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "historic_site"
+            ]
+          },
+          {
+            "name": "Otford Palace Tower",
+            "url": "https://otfordpalace.org/",
+            "lat": 51.311663,
+            "lng": 0.191317,
+            "kmIntoRoute": 12.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "historic_site"
+            ]
+          },
+          {
+            "name": "St. Bartholomew's Church",
+            "url": "https://www.stbartholomews.co.uk/",
+            "lat": 51.312479,
+            "lng": 0.190999,
+            "kmIntoRoute": 12.2,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "church",
+              "historic_site"
+            ]
           }
         ],
         "miscellany": "Can be muddy",
@@ -59779,22 +60009,72 @@
         "mudWarning": true,
         "rating": 3,
         "source": {
-          "orgSlug": "time-out-country-walks-vol-1",
+          "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "main"
         },
         "suffix": "via Romney Street",
-        "updatedAt": "2026-05-02T02:19:37.931Z",
+        "updatedAt": "2026-05-05T12:30:57.173Z",
         "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Otford Circular via Romney Street",
           "pageURL": "https://www.walkingclub.org.uk/walk/otford-circular/",
           "type": "related"
         },
-        "uphillMetres": 230.06,
+        "uphillMetres": 254.76,
         "difficulty": "moderate",
-        "name": "Otford Circular via the Darent Valley"
+        "name": "Otford Circular via the Darent Valley",
+        "destinationStops": [
+          {
+            "name": "The Crown",
+            "location": "Otford",
+            "url": "http://www.vitalityhomehealth.co.uk/",
+            "lat": 51.313002,
+            "lng": 0.190048,
+            "kmIntoRoute": 12.8,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Hospices of Hope Tea Rooms",
+            "location": "Otford",
+            "url": "https://www.hospicesofhope.co.uk/",
+            "lat": 51.312883,
+            "lng": 0.189235,
+            "kmIntoRoute": 13,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          },
+          {
+            "name": "The Bull",
+            "location": "Otford",
+            "url": "https://thebull-otford.co.uk/",
+            "lat": 51.312857,
+            "lng": 0.188647,
+            "kmIntoRoute": 13,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "The Woodman",
+            "location": "Otford",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJg0EyD31N30cR9_EA-ahNsSQ",
+            "lat": 51.313016,
+            "lng": 0.191126,
+            "kmIntoRoute": 13.4,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          }
+        ]
       },
       {
         "role": "shorter",
@@ -128554,6 +128834,48 @@
           "type": "main"
         },
         "updatedAt": "2026-05-02T12:40:46.188Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-hurphrgean": {
+    "slug": "manual-hurphrgean",
+    "title": "Manual HUR to PHR",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "Hurst Green to Penshurst",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "HUR",
+        "endStation": "PHR",
+        "stationToStation": true,
+        "distanceKm": 21.3,
+        "hours": 5.9,
+        "lunchStops": [],
+        "sights": [],
+        "id": "hurphrgean",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-05T08:27:36.708Z",
+        "komootUrl": "https://www.komoot.com/tour/2934416642",
+        "uphillMetres": 353.99,
+        "difficulty": "hard"
       }
     ],
     "extracted": true,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
 import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
+import { VALID_SPOT_TYPES } from "@/lib/spot-types"
 
 // Files that hold walk entries — mirrors scripts/build-rambler-notes.mjs.
 const WALKS_FILES = [
@@ -35,8 +36,8 @@ const EDITABLE_FIELDS = [
   "sights",
   "lunchStops",
   "lunchOverride",
-  "destinationPubs",
-  "destinationPubsOverride",
+  "destinationStops",
+  "destinationStopsOverride",
   "source",
   "relatedSource",
 ] as const
@@ -97,7 +98,7 @@ function cleanField(key: string, value: unknown): unknown | undefined {
     case "name":
     case "suffix":
     case "lunchOverride":
-    case "destinationPubsOverride": {
+    case "destinationStopsOverride": {
       if (typeof value !== "string") return undefined
       const trimmed = value.trim()
       return trimmed === "" ? undefined : trimmed
@@ -178,7 +179,7 @@ case "mudWarning": {
       return cleaned
     }
     case "lunchStops":
-    case "destinationPubs": {
+    case "destinationStops": {
       // Both lists store the same shape (name + location/url/notes/
       // rating/busy), so they share the same row-level cleaner.
       if (!Array.isArray(value)) return undefined
@@ -220,15 +221,66 @@ function cleanSource(raw: unknown): {
 // Row-level cleaners for sights/lunch. Drop rows with an empty name
 // (everything else is optional context about that row). String fields
 // are trimmed; empty trimmed strings → field omitted (so the JSON
-// stays compact without empty keys).
-function cleanSight(raw: unknown): { name: string; url?: string; description?: string } | null {
+// stays compact without empty keys). Number fields are accepted as
+// either a number OR a numeric string (the editor stores them as
+// strings to keep inputs controlled, but the data file stores them
+// as numbers).
+function coerceFiniteNumber(raw: unknown): number | undefined {
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw
+  if (typeof raw === "string") {
+    const trimmed = raw.trim()
+    if (trimmed === "") return undefined
+    const n = Number(trimmed)
+    if (Number.isFinite(n)) return n
+  }
+  return undefined
+}
+// Whitelist of accepted businessStatus values. Mirrors Google Places
+// API's enum (OPERATIONAL / CLOSED_TEMPORARILY / CLOSED_PERMANENTLY).
+// Anything else is dropped — we don't want unknown strings drifting
+// into the data file.
+const BUSINESS_STATUSES = new Set([
+  "OPERATIONAL",
+  "CLOSED_TEMPORARILY",
+  "CLOSED_PERMANENTLY",
+])
+// Filter an unknown value down to a deduped string[] of valid spot
+// types (canonical vocabulary in lib/spot-types.ts). Returns
+// undefined when the result is empty so the cleaner can omit the
+// field rather than persisting "[]" in the JSON.
+function cleanTypes(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined
+  const out: string[] = []
+  const seen = new Set<string>()
+  for (const v of raw) {
+    if (typeof v !== "string") continue
+    if (!VALID_SPOT_TYPES.has(v)) continue
+    if (seen.has(v)) continue
+    seen.add(v)
+    out.push(v)
+  }
+  return out.length === 0 ? undefined : out
+}
+
+function cleanSight(raw: unknown): { name: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
   const name = typeof r.name === "string" ? r.name.trim() : ""
   if (!name) return null
-  const out: { name: string; url?: string; description?: string } = { name }
+  const out: { name: string; url?: string; description?: string; lat?: number; lng?: number; kmIntoRoute?: number; businessStatus?: string; types?: string[] } = { name }
   if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
   if (typeof r.description === "string" && r.description.trim()) out.description = r.description.trim()
+  const lat = coerceFiniteNumber(r.lat)
+  if (lat !== undefined) out.lat = lat
+  const lng = coerceFiniteNumber(r.lng)
+  if (lng !== undefined) out.lng = lng
+  const km = coerceFiniteNumber(r.kmIntoRoute)
+  if (km !== undefined) out.kmIntoRoute = km
+  if (typeof r.businessStatus === "string" && BUSINESS_STATUSES.has(r.businessStatus)) {
+    out.businessStatus = r.businessStatus
+  }
+  const types = cleanTypes(r.types)
+  if (types !== undefined) out.types = types
   return out
 }
 
@@ -245,6 +297,11 @@ function cleanLunchStop(raw: unknown): {
   notes?: string
   rating?: "good" | "fine" | "poor"
   busy?: "busy" | "quiet"
+  lat?: number
+  lng?: number
+  kmIntoRoute?: number
+  businessStatus?: string
+  types?: string[]
 } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
@@ -257,6 +314,11 @@ function cleanLunchStop(raw: unknown): {
     notes?: string
     rating?: "good" | "fine" | "poor"
     busy?: "busy" | "quiet"
+    lat?: number
+    lng?: number
+    kmIntoRoute?: number
+    businessStatus?: string
+    types?: string[]
   } = { name }
   if (typeof r.location === "string" && r.location.trim()) out.location = r.location.trim()
   if (typeof r.url === "string" && r.url.trim()) out.url = r.url.trim()
@@ -267,6 +329,17 @@ function cleanLunchStop(raw: unknown): {
   if (typeof r.busy === "string" && LUNCH_BUSY.has(r.busy)) {
     out.busy = r.busy as "busy" | "quiet"
   }
+  const lat = coerceFiniteNumber(r.lat)
+  if (lat !== undefined) out.lat = lat
+  const lng = coerceFiniteNumber(r.lng)
+  if (lng !== undefined) out.lng = lng
+  const km = coerceFiniteNumber(r.kmIntoRoute)
+  if (km !== undefined) out.kmIntoRoute = km
+  if (typeof r.businessStatus === "string" && BUSINESS_STATUSES.has(r.businessStatus)) {
+    out.businessStatus = r.businessStatus
+  }
+  const types = cleanTypes(r.types)
+  if (types !== undefined) out.types = types
   return out
 }
 

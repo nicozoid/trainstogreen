@@ -256,6 +256,36 @@ function formatTerrainTags(raw) {
   return `${items.slice(0, -1).join(", ")}, and ${items[items.length - 1]}.`
 }
 
+// "Last reviewed {date}." — italicised sentence sourced from the
+// variant's previousWalkDates log. Picks the most recent valid ISO
+// date and formats it UK-style ("13 May 2022"). Returns null when
+// the array is missing/empty/all garbage so the caller can skip it
+// cleanly.
+//
+// Date formatting is hand-rolled rather than via Intl.DateTimeFormat
+// to avoid environment-specific locale fallbacks — UK month names
+// are stable and short to enumerate.
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+]
+function formatLastReviewed(dates) {
+  if (!Array.isArray(dates) || dates.length === 0) return null
+  // Pick the latest valid YYYY-MM-DD entry. ISO sorts lexically, so
+  // a string sort gives us chronological order without parsing.
+  const valid = dates
+    .filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d))
+    .sort()
+  if (valid.length === 0) return null
+  const latest = valid[valid.length - 1]
+  const [yyyy, mm, dd] = latest.split("-").map((p) => parseInt(p, 10))
+  // Bail on out-of-range months — defensive, since the regex already
+  // matches digits but a "13" or "00" could slip through.
+  if (mm < 1 || mm > 12) return null
+  // No leading zero on day; "13 May 2022" not "13 May 2022".
+  return `*Last reviewed ${dd} ${MONTH_NAMES[mm - 1]} ${yyyy}.*`
+}
+
 // Distance in km, rounded DOWN, with a space before "km". Miles are
 // intentionally dropped — keeps the trailing stats compact.
 function formatDistance(km) {
@@ -303,20 +333,35 @@ function joinWithOr(items) {
 // location share one clause). Strips a leading "the/The" from the name
 // because we always prepend a lowercase "the " ourselves; produces
 // "the [Gun Inn](url) (charming; reservations recommended)" etc.
+// Stored rating ("poor"/"fine"/"good") → public prose phrase. "poor"
+// reads as a soft warning, "fine" as faint praise, "good" as a clear
+// recommendation. Anything else (unset, unexpected) → no rating bit
+// in the parens.
+const RATING_PHRASES = {
+  poor: "not great",
+  fine: "not bad",
+  good: "very nice",
+}
+function ratingPhrase(rating) {
+  return typeof rating === "string" ? RATING_PHRASES[rating] ?? "" : ""
+}
+
 function formatLunchVenue(s) {
   const cleanedName = s.name.replace(/^the\s+/i, "")
   const linked = s.url ? `[${cleanedName}](${s.url})` : cleanedName
   const base = `the ${linked}`
-  // Parenthetical bits: optional admin notes ("good Sunday roast",
-  // "no kitchen on Mondays") + a "reservations recommended" tag when
-  // busy === "busy" (the UI relabels this as Yes/No; stored value is
-  // unchanged). Joined by "; " so both fit in one paren.
+  // Parenthetical bits, in order: rating phrase → admin notes →
+  // "reservations recommended". Rating comes first so the reader
+  // gets the qualitative tier ("not bad", "very nice") before the
+  // free-text colour. Joined with "; " so a venue with all three
+  // reads "(very nice; charming; reservations recommended)".
   // Strip trailing "." and "?" from notes so they merge cleanly into
   // the surrounding sentence, but PRESERVE "!" — exclamation marks
   // carry tone the admin chose deliberately ("(lovely!)").
   const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.?]+$/, "") : ""
+  const rating = ratingPhrase(s.rating)
   const reservations = s.busy === "busy" ? "reservations recommended" : ""
-  const parens = [note, reservations].filter(Boolean).join("; ")
+  const parens = [rating, note, reservations].filter(Boolean).join("; ")
   return parens ? `${base} (${parens})` : base
 }
 
@@ -342,6 +387,11 @@ function formatLunchVenue(s) {
 // stops:" trailing sentence in the multi-location case).
 function formatLunchStops(stops) {
   if (!stops?.length) return null
+  // Strip permanently-closed venues before grouping. An entire group
+  // becoming empty is fine — joinWithOr handles the resulting array
+  // shape — and an empty overall list returns null below.
+  stops = stops.filter(isLive)
+  if (stops.length === 0) return null
   const groups = new Map() // location → venue strings (preserves order)
   const noLoc = []
   for (const s of stops) {
@@ -394,24 +444,28 @@ function formatLunchStops(stops) {
 // convention differs: the location is implicit (the walk destination),
 // so we don't render "in {location}" or prepend "the ". The venue name
 // is rendered as-is — including any leading "The" — because the typical
-// sentence reads "Destination pub: The Queens Head."
+// sentence reads "End-of-walk rests: The Queens Head."
 //
 // URLs (when present) wrap the name as a markdown link, mirroring the
 // lunch-stop formatter. Optional admin notes go in trailing parens.
-function formatDestinationPubs(stops) {
+function formatDestinationStops(stops) {
   if (!stops?.length) return null
+  stops = stops.filter(isLive)
+  if (stops.length === 0) return null
   const fmts = stops.map((s) => {
     const linked = s.url ? `[${s.name}](${s.url})` : s.name
-    // Parenthetical bits — admin notes + "reservations recommended"
-    // when busy === "busy" (the UI relabels this as Yes/No, but the
-    // stored value is unchanged). Joined by "; " so both fit
-    // naturally in one paren.
+    // Parenthetical bits, same order + helper as formatLunchVenue:
+    // rating phrase → notes → "reservations recommended". Rating
+    // first so the reader gets the qualitative tier before the
+    // free-text colour. Joined with "; " so a venue with all three
+    // reads "(very nice; charming; reservations recommended)".
     // Strip trailing "." and "?" from notes so they merge cleanly into
-  // the surrounding sentence, but PRESERVE "!" — exclamation marks
-  // carry tone the admin chose deliberately ("(lovely!)").
-  const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.?]+$/, "") : ""
+    // the surrounding sentence, but PRESERVE "!" — exclamation marks
+    // carry tone the admin chose deliberately ("(lovely!)").
+    const note = typeof s.notes === "string" ? s.notes.trim().replace(/[.?]+$/, "") : ""
+    const rating = ratingPhrase(s.rating)
     const reservations = s.busy === "busy" ? "reservations recommended" : ""
-    const parens = [note, reservations].filter(Boolean).join("; ")
+    const parens = [rating, note, reservations].filter(Boolean).join("; ")
     return parens ? `${linked} (${parens})` : linked
   })
   return joinWithOr(fmts)
@@ -482,8 +536,17 @@ function variantPhrase(type) {
 // No "or" — sights aren't alternatives, they're all worth seeing.
 // Oxford comma + "and" before the last item, matching the terrain-tag
 // formatter's style so the rendered prose reads consistently.
+// Drop venues Google has flagged as permanently closed before any
+// downstream rendering touches them — keeps closed places out of the
+// public prose without needing to remove the row from the JSON.
+function isLive(s) {
+  return s?.businessStatus !== "CLOSED_PERMANENTLY"
+}
+
 function formatSights(sights) {
   if (!Array.isArray(sights) || sights.length === 0) return null
+  sights = sights.filter(isLive)
+  if (sights.length === 0) return null
   const items = sights.map((s) => {
     const linked = s.url ? `[${s.name}](${s.url})` : s.name
     // Optional descriptive blurb — surfaces in parentheses after the
@@ -750,19 +813,18 @@ function buildSummary(variant, entry, crsIndex, sources) {
     if (lunch) parts.push(lunch)
   }
 
-  // Destination pub(s) — same override-beats-list rule as lunch.
-  // Uses its own formatter because the prose convention differs:
-  // no "in {Location}" (the walk destination is implicit). Header
-  // pluralises with the venue count.
-  const destinationPubsOverride = typeof variant.destinationPubsOverride === "string" ? variant.destinationPubsOverride.trim() : ""
-  if (destinationPubsOverride) {
-    parts.push(withPeriod(destinationPubsOverride))
+  // End-of-walk rests — venues at or near the route's end. Same
+  // override-beats-list rule as lunch. Uses its own formatter because
+  // the prose convention differs from lunch: no "in {Location}", just
+  // the venue name(s) since the destination is implicit. Header is
+  // always "End-of-walk rests:" — no singular/plural variant, the
+  // colon construction reads naturally with one or many.
+  const destinationStopsOverride = typeof variant.destinationStopsOverride === "string" ? variant.destinationStopsOverride.trim() : ""
+  if (destinationStopsOverride) {
+    parts.push(withPeriod(destinationStopsOverride))
   } else {
-    const dest = formatDestinationPubs(variant.destinationPubs)
-    if (dest) {
-      const label = (variant.destinationPubs?.length ?? 0) > 1 ? "Destination pubs" : "Destination pub"
-      parts.push(`${label}: ${dest}.`)
-    }
+    const dest = formatDestinationStops(variant.destinationStops)
+    if (dest) parts.push(`End-of-walk rests: ${dest}.`)
   }
 
   // Book source clause — emitted before distance so the book
@@ -777,6 +839,14 @@ function buildSummary(variant, entry, crsIndex, sources) {
   // Related source is intentionally NOT rendered in public prose —
   // it stays admin-only as a cross-reference inside the editor. The
   // formatter still exists for any admin-side surfaces that want it.
+
+  // "Last reviewed {date}." — italicised, sits just before the
+  // distance/time stats. Sourced from variant.previousWalkDates (the
+  // admin-tracked log of when this walk was personally completed);
+  // we pick the LATEST date and format it "13 May 2022" UK-style.
+  // Skipped when the array is empty / missing.
+  const reviewSentence = formatLastReviewed(variant.previousWalkDates)
+  if (reviewSentence) parts.push(reviewSentence)
 
   // Distance, uphill, hours, difficulty — each their own sentence.
   // Always emitted when present, including alongside a Komoot route
@@ -1153,9 +1223,16 @@ function buildRamblerNotes(args) {
     const publicCircularParts = publicOrdered.filter((p) => p.isCircular)
     const publicS2SStartingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "starting")
     const publicS2SEndingParts = publicOrdered.filter((p) => !p.isCircular && p.role === "ending")
-    const publicWalksCircular = publicCircularParts.map((p) => p.summary).join("\n\n")
-    const publicWalksS2S = publicS2SStartingParts.map((p) => p.summary).join("\n\n")
-    const publicWalksS2SEnding = publicS2SEndingParts.map((p) => p.summary).join("\n\n")
+    // The "*Last reviewed …*" sentence is admin-only; strip it (plus
+    // its leading separator) before joining so the public prose
+    // doesn't expose the personal hike-tracking dates. buildSummary
+    // emits one summary per walk and we use it for BOTH admin and
+    // public views, so the cleanest place to drop it is at the
+    // public-render boundary here.
+    const stripReviewedSentence = (s) => s.replace(/\s*\*Last reviewed [^*\n]+\*\.?/g, "")
+    const publicWalksCircular = publicCircularParts.map((p) => stripReviewedSentence(p.summary)).join("\n\n")
+    const publicWalksS2S = publicS2SStartingParts.map((p) => stripReviewedSentence(p.summary)).join("\n\n")
+    const publicWalksS2SEnding = publicS2SEndingParts.map((p) => stripReviewedSentence(p.summary)).join("\n\n")
     // Per-station month aggregation from publicly-visible walks only —
     // bypasses admin-only variants hidden by publicTierFilter so the
     // month filter never surfaces a station whose only matching walks
