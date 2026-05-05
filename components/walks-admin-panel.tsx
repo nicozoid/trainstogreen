@@ -1000,6 +1000,291 @@ function CollapsibleSection({
   )
 }
 
+// Phase 2 places-registry — fetch the "distinct walks referencing
+// this placeId" count for every place in a walk's rows. Drives the
+// "Synced (N)" badge in the row header. Returns a map keyed by
+// placeId; missing ids resolve to 0 (treated as "not synced").
+//
+// The hook re-fetches whenever the SET of placeIds changes; an
+// edit that swaps one row's placeId for another (admin picks an
+// autocomplete suggestion) will cause exactly one refresh.
+function usePlaceRefcounts(placeIds: string[]): Record<string, number> {
+  const [counts, setCounts] = useState<Record<string, number>>({})
+  // Stable string key over the placeId set so the effect doesn't
+  // re-fire on every parent render. Sort + join keeps it order-
+  // independent and dedup-friendly.
+  const key = useMemo(
+    () => [...new Set(placeIds.filter(Boolean))].sort().join(","),
+    [placeIds],
+  )
+  useEffect(() => {
+    const ids = key ? key.split(",") : []
+    if (ids.length === 0) {
+      setCounts({})
+      return
+    }
+    let cancelled = false
+    fetch("/api/dev/places/refcount", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ placeIds: ids }),
+    })
+      .then((r) => (r.ok ? r.json() : { counts: {} }))
+      .then((j) => {
+        if (cancelled) return
+        const next = (j?.counts ?? {}) as Record<string, number>
+        setCounts(next)
+      })
+      .catch(() => {
+        if (!cancelled) setCounts({})
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [key])
+  return counts
+}
+
+// "Synced (N)" badge with a click-to-expand popover listing the
+// other walks that reference this place. Renders nothing when
+// `count <= 1` — by definition a place referenced by 0 or 1 walks
+// isn't shared, so there's nothing to surface. Click toggles the
+// popover; references are fetched on first open and cached for
+// the lifetime of the badge instance.
+function SyncedBadge({ placeId, count }: { placeId: string; count: number }) {
+  const [open, setOpen] = useState(false)
+  type Reference = {
+    walkId: string
+    walkName: string
+    pageTitle: string
+    startStation: string | null
+    endStation: string | null
+  }
+  const [refs, setRefs] = useState<Reference[] | null>(null)
+  const [loading, setLoading] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+
+  // Click-outside closes the popover. Pointerdown rather than click
+  // because some inner controls call e.preventDefault on click —
+  // pointerdown fires earlier in the gesture and is reliable for
+  // popover-dismiss behaviour.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => {
+      if (!ref.current) return
+      if (!ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("pointerdown", onDown)
+    return () => document.removeEventListener("pointerdown", onDown)
+  }, [open])
+
+  // Lazy fetch — first time the popover opens we go grab the walk
+  // list. Subsequent opens reuse the cached array.
+  useEffect(() => {
+    if (!open || refs !== null || loading || !placeId) return
+    setLoading(true)
+    fetch(`/api/dev/places/${encodeURIComponent(placeId)}/references`)
+      .then((r) => (r.ok ? r.json() : { references: [] }))
+      .then((j) => setRefs((j?.references ?? []) as Reference[]))
+      .catch(() => setRefs([]))
+      .finally(() => setLoading(false))
+  }, [open, refs, loading, placeId])
+
+  if (count <= 1) return null
+  return (
+    <div ref={ref} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        title="Click to see which walks reference this place"
+        aria-expanded={open}
+        className="rounded bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-orange-700 hover:bg-orange-500/20 dark:text-orange-300"
+      >
+        Synced ({count})
+      </button>
+      {open && (
+        <div
+          // Absolutely-positioned dropdown anchored under the badge.
+          // z-50 keeps it above the rest of the editor content
+          // (CollapsibleSection bodies set their own stacking
+          // contexts via overflow rules).
+          role="dialog"
+          className="absolute left-0 top-full z-50 mt-1 max-h-72 w-72 overflow-y-auto rounded border border-border bg-popover px-2 py-1.5 text-xs shadow-md"
+        >
+          {loading && <div className="text-muted-foreground">Loading…</div>}
+          {!loading && refs && refs.length === 0 && (
+            <div className="text-muted-foreground">No other walks reference this place.</div>
+          )}
+          {!loading && refs && refs.length > 0 && (
+            <ul className="space-y-1">
+              {refs.map((r) => {
+                const station = r.startStation && r.endStation
+                  ? r.startStation === r.endStation
+                    ? r.startStation
+                    : `${r.startStation}→${r.endStation}`
+                  : ""
+                const label = r.walkName || r.pageTitle
+                return (
+                  <li key={r.walkId} className="leading-snug">
+                    <span className="font-medium">{label || r.walkId}</span>
+                    {station && (
+                      <span className="ml-1 text-muted-foreground">[{station}]</span>
+                    )}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Autocomplete-aware name input. Wraps the existing <Input> with a
+// debounced fetch against /api/dev/places/search. Suggestions appear
+// in a dropdown beneath the input; clicking one switches the row's
+// placeId AND replaces every venue field with the chosen place's
+// data via `onPick`. The previous placeId becomes orphaned when no
+// other walk references it — Phase 2 leaves orphans alone (they sit
+// in the registry until a future cleanup tool gathers them).
+type PlaceSuggestion = {
+  placeId: string
+  name: string
+  location?: string
+  url?: string
+  lat?: number | null
+  lng?: number | null
+  types?: string[]
+  businessStatus?: string
+  rating?: "" | "good" | "fine" | "poor"
+  busy?: "" | "busy" | "quiet"
+  notes?: string
+  description?: string
+}
+
+function NameField({
+  id,
+  value,
+  currentPlaceId,
+  placeholder,
+  className = "flex-1",
+  onChange,
+  onPick,
+}: {
+  id: string
+  value: string
+  currentPlaceId: string
+  placeholder?: string
+  /** Tailwind classes applied to the wrapper (the positioning
+   *  parent of the suggestions dropdown). Defaults to `flex-1` so
+   *  the name input shares the row's leftover horizontal space
+   *  equally with the URL sibling (location sits between them with
+   *  a 250 px cap). Override via prop when a row needs a different
+   *  layout. */
+  className?: string
+  /** Plain-text edit — name typed but no suggestion picked. The
+   *  caller still owns the row's placeId; an unpicked name change
+   *  is a "rename" of the existing place on save. */
+  onChange: (next: string) => void
+  /** Suggestion picked — caller swaps the row's placeId AND
+   *  populates the rest of the venue fields from the suggestion. */
+  onPick: (suggestion: PlaceSuggestion) => void
+}) {
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([])
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const wrapRef = useRef<HTMLDivElement | null>(null)
+
+  // Click-outside closes. Same pattern as SyncedBadge.
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: PointerEvent) => {
+      if (!wrapRef.current) return
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener("pointerdown", onDown)
+    return () => document.removeEventListener("pointerdown", onDown)
+  }, [open])
+
+  // Debounced search. 200 ms gives a real human time to finish a
+  // word without spamming the endpoint, while still feeling live.
+  // Queries shorter than 2 chars short-circuit to no suggestions.
+  useEffect(() => {
+    const q = value.trim()
+    if (q.length < 2) {
+      setSuggestions([])
+      return
+    }
+    const t = setTimeout(() => {
+      setLoading(true)
+      fetch(`/api/dev/places/search?q=${encodeURIComponent(q)}&limit=10`)
+        .then((r) => (r.ok ? r.json() : { results: [] }))
+        .then((j) => {
+          // Filter out the row's own current place — no point
+          // suggesting "switch to yourself".
+          const all = (j?.results ?? []) as PlaceSuggestion[]
+          setSuggestions(currentPlaceId ? all.filter((s) => s.placeId !== currentPlaceId) : all)
+        })
+        .catch(() => setSuggestions([]))
+        .finally(() => setLoading(false))
+    }, 200)
+    return () => clearTimeout(t)
+  }, [value, currentPlaceId])
+
+  return (
+    <div ref={wrapRef} className={`relative ${className}`}>
+      <Input
+        id={id}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value)
+          setOpen(true)
+        }}
+        onFocus={() => setOpen(true)}
+        placeholder={placeholder ?? "Name (required)"}
+        className="h-7 w-full text-xs"
+        autoComplete="off"
+      />
+      {open && (loading || suggestions.length > 0) && (
+        <div
+          role="listbox"
+          className="absolute left-0 top-full z-50 mt-1 max-h-72 w-[28rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded border border-border bg-popover shadow-md"
+        >
+          {loading && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">Searching…</div>
+          )}
+          {!loading && suggestions.length === 0 && (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">No matches.</div>
+          )}
+          {suggestions.map((s) => {
+            const types = (s.types ?? []).map((t) => SPOT_TYPE_LABELS[t] ?? t).join(", ")
+            return (
+              <button
+                key={s.placeId}
+                type="button"
+                onClick={() => {
+                  onPick(s)
+                  setOpen(false)
+                }}
+                role="option"
+                className="block w-full cursor-pointer border-b border-border/40 px-2 py-1.5 text-left text-xs last:border-b-0 hover:bg-muted/60"
+              >
+                <div className="font-medium leading-tight">{s.name}</div>
+                {(s.location || types) && (
+                  <div className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
+                    {[s.location, types].filter(Boolean).join(" • ")}
+                  </div>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // Single walk card. Collapsed by default — click the header to expand.
 // Drafts are kept in local state so keystrokes don't round-trip until
 // the user hits Save.
@@ -1108,6 +1393,20 @@ function WalkCard({
   // prior server state — otherwise the user has unsaved edits we
   // shouldn't clobber.
   useEffect(() => { setDraft(serverState) }, [serverState])
+
+  // Phase 2 places-registry: gather every placeId across the three
+  // row arrays so we can fetch their refcounts in one batch. Filtering
+  // empty strings drops brand-new rows the admin just added (which
+  // don't get a placeId until the next save).
+  const placeIds = useMemo(
+    () => [
+      ...draft.sights.map((s) => s.placeId),
+      ...draft.lunchStops.map((s) => s.placeId),
+      ...draft.destinationStops.map((s) => s.placeId),
+    ].filter(Boolean),
+    [draft.sights, draft.lunchStops, draft.destinationStops],
+  )
+  const placeCounts = usePlaceRefcounts(placeIds)
 
   const dirty = useMemo(() => {
     return (
@@ -2729,6 +3028,7 @@ function WalkCard({
           <SightsEditor
             walkId={walk.id}
             sights={draft.sights}
+            placeCounts={placeCounts}
             onChange={(sights) => setDraft((d) => ({ ...d, sights }))}
             onTypesChange={onSightTypesChange}
           />
@@ -2745,6 +3045,7 @@ function WalkCard({
             itemLabel="Lunch"
             addLabel="+ Add lunch stop"
             stops={draft.lunchStops}
+            placeCounts={placeCounts}
             onStopsChange={(lunchStops) => setDraft((d) => ({ ...d, lunchStops }))}
             onTypesChange={(i, t) => onRefreshmentTypesChange("lunchStops", i, t)}
             onSwitchKind={(i) => onSwitchKind("lunchStops", i)}
@@ -2765,6 +3066,7 @@ function WalkCard({
             sectionTitle="Destination stops"
             itemLabel="Destination stop"
             addLabel="+ Add destination stop"
+            placeCounts={placeCounts}
             showLocation={false}
             stops={draft.destinationStops}
             onStopsChange={(destinationStops) => setDraft((d) => ({ ...d, destinationStops }))}
@@ -3246,11 +3548,17 @@ function BusinessStatusSelect({
 function SightsEditor({
   walkId,
   sights,
+  placeCounts,
   onChange,
   onTypesChange,
 }: {
   walkId: string
   sights: SightDraft[]
+  /** placeId → distinct-walks count, fed by usePlaceRefcounts on the
+   *  parent. Drives the "Synced (N)" badge + the unlink button's
+   *  visibility. Missing entries (rows the admin just added that
+   *  have no placeId yet) treat as 0. */
+  placeCounts?: Record<string, number>
   onChange: (next: SightDraft[]) => void
   // Specialised types-change handler that decides whether the row
   // stays a Sight or gets promoted to Lunch / Destination based on
@@ -3276,10 +3584,16 @@ function SightsEditor({
                 row with its neighbour in the draft array; they're
                 disabled at the edges (first row can't move up, last
                 can't move down). */}
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Sight {i + 1}
-              </span>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  Sight {i + 1}
+                </span>
+                {/* Synced badge — renders only when this place is
+                    referenced by ≥2 walks. Click opens a popover
+                    listing the walks. */}
+                <SyncedBadge placeId={s.placeId} count={placeCounts?.[s.placeId] ?? 0} />
+              </div>
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
@@ -3311,6 +3625,26 @@ function SightsEditor({
                 >
                   ▼
                 </button>
+                {/* Unlink — visible only on synced rows (≥2 walks).
+                    Clearing the placeId means the next save mints a
+                    fresh registry entry from this row's current
+                    fields, leaving the original place intact for
+                    the other walks that still reference it. */}
+                {(placeCounts?.[s.placeId] ?? 0) >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = [...sights]
+                      next[i] = { ...next[i], placeId: "" }
+                      onChange(next)
+                    }}
+                    className="ml-0.5 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/60"
+                    aria-label={`Unlink sight ${i + 1} from shared place`}
+                    title="Disconnect from shared place — next save will create a standalone copy"
+                  >
+                    Unlink
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onChange(sights.filter((_, j) => j !== i))}
@@ -3330,37 +3664,70 @@ function SightsEditor({
                   in by hand for any sight. Sights sharing a location
                   group together in the public prose. */}
               <div className="flex gap-1.5">
-                <Input
+                <NameField
+                  id={`sight-name-${walkId}-${i}`}
                   value={s.name}
-                  onChange={(e) => {
-                    const next = [...sights]
-                    next[i] = { ...next[i], name: e.target.value }
-                    onChange(next)
-                  }}
+                  currentPlaceId={s.placeId}
                   placeholder="Name (required)"
-                  className="h-7 flex-1 text-xs"
-                />
-                <Input
-                  value={s.location}
-                  onChange={(e) => {
+                  onChange={(name) => {
                     const next = [...sights]
-                    next[i] = { ...next[i], location: e.target.value }
+                    next[i] = { ...next[i], name }
                     onChange(next)
                   }}
-                  placeholder="Location"
-                  className="h-7 flex-1 text-xs"
-                />
-                <Input
-                  type="url"
-                  value={s.url}
-                  onChange={(e) => {
+                  onPick={(p) => {
+                    // Sync to the picked place — copy every venue
+                    // field. kmIntoRoute stays put (it's per-walk).
+                    // The previous placeId becomes orphaned if no
+                    // other walk referenced it; that's fine for
+                    // Phase 2 (a future cleanup tool sweeps
+                    // unreferenced entries).
                     const next = [...sights]
-                    next[i] = { ...next[i], url: e.target.value }
+                    next[i] = {
+                      ...next[i],
+                      placeId: p.placeId,
+                      name: p.name,
+                      location: p.location ?? "",
+                      url: p.url ?? "",
+                      description: p.description ?? "",
+                      lat: typeof p.lat === "number" ? String(p.lat) : "",
+                      lng: typeof p.lng === "number" ? String(p.lng) : "",
+                      businessStatus: p.businessStatus ?? "",
+                      types: p.types ?? [],
+                    }
                     onChange(next)
                   }}
-                  placeholder="URL (optional)"
-                  className="h-7 flex-1 text-xs"
                 />
+                {/* Location + URL sit in their own flex wrappers so
+                    the shadcn Input's inner span doesn't swallow the
+                    flex class (passing flex-1 to <Input> applies to
+                    the inner input element, not the wrapping span,
+                    so it has no layout effect). The wrapper divs ARE
+                    the flex items the parent row distributes. */}
+                <div className="max-w-[250px] flex-1">
+                  <Input
+                    value={s.location}
+                    onChange={(e) => {
+                      const next = [...sights]
+                      next[i] = { ...next[i], location: e.target.value }
+                      onChange(next)
+                    }}
+                    placeholder="Location"
+                    className="h-7 w-full text-xs"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="url"
+                    value={s.url}
+                    onChange={(e) => {
+                      const next = [...sights]
+                      next[i] = { ...next[i], url: e.target.value }
+                      onChange(next)
+                    }}
+                    placeholder="URL (optional)"
+                    className="h-7 w-full text-xs"
+                  />
+                </div>
                 <WebSearchButton
                   name={s.name}
                   location={s.location}
@@ -3476,6 +3843,7 @@ function RefreshmentStopsEditor({
   addLabel,
   showLocation = true,
   stops,
+  placeCounts,
   onStopsChange,
   onTypesChange,
   onSwitchKind,
@@ -3495,6 +3863,9 @@ function RefreshmentStopsEditor({
   // builder doesn't need it and an extra input would just be noise).
   showLocation?: boolean
   stops: LunchDraft[]
+  /** placeId → distinct-walks count. Drives the synced badge + the
+   *  unlink button visibility. See SightsEditor's equivalent prop. */
+  placeCounts?: Record<string, number>
   onStopsChange: (next: LunchDraft[]) => void
   // Specialised types-change handler — symmetric to SightsEditor's
   // version. Gives the parent a hook to demote the row to Sights when
@@ -3541,10 +3912,13 @@ function RefreshmentStopsEditor({
             key={i}
             className="rounded border border-border/60 bg-background px-2 py-1.5"
           >
-            <div className="mb-1 flex items-center justify-between">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                {itemLabel} {i + 1}
-              </span>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {itemLabel} {i + 1}
+                </span>
+                <SyncedBadge placeId={s.placeId} count={placeCounts?.[s.placeId] ?? 0} />
+              </div>
               <div className="flex items-center gap-0.5">
                 <button
                   type="button"
@@ -3595,6 +3969,25 @@ function RefreshmentStopsEditor({
                     </button>
                   )
                 })()}
+                {/* Unlink — synced rows only. Clearing placeId means
+                    the next save mints a fresh registry entry from
+                    this row's current fields. See SightsEditor for
+                    the symmetric behaviour. */}
+                {(placeCounts?.[s.placeId] ?? 0) >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = [...stops]
+                      next[i] = { ...next[i], placeId: "" }
+                      onStopsChange(next)
+                    }}
+                    className="ml-0.5 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/60"
+                    aria-label={`Unlink ${itemLabel} ${i + 1} from shared place`}
+                    title="Disconnect from shared place — next save will create a standalone copy"
+                  >
+                    Unlink
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => onStopsChange(stops.filter((_, j) => j !== i))}
@@ -3614,39 +4007,71 @@ function RefreshmentStopsEditor({
                   values truncate inside their input rather than
                   wrapping the row. */}
               <div className="flex gap-1.5">
-                <Input
+                <NameField
+                  id={`${kind}-name-${walkId}-${i}`}
                   value={s.name}
-                  onChange={(e) => {
+                  currentPlaceId={s.placeId}
+                  placeholder="Name (required)"
+                  onChange={(name) => {
                     const next = [...stops]
-                    next[i] = { ...next[i], name: e.target.value }
+                    next[i] = { ...next[i], name }
                     onStopsChange(next)
                   }}
-                  placeholder="Name (required)"
-                  className="h-7 flex-1 text-xs"
+                  onPick={(p) => {
+                    // Sync — copy every venue field. kmIntoRoute
+                    // stays put (per-walk). See SightsEditor for the
+                    // symmetric handler. notes is the refreshment
+                    // equivalent of description; rating/busy carry
+                    // over too since they live on the place.
+                    const next = [...stops]
+                    next[i] = {
+                      ...next[i],
+                      placeId: p.placeId,
+                      name: p.name,
+                      location: p.location ?? "",
+                      url: p.url ?? "",
+                      notes: p.notes ?? "",
+                      rating: (p.rating ?? "") as LunchRating,
+                      busy: (p.busy ?? "") as LunchBusy,
+                      lat: typeof p.lat === "number" ? String(p.lat) : "",
+                      lng: typeof p.lng === "number" ? String(p.lng) : "",
+                      businessStatus: p.businessStatus ?? "",
+                      types: p.types ?? [],
+                    }
+                    onStopsChange(next)
+                  }}
                 />
+                {/* Location + URL wrap their inputs in flex divs so
+                    the wrappers are the flex items the parent row
+                    distributes — see SightsEditor's matching comment
+                    for why <Input className="flex-1"> doesn't work. */}
                 {showLocation && (
+                  <div className="max-w-[250px] flex-1">
+                    <Input
+                      value={s.location}
+                      onChange={(e) => {
+                        const next = [...stops]
+                        next[i] = { ...next[i], location: e.target.value }
+                        onStopsChange(next)
+                      }}
+                      placeholder="Location"
+                      className="h-7 w-full text-xs"
+                    />
+                  </div>
+                )}
+                <div className="flex-1">
                   <Input
-                    value={s.location}
+                    type="url"
+                    value={s.url}
                     onChange={(e) => {
                       const next = [...stops]
-                      next[i] = { ...next[i], location: e.target.value }
+                      next[i] = { ...next[i], url: e.target.value }
                       onStopsChange(next)
                     }}
-                    placeholder="Location"
-                    className="h-7 flex-1 text-xs"
+                    placeholder="URL (optional)"
+                    className="h-7 w-full text-xs"
                   />
-                )}
-                <Input
-                  type="url"
-                  value={s.url}
-                  onChange={(e) => {
-                    const next = [...stops]
-                    next[i] = { ...next[i], url: e.target.value }
-                    onStopsChange(next)
-                  }}
-                  placeholder="URL (optional)"
-                  className="h-7 flex-1 text-xs"
-                />
+                </div>
                 <WebSearchButton
                   name={s.name}
                   location={s.location}
