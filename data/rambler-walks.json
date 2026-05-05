@@ -57481,8 +57481,8 @@
         "endStation": "OXT",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 9,
-        "hours": 2.75,
+        "distanceKm": 11,
+        "hours": 2.97,
         "lunchStops": [
           {
             "name": "Carpenters Arms",
@@ -57496,7 +57496,7 @@
         "id": "huroxtshrimp",
         "mudWarning": true,
         "source": {
-          "orgSlug": "time-out-country-walks-vol-2",
+          "orgSlug": "trains-to-green",
           "pageName": "",
           "pageURL": "",
           "type": "shorter"
@@ -57506,7 +57506,12 @@
           "pageName": "Hurst Green to Chiddingstone Causeway",
           "pageURL": "https://www.walkingclub.org.uk/walk/hurst-green-to-chiddingstone-causeway/",
           "type": "related"
-        }
+        },
+        "komootUrl": "https://www.komoot.com/tour/2934429851",
+        "uphillMetres": 148.71,
+        "difficulty": "moderate",
+        "name": "Hurst Green to Oxted",
+        "updatedAt": "2026-05-05T08:32:18.458Z"
       },
       {
         "role": "alternative",
@@ -128553,6 +128558,48 @@
           "type": "main"
         },
         "updatedAt": "2026-05-02T12:40:46.188Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
+  },
+  "manual-hurphrgean": {
+    "slug": "manual-hurphrgean",
+    "title": "Manual HUR to PHR",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "Hurst Green to Penshurst",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "HUR",
+        "endStation": "PHR",
+        "stationToStation": true,
+        "distanceKm": 21.3,
+        "hours": 5.9,
+        "lunchStops": [],
+        "sights": [],
+        "id": "hurphrgean",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-05T08:27:36.708Z",
+        "komootUrl": "https://www.komoot.com/tour/2934416642",
+        "uphillMetres": 353.99,
+        "difficulty": "hard"
       }
     ],
     "extracted": true,
