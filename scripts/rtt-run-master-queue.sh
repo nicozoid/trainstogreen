@@ -103,13 +103,26 @@ recommend_next_run() {
   date -v +7d -v +1H -v 0M -v 0S -u +"%Y-%m-%dT%H:%M:%SZ"
 }
 
+# Short-runway recommendation for storm-mode exits — the per-minute
+# cap and 429-storm queue both clear within a few hours. 6h is a
+# safe-but-quick retry. Used by the cascade-detect early-exit branch.
+recommend_storm_recovery_run() {
+  date -v +6H -v +1H -v 0M -v 0S -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
 write_status() {
   local last_crs="$1"
   local remaining="$2"
   local reason="$3"
   local stations_done_count="$4"
   local next_run_iso next_run_human
-  next_run_iso=$(recommend_next_run)
+  # Storm-mode exits get a +6h runway; everything else gets the
+  # standard +7d weekly-cap-recovery runway.
+  if [ "$reason" = "rate_limit_storm_aborted" ]; then
+    next_run_iso=$(recommend_storm_recovery_run)
+  else
+    next_run_iso=$(recommend_next_run)
+  fi
   # Human-readable BST/GMT (auto-DST). Two-step conversion via epoch is
   # required: BSD `date -f` parses the Z-suffixed string as LOCAL time
   # otherwise, which would mis-format a UTC stamp by 1 hour during BST.
@@ -185,6 +198,23 @@ fi
 
 STATIONS_DONE_THIS_RUN=0
 LAST_CRS=""
+# Cascade tracking. The 2026-05-05 Greater London tail run died from a
+# rate-limit storm: a Liz-line hub (TCR) blew the per-minute cap so hard
+# that the server-side throttle stayed lit for ~1h, killing the next 3
+# stations even though they were small. CONSECUTIVE_GIVEUPS triggers
+# escalating mitigations:
+#   ≥ 2: pause 10 min before next station — gives the storm time to clear.
+#   ≥ 4: bail out entirely with a +6h restart recommendation. Continuing
+#        past 4 wastes auth credits at ~30 cap-credits/station with
+#        zero chance of data until the storm ends.
+CONSECUTIVE_GIVEUPS=0
+GIVEUP_PAUSE_THRESHOLD=2
+GIVEUP_PAUSE_SECS=600
+GIVEUP_BAIL_THRESHOLD=4
+# Cool-down between stations to drain the per-minute window. Cheap insurance
+# (no cap cost — pure sleep) against a successful-but-cap-exhausting big
+# station bleeding 429s into the next small one.
+INTER_STATION_COOLDOWN_SECS=30
 
 while IFS= read -r line; do
   # Skip comments + blanks
@@ -226,6 +256,11 @@ while IFS= read -r line; do
   echo "=== $CRS at $(date '+%Y-%m-%d %H:%M:%S') (remaining-week: $REMAINING) ===" | tee -a "$LOG"
   LAST_CRS="$CRS"
   ok=0
+  # Stepped backoff between attempts. The old uniform 60s × 3 was too
+  # short to outrun a real rate-limit storm (which lasts 15-30 min). 60s
+  # / 300s buys storm-victims a real shot at attempt 3 without dragging
+  # genuinely-broken stations on for hours.
+  ATTEMPT_BACKOFFS=(60 300)
   for attempt in 1 2 3; do
     if [ -n "$TIMEOUT_BIN" ]; then
       RUN=("$TIMEOUT_BIN" 900 node "$FETCH_SCRIPT" "$CRS" "--dates=$DATES" "--throttle=$THROTTLE")
@@ -236,13 +271,36 @@ while IFS= read -r line; do
       ok=1
       break
     fi
-    echo "  attempt $attempt failed for $CRS — sleeping 60s" | tee -a "$LOG"
-    sleep 60
+    if [ "$attempt" -lt 3 ]; then
+      backoff="${ATTEMPT_BACKOFFS[$((attempt - 1))]}"
+      echo "  attempt $attempt failed for $CRS — sleeping ${backoff}s" | tee -a "$LOG"
+      sleep "$backoff"
+    fi
   done
   if [ "$ok" -eq 0 ]; then
     echo "  GIVING UP on $CRS after 3 attempts — moving on" | tee -a "$LOG"
+    CONSECUTIVE_GIVEUPS=$((CONSECUTIVE_GIVEUPS + 1))
   else
     STATIONS_DONE_THIS_RUN=$((STATIONS_DONE_THIS_RUN + 1))
+    CONSECUTIVE_GIVEUPS=0
+  fi
+
+  # Cascade response. Bail-threshold check first so we never sleep
+  # then exit; if we're done, we're done.
+  if [ "$CONSECUTIVE_GIVEUPS" -ge "$GIVEUP_BAIL_THRESHOLD" ]; then
+    echo "" | tee -a "$LOG"
+    echo "=== Rate-limit storm detected: $CONSECUTIVE_GIVEUPS consecutive give-ups. Aborting. ===" | tee -a "$LOG"
+    REMAINING=$(get_remaining_week)
+    write_status "$CRS" "$REMAINING" "rate_limit_storm_aborted" "$STATIONS_DONE_THIS_RUN"
+    exit 0
+  fi
+  if [ "$CONSECUTIVE_GIVEUPS" -ge "$GIVEUP_PAUSE_THRESHOLD" ]; then
+    echo "  Cascade pause: $CONSECUTIVE_GIVEUPS consecutive give-ups, sleeping ${GIVEUP_PAUSE_SECS}s before next station..." | tee -a "$LOG"
+    sleep "$GIVEUP_PAUSE_SECS"
+  else
+    # Normal inter-station cool-down — drains the per-minute window so a
+    # cap-heavy success doesn't bleed into the next station.
+    sleep "$INTER_STATION_COOLDOWN_SECS"
   fi
 
   # Refresh the done set so the next loop catches the just-fetched CRS.
