@@ -2380,5 +2380,47 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false
+  },
+  "manual-hurphrgean": {
+    "slug": "manual-hurphrgean",
+    "title": "Manual HUR to PHR",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "HUR",
+        "endStation": "PHR",
+        "stationToStation": true,
+        "distanceKm": null,
+        "hours": null,
+        "lunchStops": [],
+        "terrain": "",
+        "sights": [],
+        "miscellany": "",
+        "id": "hurphrgean",
+        "suffix": "",
+        "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-05T08:24:54.272Z"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false
   }
 }
