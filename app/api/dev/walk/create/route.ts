@@ -102,6 +102,7 @@ export async function POST(req: NextRequest) {
     distanceKm: null,
     hours: null,
     lunchStops: [],
+    destinationPubs: [],
     terrain: "",
     sights: [],
     miscellany: "",

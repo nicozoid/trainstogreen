@@ -34,6 +34,9 @@ const EDITABLE_FIELDS = [
   "suffix",
   "sights",
   "lunchStops",
+  "lunchOverride",
+  "destinationPubs",
+  "destinationPubsOverride",
   "source",
   "relatedSource",
 ] as const
@@ -92,7 +95,9 @@ function cleanField(key: string, value: unknown): unknown | undefined {
   switch (key) {
     case "komootUrl":
     case "name":
-    case "suffix": {
+    case "suffix":
+    case "lunchOverride":
+    case "destinationPubsOverride": {
       if (typeof value !== "string") return undefined
       const trimmed = value.trim()
       return trimmed === "" ? undefined : trimmed
@@ -172,7 +177,10 @@ case "mudWarning": {
       // the intent is visible in the file diff.
       return cleaned
     }
-    case "lunchStops": {
+    case "lunchStops":
+    case "destinationPubs": {
+      // Both lists store the same shape (name + location/url/notes/
+      // rating/busy), so they share the same row-level cleaner.
       if (!Array.isArray(value)) return undefined
       const cleaned = value
         .map((raw) => cleanLunchStop(raw))
