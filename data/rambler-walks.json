@@ -46081,26 +46081,27 @@
         "hours": 4.33,
         "lunchStops": [
           {
-            "name": "Queens Head",
+            "name": "Heartwood Tearooms",
             "location": "Sandridge",
-            "rating": "poor",
-            "busy": "quiet"
+            "notes": "if you can find a spot"
           },
           {
             "name": "Green Man",
             "location": "Sandridge",
-            "notes": "very popular; presumably high quality!"
+            "busy": "busy"
+          },
+          {
+            "name": "Queens Head",
+            "location": "Sandridge",
+            "notes": "not great; consider as backup",
+            "rating": "poor",
+            "busy": "quiet"
           },
           {
             "name": "Rose & Crown",
             "location": "Sandridge",
+            "notes": "didn't look promising",
             "busy": "quiet"
-          },
-          {
-            "name": "Heartwood Tearooms",
-            "location": "Sandridge",
-            "notes": "very popular; presumably high quality!",
-            "busy": "busy"
           }
         ],
         "terrain": "Mostly fields and country lanes. Some beautiful new bluebell woods, stunning historic city streeets, commons, golf courses, parkland",
@@ -46133,7 +46134,7 @@
           "pageURL": "https://www.walkingclub.org.uk/walk/harpenden-to-st-albans/",
           "type": "adapted"
         },
-        "updatedAt": "2026-05-04T17:26:33.081Z"
+        "updatedAt": "2026-05-05T10:04:36.719Z"
       }
     ]
   },
