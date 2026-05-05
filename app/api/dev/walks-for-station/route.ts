@@ -103,23 +103,19 @@ type WalkPayload = {
   // renderer adds it.
   ratingExplanation: string
   updatedAt: string | null
-  // provenance (read-only in v1 — populated by
-  // scripts/backfill-walk-source-metadata.mjs)
-  source?: {
+  // Provenance — list of organisations that have documented this walk.
+  // Each row carries its own type (main / shorter / longer / alternative
+  // / variant) and optional walk-specific page link. The public render
+  // picks ONE row to attribute to via tie-break order; the rest are
+  // kept for admin cross-reference. walkNumber is currently only
+  // meaningful for the two Time Out Country Walks orgs.
+  orgs?: Array<{
     orgSlug: string
-    pageName: string
-    pageURL: string
     type: string
-  }
-  // Admin-only cross-reference to a related walk page. Same shape
-  // as `source` but optional — when unset the whole field is
-  // absent from the JSON. Not rendered in public prose.
-  relatedSource?: {
-    orgSlug: string
-    pageName: string
-    pageURL: string
-    type: string
-  }
+    pageURL?: string
+    pageTitle?: string
+    walkNumber?: string
+  }>
   // admin-only metadata (not editable in v1 but preserved on write)
   previousWalkDates?: string[]
   // Page-level tags (e.g. "TO1:24" for Time Out Book 1, Walk 24).
@@ -324,8 +320,7 @@ export async function GET(req: NextRequest) {
         rating: typeof v.rating === "number" ? v.rating : null,
         ratingExplanation: typeof v.ratingExplanation === "string" ? v.ratingExplanation : "",
         updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : null,
-        source: v.source && typeof v.source === "object" ? v.source : undefined,
-        relatedSource: v.relatedSource && typeof v.relatedSource === "object" ? v.relatedSource : undefined,
+        orgs: Array.isArray(v.orgs) ? v.orgs : undefined,
         previousWalkDates: Array.isArray(v.previousWalkDates) ? v.previousWalkDates : undefined,
         pageTags: Array.isArray(entry.tags) ? entry.tags : [],
         meta: buildMeta(entry),
@@ -377,10 +372,16 @@ export async function GET(req: NextRequest) {
     const sa = sectionPriority(a), sb = sectionPriority(b)
     if (sa !== sb) return sa - sb
     // 4. Main walks first. No further type-subtype ordering among
-    //    non-mains. source.type is the modern home; fall back to
-    //    legacy `role` for older walks.
-    const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
-    const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
+    //    non-mains. A walk counts as "main" if ANY org row has
+    //    type==="main"; we fall back to the legacy `role` field for
+    //    walks that somehow have no orgs[] (rare — empty-orgs walks
+    //    are usually our own routes with no external attribution).
+    const isMain = (w: WalkPayload) =>
+      Array.isArray(w.orgs) && w.orgs.some((o) => o.type === "main")
+        ? true
+        : w.role === "main"
+    const ma = isMain(a) ? 0 : 1
+    const mb = isMain(b) ? 0 : 1
     if (ma !== mb) return ma - mb
     // 5. Rating tier (4 → 3 → 2 → 1 → unrated).
     const ta = ratingTier(a.rating), tb = ratingTier(b.rating)

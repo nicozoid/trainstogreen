@@ -4,12 +4,12 @@
 // each ambiguous walk by extracting a " via X" fragment from its
 // source page title.
 //
-// Example: source.pageName = "Eynsford Circular via Farningham"
+// Example: orgs[0].pageTitle = "Eynsford Circular via Farningham"
 //          → v.suffix = "via Farningham"
 //          → derived title renders as "Eynsford Circular via Farningham"
 //
 // Walks that already have a `suffix` or a `name` override are left
-// alone. Walks whose source.pageName has no "via X" fragment are
+// alone. Walks whose first orgs[] pageTitle has no "via X" fragment are
 // reported at the end so the admin can set a custom suffix manually.
 //
 // Idempotent — a walk that already has a suffix is skipped.
@@ -115,13 +115,15 @@ function main() {
 
   for (const [title, walks] of groups) {
     if (walks.length < 2) continue
-    // Pass 1 — assign via-suffix from source.pageName where present.
+    // Pass 1 — assign via-suffix from the first org's pageTitle where present.
     const results = walks.map((w) => {
       if ((w.v.suffix ?? "").trim()) {
         alreadySuffixed++
         return { w, suffix: w.v.suffix, source: "existing" }
       }
-      const via = extractViaSuffix(w.v.source?.pageName)
+      const orgs = Array.isArray(w.v.orgs) ? w.v.orgs : []
+      const titleSource = orgs.find((o) => o?.pageTitle)?.pageTitle
+      const via = extractViaSuffix(titleSource)
       if (via) return { w, suffix: via, source: "via" }
       return { w, suffix: null, source: "pending" }
     })

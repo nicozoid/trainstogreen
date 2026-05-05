@@ -55,7 +55,8 @@ const ALL_CLUSTER_MEMBERS = Object.fromEntries(
   Object.entries(CLUSTERS).map(([k, d]) => [k, d.members]),
 )
 // Organisation registry — slug → { name, url }. Used to render the
-// human-readable "<Org> walk" link text in the relatedSource clause.
+// human-readable "<Org> walk" link text when an org row has no
+// walk-specific URL and we fall back to the org-level metadata.
 const SOURCES_PATH = join(PROJECT_ROOT, "data", "sources.json")
 // Derived file: per-station month-code arrays ("jan" | "feb" | …) for the
 // month dropdown + "[current-month] highlights" checkbox in the filter
@@ -85,8 +86,8 @@ const KOMOOT_PATH = join(PROJECT_ROOT, "data", "stations-with-komoot.json")
 // Derived index of stations grouped by source organisation. Shape:
 // { [orgSlug]: string[] } where the value is a sorted array of
 // coordKeys. Drives the admin-only "Source" filter, which keeps only
-// stations with at least one attached walk whose source.orgSlug or
-// relatedSource.orgSlug matches the picked org. Considers ALL walks
+// stations with at least one attached walk whose orgs[].orgSlug
+// matches the picked org. Considers ALL walks
 // (including non-stationToStation), since the filter is admin-only and
 // non-public walks still belong to a station for curation purposes.
 const STATIONS_BY_SOURCE_PATH = join(PROJECT_ROOT, "data", "stations-by-source.json")
@@ -465,63 +466,103 @@ function formatDestinationStops(stops) {
   return joinWithOr(fmts)
 }
 
-// Source-link clause. Every walk gets one, positioned right after the
-// title colon. The walk title itself is intentionally un-linked so
-// this clause is the single canonical path to the source page.
+// Tie-break order for picking the canonical attribution org when a
+// walk has multiple orgs[] rows. Lower index = higher priority. Orgs
+// not in this list sort to the bottom (in input order).
 //
-//   main        → "From [Page](url)."
-//   shorter     → "A shorter variant of [Page](url)."
-//   longer      → "A longer variant of [Page](url)."
-//   alternative → "An alternative variant of [Page](url)."
-//   variant     → "A variant of [Page](url)."
-//   similar     → "Similar to [Page](url)."
-//   adapted     → "Adapted from [Page](url)."
-//
-// Capitalised at sentence start (follows the opening colon). Returns
-// null only if the walk has no identifiable source — in practice this
-// never fires post-backfill, but the build script stays defensive.
-// Some sources are books rather than per-walk web pages — there's
-// no pageURL to link to, so the source clause renders against the
-// org-level name/URL from sources.json instead. Detected by slug
-// prefix for now (extend the check when we add more book sources).
-function isBookSource(orgSlug) {
-  if (typeof orgSlug !== "string") return false
-  return orgSlug.startsWith("rough-guide-") || orgSlug.startsWith("time-out-country-walks-")
+// Mirrors the user's documented preference: SWC takes precedence over
+// every UK Ramblers group, which in turn precede the books. Walks
+// rarely list more than 2-3 orgs, so the linear scan stays cheap.
+const ORG_PRIORITY = [
+  "saturday-walkers-club",        // swc
+  "abbey-line",                   // alcrp
+  "heart-rail-trails",            // hrt
+  "leicester-ramblers",           // lr
+  "visit-amber-valley",           // vav
+  "rough-guide-walks-london-south-east-3rd",  // rg
+  "time-out-country-walks-vol-1",             // tocw1
+  "time-out-country-walks-vol-2",             // tocw2
+]
+function orgPriority(slug) {
+  const i = ORG_PRIORITY.indexOf(slug)
+  return i < 0 ? Number.POSITIVE_INFINITY : i
 }
 
-function formatSourceClause(variant, entry, sources) {
-  const type = variant.source?.type ?? variant.role ?? "main"
-  const orgSlug = variant.source?.orgSlug
-  // Book sources (e.g. the Rough Guide series) have no per-walk URL,
-  // so the link target is the publisher's landing page from
-  // sources.json and the link text is the book's title.
-  if (isBookSource(orgSlug)) {
-    const org = sources?.[orgSlug]
-    if (!org?.name) return null
-    const linked = org.url ? `[${org.name}](${org.url})` : org.name
-    const phrase = type === "main" ? "From" : variantPhrase(type)
-    return `${phrase} ${linked}.`
+// Pick the canonical org for public attribution from a walk's orgs[].
+// Returns null when no attribution should be rendered.
+//
+//   • komoot route present + any "leicester-ramblers" row → return
+//     that row (LR routes ARE the komoot routes — they get attribution
+//     as the originator).
+//   • komoot route present + no LR row → return null. The walk's been
+//     replotted in komoot and deviates from any external source, so
+//     attribution would mislead readers.
+//   • no komoot route → among orgs WITH a walk-specific pageURL, pick
+//     the highest-priority one. If none have a pageURL, pick the
+//     highest-priority org overall (renders against its sources.json
+//     org-level URL via the second branch of renderOrgAttribution).
+function pickPublicOrg(orgs, hasKomoot) {
+  if (!Array.isArray(orgs) || orgs.length === 0) return null
+  if (hasKomoot) {
+    return orgs.find((o) => o.orgSlug === "leicester-ramblers") ?? null
   }
-  // Web-page sources — prefer structured source info, falling back
-  // to entry-level fields for walks that predate the source backfill.
-  const pageName = variant.source?.pageName ?? entry.title
-  const pageURL = variant.source?.pageURL ?? entry.url
-  if (!pageName || !pageURL) return null
-  const phrase = type === "main" ? "From" : variantPhrase(type)
-  return `${phrase} [${pageName}](${pageURL}).`
+  const sorted = [...orgs].sort((a, b) => orgPriority(a.orgSlug) - orgPriority(b.orgSlug))
+  const withUrl = sorted.find((o) => typeof o.pageURL === "string" && o.pageURL.trim() !== "")
+  return withUrl ?? sorted[0]
 }
 
-// Per-type prefix shared between formatSourceClause (web sources +
-// book sources) and the relatedSource clause. Kept tight so the
-// switch arms stay terse at each call site.
+// Render an org's attribution. Returns:
+//   { titleLink, sourceClause }
+//
+// titleLink (string|null) — when set, the walk title in buildSummary
+// links to this URL. When null, the title stays plain text.
+// sourceClause (string|null) — when set, emitted right after the title
+// (e.g. "A shorter variant of [Page](url)."). When null, no clause.
+//
+// Two paths:
+//   • Org has a walk-specific pageURL → today's "web source" format.
+//     - main → linked title, no clause.
+//     - non-main → plain title, clause linking to the walk page.
+//   • No pageURL → fall back to the org-level URL/name in sources.json.
+//     - Renders as a closing-style clause regardless of type.
+//     - For TOCW orgs (or any other org carrying walkNumber), the
+//       link text is "{Org Name}, walk {N}" so the reader can find
+//       the walk in the book.
+function renderOrgAttribution(org, sources) {
+  const type = org.type || "main"
+  const isMain = type === "main"
+  const orgUrl = typeof org.pageURL === "string" ? org.pageURL.trim() : ""
+
+  if (orgUrl) {
+    if (isMain) {
+      return { titleLink: orgUrl, sourceClause: null }
+    }
+    const linkText = (org.pageTitle && org.pageTitle.trim())
+      || sources?.[org.orgSlug]?.name
+      || org.orgSlug
+    return { titleLink: null, sourceClause: `${variantPhrase(type)} [${linkText}](${orgUrl}).` }
+  }
+
+  // No walk-specific URL — render against the org-level metadata.
+  const orgMeta = sources?.[org.orgSlug]
+  if (!orgMeta) return { titleLink: null, sourceClause: null }
+  const baseLabel = orgMeta.name ?? org.orgSlug
+  const walkNumber = typeof org.walkNumber === "string" ? org.walkNumber.trim() : ""
+  const labelText = walkNumber ? `${baseLabel}, walk ${walkNumber}` : baseLabel
+  const linked = orgMeta.url ? `[${labelText}](${orgMeta.url})` : labelText
+  const phrase = isMain ? "From" : variantPhrase(type)
+  return { titleLink: null, sourceClause: `${phrase} ${linked}.` }
+}
+
+// Per-type prefix used by renderOrgAttribution. The "main" arm is
+// "From" — used when the org is being credited as an originator
+// (e.g. orgs with no walk-specific URL fall back to this phrasing).
 function variantPhrase(type) {
   switch (type) {
     case "shorter":     return "A shorter variant of"
     case "longer":      return "A longer variant of"
     case "alternative": return "An alternative variant of"
     case "variant":     return "A variant of"
-    case "similar":     return "Similar to"
-    case "adapted":     return "Adapted from"
     default:            return "From"
   }
 }
@@ -819,48 +860,25 @@ function buildSummary(variant, entry, crsIndex, sources) {
     displayName = entry.title
     baseDisplayName = entry.title
   }
-  // Title linking rule: ONLY main walks link the title, and ONLY to
-  // their OWN main source URL (variant.source.pageURL). Variants
-  // (shorter / longer / alternative / similar / adapted / variant)
-  // NEVER link the title — their provenance is carried in the
-  // "A shorter variant of [X](url)." clause that emits right after.
-  // The title also never links to the related source URL or to
-  // entry.url. Both of those are easy to mistake for a "main source"
-  // in legacy data: entry.url is a holdover from when the entry was
-  // originally scraped from a single page, so for an admin-created
-  // T2G walk hung under a scraped-page slug, entry.url effectively
-  // IS the related source URL. Linking the title to either would be
-  // wrong. When variant.source.pageURL is empty, the title stays
-  // plain text — even for main walks.
-  const sourceType = variant.source?.type ?? variant.role ?? "main"
-  const isMain = sourceType === "main"
-  // Title-link target. For book sources we deliberately skip the
-  // pageURL too — book entries don't have per-walk URLs and book
-  // attribution flows through the dedicated source clause instead.
-  const ownSourceUrl = typeof variant.source?.pageURL === "string" ? variant.source.pageURL.trim() : ""
-  const sourceUrl = isBookSource(variant.source?.orgSlug) ? null : (ownSourceUrl || null)
+  // Title-link + source-clause resolution. Public attribution comes
+  // from the orgs[] picker:
+  //   • komoot route + any LR row  → LR attribution.
+  //   • komoot route + no LR row   → no attribution at all.
+  //   • no komoot route            → tie-break-priority pick (orgs
+  //     with a walk-specific pageURL win over those without).
+  // Title links iff the picked org has type=main AND a walk-specific
+  // pageURL. Otherwise the title stays plain text and the picked org
+  // emits an opening source clause ("A shorter variant of [X](url).").
+  const hasKomoot = typeof variant.komootUrl === "string" && variant.komootUrl.trim() !== ""
+  const publicOrg = pickPublicOrg(variant.orgs, hasKomoot)
+  const attribution = publicOrg ? renderOrgAttribution(publicOrg, sources) : { titleLink: null, sourceClause: null }
 
-  let opening
-  if (isMain && sourceUrl) {
-    opening = `**[${displayName}](${sourceUrl})**:`
-  } else {
-    opening = `**${displayName}**:`
-  }
+  const opening = attribution.titleLink
+    ? `**[${displayName}](${attribution.titleLink})**:`
+    : `**${displayName}**:`
 
   const parts = [opening]
-
-  // Source clause for WEB sources sits right after the title.
-  //  - non-main walks always emit ("A shorter variant of [X](url).")
-  //  - main walks skip it (the title is already linked to the source).
-  // Book sources (Rough Guide etc) defer to a clause emitted AFTER
-  // distance — see further down. They're handled separately because
-  // a book attribution reads more naturally as a closing footnote
-  // than as an opening clause.
-  const orgIsBook = isBookSource(variant.source?.orgSlug)
-  if (!orgIsBook && (!isMain || !sourceUrl)) {
-    const sourceClause = formatSourceClause(variant, entry, sources)
-    if (sourceClause) parts.push(sourceClause)
-  }
+  if (attribution.sourceClause) parts.push(attribution.sourceClause)
 
   // Rambler-favourite flourish now keys off the walk's own rating.
   // Historic behaviour fired on the entry-level `favourite` flag,
@@ -955,19 +973,6 @@ function buildSummary(variant, entry, crsIndex, sources) {
     const dest = formatDestinationStops(variant.destinationStops)
     if (dest) parts.push(`End-of-walk rests: ${dest}.`)
   }
-
-  // Book sources (Rough Guide series, Time Out Country Walks vols I+II)
-  // are deliberately NOT mentioned in the public prose at all — no
-  // attribution clause, no link. Rationale: those books are paid
-  // products with no per-walk landing page, so any "From <book>"
-  // sentence either dead-ends in plain text or sends the reader to a
-  // generic publisher page that doesn't help them on the trail. The
-  // attribution still lives in the walk's data file (variant.source)
-  // for admin/audit purposes; we just don't surface it.
-
-  // Related source is intentionally NOT rendered in public prose —
-  // it stays admin-only as a cross-reference inside the editor. The
-  // formatter still exists for any admin-side surfaces that want it.
 
   // "Last reviewed {date}." — italicised, sits just before the
   // distance/time stats. Sourced from variant.previousWalkDates (the
@@ -1113,7 +1118,8 @@ function buildRamblerNotes(args) {
   }
   const crsIndex = buildCrsIndex()
   // sources.json — organisation registry. Loaded once here and threaded
-  // into buildSummary so the relatedSource clause can render
+  // into buildSummary so the org-level fallback (used when an org row
+  // has no walk-specific URL) can render
   // "<Org> walk" link text without each call re-reading from disk.
   const sources = JSON.parse(readFileSync(SOURCES_PATH, "utf-8"))
 
@@ -1139,11 +1145,11 @@ function buildRamblerNotes(args) {
   // Populated in the per-station rendering loop below (after public-
   // tier filtering). Written to data/stations-potential-months.json.
   const perStationPotentialMonths = new Set()
-  // coordKey → Set<orgSlug>. Aggregated from every variant's
-  // source.orgSlug AND relatedSource.orgSlug (both contribute), across
-  // ALL walks (including non-s2s). Pivoted into { orgSlug: coordKey[] }
-  // at write-time and shipped to data/stations-by-source.json. Drives
-  // the admin-only "Source" dropdown.
+  // coordKey → Set<orgSlug>. Aggregated from every variant's orgs[]
+  // (every row contributes), across ALL walks (including non-s2s).
+  // Pivoted into { orgSlug: coordKey[] } at write-time and shipped to
+  // data/stations-by-source.json. Drives the admin-only "Source"
+  // dropdown.
   const perStationSourceOrgs = new Map()
   // Track which walk URLs contributed at least one summary — used for
   // --flip-on-map to mark onMap:true in rambler-walks.json.
@@ -1157,7 +1163,7 @@ function buildRamblerNotes(args) {
     urlsConsidered.add(slug)
 
     // Source-org index. Iterates EVERY variant on the page (not just
-    // s2s) and records orgSlugs from BOTH source and relatedSource
+    // s2s) and records every orgSlug in the variant's orgs[] array
     // against whichever station endpoints the variant touches. Runs
     // independently of the s2s/public pipeline so the admin "Source"
     // filter sees curation-only walks too (requires-bus, half-mainline,
@@ -1166,18 +1172,18 @@ function buildRamblerNotes(args) {
     // build, and avoids a hard failure if a walk references a
     // station that's been retired from public/stations.json.
     for (const variant of entry.walks) {
-      const orgs = []
-      const srcOrg = variant.source?.orgSlug
-      const srcOk = typeof srcOrg === "string" && srcOrg.trim() !== ""
-      if (srcOk) orgs.push(srcOrg.trim())
-      const relOrg = variant.relatedSource?.orgSlug
-      const relOk = typeof relOrg === "string" && relOrg.trim() !== ""
-      if (relOk) orgs.push(relOrg.trim())
+      const orgSlugs = []
+      if (Array.isArray(variant.orgs)) {
+        for (const o of variant.orgs) {
+          const slug = typeof o?.orgSlug === "string" ? o.orgSlug.trim() : ""
+          if (slug) orgSlugs.push(slug)
+        }
+      }
       // Sentinel "none" — record stations with at least one variant
-      // missing BOTH source.orgSlug AND relatedSource.orgSlug. Drives
-      // the admin "No source" dropdown option, which surfaces fully
-      // unattributed walks (the orphans most likely to need fixing).
-      if (!srcOk && !relOk) orgs.push("none")
+      // missing every orgs[] row. Drives the admin "No source"
+      // dropdown option, which surfaces fully unattributed walks
+      // (the orphans most likely to need fixing).
+      if (orgSlugs.length === 0) orgSlugs.push("none")
       const seen = new Set()
       for (const crs of [variant.startStation, variant.endStation]) {
         if (!crs) continue
@@ -1190,7 +1196,7 @@ function buildRamblerNotes(args) {
           set = new Set()
           perStationSourceOrgs.set(station.coordKey, set)
         }
-        for (const o of orgs) set.add(o)
+        for (const o of orgSlugs) set.add(o)
       }
     }
 
@@ -1230,7 +1236,15 @@ function buildRamblerNotes(args) {
         // The sort order within walks is defined by compareRamblerParts —
         // admins don't override it; all keys come from the walk data
         // itself (main/variant, komoot, rating, distance).
-        const sourceType = variant.source?.type ?? variant.role ?? "main"
+        // "Main" status: a walk counts as main if ANY org row carries
+        // type "main"; we fall back to the legacy `role` for orgs-less
+        // walks. The `sourceType` value below is mostly informational
+        // (kept on the part for possible future per-subtype filtering)
+        // and isn't load-bearing in the public-tier filter — only the
+        // boolean `isMain` matters there.
+        const hasMainOrg = Array.isArray(variant.orgs) && variant.orgs.some((o) => o?.type === "main")
+        const firstOrgType = Array.isArray(variant.orgs) ? variant.orgs.find((o) => o?.type)?.type : undefined
+        const sourceType = hasMainOrg ? "main" : (firstOrgType ?? variant.role ?? "main")
         // Circular walks: same start and end station. The public view
         // splits walks into "Station-to-station" vs "Circular" sections;
         // each section applies its own 3-walks-per-section quota.

@@ -42,12 +42,14 @@ const EDITABLE_FIELDS = [
   "lunchOverride",
   "destinationStops",
   "destinationStopsOverride",
-  "source",
-  "relatedSource",
+  "orgs",
 ] as const
 
 const LUNCH_RATINGS = new Set(["good", "fine", "poor"])
-const SOURCE_TYPES = new Set(["main", "shorter", "longer", "alternative", "variant", "similar", "adapted", "related"])
+// Closed vocabulary for an orgs[] entry's `type`. Drives both the public
+// prose ("A shorter variant of …") and the admin walk sort order.
+// Mirrors SOURCE_TYPES in components/walks-admin-panel.tsx.
+const ORG_TYPES = new Set(["main", "shorter", "longer", "alternative", "variant"])
 
 // Month codes accepted inside the bestSeasons array. Keep in sync with
 // the month alphabet used by scripts/build-rambler-notes.mjs.
@@ -188,34 +190,66 @@ case "mudWarning": {
     case "lunchStops":
     case "destinationStops":
       return undefined
-    // `source` is handled separately in the PATCH loop so invalid
-    // payloads can be a no-op rather than deleting the field.
+    // `orgs` is handled separately in the PATCH loop — it's an array,
+    // not a scalar, so the cleaner runs over each row.
     default:
       return undefined
   }
 }
 
-// Source provenance — only `orgSlug` is mandatory. `pageName` and
-// `pageURL` are optional (manual walks owned by Trains-to-Green
-// frequently have no external source page; the renderer falls back to
-// a plain, non-linked title when pageURL is empty). For relatedSource,
-// an empty orgSlug is the signal to delete the field — callers rely
-// on cleanSource returning null in that case.
-function cleanSource(raw: unknown): {
+// One org-link row inside a variant's orgs[] array. Only orgSlug + type
+// are mandatory. pageURL/pageTitle/walkNumber are optional and stripped
+// when blank so the JSON stays compact (no "": "" keys).
+//
+// walkNumber is currently only meaningful for the two Time Out Country
+// Walks orgs (book sources) — it's the integer ID the book uses for
+// each walk, e.g. "Walk 17". Stored as a string because some walks
+// carry sub-numbers like "1.5" or letter suffixes; the renderer just
+// echoes it.
+function cleanOrg(raw: unknown): {
   orgSlug: string
-  pageName: string
-  pageURL: string
   type: string
+  pageURL?: string
+  pageTitle?: string
+  walkNumber?: string
 } | null {
   if (!raw || typeof raw !== "object") return null
   const r = raw as Record<string, unknown>
   const orgSlug = typeof r.orgSlug === "string" ? r.orgSlug.trim() : ""
-  const pageName = typeof r.pageName === "string" ? r.pageName.trim() : ""
-  const pageURL = typeof r.pageURL === "string" ? r.pageURL.trim() : ""
-  const typeRaw = typeof r.type === "string" ? r.type.trim() : ""
   if (!orgSlug) return null
-  const type = SOURCE_TYPES.has(typeRaw) ? typeRaw : "variant"
-  return { orgSlug, pageName, pageURL, type }
+  const typeRaw = typeof r.type === "string" ? r.type.trim() : ""
+  const type = ORG_TYPES.has(typeRaw) ? typeRaw : "main"
+  const out: { orgSlug: string; type: string; pageURL?: string; pageTitle?: string; walkNumber?: string } = { orgSlug, type }
+  const pageURL = typeof r.pageURL === "string" ? r.pageURL.trim() : ""
+  if (pageURL) out.pageURL = pageURL
+  const pageTitle = typeof r.pageTitle === "string" ? r.pageTitle.trim() : ""
+  if (pageTitle) out.pageTitle = pageTitle
+  const walkNumber = typeof r.walkNumber === "string" ? r.walkNumber.trim() : ""
+  if (walkNumber) out.walkNumber = walkNumber
+  return out
+}
+
+// Clean the whole orgs[] array. Drops invalid rows + dedupes by
+// orgSlug (last write wins — the editor never produces dupes, but the
+// validation guards against bad payloads). Returns the array verbatim
+// (empty array when no valid rows) so the PATCH loop can decide
+// whether to delete the field or write it.
+function cleanOrgs(raw: unknown): Array<ReturnType<typeof cleanOrg>> {
+  if (!Array.isArray(raw)) return []
+  const out: Array<ReturnType<typeof cleanOrg>> = []
+  const seen = new Map<string, number>()
+  for (const row of raw) {
+    const cleaned = cleanOrg(row)
+    if (!cleaned) continue
+    const dupeIdx = seen.get(cleaned.orgSlug)
+    if (dupeIdx !== undefined) {
+      out[dupeIdx] = cleaned
+    } else {
+      seen.set(cleaned.orgSlug, out.length)
+      out.push(cleaned)
+    }
+  }
+  return out
 }
 
 // Row-level cleaners for sights/lunch. Drop rows with an empty name
@@ -400,34 +434,19 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       continue
     }
 
-    // `source` is special-cased: invalid payloads are a no-op (the
-    // field stays intact). All other fields treat an undefined clean
-    // result as "delete this key" so empty strings/arrays don't
-    // linger in the file. Source is always expected to be present,
-    // so deleting on a bad PATCH would corrupt the record.
-    if (key === "source") {
-      const cleaned = cleanSource(body[key])
-      if (cleaned && JSON.stringify(variant.source) !== JSON.stringify(cleaned)) {
-        variant.source = cleaned
-        changed = true
-      }
-      continue
-    }
-
-    // `relatedSource` — same shape as `source` but OPTIONAL. An
-    // invalid / empty payload DELETES the field (unlike `source`
-    // which is required and no-ops on bad input). Used for admin
-    // cross-references to a related walk page, not rendered in
-    // public prose.
-    if (key === "relatedSource") {
-      const cleaned = cleanSource(body[key])
-      if (cleaned) {
-        if (JSON.stringify(variant.relatedSource) !== JSON.stringify(cleaned)) {
-          variant.relatedSource = cleaned
+    // `orgs` — array of org-link rows (orgSlug, type, optional
+    // pageURL / pageTitle / walkNumber). Empty array deletes the key
+    // entirely; otherwise we write the cleaned array. Each row is
+    // validated by cleanOrg; rows missing orgSlug are dropped silently.
+    if (key === "orgs") {
+      const cleaned = cleanOrgs(body[key])
+      if (cleaned.length === 0) {
+        if ("orgs" in variant) {
+          delete variant.orgs
           changed = true
         }
-      } else if ("relatedSource" in variant) {
-        delete variant.relatedSource
+      } else if (JSON.stringify(variant.orgs) !== JSON.stringify(cleaned)) {
+        variant.orgs = cleaned
         changed = true
       }
       continue

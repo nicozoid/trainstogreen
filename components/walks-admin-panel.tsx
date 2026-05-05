@@ -118,20 +118,21 @@ export type WalkPayload = {
   /** Footfall on a 1–5 scale (1 = isolated, 5 = busy). Descriptive,
    *  not curatorial — separate from `rating`. Null when unset. */
   busyness?: number | null
-  source?: {
+  /** Provenance — list of organisations that have documented this
+   *  walk. Each row has an orgSlug + a type (main / shorter / longer
+   *  / alternative / variant) plus optional walk-specific link
+   *  fields. The public renderer picks ONE org via tie-break order
+   *  for attribution; the others are admin cross-references.
+   *  walkNumber is currently only meaningful for the two Time Out
+   *  Country Walks orgs (book sources where a "Walk 17" reference
+   *  lets the reader find the walk in the book). */
+  orgs?: Array<{
     orgSlug: string
-    pageName: string
-    pageURL: string
     type: string
-  }
-  /** Admin-only cross-reference. Same shape as `source` but
-   *  optional. Never rendered in public prose. */
-  relatedSource?: {
-    orgSlug: string
-    pageName: string
-    pageURL: string
-    type: string
-  }
+    pageURL?: string
+    pageTitle?: string
+    walkNumber?: string
+  }>
   previousWalkDates?: string[]
   pageTags?: string[]
   /** Read-only entry-level "hidden metadata" + admin/build flags.
@@ -256,28 +257,18 @@ type EditableFields = {
   lunchOverride: string
   destinationStops: LunchDraft[]
   destinationStopsOverride: string
-  // Source provenance — all four fields editable. orgSlug comes from
-  // sources.json (organisation registry); type is a small enum
-  // (main/shorter/longer/alternative/variant). We default missing
-  // fields to empty strings so the form stays controlled; the server
-  // rejects blanks on save.
-  source: {
+  // Provenance — flat list of org-link rows. Empty array is allowed
+  // (walks we authored ourselves with no external source). Each row
+  // tracks: orgSlug (registry key from sources.json), type (e.g.
+  // "main"/"shorter"), and optional walk-specific link fields.
+  // walkNumber is only relevant for the two Time Out orgs.
+  orgs: Array<{
     orgSlug: string
-    pageName: string
-    pageURL: string
     type: string
-  }
-  // Related source — admin cross-reference, same shape as `source`
-  // but deletable. Draft-level this is always a fully-populated
-  // object (defaulting to empty strings) so the form stays
-  // controlled; the server deletes the field when all strings are
-  // blank via the cleanSource → no-op path.
-  relatedSource: {
-    orgSlug: string
-    pageName: string
     pageURL: string
-    type: string
-  }
+    pageTitle: string
+    walkNumber: string
+  }>
 }
 
 // Swap two items in an array by index. Returns a NEW array — never
@@ -350,11 +341,12 @@ function lunchToDraft(list: WalkPayload["lunchStops"]): LunchDraft[] {
 }
 
 // Build the derived title from station names + optional suffix.
-// Falls back to source.pageName when stations aren't resolved (rare).
-// Mirrors the resolution order in scripts/build-rambler-notes.mjs so
-// the admin preview matches the rendered prose.
+// Falls back to the first org's pageTitle (then the entry pageTitle)
+// when stations aren't resolved (rare). Mirrors the resolution order
+// in scripts/build-rambler-notes.mjs so the admin preview matches the
+// rendered prose.
 function derivedTitleOf(
-  w: Pick<WalkPayload, "startStation" | "endStation" | "startStationName" | "endStationName" | "source" | "pageTitle">,
+  w: Pick<WalkPayload, "startStation" | "endStation" | "startStationName" | "endStationName" | "orgs" | "pageTitle">,
   suffix: string,
 ) {
   let base: string
@@ -364,7 +356,7 @@ function derivedTitleOf(
         ? `${w.startStationName} Circular`
         : `${w.startStationName} to ${w.endStationName}`
   } else {
-    base = w.source?.pageName ?? w.pageTitle
+    base = w.orgs?.[0]?.pageTitle ?? w.pageTitle
   }
   const s = suffix.trim()
   return s ? `${base} ${s}` : base
@@ -380,21 +372,25 @@ const SOURCE_ORGS: { slug: string; name: string }[] = Object.entries(sourcesJson
   }))
   .sort((a, b) => a.name.localeCompare(b.name))
 
-// Type priority — dictates BOTH the dropdown order and the walk
-// sort order (higher-priority types bubble up). Keep this single
-// source of truth in step with TYPE_PRIORITY on the server
-// (app/api/dev/walks-for-station/route.ts) and the build script
-// (scripts/build-rambler-notes.mjs).
-const SOURCE_TYPES: { value: string; label: string }[] = [
+// Closed vocabulary for org-row `type`. Drives the dropdown order in
+// the editor and the public-prose phrasing ("A shorter variant of …").
+// Keep in step with ORG_TYPES in app/api/dev/walk/[id]/route.ts and the
+// renderer in scripts/build-rambler-notes.mjs.
+const ORG_TYPES: { value: string; label: string }[] = [
   { value: "main",        label: "Main walk" },
   { value: "shorter",     label: "Shorter variant" },
   { value: "alternative", label: "Alternative variant" },
   { value: "variant",     label: "Variant" },
   { value: "longer",      label: "Longer variant" },
-  { value: "similar",     label: "Similar to" },
-  { value: "adapted",     label: "Adapted from" },
-  { value: "related",     label: "Related to" },
 ]
+
+// Time Out Country Walks orgs are the only sources where `walkNumber`
+// is meaningful — the books reference each walk by its number. Used
+// to conditionally render the walkNumber input in the org row UI.
+const TOCW_ORG_SLUGS = new Set([
+  "time-out-country-walks-vol-1",
+  "time-out-country-walks-vol-2",
+])
 
 // Rating-level icons — mirror the map marker shapes used in the
 // filter panel (components/filter-panel.tsx:109). Kept inline here
@@ -711,9 +707,15 @@ export default function WalksAdminPanel({
       // 3. Section priority (circular → starting here → ending here).
       const sa = sectionPriority(a), sb = sectionPriority(b)
       if (sa !== sb) return sa - sb
-      // 4. Main walks first.
-      const ma = (a.source?.type ?? a.role) === "main" ? 0 : 1
-      const mb = (b.source?.type ?? b.role) === "main" ? 0 : 1
+      // 4. Main walks first. A walk counts as "main" when ANY org
+      //    row carries type "main"; we fall back to the legacy `role`
+      //    for orgs-less walks.
+      const isMain = (w: WalkPayload) =>
+        Array.isArray(w.orgs) && w.orgs.some((o) => o.type === "main")
+          ? true
+          : w.role === "main"
+      const ma = isMain(a) ? 0 : 1
+      const mb = isMain(b) ? 0 : 1
       if (ma !== mb) return ma - mb
       // 5. Rating tier (4 → 3 → 2 → 1 → unrated).
       const ta = ratingTier(a.rating), tb = ratingTier(b.rating)
@@ -1361,21 +1363,18 @@ function WalkCard({
       // lunchToDraft works for both lists since they share the same shape.
       destinationStops: lunchToDraft(walk.destinationStops ?? []),
       destinationStopsOverride: walk.destinationStopsOverride ?? "",
-      source: {
-        orgSlug: walk.source?.orgSlug ?? "",
-        pageName: walk.source?.pageName ?? "",
-        pageURL: walk.source?.pageURL ?? "",
-        type: walk.source?.type ?? "variant",
-      },
-      relatedSource: {
-        orgSlug: walk.relatedSource?.orgSlug ?? "",
-        pageName: walk.relatedSource?.pageName ?? "",
-        pageURL: walk.relatedSource?.pageURL ?? "",
-        // Default unset relatedSource.type to "adapted" — most
-        // cross-references describe a Trains-to-Green walk that's
-        // an adaptation of an external page.
-        type: walk.relatedSource?.type ?? "adapted",
-      },
+      // Hydrate orgs into the controlled-input shape — every optional
+      // field becomes "" so each input stays controlled; the server
+      // strips empty-string fields back to "absent" on save.
+      orgs: Array.isArray(walk.orgs)
+        ? walk.orgs.map((o) => ({
+            orgSlug: o.orgSlug ?? "",
+            type: o.type ?? "main",
+            pageURL: o.pageURL ?? "",
+            pageTitle: o.pageTitle ?? "",
+            walkNumber: o.walkNumber ?? "",
+          }))
+        : [],
     }),
     [
       walk.name, walk.suffix, walk.komootUrl, walk.bestSeasons, walk.bestSeasonsNote, walk.mudWarning,
@@ -1383,8 +1382,7 @@ function WalkCard({
       walk.distanceKm, walk.hours, walk.uphillMetres, walk.difficulty,
       walk.sights, walk.lunchStops, walk.lunchOverride,
       walk.destinationStops, walk.destinationStopsOverride,
-      walk.source?.orgSlug, walk.source?.pageName, walk.source?.pageURL, walk.source?.type,
-      walk.relatedSource?.orgSlug, walk.relatedSource?.pageName, walk.relatedSource?.pageURL, walk.relatedSource?.type,
+      walk.orgs,
     ],
   )
   const [draft, setDraft] = useState<EditableFields>(serverState)
@@ -1441,8 +1439,7 @@ function WalkCard({
       draft.lunchOverride.trim() !== serverState.lunchOverride.trim() ||
       JSON.stringify(draft.destinationStops) !== JSON.stringify(serverState.destinationStops) ||
       draft.destinationStopsOverride.trim() !== serverState.destinationStopsOverride.trim() ||
-      JSON.stringify(draft.source) !== JSON.stringify(serverState.source) ||
-      JSON.stringify(draft.relatedSource) !== JSON.stringify(serverState.relatedSource)
+      JSON.stringify(draft.orgs) !== JSON.stringify(serverState.orgs)
     )
   }, [draft, serverState])
 
@@ -1935,8 +1932,7 @@ function WalkCard({
           lunchOverride: draft.lunchOverride,
           destinationStops: draft.destinationStops,
           destinationStopsOverride: draft.destinationStopsOverride,
-          source: draft.source,
-          relatedSource: draft.relatedSource,
+          orgs: draft.orgs,
         }),
       })
       if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`)
@@ -2023,7 +2019,15 @@ function WalkCard({
             title string gets long; the title's `truncate` absorbs
             the overflow instead. */}
         {(() => {
-          const walkType = walk.source?.type ?? walk.role
+          // Variant chip: a walk is "main" when ANY org row carries
+          // type "main"; we fall back to the legacy `role` for orgs-less
+          // walks. The chip displays the FIRST non-main type label
+          // ("shorter", "longer", etc.) — same heuristic as the public
+          // sort key in the walks-for-station route.
+          const orgs = Array.isArray(walk.orgs) ? walk.orgs : []
+          const hasMain = orgs.some((o) => o.type === "main")
+          const firstNonMain = orgs.find((o) => o.type && o.type !== "main")
+          const walkType = hasMain ? "main" : (firstNonMain?.type ?? walk.role)
           const isVariant = walkType && walkType !== "main"
           // Base pill styling — muted grey, shared across chip types.
           // Destructive chips (variant, bus) override the bg/text via
@@ -2136,21 +2140,21 @@ function WalkCard({
 
       {expanded && (
         <div className="border-t border-border px-3 py-3 text-xs">
-          {/* Sources — single collapsible holding Main source +
-              Related source. The render pipeline uses source.type to
-              emit the "A shorter variant of [X](url)." clause;
-              relatedSource is admin-only and never appears in public
-              prose. */}
+          {/* Orgs — flat list of organisations that have documented
+              this walk. Each row is independent: orgSlug, type, plus
+              optional walk-specific link fields. The public renderer
+              picks ONE org via tie-break order to attribute the walk
+              to (komoot-route walks suppress all attribution unless
+              Leicester Ramblers is in the list). Add as many rows as
+              apply; remove the lot for walks we authored ourselves
+              with no external precedent. */}
           <div className="mb-3 rounded border border-border/60 bg-muted/30 px-2 py-2">
-            {/* Header row — chevron toggle on the left, Subordinate
-                action on the right. Subordinate stays in the header
-                so it's reachable while the section is collapsed. */}
             <div className="mb-1.5 flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setSourcesExpanded((v) => !v)}
                 aria-expanded={sourcesExpanded}
-                aria-controls={`sources-body-${walk.id}`}
+                aria-controls={`orgs-body-${walk.id}`}
                 className="flex flex-1 cursor-pointer items-center gap-1 text-left text-[10px] uppercase tracking-wide text-muted-foreground hover:text-foreground"
               >
                 <span
@@ -2159,205 +2163,157 @@ function WalkCard({
                 >
                   ▸
                 </span>
-                Sources
-              </button>
-              {/* Subordinate — demote the current external source to a
-                  Related Source entry and rebrand this walk as a
-                  Trains-to-Green main walk. Used when we're taking
-                  ownership of a walk that started life as someone
-                  else's route (e.g. a Saturday Walkers Club page
-                  we've rewritten). The Related Source `type` defaults
-                  to "related" ("Related to"); the admin can change
-                  it after the fact (e.g. to "Adapted from"). */}
-              <button
-                type="button"
-                onClick={() => {
-                  setDraft((d) => ({
-                    ...d,
-                    relatedSource: {
-                      ...d.relatedSource,
-                      type: "related",
-                      orgSlug: d.source.orgSlug,
-                      pageName: d.source.pageName,
-                      pageURL: d.source.pageURL,
-                    },
-                    source: {
-                      ...d.source,
-                      orgSlug: "trains-to-green",
-                      type: d.source.type === "main" ? d.source.type : "main",
-                      pageName: "",
-                      pageURL: "",
-                    },
-                  }))
-                  setSourcesExpanded(true)
-                }}
-                className="ml-auto rounded border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/40"
-                title="Move current source into Related Source and mark this walk as a Trains-to-Green main walk"
-              >
-                Subordinate
+                Orgs{draft.orgs.length > 0 ? ` (${draft.orgs.length})` : ""}
               </button>
             </div>
             {sourcesExpanded && (
-            <div id={`sources-body-${walk.id}`} className="space-y-2">
-              {/* Main source */}
-              <div>
-                <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Main source
+            <div id={`orgs-body-${walk.id}`} className="space-y-2">
+              {draft.orgs.length === 0 && (
+                <div className="text-[10px] text-muted-foreground">
+                  No orgs attached to this walk.
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {/* Organisation — dropdown of slugs from
-                      sources.json. Adding a new org requires editing
-                      data/sources.json by hand. */}
-                  <div>
-                    <Label htmlFor={`src-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Organisation
-                    </Label>
-                    <select
-                      id={`src-org-${walk.id}`}
-                      value={draft.source.orgSlug}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, source: { ...d.source, orgSlug: e.target.value },
-                      }))}
-                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                    >
-                      {!SOURCE_ORGS.some((o) => o.slug === draft.source.orgSlug) && draft.source.orgSlug && (
-                        <option value={draft.source.orgSlug}>{draft.source.orgSlug} (unknown)</option>
+              )}
+              {draft.orgs.map((row, idx) => {
+                // walkNumber input only shown for TOCW orgs — they're the
+                // only sources where a numeric reference is meaningful.
+                const showWalkNumber = TOCW_ORG_SLUGS.has(row.orgSlug)
+                return (
+                  <div key={idx} className="rounded border border-border/40 bg-background/40 p-2">
+                    <div className="mb-1 flex items-center justify-between">
+                      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                        Org #{idx + 1}
+                      </div>
+                      {/* Remove this org row. Empty rows aren't useful
+                          (the server filters them out anyway), so we
+                          surface a hard delete rather than the legacy
+                          "blank → drops" pattern. */}
+                      <button
+                        type="button"
+                        onClick={() => setDraft((d) => ({
+                          ...d,
+                          orgs: d.orgs.filter((_, i) => i !== idx),
+                        }))}
+                        className="rounded border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                        title="Remove this org"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <Label htmlFor={`org-slug-${walk.id}-${idx}`} className="mb-1 block text-[10px] text-muted-foreground">
+                          Organisation
+                        </Label>
+                        <select
+                          id={`org-slug-${walk.id}-${idx}`}
+                          value={row.orgSlug}
+                          onChange={(e) => setDraft((d) => ({
+                            ...d,
+                            orgs: d.orgs.map((o, i) => i === idx ? { ...o, orgSlug: e.target.value } : o),
+                          }))}
+                          className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                        >
+                          {/* Empty default — forces the admin to pick an
+                              org explicitly. Save fails server-side if
+                              orgSlug stays blank (the row is dropped). */}
+                          <option value="">— pick an org —</option>
+                          {!SOURCE_ORGS.some((o) => o.slug === row.orgSlug) && row.orgSlug && (
+                            <option value={row.orgSlug}>{row.orgSlug} (unknown)</option>
+                          )}
+                          {SOURCE_ORGS.map((o) => (
+                            <option key={o.slug} value={o.slug}>{o.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`org-type-${walk.id}-${idx}`} className="mb-1 block text-[10px] text-muted-foreground">
+                          Type
+                        </Label>
+                        <select
+                          id={`org-type-${walk.id}-${idx}`}
+                          value={row.type}
+                          onChange={(e) => setDraft((d) => ({
+                            ...d,
+                            orgs: d.orgs.map((o, i) => i === idx ? { ...o, type: e.target.value } : o),
+                          }))}
+                          className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
+                        >
+                          {ORG_TYPES.map((t) => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label htmlFor={`org-title-${walk.id}-${idx}`} className="mb-1 block text-[10px] text-muted-foreground">
+                          Page title
+                        </Label>
+                        <Input
+                          id={`org-title-${walk.id}-${idx}`}
+                          value={row.pageTitle}
+                          onChange={(e) => setDraft((d) => ({
+                            ...d,
+                            orgs: d.orgs.map((o, i) => i === idx ? { ...o, pageTitle: e.target.value } : o),
+                          }))}
+                          placeholder="e.g. Milford to Haslemere"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`org-url-${walk.id}-${idx}`} className="mb-1 block text-[10px] text-muted-foreground">
+                          Page URL
+                        </Label>
+                        <Input
+                          id={`org-url-${walk.id}-${idx}`}
+                          type="url"
+                          value={row.pageURL}
+                          onChange={(e) => setDraft((d) => ({
+                            ...d,
+                            orgs: d.orgs.map((o, i) => i === idx ? { ...o, pageURL: e.target.value } : o),
+                          }))}
+                          placeholder="https://…"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      {/* walkNumber — only meaningful for the two TOCW
+                          orgs (book sources reference walks by number).
+                          Hidden for every other org so the form doesn't
+                          imply a field that has no use. */}
+                      {showWalkNumber && (
+                        <div>
+                          <Label htmlFor={`org-num-${walk.id}-${idx}`} className="mb-1 block text-[10px] text-muted-foreground">
+                            Walk number
+                          </Label>
+                          <Input
+                            id={`org-num-${walk.id}-${idx}`}
+                            value={row.walkNumber}
+                            onChange={(e) => setDraft((d) => ({
+                              ...d,
+                              orgs: d.orgs.map((o, i) => i === idx ? { ...o, walkNumber: e.target.value } : o),
+                            }))}
+                            placeholder="e.g. 17"
+                            className="h-7 text-xs"
+                          />
+                        </div>
                       )}
-                      {SOURCE_ORGS.map((o) => (
-                        <option key={o.slug} value={o.slug}>{o.name}</option>
-                      ))}
-                    </select>
+                    </div>
                   </div>
-                  {/* Type — drives the "A longer variant of…" prose. */}
-                  <div>
-                    <Label htmlFor={`src-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Type
-                    </Label>
-                    <select
-                      id={`src-type-${walk.id}`}
-                      value={draft.source.type}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, source: { ...d.source, type: e.target.value },
-                      }))}
-                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                    >
-                      {SOURCE_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor={`src-name-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Page name
-                    </Label>
-                    <Input
-                      id={`src-name-${walk.id}`}
-                      value={draft.source.pageName}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, source: { ...d.source, pageName: e.target.value },
-                      }))}
-                      placeholder="e.g. Milford to Haslemere"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`src-url-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Page URL
-                    </Label>
-                    <Input
-                      id={`src-url-${walk.id}`}
-                      type="url"
-                      value={draft.source.pageURL}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, source: { ...d.source, pageURL: e.target.value },
-                      }))}
-                      placeholder="https://…"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Related source — same four fields, fully optional.
-                  Server drops the whole `relatedSource` key when all
-                  fields are blank. Never rendered in public prose. */}
-              <div className="border-t border-border/60 pt-2">
-                <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Related source
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div>
-                    <Label htmlFor={`rsrc-org-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Organisation
-                    </Label>
-                    <select
-                      id={`rsrc-org-${walk.id}`}
-                      value={draft.relatedSource.orgSlug}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, relatedSource: { ...d.relatedSource, orgSlug: e.target.value },
-                      }))}
-                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                    >
-                      {/* Empty option clears the related-source
-                          block; the server deletes the field on
-                          save. */}
-                      <option value="">— none —</option>
-                      {!SOURCE_ORGS.some((o) => o.slug === draft.relatedSource.orgSlug) && draft.relatedSource.orgSlug && (
-                        <option value={draft.relatedSource.orgSlug}>{draft.relatedSource.orgSlug} (unknown)</option>
-                      )}
-                      {SOURCE_ORGS.map((o) => (
-                        <option key={o.slug} value={o.slug}>{o.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor={`rsrc-type-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Type
-                    </Label>
-                    <select
-                      id={`rsrc-type-${walk.id}`}
-                      value={draft.relatedSource.type}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, relatedSource: { ...d.relatedSource, type: e.target.value },
-                      }))}
-                      className="h-7 w-full rounded-lg border border-input bg-input/30 px-2 text-xs"
-                    >
-                      {SOURCE_TYPES.map((t) => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor={`rsrc-name-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Page name
-                    </Label>
-                    <Input
-                      id={`rsrc-name-${walk.id}`}
-                      value={draft.relatedSource.pageName}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, relatedSource: { ...d.relatedSource, pageName: e.target.value },
-                      }))}
-                      placeholder="e.g. Milford to Haslemere"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={`rsrc-url-${walk.id}`} className="mb-1 block text-[10px] text-muted-foreground">
-                      Page URL
-                    </Label>
-                    <Input
-                      id={`rsrc-url-${walk.id}`}
-                      type="url"
-                      value={draft.relatedSource.pageURL}
-                      onChange={(e) => setDraft((d) => ({
-                        ...d, relatedSource: { ...d.relatedSource, pageURL: e.target.value },
-                      }))}
-                      placeholder="https://…"
-                      className="h-7 text-xs"
-                    />
-                  </div>
-                </div>
-              </div>
+                )
+              })}
+              {/* Add a fresh blank org row. Defaults: empty slug
+                  (admin must pick), type "main". Type defaults to
+                  "main" rather than "variant" because most additions
+                  are a fresh main attribution rather than a sibling
+                  variant. */}
+              <button
+                type="button"
+                onClick={() => setDraft((d) => ({
+                  ...d,
+                  orgs: [...d.orgs, { orgSlug: "", type: "main", pageURL: "", pageTitle: "", walkNumber: "" }],
+                }))}
+                className="rounded border border-dashed border-border px-2 py-0.5 text-[10px] text-muted-foreground hover:bg-muted/40"
+              >
+                + Add org
+              </button>
             </div>
             )}
           </div>
