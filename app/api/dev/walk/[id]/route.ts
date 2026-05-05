@@ -4,6 +4,7 @@ import { commitWalkSave, handleAdminWrite } from "@/app/api/dev/_helpers"
 import { VALID_SPOT_TYPES } from "@/lib/spot-types"
 import { MAIN_TERRAINS, VALID_MAIN_TERRAINS } from "@/lib/main-terrains"
 import { buildPlaceSlug, reserveSlug, type Place, type PlaceRegistry } from "@/lib/places"
+import { buildWalkPayload, loadCrsNameIndex } from "@/lib/walk-payload"
 
 // Single unified walks file (each entry carries a top-level `source`
 // field identifying its origin).
@@ -43,6 +44,11 @@ const EDITABLE_FIELDS = [
   "destinationStops",
   "destinationStopsOverride",
   "orgs",
+  // ISO timestamp recording the last successful "Pull data" run.
+  // Written by the editor immediately after the Komoot scrape returns
+  // — separate from the bulk Save so abandoned drafts still leave a
+  // trace of when the walk was last queried.
+  "lastPullAt",
 ] as const
 
 const LUNCH_RATINGS = new Set(["good", "fine", "poor"])
@@ -182,6 +188,17 @@ case "mudWarning": {
           .filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
       )].sort()
       return cleaned.length === 0 ? undefined : cleaned
+    }
+    case "lastPullAt": {
+      // ISO 8601 timestamp. Empty / non-string / unparseable values
+      // drop the field entirely so a corrupt payload can clear a
+      // previously-set timestamp by sending null.
+      if (typeof value !== "string") return undefined
+      const trimmed = value.trim()
+      if (!trimmed) return undefined
+      const t = Date.parse(trimmed)
+      if (!Number.isFinite(t)) return undefined
+      return new Date(t).toISOString()
     }
     // sights / lunchStops / destinationStops are handled by
     // cleanRowArrayWithRegistry in the PATCH loop below — they need
@@ -379,6 +396,25 @@ function cleanRowArrayWithRegistry(
 // New-format ids: `[startCRS][endCRS][word]` (9+ chars, e.g. "hunhunfox").
 // Legacy 4-char ids (e.g. "ml6i") still exist in data — accept both.
 const WALK_ID_RE = /^[a-z0-9]{4}$|^[a-z]{6}[a-z0-9]{3,15}$/
+
+// GET — return a single walk variant as WalkPayload, used by the
+// /walks-manager/[walkId] standalone editor page. 404 when the id
+// doesn't resolve.
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+  if (!id || !WALK_ID_RE.test(id)) {
+    return NextResponse.json({ error: "invalid id" }, { status: 400 })
+  }
+  const located = await locateWalk(id)
+  if (!located) return NextResponse.json({ error: "walk not found" }, { status: 404 })
+  const { data, slug, variantIndex } = located
+  const entry = data[slug] as Record<string, unknown>
+  const variant = (entry.walks as Array<Record<string, unknown>>)[variantIndex]
+  const crsName = await loadCrsNameIndex()
+  const placesRead = await readDataFile<PlaceRegistry>(PLACES_FILE)
+  const payload = buildWalkPayload(entry, variant, crsName, placesRead.data)
+  return NextResponse.json(payload)
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
