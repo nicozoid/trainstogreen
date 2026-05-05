@@ -2,14 +2,9 @@ import { NextResponse } from "next/server"
 import { readDataFile } from "@/lib/github-data"
 import { ALL_CLUSTERS } from "@/lib/clusters"
 
-// Sources of walk records. Mirrors WALKS_FILES in walks-for-station/route.ts.
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-  "data/manual-walks.json",
-]
+// Single unified walks file (each entry carries a top-level `source`
+// field identifying its origin).
+const WALKS_FILE = "data/walks.json"
 
 type WalkVariant = {
   id?: string
@@ -98,47 +93,39 @@ export async function GET() {
   // can re-tier on the cluster's union.
   const byCrs = new Map<string, Attachment[]>()
 
-  for (const file of WALKS_FILES) {
-    let entries: Record<string, WalkEntry>
-    try {
-      const { data } = await readDataFile<Record<string, WalkEntry>>(file)
-      entries = data
-    } catch {
-      continue
-    }
-    for (const entry of Object.values(entries)) {
-      if (!Array.isArray(entry.walks)) continue
-      const entryHasGpx = typeof entry.gpx === "string" && entry.gpx.trim() !== ""
-      for (const v of entry.walks) {
-        // Skip non-public walks entirely. Mirrors the build script's
-        // `entry.walks.filter((v) => v.stationToStation)` gate.
-        if (!v.stationToStation) continue
+  const { data: entries } = await readDataFile<Record<string, WalkEntry>>(WALKS_FILE)
+  for (const entry of Object.values(entries)) {
+    if (!Array.isArray(entry.walks)) continue
+    const entryHasGpx = typeof entry.gpx === "string" && entry.gpx.trim() !== ""
+    for (const v of entry.walks) {
+      // Skip non-public walks entirely. Mirrors the build script's
+      // `entry.walks.filter((v) => v.stationToStation)` gate.
+      if (!v.stationToStation) continue
 
-        const isMain = (v.source?.type ?? v.role ?? "main") === "main"
-        const baseAttachment = {
-          walkId: v.id ?? "",
-          rating: typeof v.rating === "number" ? v.rating : null,
-          hasKomoot: typeof v.komootUrl === "string" && v.komootUrl.trim() !== "",
-          hasGpx: entryHasGpx,
-          isMain,
-        }
+      const isMain = (v.source?.type ?? v.role ?? "main") === "main"
+      const baseAttachment = {
+        walkId: v.id ?? "",
+        rating: typeof v.rating === "number" ? v.rating : null,
+        hasKomoot: typeof v.komootUrl === "string" && v.komootUrl.trim() !== "",
+        hasGpx: entryHasGpx,
+        isMain,
+      }
 
-        // Attach to BOTH endpoints with distinct roles so the rating
-        // derivation can enforce the "rating-4 only via a starting
-        // walk" rule. Circular walks (start === end) get a single
-        // "starting" attachment via the seenStations dedup.
-        const seenStations = new Set<string>()
-        for (const { crs, role } of [
-          { crs: v.startStation, role: "starting" as const },
-          { crs: v.endStation, role: "ending" as const },
-        ]) {
-          if (!crs) continue
-          if (seenStations.has(crs)) continue
-          seenStations.add(crs)
-          const arr = byCrs.get(crs) ?? []
-          arr.push({ ...baseAttachment, role })
-          byCrs.set(crs, arr)
-        }
+      // Attach to BOTH endpoints with distinct roles so the rating
+      // derivation can enforce the "rating-4 only via a starting
+      // walk" rule. Circular walks (start === end) get a single
+      // "starting" attachment via the seenStations dedup.
+      const seenStations = new Set<string>()
+      for (const { crs, role } of [
+        { crs: v.startStation, role: "starting" as const },
+        { crs: v.endStation, role: "ending" as const },
+      ]) {
+        if (!crs) continue
+        if (seenStations.has(crs)) continue
+        seenStations.add(crs)
+        const arr = byCrs.get(crs) ?? []
+        arr.push({ ...baseAttachment, role })
+        byCrs.set(crs, arr)
       }
     }
   }

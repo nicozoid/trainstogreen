@@ -99,7 +99,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "newborough-warren-circular": {
     "slug": "newborough-warren-circular",
@@ -273,7 +274,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "arlesey-to-letchworth-garden-city": {
     "slug": "arlesey-to-letchworth-garden-city",
@@ -395,7 +397,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bedford-circular": {
     "slug": "bedford-circular",
@@ -635,7 +638,8 @@
         },
         "suffix": "via Bromham Bridge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "biggleswade-to-sandy": {
     "slug": "biggleswade-to-sandy",
@@ -963,7 +967,8 @@
         },
         "suffix": "via Shuttleworth Collection"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bow-brickhill-to-woburn-sands": {
     "slug": "bow-brickhill-to-woburn-sands",
@@ -1201,7 +1206,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "flitwick-circular": {
     "slug": "flitwick-circular",
@@ -1384,7 +1390,8 @@
         },
         "suffix": "via De Grey Mausoleum & Clophill Lakes Nature Reserve"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "harlington-to-flitwick": {
     "slug": "harlington-to-flitwick",
@@ -1548,7 +1555,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leagrave-to-harlington": {
     "slug": "leagrave-to-harlington",
@@ -1664,7 +1672,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lidlington-to-flitwick": {
     "slug": "lidlington-to-flitwick",
@@ -1771,7 +1780,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sandy-to-arlesey": {
     "slug": "sandy-to-arlesey",
@@ -2124,7 +2134,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "stewartby-to-ridgmont": {
     "slug": "stewartby-to-ridgmont",
@@ -2244,7 +2255,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "woburn-sands-to-ridgmont": {
     "slug": "woburn-sands-to-ridgmont",
@@ -2393,7 +2405,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "aldermaston-to-woolhampton-via-frilsham": {
     "slug": "aldermaston-to-woolhampton-via-frilsham",
@@ -2557,7 +2570,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village."
+    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village.",
+    "source": "saturday-walkers-club"
   },
   "aldermaston-to-woolhampton-via-stanford-dingley": {
     "slug": "aldermaston-to-woolhampton-via-stanford-dingley",
@@ -2695,7 +2709,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village."
+    "resolution": "Set endStation to MDG on all variants — Midgham is the station for Woolhampton village.",
+    "source": "saturday-walkers-club"
   },
   "bedwyn-circular-via-savernake-forest-and-marlborough": {
     "slug": "bedwyn-circular-via-savernake-forest-and-marlborough",
@@ -2825,7 +2840,8 @@
         },
         "suffix": "via Savernake Forest and Marlborough"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "blackwater-to-wokingham": {
     "slug": "blackwater-to-wokingham",
@@ -3341,7 +3357,8 @@
         },
         "suffix": "via Horseshoe Lake Activity Centre"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "burghclere-circular": {
     "slug": "burghclere-circular",
@@ -3450,7 +3467,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "crowthorne-to-blackwater-via-eversley-cross": {
     "slug": "crowthorne-to-blackwater-via-eversley-cross",
@@ -3716,7 +3734,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "goring-circular": {
     "slug": "goring-circular",
@@ -3893,7 +3912,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley)."
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley).",
+    "source": "saturday-walkers-club"
   },
   "kintbury-to-great-bedwyn": {
     "slug": "kintbury-to-great-bedwyn",
@@ -4155,7 +4175,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "maidenhead-to-marlow": {
     "slug": "maidenhead-to-marlow",
@@ -4721,7 +4742,8 @@
         },
         "suffix": "via Maidenhead Rail Bridge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "mortimer-to-aldermaston": {
     "slug": "mortimer-to-aldermaston",
@@ -4981,7 +5003,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "newbury-racecourse-to-woolhampton": {
     "slug": "newbury-racecourse-to-woolhampton",
@@ -5148,7 +5171,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "slough-to-egham-via-windsor-great-park": {
     "slug": "slough-to-egham-via-windsor-great-park",
@@ -5291,7 +5315,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "End station confirmed as EGH (Egham). Updated main walk distance to the true station-to-station figure (19 km / 12 mi) rather than the plotted park-to-park 16 km."
+    "resolution": "End station confirmed as EGH (Egham). Updated main walk distance to the true station-to-station figure (19 km / 12 mi) rather than the plotted park-to-park 16 km.",
+    "source": "saturday-walkers-club"
   },
   "sunningdale-to-windsor": {
     "slug": "sunningdale-to-windsor",
@@ -5643,7 +5668,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "reading-to-henley": {
     "slug": "reading-to-henley",
@@ -5743,7 +5769,8 @@
         },
         "suffix": "via Sonning Lock"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "black-mountain-from-glyntawe": {
     "slug": "black-mountain-from-glyntawe",
@@ -5921,7 +5948,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "black-mountains-ridge": {
     "slug": "black-mountains-ridge",
@@ -6152,7 +6180,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "blorenge": {
     "slug": "blorenge",
@@ -6351,7 +6380,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "brecon-beacons-horseshoe-from-neuadd-reservoir": {
     "slug": "brecon-beacons-horseshoe-from-neuadd-reservoir",
@@ -6452,7 +6482,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "brecon-circular-via-y-gaer-battle-and-pen-y-crug": {
     "slug": "brecon-circular-via-y-gaer-battle-and-pen-y-crug",
@@ -6648,7 +6679,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "bwlch-circular-via-mynydd-troed-and-llangorse-lake": {
     "slug": "bwlch-circular-via-mynydd-troed-and-llangorse-lake",
@@ -6933,7 +6965,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "crickhowell-circular-via-mynydd-llangatwg-and-craig-y-cilau": {
     "slug": "crickhowell-circular-via-mynydd-llangatwg-and-craig-y-cilau",
@@ -7045,7 +7078,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "crickhowell-circular-via-table-mountain-and-the-3-pens": {
     "slug": "crickhowell-circular-via-table-mountain-and-the-3-pens",
@@ -7360,7 +7394,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "brecon-beacons-fan-dance": {
     "slug": "brecon-beacons-fan-dance",
@@ -7450,7 +7485,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "fforest-fawr-traverse-craig-y-nos-to-llwyn-y-celyn": {
     "slug": "fforest-fawr-traverse-craig-y-nos-to-llwyn-y-celyn",
@@ -7649,7 +7685,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Nulled inferred distance/time on alternative finish (per ambiguous-DT rule). Ambiguous high-plateau route variant ignored."
+    "resolution": "Nulled inferred distance/time on alternative finish (per ambiguous-DT rule). Ambiguous high-plateau route variant ignored.",
+    "source": "saturday-walkers-club"
   },
   "henrhyd-waterfalls-from-craig-y-nos": {
     "slug": "henrhyd-waterfalls-from-craig-y-nos",
@@ -7919,7 +7956,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "llangynidr-to-bwlch-or-circular": {
     "slug": "llangynidr-to-bwlch-or-circular",
@@ -8076,7 +8114,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "llanvihangel-crucorney-circular": {
     "slug": "llanvihangel-crucorney-circular",
@@ -8318,7 +8357,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "pandy-inn-to-llanvihangel-crucorney": {
     "slug": "pandy-inn-to-llanvihangel-crucorney",
@@ -8437,7 +8477,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "pen-y-fan-and-corn-du-from-storey-arms": {
     "slug": "pen-y-fan-and-corn-du-from-storey-arms",
@@ -8558,7 +8599,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "storey-arms-to-libanus-or-circular": {
     "slug": "storey-arms-to-libanus-or-circular",
@@ -8836,7 +8878,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "sugar-loaf-abergavenny-circular": {
     "slug": "sugar-loaf-abergavenny-circular",
@@ -9010,7 +9053,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "the-black-mountain-from-glyntawe": {
     "slug": "the-black-mountain-from-glyntawe",
@@ -9266,7 +9310,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "clydach-gorge": {
     "slug": "clydach-gorge",
@@ -9429,7 +9474,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "waterfall-country-pontneddfechan-circular": {
     "slug": "waterfall-country-pontneddfechan-circular",
@@ -9722,7 +9768,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "amersham-circular-via-chalfont-st-giles": {
     "slug": "amersham-circular-via-chalfont-st-giles",
@@ -9830,7 +9877,8 @@
         "ratingExplanation": "An excess of plain open fields",
         "updatedAt": "2026-04-28T07:50:41.657Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "aylesbury-vale-parkway-to-aylesbury": {
     "slug": "aylesbury-vale-parkway-to-aylesbury",
@@ -9954,7 +10002,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "beaconsfield-circular": {
     "slug": "beaconsfield-circular",
@@ -10234,7 +10283,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Seer Green & Jordans\" to SRG on the shorter walk."
+    "resolution": "Matched \"Seer Green & Jordans\" to SRG on the shorter walk.",
+    "source": "saturday-walkers-club"
   },
   "west-drayton-to-cookham": {
     "slug": "west-drayton-to-cookham",
@@ -10613,7 +10663,8 @@
         },
         "suffix": "station"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bow-brickhill-to-leighton-buzzard": {
     "slug": "bow-brickhill-to-leighton-buzzard",
@@ -10747,7 +10798,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cheddington-to-leighton-buzzard": {
     "slug": "cheddington-to-leighton-buzzard",
@@ -10832,7 +10884,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chesham-to-great-missenden": {
     "slug": "chesham-to-great-missenden",
@@ -11059,7 +11112,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chorleywood-to-chesham": {
     "slug": "chorleywood-to-chesham",
@@ -11225,7 +11279,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "gerrards-cross-to-cookham": {
     "slug": "gerrards-cross-to-cookham",
@@ -11393,7 +11448,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "great-missenden-to-amersham": {
     "slug": "great-missenden-to-amersham",
@@ -11657,7 +11713,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "haddenham-circular-via-brill": {
     "slug": "haddenham-circular-via-brill",
@@ -11768,7 +11825,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Haddenham & Thame Parkway\" to HDM."
+    "resolution": "Matched \"Haddenham & Thame Parkway\" to HDM.",
+    "source": "saturday-walkers-club"
   },
   "haddenham-to-aylesbury-via-gibraltar-and-ford": {
     "slug": "haddenham-to-aylesbury-via-gibraltar-and-ford",
@@ -11943,7 +12001,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note."
+    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note.",
+    "source": "saturday-walkers-club"
   },
   "haddenham-to-aylesbury-via-waddesdon": {
     "slug": "haddenham-to-aylesbury-via-waddesdon",
@@ -12192,7 +12251,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note."
+    "resolution": "Matched start to HDM. Assumed HS2 closure lifted — removed closure warning and note.",
+    "source": "saturday-walkers-club"
   },
   "little-kimble-to-saunderton": {
     "slug": "little-kimble-to-saunderton",
@@ -12283,7 +12343,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "princes-risborough-to-great-missenden": {
     "slug": "princes-risborough-to-great-missenden",
@@ -12415,7 +12476,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "princes-risborough-to-wendover": {
     "slug": "princes-risborough-to-wendover",
@@ -12552,7 +12614,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "saunderton-via-bledlow-circular": {
     "slug": "saunderton-via-bledlow-circular",
@@ -12710,7 +12773,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "saunderton-via-west-wycombe-circular": {
     "slug": "saunderton-via-west-wycombe-circular",
@@ -12848,7 +12912,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tring-circular": {
     "slug": "tring-circular",
@@ -12985,27 +13050,87 @@
         "endStation": "TRI",
         "requiresBus": false,
         "stationToStation": true,
-        "distanceKm": 14.5,
-        "hours": 4.05,
-        "lunchStops": [
-          {
-            "name": "Monument Cafe",
-            "location": "Ashridge Estate"
-          }
-        ],
+        "distanceKm": 15.2,
+        "hours": 4.22,
+        "lunchStops": [],
         "terrain": "Ridgeway escarpment, gravel track through beechwoods, optional bluebell woodland diversion",
         "sights": [
           {
-            "name": "Ivinghoe Beacon"
+            "name": "Aldbury Nowers",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJaTT1yqpbdkgR1VvxYZVmpYs",
+            "lat": 51.813153,
+            "lng": -0.620982,
+            "kmIntoRoute": 2.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "summit"
+            ]
           },
           {
-            "name": "Flat Isley"
+            "name": "Pitstone Hill",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJT_6AEPRadkgRzAXS8unid78",
+            "lat": 51.819632,
+            "lng": -0.622332,
+            "kmIntoRoute": 3.5,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "viewpoint"
+            ]
           },
           {
-            "name": "Bridgewater Monument"
+            "name": "Paul's Knob",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJT_6AEPRadkgRzAXS8unid78",
+            "lat": 51.82419,
+            "lng": -0.617529,
+            "kmIntoRoute": 4.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "viewpoint"
+            ]
           },
           {
-            "name": "Ashridge Estate"
+            "name": "Steps Hill",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJBe5e9h5bdkgRxF4PvB3IJkc",
+            "lat": 51.833298,
+            "lng": -0.607633,
+            "kmIntoRoute": 5.3,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "viewpoint"
+            ]
+          },
+          {
+            "name": "Ivinghoe Beacon",
+            "url": "https://www.chilterns.org.uk/map_marker/ivinghoe-beacon/",
+            "lat": 51.84208,
+            "lng": -0.608394,
+            "kmIntoRoute": 6.6,
+            "types": [
+              "viewpoint"
+            ]
+          },
+          {
+            "name": "Bridgewater Monument",
+            "url": "https://www.nationaltrust.org.uk/visit/essex-bedfordshire-hertfordshire/ashridge-estate",
+            "lat": 51.808258,
+            "lng": -0.594269,
+            "kmIntoRoute": 11.9,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "historic_site",
+              "forest"
+            ]
+          },
+          {
+            "name": "St John the Baptist",
+            "url": "http://www.tringteamparish.org.uk/",
+            "lat": 51.802497,
+            "lng": -0.603998,
+            "kmIntoRoute": 14.3,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "church"
+            ]
           }
         ],
         "miscellany": "Very hilly and very windy",
@@ -13025,10 +13150,64 @@
         },
         "komootUrl": "https://www.komoot.com/tour/2925756026",
         "rating": 2,
-        "uphillMetres": 274.88,
+        "uphillMetres": 274.18,
         "difficulty": "moderate",
         "name": "Tring Circular via Ivinghoe Beacon",
-        "updatedAt": "2026-05-04T17:20:15.195Z"
+        "updatedAt": "2026-05-05T17:56:59.931Z",
+        "destinationStops": [
+          {
+            "name": "Ashridge Estate Café",
+            "location": "Ringshall",
+            "url": "https://www.nationaltrust.org.uk/visit/essex-bedfordshire-hertfordshire/ashridge-estate",
+            "lat": 51.807596,
+            "lng": -0.593637,
+            "kmIntoRoute": 12.3,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          },
+          {
+            "name": "Aldbury Village",
+            "location": "Aldbury",
+            "url": "https://www.enjoydacorum.co.uk/village/aldbury/",
+            "lat": 51.802419,
+            "lng": -0.602049,
+            "kmIntoRoute": 13.8,
+            "types": [
+              "cafe",
+              "pub",
+              "village",
+              "historic_site",
+              "church",
+              "restaurant"
+            ]
+          },
+          {
+            "name": "The Greyhound Inn",
+            "location": "Aldbury",
+            "url": "https://www.greyhoundaldbury.co.uk/",
+            "lat": 51.803065,
+            "lng": -0.601865,
+            "kmIntoRoute": 14,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Church Farm Cafe",
+            "location": "Aldbury",
+            "url": "http://www.churchfarmcafe.com/",
+            "lat": 51.802421,
+            "lng": -0.60683,
+            "kmIntoRoute": 14.8,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "cafe"
+            ]
+          }
+        ]
       },
       {
         "role": "longer",
@@ -13137,7 +13316,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tring-to-wendover": {
     "slug": "tring-to-wendover",
@@ -13283,7 +13463,8 @@
         "difficulty": "hard",
         "name": "Tring to Wendover via Aston Clinton"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wendover-circular": {
     "slug": "wendover-circular",
@@ -13587,7 +13768,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Rising Sun (closed since 2010) already absent from lunchStops. Walk surfaces on WND + MRS as expected."
+    "resolution": "Rising Sun (closed since 2010) already absent from lunchStops. Walk surfaces on WND + MRS as expected.",
+    "source": "saturday-walkers-club"
   },
   "wendover-circular-via-the-lee-and-swan-bottom": {
     "slug": "wendover-circular-via-the-lee-and-swan-bottom",
@@ -13722,7 +13904,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cambridge-via-grantchester-circular": {
     "slug": "cambridge-via-grantchester-circular",
@@ -13916,7 +14099,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ely-circular": {
     "slug": "ely-circular",
@@ -14006,7 +14190,8 @@
         },
         "suffix": "via Ely Cathedral"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "huntingdon-circular": {
     "slug": "huntingdon-circular",
@@ -14312,7 +14497,8 @@
         },
         "suffix": "via St Ives"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ouse-fen-nature-reserve": {
     "slug": "ouse-fen-nature-reserve",
@@ -14394,7 +14580,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "shelford-to-cambridge": {
     "slug": "shelford-to-cambridge",
@@ -14770,7 +14957,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "cross-fell-and-great-dun-fell": {
     "slug": "cross-fell-and-great-dun-fell",
@@ -15000,7 +15188,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "hadrians-wall-path-core-section": {
     "slug": "hadrians-wall-path-core-section",
@@ -15647,7 +15836,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "high-cup-nick": {
     "slug": "high-cup-nick",
@@ -15818,7 +16008,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "nine-standards": {
     "slug": "nine-standards",
@@ -16004,7 +16195,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wild-boar-fell": {
     "slug": "wild-boar-fell",
@@ -16106,7 +16298,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ten-tors": {
     "slug": "ten-tors",
@@ -16178,7 +16371,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lundy-island-circular": {
     "slug": "lundy-island-circular",
@@ -16276,7 +16470,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "seaton-to-lyme-regis-via-the-undercliff": {
     "slug": "seaton-to-lyme-regis-via-the-undercliff",
@@ -16412,7 +16607,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "axminster-to-lyme-regis-via-the-pinetum": {
     "slug": "axminster-to-lyme-regis-via-the-pinetum",
@@ -16521,7 +16717,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "bournemouth-to-barton-on-sea": {
     "slug": "bournemouth-to-barton-on-sea",
@@ -17009,7 +17206,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chesil-beach": {
     "slug": "chesil-beach",
@@ -17120,7 +17318,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "dorchester-circular-or-to-portesham": {
     "slug": "dorchester-circular-or-to-portesham",
@@ -17371,7 +17570,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lulworth-cove-circular": {
     "slug": "lulworth-cove-circular",
@@ -17612,7 +17812,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "lyme-regis-to-axminster-via-hawkchurch": {
     "slug": "lyme-regis-to-axminster-via-hawkchurch",
@@ -17704,7 +17905,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "lyme-regis-via-golden-cap-circular": {
     "slug": "lyme-regis-via-golden-cap-circular",
@@ -17862,7 +18064,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "maiden-newton-circular-or-to-dorchester": {
     "slug": "maiden-newton-circular-or-to-dorchester",
@@ -18059,7 +18262,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "wareham-to-swanage-or-kingston": {
     "slug": "wareham-to-swanage-or-kingston",
@@ -18216,7 +18420,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "seaton-circular-via-branscombe": {
     "slug": "seaton-circular-via-branscombe",
@@ -18386,7 +18591,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "osmington-or-dorchester-to-abbotsbury": {
     "slug": "osmington-or-dorchester-to-abbotsbury",
@@ -18563,7 +18769,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Dorchester resolved to DCH (South — fastest to London). Ignored Weymouth/Upwey suggestions. Walk surfaces on DCH via station-rambler-extras since Abbotsbury is non-station."
+    "resolution": "Dorchester resolved to DCH (South — fastest to London). Ignored Weymouth/Upwey suggestions. Walk surfaces on DCH via station-rambler-extras since Abbotsbury is non-station.",
+    "source": "saturday-walkers-club"
   },
   "abbotsbury-to-west-bay": {
     "slug": "abbotsbury-to-west-bay",
@@ -18690,7 +18897,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "branksome-to-swanage-or-corfe-castle": {
     "slug": "branksome-to-swanage-or-corfe-castle",
@@ -18861,7 +19069,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "west-bay-to-lyme-regis": {
     "slug": "west-bay-to-lyme-regis",
@@ -18969,7 +19178,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "weymouth-to-lulworth-cove": {
     "slug": "weymouth-to-lulworth-cove",
@@ -19157,7 +19367,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "weymouth-via-isle-of-portland-circular": {
     "slug": "weymouth-via-isle-of-portland-circular",
@@ -19403,7 +19614,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wareham-to-lulworth-cove": {
     "slug": "wareham-to-lulworth-cove",
@@ -19682,7 +19894,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "wool-circular": {
     "slug": "wool-circular",
@@ -19825,7 +20038,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "worth-matravers-circular": {
     "slug": "worth-matravers-circular",
@@ -19938,7 +20152,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "ashurst-circular": {
     "slug": "ashurst-circular",
@@ -20466,7 +20681,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ashurst-to-forest-row-and-east-grinstead": {
     "slug": "ashurst-to-forest-row-and-east-grinstead",
@@ -20827,7 +21043,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "battle-circular": {
     "slug": "battle-circular",
@@ -20914,7 +21131,8 @@
         "rating": null,
         "updatedAt": "2026-04-27T19:15:55.715Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "berwick-to-birling-gap": {
     "slug": "berwick-to-birling-gap",
@@ -21184,7 +21402,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "berwick-to-eastbourne": {
     "slug": "berwick-to-eastbourne",
@@ -21400,7 +21619,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "berwick-to-seaford": {
     "slug": "berwick-to-seaford",
@@ -21965,7 +22185,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "berwick-via-upper-dicker-circular": {
     "slug": "berwick-via-upper-dicker-circular",
@@ -22091,7 +22312,8 @@
         },
         "suffix": "via Upper Dicker Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bishopstone-circular": {
     "slug": "bishopstone-circular",
@@ -22454,7 +22676,8 @@
         },
         "suffix": "via Saxon Church of St Andrew"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "burgess-hill-to-hassocks": {
     "slug": "burgess-hill-to-hassocks",
@@ -22627,7 +22850,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxted-circular": {
     "slug": "buxted-circular",
@@ -22702,7 +22926,8 @@
         },
         "suffix": "Walk"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "eastbourne-to-east-dean": {
     "slug": "eastbourne-to-east-dean",
@@ -22997,7 +23222,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "eastbourne-to-hastings-via-bexhill": {
     "slug": "eastbourne-to-hastings-via-bexhill",
@@ -23233,7 +23459,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched Pevensey to PEV (Pevensey and Westham). Removed both Norman's Bay shorter variants — not valid for this project (bus-required)."
+    "resolution": "Matched Pevensey to PEV (Pevensey and Westham). Removed both Norman's Bay shorter variants — not valid for this project (bus-required).",
+    "source": "saturday-walkers-club"
   },
   "eridge-circular": {
     "slug": "eridge-circular",
@@ -23516,7 +23743,8 @@
         },
         "suffix": "via Spa Valley Railway & Harrison's Rocks"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "eridge-to-forest-row-and-east-grinstead": {
     "slug": "eridge-to-forest-row-and-east-grinstead",
@@ -23900,7 +24128,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "etchingham-to-wadhurst-via-ticehurst": {
     "slug": "etchingham-to-wadhurst-via-ticehurst",
@@ -24037,7 +24266,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "forest-row-circular": {
     "slug": "forest-row-circular",
@@ -24222,7 +24452,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Dropped Horsted Keynes combo variants (invalid). Added Forest Row Circular extension one-liner to East Grinstead's ramblerNote via station-rambler-extras."
+    "resolution": "Dropped Horsted Keynes combo variants (invalid). Added Forest Row Circular extension one-liner to East Grinstead's ramblerNote via station-rambler-extras.",
+    "source": "saturday-walkers-club"
   },
   "glynde-to-seaford": {
     "slug": "glynde-to-seaford",
@@ -24411,7 +24642,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hampden-park-to-eastbourne": {
     "slug": "hampden-park-to-eastbourne",
@@ -24600,7 +24832,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hassocks-to-brighton": {
     "slug": "hassocks-to-brighton",
@@ -24911,7 +25144,8 @@
         },
         "suffix": "via Clayton Windmills"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hassocks-to-lewes": {
     "slug": "hassocks-to-lewes",
@@ -25141,7 +25375,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hastings-circular-via-fairlight-glen-beach": {
     "slug": "hastings-circular-via-fairlight-glen-beach",
@@ -25257,7 +25492,8 @@
         },
         "suffix": "via Fairlight Glen Beach"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hastings-to-rye": {
     "slug": "hastings-to-rye",
@@ -25540,7 +25776,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lewes-circular-via-glynde-and-southease": {
     "slug": "lewes-circular-via-glynde-and-southease",
@@ -25821,7 +26058,8 @@
         },
         "suffix": "via Glynde and Southease & West Firle"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lewes-circular-via-swanborough-and-black-cap": {
     "slug": "lewes-circular-via-swanborough-and-black-cap",
@@ -26082,7 +26320,8 @@
         },
         "suffix": "via Swanborough and Black Cap & Old Hamsey Church"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lewes-to-saltdean": {
     "slug": "lewes-to-saltdean",
@@ -26362,7 +26601,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lewes-to-seaford-via-west-firle": {
     "slug": "lewes-to-seaford-via-west-firle",
@@ -26650,7 +26890,8 @@
         },
         "suffix": "via West Firle"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lewes-via-west-firle-circular": {
     "slug": "lewes-via-west-firle-circular",
@@ -26898,7 +27139,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "newhaven-circular": {
     "slug": "newhaven-circular",
@@ -27119,7 +27361,8 @@
         },
         "suffix": "via Newhaven Fort"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "newhaven-to-brighton-and-portslade": {
     "slug": "newhaven-to-brighton-and-portslade",
@@ -27389,7 +27632,8 @@
         },
         "suffix": "(via Brighton and Hove)"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "polegate-to-birling-gap": {
     "slug": "polegate-to-birling-gap",
@@ -27539,7 +27783,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "robertsbridge-circular": {
     "slug": "robertsbridge-circular",
@@ -27785,7 +28030,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "robertsbridge-circular-via-brightling": {
     "slug": "robertsbridge-circular-via-brightling",
@@ -27880,7 +28126,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "robertsbridge-to-uckfield": {
     "slug": "robertsbridge-to-uckfield",
@@ -28115,7 +28362,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "rye-figure-of-8": {
     "slug": "rye-figure-of-8",
@@ -28414,7 +28662,8 @@
         },
         "suffix": "via Scots Float Sluice"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "seaford-to-eastbourne": {
     "slug": "seaford-to-eastbourne",
@@ -28765,7 +29014,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "southease-to-eastbourne": {
     "slug": "southease-to-eastbourne",
@@ -29065,7 +29315,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "southease-circular": {
     "slug": "southease-circular",
@@ -29398,7 +29649,8 @@
         },
         "suffix": "via Balsdean deserted village"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "southease-to-rottingdean-or-brighton": {
     "slug": "southease-to-rottingdean-or-brighton",
@@ -29582,40 +29834,42 @@
         "requiresBus": false,
         "stationToStation": true,
         "distanceKm": 15,
-        "hours": null,
         "lunchStops": [
           {
             "name": "Abergavenny Arms",
-            "location": "Rodmell",
-            "url": null
+            "location": "Rodmell"
           },
           {
             "name": "Juggs",
-            "location": "Kingston",
-            "url": null
+            "location": "Kingston"
           }
         ],
         "terrain": "Flat Ouse valley, riverbank, chalk downs, South Downs Way, circular route back to station",
         "sights": [
           {
-            "name": "Monk's House",
-            "url": null
+            "name": "Monk's House"
           },
           {
-            "name": "Lewes Castle",
-            "url": null
+            "name": "Lewes Castle"
           }
         ],
         "miscellany": "Can be muddy",
         "id": "seeseehornbeam",
         "mudWarning": true,
         "source": {
+          "orgSlug": "trains-to-green",
+          "pageName": "",
+          "pageURL": "",
+          "type": "shorter"
+        },
+        "destinationStops": [],
+        "relatedSource": {
           "orgSlug": "saturday-walkers-club",
           "pageName": "Southease to Rottingdean or Brighton",
           "pageURL": "https://www.walkingclub.org.uk/walk/southease-to-rottingdean-or-brighton/",
-          "type": "shorter"
+          "type": "related"
         },
-        "suffix": "via Monk's House"
+        "updatedAt": "2026-05-05T18:03:10.196Z"
       },
       {
         "role": "longer",
@@ -29809,7 +30063,8 @@
         },
         "suffix": "via Kipling Gardens"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "southease-to-seaford": {
     "slug": "southease-to-seaford",
@@ -30034,7 +30289,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "stonegate-to-robertsbridge": {
     "slug": "stonegate-to-robertsbridge",
@@ -30143,7 +30399,8 @@
         },
         "suffix": "via Batemans"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "uckfield-to-buxted": {
     "slug": "uckfield-to-buxted",
@@ -30302,7 +30559,8 @@
         },
         "suffix": "via Tickerage Mill"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "uckfield-to-lewes": {
     "slug": "uckfield-to-lewes",
@@ -30502,7 +30760,8 @@
         },
         "suffix": "via Barcombe Mills sluices and river pools"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "uckfield-to-pease-pottage": {
     "slug": "uckfield-to-pease-pottage",
@@ -30777,7 +31036,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "uckfield-via-van-hoogstraatens-path-circular": {
     "slug": "uckfield-via-van-hoogstraatens-path-circular",
@@ -31021,7 +31281,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wadhurst-to-tunbridge-wells": {
     "slug": "wadhurst-to-tunbridge-wells",
@@ -31297,7 +31558,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wadhurst-via-bewl-water-circular": {
     "slug": "wadhurst-via-bewl-water-circular",
@@ -31384,7 +31646,8 @@
         },
         "suffix": "via Bewl Water Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "winchelsea-to-hastings": {
     "slug": "winchelsea-to-hastings",
@@ -31735,7 +31998,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "winchelsea-to-hastings-via-three-oaks": {
     "slug": "winchelsea-to-hastings-via-three-oaks",
@@ -32060,7 +32324,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "benfleet-circular-via-canvey-island": {
     "slug": "benfleet-circular-via-canvey-island",
@@ -32242,7 +32507,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "benfleet-circular-via-leigh-on-sea": {
     "slug": "benfleet-circular-via-leigh-on-sea",
@@ -32423,7 +32689,8 @@
         },
         "suffix": "via Leigh on Sea & Benfleet Creek"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bures-to-sudbury": {
     "slug": "bures-to-sudbury",
@@ -32624,7 +32891,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "clacton-on-sea-to-walton-on-the-naze": {
     "slug": "clacton-on-sea-to-walton-on-the-naze",
@@ -32701,7 +32969,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "epping-to-ingatestone-via-chipping-ongar": {
     "slug": "epping-to-ingatestone-via-chipping-ongar",
@@ -32861,7 +33130,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "great-chesterford-to-newport": {
     "slug": "great-chesterford-to-newport",
@@ -33346,7 +33616,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Newport (Essex)\" to NWE (Newport)."
+    "resolution": "Matched \"Newport (Essex)\" to NWE (Newport).",
+    "source": "saturday-walkers-club"
   },
   "ingatestone-to-battlesbridge": {
     "slug": "ingatestone-to-battlesbridge",
@@ -33548,7 +33819,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kelvedon-circular": {
     "slug": "kelvedon-circular",
@@ -33777,7 +34049,8 @@
         },
         "suffix": "via Nunn's Bridge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "laindon-circular": {
     "slug": "laindon-circular",
@@ -33887,7 +34160,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leigh-on-sea-to-shoeburyness": {
     "slug": "leigh-on-sea-to-shoeburyness",
@@ -34005,7 +34279,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "manningtree-circular": {
     "slug": "manningtree-circular",
@@ -34275,7 +34550,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "north-fambridge-to-burnham-on-crouch": {
     "slug": "north-fambridge-to-burnham-on-crouch",
@@ -34354,7 +34630,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "south-woodham-ferrers-to-north-fambridge": {
     "slug": "south-woodham-ferrers-to-north-fambridge",
@@ -34528,7 +34805,8 @@
         },
         "suffix": "via RHS Garden Hyde Hall & Blue House Farm Nature Reserve"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "the-broomway-and-foulness-island": {
     "slug": "the-broomway-and-foulness-island",
@@ -34612,7 +34890,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "theydon-bois-to-epping": {
     "slug": "theydon-bois-to-epping",
@@ -34708,7 +34987,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tilbury-to-east-tilbury-via-2-forts-way": {
     "slug": "tilbury-to-east-tilbury-via-2-forts-way",
@@ -34822,7 +35102,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wakes-colne-to-bures": {
     "slug": "wakes-colne-to-bures",
@@ -34955,7 +35236,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "walton-on-the-naze-circular": {
     "slug": "walton-on-the-naze-circular",
@@ -35090,7 +35372,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Added Stone Point reliability warning to both variants. Walk continues to surface on WON + FRI."
+    "resolution": "Added Stone Point reliability warning to both variants. Walk continues to surface on WON + FRI.",
+    "source": "saturday-walkers-club"
   },
   "wendens-ambo-circular": {
     "slug": "wendens-ambo-circular",
@@ -35185,7 +35468,8 @@
         },
         "suffix": "via The Cottage (pargeted house, Wendens Ambo)"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wickford-to-battlesbridge": {
     "slug": "wickford-to-battlesbridge",
@@ -35330,7 +35614,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wivenhoe-circular": {
     "slug": "wivenhoe-circular",
@@ -35477,7 +35762,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wivenhoe-to-west-mersea-or-clacton-on-sea": {
     "slug": "wivenhoe-to-west-mersea-or-clacton-on-sea",
@@ -35793,7 +36079,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "foreland-point-lynmouth-and-watersmeet-circular": {
     "slug": "foreland-point-lynmouth-and-watersmeet-circular",
@@ -35980,7 +36267,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "heddons-mouth-circular": {
     "slug": "heddons-mouth-circular",
@@ -36071,7 +36359,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "minehead-to-porlock": {
     "slug": "minehead-to-porlock",
@@ -36181,7 +36470,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "porlock-to-lynton": {
     "slug": "porlock-to-lynton",
@@ -36283,7 +36573,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "lynton-to-combe-martin": {
     "slug": "lynton-to-combe-martin",
@@ -36391,7 +36682,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "barry-to-llantwit-major": {
     "slug": "barry-to-llantwit-major",
@@ -36627,7 +36919,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Rhoose\" to RIA (Rhoose Cardiff International Airport). Removed ambiguous Barry-to-Rhoose distance (conflicting 4 mi / 7 km vs 6.5 mi)."
+    "resolution": "Matched \"Rhoose\" to RIA (Rhoose Cardiff International Airport). Removed ambiguous Barry-to-Rhoose distance (conflicting 4 mi / 7 km vs 6.5 mi).",
+    "source": "saturday-walkers-club"
   },
   "kenfig-burrows-to-porthcawl": {
     "slug": "kenfig-burrows-to-porthcawl",
@@ -36887,7 +37180,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "llantwit-major-to-ogmore-or-porthcawl": {
     "slug": "llantwit-major-to-ogmore-or-porthcawl",
@@ -37318,7 +37612,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "kemble-circular": {
     "slug": "kemble-circular",
@@ -37468,7 +37763,8 @@
         },
         "suffix": "via Thames Head and Cirencester"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kingham-to-moreton-in-marsh-via-adelstrop": {
     "slug": "kingham-to-moreton-in-marsh-via-adelstrop",
@@ -37585,7 +37881,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "moreton-in-marsh-circular": {
     "slug": "moreton-in-marsh-circular",
@@ -37788,7 +38085,8 @@
         },
         "suffix": "via Broad Campden"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "moreton-in-marsh-circular-via-the-escarpment": {
     "slug": "moreton-in-marsh-circular-via-the-escarpment",
@@ -37970,7 +38268,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "llanmadoc-via-whiteford-sands-circular": {
     "slug": "llanmadoc-via-whiteford-sands-circular",
@@ -38091,7 +38390,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "mumbles-to-three-cliffs-bay": {
     "slug": "mumbles-to-three-cliffs-bay",
@@ -38253,7 +38553,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "port-eynon-to-rhossili": {
     "slug": "port-eynon-to-rhossili",
@@ -38432,7 +38733,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "rhossili-via-llangennith-circular": {
     "slug": "rhossili-via-llangennith-circular",
@@ -38547,7 +38849,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "rhossili-via-worms-head-circular": {
     "slug": "rhossili-via-worms-head-circular",
@@ -38651,7 +38954,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "three-cliffs-bay-to-oxwich-bay": {
     "slug": "three-cliffs-bay-to-oxwich-bay",
@@ -38780,7 +39084,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "alton-circular": {
     "slug": "alton-circular",
@@ -39012,7 +39317,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "brockenhurst-circular": {
     "slug": "brockenhurst-circular",
@@ -39093,7 +39399,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "brockenhurst-to-lymington": {
     "slug": "brockenhurst-to-lymington",
@@ -39518,7 +39825,8 @@
         },
         "suffix": "via Hurst Castle"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dean-to-mottisfont": {
     "slug": "dean-to-mottisfont",
@@ -39790,7 +40098,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "farnham-to-blackwater": {
     "slug": "farnham-to-blackwater",
@@ -40059,7 +40368,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "fleet-circular": {
     "slug": "fleet-circular",
@@ -40253,7 +40563,8 @@
         },
         "suffix": "via Fleet Pond Nature Reserve"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hook-to-winchfield": {
     "slug": "hook-to-winchfield",
@@ -40740,7 +41051,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lymington-to-barton-on-sea": {
     "slug": "lymington-to-barton-on-sea",
@@ -40907,7 +41219,8 @@
         },
         "updatedAt": "2026-04-28T08:04:16.007Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "mottisfont-to-romsey": {
     "slug": "mottisfont-to-romsey",
@@ -41051,7 +41364,8 @@
         },
         "suffix": "via War Memorial Park"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "netley-to-botley": {
     "slug": "netley-to-botley",
@@ -41373,7 +41687,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "overton-circular": {
     "slug": "overton-circular",
@@ -41486,7 +41801,8 @@
         },
         "suffix": "via River Test"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "overton-to-whitchurch": {
     "slug": "overton-to-whitchurch",
@@ -41875,7 +42191,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "petersfield-to-liss": {
     "slug": "petersfield-to-liss",
@@ -42145,7 +42462,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "portsmouth-to-havant-via-hayling-island": {
     "slug": "portsmouth-to-havant-via-hayling-island",
@@ -42368,7 +42686,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bursledon-to-gosport": {
     "slug": "bursledon-to-gosport",
@@ -42625,7 +42944,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "winchester-to-west-meon-or-hinton-ampner": {
     "slug": "winchester-to-west-meon-or-hinton-ampner",
@@ -42907,7 +43227,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "west-meon-to-petersfield": {
     "slug": "west-meon-to-petersfield",
@@ -43289,7 +43610,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "southbourne-to-emsworth-via-thorney-island": {
     "slug": "southbourne-to-emsworth-via-thorney-island",
@@ -43434,7 +43756,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "whitchurch-to-andover": {
     "slug": "whitchurch-to-andover",
@@ -43658,7 +43981,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "winchester-circular": {
     "slug": "winchester-circular",
@@ -43930,7 +44254,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "baldock-circular": {
     "slug": "baldock-circular",
@@ -44124,7 +44449,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "berkhamsted-circular": {
     "slug": "berkhamsted-circular",
@@ -44349,7 +44675,8 @@
         },
         "suffix": "via Hockeridge Woods"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "broxbourne-circular": {
     "slug": "broxbourne-circular",
@@ -44504,7 +44831,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "broxbourne-circular-via-waltham-abbey": {
     "slug": "broxbourne-circular-via-waltham-abbey",
@@ -44988,7 +45316,8 @@
         },
         "suffix": "via Waltham Abbey"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cheshunt-circular": {
     "slug": "cheshunt-circular",
@@ -45278,7 +45607,8 @@
         },
         "suffix": "via River Lee Country Park"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "garston-to-st-albans": {
     "slug": "garston-to-st-albans",
@@ -45563,7 +45893,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Main walk now ends at SAC (St Albans City); added alternative variant ending at SAA (St Albans Abbey) so both stations surface the walk."
+    "resolution": "Main walk now ends at SAC (St Albans City); added alternative variant ending at SAA (St Albans Abbey) so both stations surface the walk.",
+    "source": "saturday-walkers-club"
   },
   "harlow-circular": {
     "slug": "harlow-circular",
@@ -45658,7 +45989,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "harpenden-to-st-albans": {
     "slug": "harpenden-to-st-albans",
@@ -45919,7 +46251,8 @@
         ],
         "bestSeasonsNote": "bluebell season"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hitchin-circular": {
     "slug": "hitchin-circular",
@@ -46057,7 +46390,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "knebworth-circular": {
     "slug": "knebworth-circular",
@@ -46402,7 +46736,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "knebworth-to-welwyn-garden-city": {
     "slug": "knebworth-to-welwyn-garden-city",
@@ -46596,7 +46931,8 @@
         },
         "suffix": "via Ayot Greenway"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "roydon-to-sawbridgeworth": {
     "slug": "roydon-to-sawbridgeworth",
@@ -46680,7 +47016,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sawbridgeworth-to-bishops-stortford": {
     "slug": "sawbridgeworth-to-bishops-stortford",
@@ -46790,7 +47127,8 @@
         "suffix": "via St. Andrew's Church"
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "st-margarets-circular": {
     "slug": "st-margarets-circular",
@@ -46970,7 +47308,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"St. Margarets\" to SMT (Hertfordshire) — walk region = Hertfordshire."
+    "resolution": "Matched \"St. Margarets\" to SMT (Hertfordshire) — walk region = Hertfordshire.",
+    "source": "saturday-walkers-club"
   },
   "tring-to-berkhamsted": {
     "slug": "tring-to-berkhamsted",
@@ -47233,7 +47572,8 @@
         },
         "suffix": "via Tom's Hill & Ivinghoe Beacon"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "watton-at-stone-circular": {
     "slug": "watton-at-stone-circular",
@@ -47365,7 +47705,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "welwyn-circular": {
     "slug": "welwyn-circular",
@@ -47469,7 +47810,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chale-to-ventnor": {
     "slug": "chale-to-ventnor",
@@ -47601,7 +47943,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lake-to-ryde": {
     "slug": "lake-to-ryde",
@@ -47917,7 +48260,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lake-to-shanklin": {
     "slug": "lake-to-shanklin",
@@ -48143,7 +48487,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ventnor-to-godshill": {
     "slug": "ventnor-to-godshill",
@@ -48228,7 +48573,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "yarmouth-circular": {
     "slug": "yarmouth-circular",
@@ -48392,7 +48738,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "ashurst-to-eridge": {
     "slug": "ashurst-to-eridge",
@@ -48720,7 +49067,8 @@
         },
         "suffix": "via Groombridge Place & Broadwater Warren"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "aylesford-to-maidstone": {
     "slug": "aylesford-to-maidstone",
@@ -49016,7 +49364,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Assumed end station is Maidstone East — endStation set to MDE on the main walk."
+    "resolution": "Assumed end station is Maidstone East — endStation set to MDE on the main walk.",
+    "source": "saturday-walkers-club"
   },
   "birchington-to-herne-bay": {
     "slug": "birchington-to-herne-bay",
@@ -49230,7 +49579,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "borough-green-to-sevenoaks": {
     "slug": "borough-green-to-sevenoaks",
@@ -49371,7 +49721,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Borough Green\" to BRG (Borough Green & Wrotham)."
+    "resolution": "Matched \"Borough Green\" to BRG (Borough Green & Wrotham).",
+    "source": "saturday-walkers-club"
   },
   "canterbury-circular": {
     "slug": "canterbury-circular",
@@ -49817,7 +50168,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Canterbury\" to CBE (Canterbury East) on all variants."
+    "resolution": "Matched \"Canterbury\" to CBE (Canterbury East) on all variants.",
+    "source": "saturday-walkers-club"
   },
   "chilham-circular": {
     "slug": "chilham-circular",
@@ -49982,7 +50334,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chilham-to-canterbury": {
     "slug": "chilham-to-canterbury",
@@ -50160,7 +50513,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cowden-to-eridge": {
     "slug": "cowden-to-eridge",
@@ -50261,7 +50615,8 @@
         },
         "suffix": "via Pooh Corner"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cowden-to-hever": {
     "slug": "cowden-to-hever",
@@ -50479,7 +50834,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "crowhurst-to-battle": {
     "slug": "crowhurst-to-battle",
@@ -50626,7 +50982,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cuxton-to-sole-street": {
     "slug": "cuxton-to-sole-street",
@@ -50753,7 +51110,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dartford-to-greenhithe": {
     "slug": "dartford-to-greenhithe",
@@ -50849,7 +51207,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dover-to-deal": {
     "slug": "dover-to-deal",
@@ -51133,7 +51492,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "east-malling-to-maidstone": {
     "slug": "east-malling-to-maidstone",
@@ -51694,7 +52054,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "edenbridge-figure-of-8": {
     "slug": "edenbridge-figure-of-8",
@@ -51948,7 +52309,8 @@
         },
         "suffix": "via Edenbridge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "edenbridge-to-westerham": {
     "slug": "edenbridge-to-westerham",
@@ -52301,7 +52663,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "eynsford-circular-via-farningham": {
     "slug": "eynsford-circular-via-farningham",
@@ -52493,7 +52856,8 @@
         },
         "suffix": "via Farningham"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "eynsford-circular-via-otford": {
     "slug": "eynsford-circular-via-otford",
@@ -52700,7 +53064,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "farningham-road-to-otford": {
     "slug": "farningham-road-to-otford",
@@ -53379,7 +53744,8 @@
         },
         "suffix": "via Nine Hole Wood"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "farningham-road-to-sole-street": {
     "slug": "farningham-road-to-sole-street",
@@ -53467,7 +53833,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "faversham-circular": {
     "slug": "faversham-circular",
@@ -53837,7 +54204,8 @@
         },
         "suffix": "via Faversham Guildhall & Oare Gunpowder Works Country Park"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "faversham-to-whitstable": {
     "slug": "faversham-to-whitstable",
@@ -53914,7 +54282,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "folkestone-to-dover": {
     "slug": "folkestone-to-dover",
@@ -54133,7 +54502,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pluckley-to-ashford": {
     "slug": "pluckley-to-ashford",
@@ -54312,7 +54682,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ashford-to-ham-street": {
     "slug": "ashford-to-ham-street",
@@ -54430,7 +54801,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "yalding-to-sevenoaks": {
     "slug": "yalding-to-sevenoaks",
@@ -54549,7 +54921,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "yalding-to-sutton-vallance": {
     "slug": "yalding-to-sutton-vallance",
@@ -54691,7 +55064,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "harrietsham-to-pluckley": {
     "slug": "harrietsham-to-pluckley",
@@ -54802,7 +55176,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ham-street-to-appledore": {
     "slug": "ham-street-to-appledore",
@@ -55107,7 +55482,8 @@
         },
         "suffix": "via Gusbourne Vineyard"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hayes-circular": {
     "slug": "hayes-circular",
@@ -55249,7 +55625,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "hayes-to-knockholt": {
     "slug": "hayes-to-knockholt",
@@ -55385,7 +55762,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hever-to-ashurst": {
     "slug": "hever-to-ashurst",
@@ -55641,7 +56019,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hever-to-dormans": {
     "slug": "hever-to-dormans",
@@ -55826,7 +56205,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hever-to-leigh": {
     "slug": "hever-to-leigh",
@@ -56133,7 +56513,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hever-to-tonbridge": {
     "slug": "hever-to-tonbridge",
@@ -56423,7 +56804,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "higham-to-gravesend": {
     "slug": "higham-to-gravesend",
@@ -56529,7 +56911,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hildenborough-to-hadlow-or-tonbridge": {
     "slug": "hildenborough-to-hadlow-or-tonbridge",
@@ -56732,7 +57115,8 @@
         },
         "suffix": "via Hadlow Tower"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hollingbourne-circular": {
     "slug": "hollingbourne-circular",
@@ -56994,7 +57378,8 @@
         },
         "suffix": "via Thurnham Castle & St Margaret Hucking"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hurst-green-to-chiddingstone-causeway": {
     "slug": "hurst-green-to-chiddingstone-causeway",
@@ -57280,7 +57665,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "knockholt-circular": {
     "slug": "knockholt-circular",
@@ -57377,7 +57763,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "knockholt-to-otford": {
     "slug": "knockholt-to-otford",
@@ -57521,7 +57908,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leigh-and-penshurst": {
     "slug": "leigh-and-penshurst",
@@ -57876,7 +58264,8 @@
         },
         "suffix": "via Chiddingstone Village"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leigh-to-sevenoaks": {
     "slug": "leigh-to-sevenoaks",
@@ -57997,7 +58386,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leigh-to-tunbridge-wells": {
     "slug": "leigh-to-tunbridge-wells",
@@ -58153,7 +58543,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "lenham-to-charing": {
     "slug": "lenham-to-charing",
@@ -58337,7 +58728,8 @@
         },
         "suffix": "via Lenham Cross"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "meopham-to-rochester": {
     "slug": "meopham-to-rochester",
@@ -58688,7 +59080,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sandling-to-folkestone-or-dover": {
     "slug": "sandling-to-folkestone-or-dover",
@@ -58961,7 +59354,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sandling-to-wye": {
     "slug": "sandling-to-wye",
@@ -59121,7 +59515,8 @@
         },
         "suffix": "via NDW"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "otford-to-snodland": {
     "slug": "otford-to-snodland",
@@ -59249,7 +59644,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "otford-circular": {
     "slug": "otford-circular",
@@ -59619,7 +60015,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "otford-circular-via-shoreham": {
     "slug": "otford-circular-via-shoreham",
@@ -59808,7 +60205,8 @@
         },
         "suffix": "via Shoreham"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "otford-to-eynsford": {
     "slug": "otford-to-eynsford",
@@ -59988,7 +60386,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "paddock-wood-to-yalding": {
     "slug": "paddock-wood-to-yalding",
@@ -60348,7 +60747,8 @@
         },
         "suffix": "via River Medway"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "penshurst-circular": {
     "slug": "penshurst-circular",
@@ -60567,7 +60967,8 @@
         },
         "suffix": "via Bough Beech & Hever Castle Golf Course"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pluckley-circular": {
     "slug": "pluckley-circular",
@@ -60693,7 +61094,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ramsgate-to-margate": {
     "slug": "ramsgate-to-margate",
@@ -60977,7 +61379,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "rye-dungeness-lydd-on-sea": {
     "slug": "rye-dungeness-lydd-on-sea",
@@ -61223,7 +61626,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sandling-to-folkestone-via-the-sea": {
     "slug": "sandling-to-folkestone-via-the-sea",
@@ -61443,7 +61847,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "sevenoaks-circular": {
     "slug": "sevenoaks-circular",
@@ -61567,7 +61972,8 @@
         },
         "suffix": "via Knole House"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "sevenoaks-to-westerham": {
     "slug": "sevenoaks-to-westerham",
@@ -61676,7 +62082,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map.",
+    "source": "saturday-walkers-club"
   },
   "shoreham-circular": {
     "slug": "shoreham-circular",
@@ -62122,7 +62529,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "snodland-to-sole-street": {
     "slug": "snodland-to-sole-street",
@@ -62265,7 +62673,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "staplehurst-to-headcorn": {
     "slug": "staplehurst-to-headcorn",
@@ -62421,7 +62830,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "stonegate-circular": {
     "slug": "stonegate-circular",
@@ -62573,7 +62983,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tenterden-to-rye": {
     "slug": "tenterden-to-rye",
@@ -62866,7 +63277,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "teynham-to-faversham": {
     "slug": "teynham-to-faversham",
@@ -62982,7 +63394,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tonbridge-circular-via-tudeley": {
     "slug": "tonbridge-circular-via-tudeley",
@@ -63216,7 +63629,8 @@
         },
         "suffix": "via Tudeley & St Thomas à Becket"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tonbridge-to-penshurst": {
     "slug": "tonbridge-to-penshurst",
@@ -63665,7 +64079,8 @@
         },
         "suffix": "via Hall Place"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tunbridge-wells-circular": {
     "slug": "tunbridge-wells-circular",
@@ -64045,7 +64460,8 @@
         },
         "suffix": "via Eridge Rocks"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tunbridge-wells-to-hildenborough": {
     "slug": "tunbridge-wells-to-hildenborough",
@@ -64280,7 +64696,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wadhurst-circular": {
     "slug": "wadhurst-circular",
@@ -64582,7 +64999,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wateringbury-circular": {
     "slug": "wateringbury-circular",
@@ -65234,7 +65652,8 @@
         },
         "suffix": "via North Pole"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "west-malling-circular": {
     "slug": "west-malling-circular",
@@ -65583,7 +66002,8 @@
         },
         "suffix": "via Horticultural Research Institute"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "whyteleafe-to-hayes": {
     "slug": "whyteleafe-to-hayes",
@@ -65896,7 +66316,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wye-circular": {
     "slug": "wye-circular",
@@ -66122,7 +66543,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "yalding-circular": {
     "slug": "yalding-circular",
@@ -66408,7 +66830,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "yalding-to-borough-green": {
     "slug": "yalding-to-borough-green",
@@ -66636,7 +67059,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "walks-from-ambleside": {
     "slug": "walks-from-ambleside",
@@ -66777,7 +67201,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "alexandra-palace-to-tottenham-hale": {
     "slug": "alexandra-palace-to-tottenham-hale",
@@ -67133,7 +67558,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "beverley-brook": {
     "slug": "beverley-brook",
@@ -67621,7 +68047,8 @@
         },
         "suffix": "via Barnes Common"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "blackheath-to-canary-wharf": {
     "slug": "blackheath-to-canary-wharf",
@@ -68098,7 +68525,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Canary Wharf\" to CWX (Elizabeth line) on all variants."
+    "resolution": "Matched \"Canary Wharf\" to CWX (Elizabeth line) on all variants.",
+    "source": "saturday-walkers-club"
   },
   "blackheath-to-deptford": {
     "slug": "blackheath-to-deptford",
@@ -68309,7 +68737,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "boston-manor-to-northfields": {
     "slug": "boston-manor-to-northfields",
@@ -68465,7 +68894,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chessington-to-cheam": {
     "slug": "chessington-to-cheam",
@@ -68815,7 +69245,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "crystal-palace-to-forest-hill": {
     "slug": "crystal-palace-to-forest-hill",
@@ -69019,7 +69450,8 @@
         },
         "suffix": "via Crystal Palace Museum"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ealing-broadway-circular": {
     "slug": "ealing-broadway-circular",
@@ -69396,7 +69828,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "manor-park-to-epping": {
     "slug": "manor-park-to-epping",
@@ -69877,7 +70310,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "greenford-to-osterley": {
     "slug": "greenford-to-osterley",
@@ -69993,7 +70427,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hampton-court-circular": {
     "slug": "hampton-court-circular",
@@ -70347,7 +70782,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "highgate-to-hampstead": {
     "slug": "highgate-to-hampstead",
@@ -70717,7 +71153,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "central-london-circular": {
     "slug": "central-london-circular",
@@ -70852,7 +71289,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kenley-to-caterham": {
     "slug": "kenley-to-caterham",
@@ -71051,7 +71489,8 @@
         },
         "suffix": "via Riddlesdown"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leytonstone-to-loughton": {
     "slug": "leytonstone-to-loughton",
@@ -71257,7 +71696,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "lloyd-park-to-coombe-lane": {
     "slug": "lloyd-park-to-coombe-lane",
@@ -71383,7 +71823,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "rainham-to-purfleet-via-rspb-rainham-marshes": {
     "slug": "rainham-to-purfleet-via-rspb-rainham-marshes",
@@ -71621,7 +72062,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "loughton-to-epping": {
     "slug": "loughton-to-epping",
@@ -71763,7 +72205,8 @@
         },
         "suffix": "via Epping Forest"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "mitcham-junction-to-colliers-wood": {
     "slug": "mitcham-junction-to-colliers-wood",
@@ -72364,7 +72807,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "norbiton-to-hammersmith-or-putney": {
     "slug": "norbiton-to-hammersmith-or-putney",
@@ -72896,7 +73340,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "petts-wood-circular": {
     "slug": "petts-wood-circular",
@@ -73005,7 +73450,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "rainham-to-grays": {
     "slug": "rainham-to-grays",
@@ -73203,7 +73649,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "richmond-circular": {
     "slug": "richmond-circular",
@@ -73309,7 +73756,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "river-crane": {
     "slug": "river-crane",
@@ -73425,7 +73873,8 @@
         },
         "suffix": "via Crane Island Nature Reserve"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tadworth-via-headley-heath-and-box-hill-circular": {
     "slug": "tadworth-via-headley-heath-and-box-hill-circular",
@@ -73564,7 +74013,8 @@
         },
         "suffix": "via Headley Heath and Box Hill Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "putney-to-richmond": {
     "slug": "putney-to-richmond",
@@ -73727,7 +74177,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tower-hill-to-putney-bridge-via-thames-path": {
     "slug": "tower-hill-to-putney-bridge-via-thames-path",
@@ -74023,7 +74474,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "london-bridge-to-greenwich-via-the-south-bank": {
     "slug": "london-bridge-to-greenwich-via-the-south-bank",
@@ -74390,7 +74842,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "london-stations": {
     "slug": "london-stations",
@@ -75105,7 +75558,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "totteridge-circular": {
     "slug": "totteridge-circular",
@@ -75488,7 +75942,8 @@
         },
         "suffix": "via Hadley Green"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "twickehham-circular": {
     "slug": "twickehham-circular",
@@ -75615,7 +76070,8 @@
         },
         "suffix": "via 3 rivers"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wimbledon-circular": {
     "slug": "wimbledon-circular",
@@ -75755,7 +76211,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "wimbledon-to-kingston": {
     "slug": "wimbledon-to-kingston",
@@ -76089,7 +76546,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wimbledon-to-putney": {
     "slug": "wimbledon-to-putney",
@@ -76390,7 +76848,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hunstanton-to-cromer": {
     "slug": "hunstanton-to-cromer",
@@ -76622,7 +77081,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Added Titchwell impassability warning to both variants. Walk surfaced on Cromer via station-rambler-extras (Hunstanton not a station — bus from Kings Lynn)."
+    "resolution": "Added Titchwell impassability warning to both variants. Walk surfaced on Cromer via station-rambler-extras (Hunstanton not a station — bus from Kings Lynn).",
+    "source": "saturday-walkers-club"
   },
   "kings-sutton-circular": {
     "slug": "kings-sutton-circular",
@@ -76867,7 +77327,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "wellingborough-circular": {
     "slug": "wellingborough-circular",
@@ -77180,7 +77641,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wellingborough-to-northampton": {
     "slug": "wellingborough-to-northampton",
@@ -77420,7 +77882,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wolverton-to-northampton": {
     "slug": "wolverton-to-northampton",
@@ -77631,7 +78094,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "calais-walking-guide": {
     "slug": "calais-walking-guide",
@@ -78045,7 +78509,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "banbury-circular": {
     "slug": "banbury-circular",
@@ -78248,7 +78713,8 @@
         },
         "suffix": "via St Michael's Church Barford St. Michael"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "cholsey-to-goring": {
     "slug": "cholsey-to-goring",
@@ -78371,7 +78837,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley) on main + circular variant."
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley) on main + circular variant.",
+    "source": "saturday-walkers-club"
   },
   "cholsey-to-goring-via-wallingford": {
     "slug": "cholsey-to-goring-via-wallingford",
@@ -78456,7 +78923,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley)."
+    "resolution": "Matched \"Goring\" to GOR (Goring & Streatley).",
+    "source": "saturday-walkers-club"
   },
   "cookham-to-maidenhead": {
     "slug": "cookham-to-maidenhead",
@@ -78910,7 +79378,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "didcot-circular": {
     "slug": "didcot-circular",
@@ -79077,7 +79546,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Didcot\" to DID (Didcot Parkway) on the main circular walk."
+    "resolution": "Matched \"Didcot\" to DID (Didcot Parkway) on the main circular walk.",
+    "source": "saturday-walkers-club"
   },
   "goring-circular-via-hill-bottom": {
     "slug": "goring-circular-via-hill-bottom",
@@ -79157,7 +79627,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Goring\" to GOR."
+    "resolution": "Matched \"Goring\" to GOR.",
+    "source": "saturday-walkers-club"
   },
   "hanborough-to-charlbury": {
     "slug": "hanborough-to-charlbury",
@@ -79357,7 +79828,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-circular-via-great-wood": {
     "slug": "henley-circular-via-great-wood",
@@ -79619,7 +80091,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-circular-via-rotherfield-greys": {
     "slug": "henley-circular-via-rotherfield-greys",
@@ -79748,7 +80221,8 @@
         },
         "suffix": "via Rotherfield Greys"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-to-pangbourne": {
     "slug": "henley-to-pangbourne",
@@ -79952,7 +80426,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-via-hambleden-circular": {
     "slug": "henley-via-hambleden-circular",
@@ -80216,7 +80691,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-via-stonor-circular": {
     "slug": "henley-via-stonor-circular",
@@ -80334,7 +80810,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "henley-via-turville-circular": {
     "slug": "henley-via-turville-circular",
@@ -80431,7 +80908,8 @@
         },
         "suffix": "via Turville Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "islip-circular": {
     "slug": "islip-circular",
@@ -80607,7 +81085,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kingham-to-charlbury": {
     "slug": "kingham-to-charlbury",
@@ -80696,7 +81175,8 @@
         },
         "suffix": "via Bruern Abbey"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kingham-to-charlbury-long": {
     "slug": "kingham-to-charlbury-long",
@@ -80774,7 +81254,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "marlow-circular": {
     "slug": "marlow-circular",
@@ -81129,7 +81610,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "oxford-circular": {
     "slug": "oxford-circular",
@@ -81430,7 +81912,8 @@
         "difficulty": "moderate",
         "updatedAt": "2026-05-02T02:19:43.186Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pangbourne-circular": {
     "slug": "pangbourne-circular",
@@ -81639,7 +82122,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pangbourne-via-goring-circular": {
     "slug": "pangbourne-via-goring-circular",
@@ -81893,7 +82377,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "shiplake-to-henley": {
     "slug": "shiplake-to-henley",
@@ -82166,7 +82651,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "thame-circular": {
     "slug": "thame-circular",
@@ -82413,7 +82899,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "goring-to-wantage": {
     "slug": "goring-to-wantage",
@@ -82608,7 +83095,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "bamford-to-edale-via-win-hill-and-great-ridge": {
     "slug": "bamford-to-edale-via-win-hill-and-great-ridge",
@@ -82887,7 +83375,8 @@
         },
         "suffix": "via Win Hill and Great Ridge & Brown Knoll"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxton-circular-or-to-monsal-dale-via-the-wye-valley": {
     "slug": "buxton-circular-or-to-monsal-dale-via-the-wye-valley",
@@ -83146,7 +83635,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxton-circular-via-axe-edge-moor-and-three-shires-head": {
     "slug": "buxton-circular-via-axe-edge-moor-and-three-shires-head",
@@ -83275,7 +83765,8 @@
         },
         "suffix": "via Axe Edge Moor and Three Shires Head"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxton-circular-via-combs-moss": {
     "slug": "buxton-circular-via-combs-moss",
@@ -83475,7 +83966,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxton-circular-via-the-dragons-back": {
     "slug": "buxton-circular-via-the-dragons-back",
@@ -83618,7 +84110,8 @@
         },
         "suffix": "via the Dragon's Back"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "buxton-to-macclesfield": {
     "slug": "buxton-to-macclesfield",
@@ -83747,7 +84240,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dovedale-circular-from-ashbourne": {
     "slug": "dovedale-circular-from-ashbourne",
@@ -83984,7 +84478,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "edale-circular-via-kinder-scout-and-mam-tor": {
     "slug": "edale-circular-via-kinder-scout-and-mam-tor",
@@ -84206,7 +84701,8 @@
         },
         "suffix": "via Kinder Scout and Mam Tor & Grindsbrook Clough"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "fairholmes-circular-via-bleaklow-and-derwent-head": {
     "slug": "fairholmes-circular-via-bleaklow-and-derwent-head",
@@ -84354,7 +84850,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "grindleford-circular-via-chatsworth-house": {
     "slug": "grindleford-circular-via-chatsworth-house",
@@ -84574,7 +85071,8 @@
         },
         "suffix": "via Chatsworth House & White Edge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hathersage-circular": {
     "slug": "hathersage-circular",
@@ -84727,7 +85225,8 @@
         },
         "suffix": "via Bretton Clough and Eyam"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hathersage-circular-via-stanage-edge-higger-tor-and-padley-gorge": {
     "slug": "hathersage-circular-via-stanage-edge-higger-tor-and-padley-gorge",
@@ -84940,7 +85439,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hathersage-to-bamford-via-bamford-and-hordron-edges": {
     "slug": "hathersage-to-bamford-via-bamford-and-hordron-edges",
@@ -85148,7 +85648,8 @@
         },
         "suffix": "via Hordron Edge Stone Circle"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hope-to-hathersage-or-bamford-via-castleton": {
     "slug": "hope-to-hathersage-or-bamford-via-castleton",
@@ -85608,7 +86109,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "kinder-scout-circuit-from-edale": {
     "slug": "kinder-scout-circuit-from-edale",
@@ -85767,7 +86269,8 @@
         },
         "suffix": "via Kinder Low"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ladybower-inn-circular-via-alport-castles-and-derwent-reservoirs": {
     "slug": "ladybower-inn-circular-via-alport-castles-and-derwent-reservoirs",
@@ -86055,7 +86558,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "ladybower-inn-circular-via-derwent-edge-and-strines": {
     "slug": "ladybower-inn-circular-via-derwent-edge-and-strines",
@@ -86275,7 +86779,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "macclesfield-circular-via-teggs-nose-and-kerridge-hill": {
     "slug": "macclesfield-circular-via-teggs-nose-and-kerridge-hill",
@@ -86495,7 +87000,8 @@
         },
         "suffix": "via Teggs Nose and Kerridge Hill & Shining Tor"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "macclesfield-circular-via-the-dane-valley": {
     "slug": "macclesfield-circular-via-the-dane-valley",
@@ -86633,7 +87139,8 @@
         },
         "suffix": "via The Dane Valley"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "macclesfield-to-buxton": {
     "slug": "macclesfield-to-buxton",
@@ -86770,7 +87277,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "macclesfield-to-leek": {
     "slug": "macclesfield-to-leek",
@@ -87025,7 +87533,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "mam-tor-to-kinder-low": {
     "slug": "mam-tor-to-kinder-low",
@@ -87125,7 +87634,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "monsal-trail": {
     "slug": "monsal-trail",
@@ -87278,7 +87788,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Missing walking time is not a blocker; walk uses stated distance only."
+    "resolution": "Missing walking time is not a blocker; walk uses stated distance only.",
+    "source": "saturday-walkers-club"
   },
   "sheffield-circular-via-porter-and-gleadless": {
     "slug": "sheffield-circular-via-porter-and-gleadless",
@@ -87589,7 +88100,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Nulled distances/times on all variants per user directive (page figures were inconsistent/partial)."
+    "resolution": "Nulled distances/times on all variants per user directive (page figures were inconsistent/partial).",
+    "source": "saturday-walkers-club"
   },
   "sheffield-to-bamford-via-stanage-edge": {
     "slug": "sheffield-to-bamford-via-stanage-edge",
@@ -87824,7 +88336,8 @@
         },
         "suffix": "via Stanage Edge & Carl Wark"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "upper-hulme-to-macclesfield": {
     "slug": "upper-hulme-to-macclesfield",
@@ -88104,7 +88617,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "castlemartin-range-coast-path": {
     "slug": "castlemartin-range-coast-path",
@@ -88221,7 +88735,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "snowdon": {
     "slug": "snowdon",
@@ -88582,7 +89097,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "bath-circular-via-2-tunnels-and-a-canal": {
     "slug": "bath-circular-via-2-tunnels-and-a-canal",
@@ -88758,7 +89274,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Bath\" to BTH (Bath Spa). Dropped unlisted winter-return variant (no distance/time given)."
+    "resolution": "Matched \"Bath\" to BTH (Bath Spa). Dropped unlisted winter-return variant (no distance/time given).",
+    "source": "saturday-walkers-club"
   },
   "bruton-circular-via-hauser-wirth-somerset": {
     "slug": "bruton-circular-via-hauser-wirth-somerset",
@@ -89111,7 +89628,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bruton-circular-via-stourhead": {
     "slug": "bruton-circular-via-stourhead",
@@ -89406,7 +89924,8 @@
         },
         "suffix": "via Stourhead"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "castle-cary-circular-via-camelot": {
     "slug": "castle-cary-circular-via-camelot",
@@ -89543,7 +90062,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "aldeburgh-to-saxmundham": {
     "slug": "aldeburgh-to-saxmundham",
@@ -89747,7 +90267,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "melton-to-woodbridge-via-sutton-hoo": {
     "slug": "melton-to-woodbridge-via-sutton-hoo",
@@ -89905,7 +90426,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wickham-market-to-aldeburgh": {
     "slug": "wickham-market-to-aldeburgh",
@@ -90090,7 +90612,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "wickham-market-to-felixstowe": {
     "slug": "wickham-market-to-felixstowe",
@@ -90247,7 +90770,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ash-circular-via-the-mod-ranges": {
     "slug": "ash-circular-via-the-mod-ranges",
@@ -90358,7 +90882,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ash-vale-circular-via-north-downs-way": {
     "slug": "ash-vale-circular-via-north-downs-way",
@@ -90699,7 +91224,8 @@
         },
         "suffix": "via North Downs Way & Broadstreet Common"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ash-vale-to-worplesdon": {
     "slug": "ash-vale-to-worplesdon",
@@ -90994,7 +91520,8 @@
         },
         "suffix": "via Ash Ranges"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ash-to-brookwood": {
     "slug": "ash-to-brookwood",
@@ -91511,7 +92038,8 @@
         },
         "suffix": "Walk"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bentley-to-farnham": {
     "slug": "bentley-to-farnham",
@@ -91769,7 +92297,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "box-hill-circular-via-betchworth": {
     "slug": "box-hill-circular-via-betchworth",
@@ -92205,7 +92734,8 @@
         },
         "suffix": "via Betchworth & Deepdene Trail"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "box-hill-circular-via-headley-heath-and-mickleham": {
     "slug": "box-hill-circular-via-headley-heath-and-mickleham",
@@ -92580,7 +93110,8 @@
         },
         "suffix": "via Headley Heath and Mickleham & Norbury Park"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "box-hill-to-leatherhead": {
     "slug": "box-hill-to-leatherhead",
@@ -92975,7 +93506,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chipstead-to-kingswood": {
     "slug": "chipstead-to-kingswood",
@@ -93340,7 +93872,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "deepdene-trail": {
     "slug": "deepdene-trail",
@@ -93467,7 +94000,8 @@
         },
         "suffix": "via Brockham Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dorking-circular": {
     "slug": "dorking-circular",
@@ -93785,7 +94319,8 @@
         },
         "suffix": "via Piney Copse"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dorking-to-box-hill-via-norbury-park-and-mickleham": {
     "slug": "dorking-to-box-hill-via-norbury-park-and-mickleham",
@@ -94050,7 +94585,8 @@
         },
         "suffix": "via Norbury Park and Mickleham"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dormans-to-lingfield": {
     "slug": "dormans-to-lingfield",
@@ -94541,7 +95077,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "effingham-junction-to-westhumble": {
     "slug": "effingham-junction-to-westhumble",
@@ -94762,7 +95299,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "farnham-to-godalming": {
     "slug": "farnham-to-godalming",
@@ -94898,7 +95436,8 @@
         "difficulty": "hard",
         "updatedAt": "2026-05-02T02:12:10.835Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "godstone-to-oxted": {
     "slug": "godstone-to-oxted",
@@ -95189,7 +95728,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "gomshall-to-guildford": {
     "slug": "gomshall-to-guildford",
@@ -95467,7 +96007,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "witley-to-haslemere-via-thursley-surrey-hills": {
     "slug": "witley-to-haslemere-via-thursley-surrey-hills",
@@ -95588,7 +96129,8 @@
         },
         "suffix": "via Thursley, Surrey Hills"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "witley-to-ewhurst": {
     "slug": "witley-to-ewhurst",
@@ -95802,7 +96344,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "gomshall-to-dorking": {
     "slug": "gomshall-to-dorking",
@@ -95927,7 +96470,8 @@
         },
         "suffix": "via Holmbury Hill"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "dorking-to-reigate": {
     "slug": "dorking-to-reigate",
@@ -96030,7 +96574,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "earlswood-to-oxted": {
     "slug": "earlswood-to-oxted",
@@ -96179,7 +96724,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Earlswood\" to ELD (Surrey, Brighton line) per disambiguation priority rule."
+    "resolution": "Matched \"Earlswood\" to ELD (Surrey, Brighton line) per disambiguation priority rule.",
+    "source": "saturday-walkers-club"
   },
   "hurst-green-to-sevenoaks": {
     "slug": "hurst-green-to-sevenoaks",
@@ -96302,7 +96848,8 @@
         },
         "suffix": "via Toy's Hill"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "guildford-circular-via-albury-park": {
     "slug": "guildford-circular-via-albury-park",
@@ -96649,7 +97196,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "guildford-to-farnham": {
     "slug": "guildford-to-farnham",
@@ -96932,7 +97480,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "guildford-to-gomshall": {
     "slug": "guildford-to-gomshall",
@@ -97334,7 +97883,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "guildford-to-horsley": {
     "slug": "guildford-to-horsley",
@@ -97591,7 +98141,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "guildford-via-chantries-hill-circular": {
     "slug": "guildford-via-chantries-hill-circular",
@@ -97796,7 +98347,8 @@
         },
         "suffix": "via Chantries Hill Circular"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "haslemere-circular": {
     "slug": "haslemere-circular",
@@ -97920,7 +98472,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "haslemere-outer-orbital-path": {
     "slug": "haslemere-outer-orbital-path",
@@ -98080,7 +98633,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "haslemere-to-farnham": {
     "slug": "haslemere-to-farnham",
@@ -98229,7 +98783,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "holmwood-to-gomshall": {
     "slug": "holmwood-to-gomshall",
@@ -98387,7 +98942,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "holmwood-to-reigate": {
     "slug": "holmwood-to-reigate",
@@ -98488,7 +99044,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "holmwood-to-shamley-green": {
     "slug": "holmwood-to-shamley-green",
@@ -98646,7 +99203,8 @@
         },
         "suffix": "via Leith Hill Tower"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "horsley-to-west-byfleet": {
     "slug": "horsley-to-west-byfleet",
@@ -98778,7 +99336,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hurst-green-to-riddlesdown": {
     "slug": "hurst-green-to-riddlesdown",
@@ -98957,7 +99516,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "liphook-to-haslemere": {
     "slug": "liphook-to-haslemere",
@@ -99130,7 +99690,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "merstham-to-tattenham-corner": {
     "slug": "merstham-to-tattenham-corner",
@@ -99507,7 +100068,8 @@
         },
         "suffix": "via Banstead Commons"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "milford-to-godalming": {
     "slug": "milford-to-godalming",
@@ -99773,7 +100335,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "milford-to-haslemere": {
     "slug": "milford-to-haslemere",
@@ -99992,7 +100555,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "box-hill-to-merstham": {
     "slug": "box-hill-to-merstham",
@@ -100223,7 +100787,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Box Hill\" to BXW (Box Hill & Westhumble) on main + longer. Removed approximated distances on longer and variant."
+    "resolution": "Matched \"Box Hill\" to BXW (Box Hill & Westhumble) on main + longer. Removed approximated distances on longer and variant.",
+    "source": "saturday-walkers-club"
   },
   "caterham-to-knockholt": {
     "slug": "caterham-to-knockholt",
@@ -100518,7 +101083,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ockley-to-warnham": {
     "slug": "ockley-to-warnham",
@@ -100702,7 +101268,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "oxshott-to-ashtead": {
     "slug": "oxshott-to-ashtead",
@@ -100893,7 +101460,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "oxshott-to-cobham-via-painshill": {
     "slug": "oxshott-to-cobham-via-painshill",
@@ -101100,7 +101668,8 @@
         },
         "suffix": "via Painshill & Black Pond"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "oxted-circular": {
     "slug": "oxted-circular",
@@ -101535,7 +102104,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "oxted-to-lingfield": {
     "slug": "oxted-to-lingfield",
@@ -101878,7 +102448,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "redhill-circular": {
     "slug": "redhill-circular",
@@ -102298,7 +102869,8 @@
         },
         "suffix": "via Ss Peter and Paul"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "riddlesdown-to-coulsdon-south": {
     "slug": "riddlesdown-to-coulsdon-south",
@@ -102545,7 +103117,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "shalford-circular": {
     "slug": "shalford-circular",
@@ -102846,7 +103419,8 @@
         },
         "suffix": "via Chilworth Gunpowder Mills"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tattenham-corner-circular": {
     "slug": "tattenham-corner-circular",
@@ -103342,7 +103916,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "wanborough-to-godalming": {
     "slug": "wanborough-to-godalming",
@@ -103540,7 +104115,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "warlingham-circular": {
     "slug": "warlingham-circular",
@@ -103894,7 +104470,8 @@
         },
         "suffix": "via Riddlesdown"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "west-byfleet-to-hampton-court": {
     "slug": "west-byfleet-to-hampton-court",
@@ -104140,7 +104717,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "whyteleafe-circular": {
     "slug": "whyteleafe-circular",
@@ -104421,7 +104999,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "witley-to-haslemere": {
     "slug": "witley-to-haslemere",
@@ -104630,7 +105209,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "woldingham-circular-via-titsey-place": {
     "slug": "woldingham-circular-via-titsey-place",
@@ -104926,7 +105506,8 @@
         },
         "suffix": "via Titsey Place"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "woldingham-to-oxted": {
     "slug": "woldingham-to-oxted",
@@ -105133,7 +105714,8 @@
         },
         "suffix": "via Great Church Wood"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "amberley-circular": {
     "slug": "amberley-circular",
@@ -105241,7 +105823,8 @@
         },
         "suffix": "via Amberley Wild Brooks"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "amberley-circular-via-arundel-park": {
     "slug": "amberley-circular-via-arundel-park",
@@ -105548,7 +106131,8 @@
         },
         "suffix": "via Arundel Park & Gurkha Bridge"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "amberley-to-arundel": {
     "slug": "amberley-to-arundel",
@@ -105647,7 +106231,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "amberley-to-pulborough": {
     "slug": "amberley-to-pulborough",
@@ -105825,7 +106410,8 @@
         },
         "suffix": "via Bignor"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "angmering-to-littlehampton": {
     "slug": "angmering-to-littlehampton",
@@ -106236,7 +106822,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "arundel-circular": {
     "slug": "arundel-circular",
@@ -106634,7 +107221,8 @@
         },
         "suffix": "via Arundel Castle & St Nicholas"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "arundel-to-amberley": {
     "slug": "arundel-to-amberley",
@@ -107016,7 +107604,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "arundel-to-goring-by-sea": {
     "slug": "arundel-to-goring-by-sea",
@@ -107482,7 +108071,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "arundel-to-midhurst-via-midhurst-way": {
     "slug": "arundel-to-midhurst-via-midhurst-way",
@@ -107654,7 +108244,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "balcombe-circular": {
     "slug": "balcombe-circular",
@@ -107815,7 +108406,8 @@
         "difficulty": "moderate",
         "name": "Balcombe Circular via Nymans Gardens"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "balcombe-circular-via-ardingly-reservoir": {
     "slug": "balcombe-circular-via-ardingly-reservoir",
@@ -107988,7 +108580,8 @@
         },
         "suffix": "via Ardingly Reservoir & Millennium Seedbank"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "balcombe-circular-via-wakehurst": {
     "slug": "balcombe-circular-via-wakehurst",
@@ -108165,7 +108758,8 @@
         },
         "suffix": "via Wakehurst & St Peter, Ardingly"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "balcombe-to-east-grinstead": {
     "slug": "balcombe-to-east-grinstead",
@@ -108302,7 +108896,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "balcombe-to-horsham": {
     "slug": "balcombe-to-horsham",
@@ -108465,7 +109060,8 @@
         },
         "suffix": "via High Weald"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "billingshurst-to-amberley": {
     "slug": "billingshurst-to-amberley",
@@ -108548,7 +109144,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "christs-hospital-to-billingshurst": {
     "slug": "christs-hospital-to-billingshurst",
@@ -108836,7 +109433,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Main walk start set to CHH (Christ's Hospital). Bus-dependent shorter variants accepted as-is."
+    "resolution": "Main walk start set to CHH (Christ's Hospital). Bus-dependent shorter variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "cocking-to-south-harting": {
     "slug": "cocking-to-south-harting",
@@ -108994,7 +109592,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Confirmed the extended walk ends at PTR (Petersfield). Nulled Elsted variant distance (was placeholder nn.nkm). Bus-dependent main walk accepted as-is."
+    "resolution": "Confirmed the extended walk ends at PTR (Petersfield). Nulled Elsted variant distance (was placeholder nn.nkm). Bus-dependent main walk accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "east-grinstead-circular": {
     "slug": "east-grinstead-circular",
@@ -109352,7 +109951,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "east-grinstead-to-wivelsfield": {
     "slug": "east-grinstead-to-wivelsfield",
@@ -109614,7 +110214,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "halnaker-to-chichester-via-goodwood": {
     "slug": "halnaker-to-chichester-via-goodwood",
@@ -109750,7 +110351,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "haslemere-to-midhurst-via-henley": {
     "slug": "haslemere-to-midhurst-via-henley",
@@ -110025,7 +110627,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "haslemere-to-midhurst-via-lurgashall": {
     "slug": "haslemere-to-midhurst-via-lurgashall",
@@ -110151,7 +110754,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map.",
+    "source": "saturday-walkers-club"
   },
   "haslemere-to-midhurst-via-midhurst-way": {
     "slug": "haslemere-to-midhurst-via-midhurst-way",
@@ -110296,7 +110900,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map.",
+    "source": "saturday-walkers-club"
   },
   "hassocks-to-upper-beeding": {
     "slug": "hassocks-to-upper-beeding",
@@ -110539,7 +111144,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "haywards-heath-circular-via-lindfield": {
     "slug": "haywards-heath-circular-via-lindfield",
@@ -110934,7 +111540,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras."
+    "resolution": "Auto-resolved via batch disambiguation / bus-only classification / TfL extras.",
+    "source": "saturday-walkers-club"
   },
   "haywards-heath-to-balcombe-via-ardingly": {
     "slug": "haywards-heath-to-balcombe-via-ardingly",
@@ -111259,7 +111866,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "haywards-heath-to-balcombe": {
     "slug": "haywards-heath-to-balcombe",
@@ -111354,7 +111962,8 @@
         },
         "suffix": "via the Ouse valley"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "horsted-keynes-circular": {
     "slug": "horsted-keynes-circular",
@@ -111832,7 +112441,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map."
+    "resolution": "Auto-resolved: bus-dependent or heritage-railway endpoint — walk not surfaced on map.",
+    "source": "saturday-walkers-club"
   },
   "littlehampton-to-bognor-regis": {
     "slug": "littlehampton-to-bognor-regis",
@@ -112006,7 +112616,8 @@
           "type": "longer"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "chichester-to-west-wittering-and-east-head": {
     "slug": "chichester-to-west-wittering-and-east-head",
@@ -112140,7 +112751,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "West Wittering has no train station — walk requires bus from CCH; not station-to-station."
+    "resolution": "West Wittering has no train station — walk requires bus from CCH; not station-to-station.",
+    "source": "saturday-walkers-club"
   },
   "pease-pottage-to-steyning": {
     "slug": "pease-pottage-to-steyning",
@@ -112484,7 +113096,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "petersfield-to-rowlands-castle": {
     "slug": "petersfield-to-rowlands-castle",
@@ -112563,7 +113176,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pulborough-circular": {
     "slug": "pulborough-circular",
@@ -112939,7 +113553,8 @@
         },
         "suffix": "via South Stoke Barn"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pulborough-to-amberley": {
     "slug": "pulborough-to-amberley",
@@ -113110,7 +113725,8 @@
         },
         "suffix": "via Amberley Village Tea Room"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pulborough-to-halfway-bridge-via-tillington": {
     "slug": "pulborough-to-halfway-bridge-via-tillington",
@@ -113246,7 +113862,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "pulborough-to-petworth": {
     "slug": "pulborough-to-petworth",
@@ -113599,7 +114216,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "rowlands-castle-circular": {
     "slug": "rowlands-castle-circular",
@@ -113765,7 +114383,8 @@
         },
         "suffix": "via Pen Hill"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "rowlands-castle-grand-circular": {
     "slug": "rowlands-castle-grand-circular",
@@ -114031,7 +114650,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "seaford-circular": {
     "slug": "seaford-circular",
@@ -114235,7 +114855,8 @@
         },
         "suffix": "via Alfriston and Bishopstone"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "shoreham-by-sea-to-littlehampton": {
     "slug": "shoreham-by-sea-to-littlehampton",
@@ -114489,7 +115110,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "petersfield-to-cocking": {
     "slug": "petersfield-to-cocking",
@@ -114606,7 +115228,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "amberley-to-cocking": {
     "slug": "amberley-to-cocking",
@@ -114691,7 +115314,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "amberley-to-shoreham-by-sea-or-lancing": {
     "slug": "amberley-to-shoreham-by-sea-or-lancing",
@@ -114901,7 +115525,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "southbourne-to-chichester": {
     "slug": "southbourne-to-chichester",
@@ -115175,7 +115800,8 @@
           "type": "related"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "steyning-to-cocking": {
     "slug": "steyning-to-cocking",
@@ -115424,7 +116050,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Nulled ambiguous Ending-at-Amberley distance. Walk surfaces on Amberley (AMY) via station-rambler-extras — Steyning and Cocking are bus-dependent non-stations."
+    "resolution": "Nulled ambiguous Ending-at-Amberley distance. Walk surfaces on Amberley (AMY) via station-rambler-extras — Steyning and Cocking are bus-dependent non-stations.",
+    "source": "saturday-walkers-club"
   },
   "wivelsfield-to-haywards-heath": {
     "slug": "wivelsfield-to-haywards-heath",
@@ -115642,7 +116269,8 @@
         },
         "suffix": "via Bedelands Farm Local Nature Reserve"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "bradford-on-avon-to-bath": {
     "slug": "bradford-on-avon-to-bath",
@@ -115756,7 +116384,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Bath\" to BTH (Bath Spa)."
+    "resolution": "Matched \"Bath\" to BTH (Bath Spa).",
+    "source": "saturday-walkers-club"
   },
   "chippenham-circular": {
     "slug": "chippenham-circular",
@@ -115854,7 +116483,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "marlborough-circular-via-avebury": {
     "slug": "marlborough-circular-via-avebury",
@@ -116002,7 +116632,8 @@
         }
       }
     ],
-    "resolved": true
+    "resolved": true,
+    "source": "saturday-walkers-club"
   },
   "pewsey-circular": {
     "slug": "pewsey-circular",
@@ -116178,7 +116809,8 @@
         },
         "suffix": "via Wansdyke"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "pewsey-circular-via-avebury": {
     "slug": "pewsey-circular-via-avebury",
@@ -116589,7 +117221,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "salisbury-circular": {
     "slug": "salisbury-circular",
@@ -116726,7 +117359,8 @@
         "rating": null,
         "updatedAt": "2026-04-27T19:02:55.370Z"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "salisbury-to-amesbury-via-stonehenge": {
     "slug": "salisbury-to-amesbury-via-stonehenge",
@@ -116870,7 +117504,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is."
+    "resolution": "Auto-resolved: issue purely about ambiguous distance/time and/or bus/taxi requirement. Ambiguous DT fields nulled; bus-dependent variants accepted as-is.",
+    "source": "saturday-walkers-club"
   },
   "tisbury-circular-via-alvediston": {
     "slug": "tisbury-circular-via-alvediston",
@@ -116961,7 +117596,8 @@
         },
         "suffix": "via Alvediston"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tisbury-circular-via-dinton-and-fovant": {
     "slug": "tisbury-circular-via-dinton-and-fovant",
@@ -117118,7 +117754,8 @@
         },
         "suffix": "via Dinton and Fovant & Chiselbury Iron Age hill fort"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tisbury-circular-via-donhead-st-andrew": {
     "slug": "tisbury-circular-via-donhead-st-andrew",
@@ -117212,7 +117849,8 @@
         },
         "suffix": "via Donhead St. Andrew"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tisbury-circular-via-hindon": {
     "slug": "tisbury-circular-via-hindon",
@@ -117328,7 +117966,8 @@
         },
         "suffix": "via Hindon"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "tisbury-circular-via-ludwell": {
     "slug": "tisbury-circular-via-ludwell",
@@ -117447,7 +118086,8 @@
         },
         "suffix": "via Ludwell"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "westbury-to-warminster-via-imber-range": {
     "slug": "westbury-to-warminster-via-imber-range",
@@ -117740,7 +118380,8 @@
           "type": "variant"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "evesham-to-pershore-via-dumbleton-and-bredon-hills": {
     "slug": "evesham-to-pershore-via-dumbleton-and-bredon-hills",
@@ -117897,7 +118538,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "hagley-to-barnt-green-via-the-clent-hills": {
     "slug": "hagley-to-barnt-green-via-the-clent-hills",
@@ -118113,7 +118755,8 @@
         },
         "suffix": "via the Clent Hills & Calcot Hill"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "malvern-hills-from-great-malvern-or-colwall": {
     "slug": "malvern-hills-from-great-malvern-or-colwall",
@@ -118313,7 +118956,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "baugh-fell": {
     "slug": "baugh-fell",
@@ -118429,7 +119073,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "fountains-fell-and-catrigg-force": {
     "slug": "fountains-fell-and-catrigg-force",
@@ -118533,7 +119178,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Matched \"Horton in Ribblesdale\" to HIR (Horton-in-Ribblesdale)."
+    "resolution": "Matched \"Horton in Ribblesdale\" to HIR (Horton-in-Ribblesdale).",
+    "source": "saturday-walkers-club"
   },
   "great-knoutberry-hill": {
     "slug": "great-knoutberry-hill",
@@ -118643,7 +119289,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ingleborough-via-ingleton": {
     "slug": "ingleborough-via-ingleton",
@@ -118876,7 +119523,8 @@
           "type": "alternative"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "ingleborough-via-moughton-scars-and-gaping-gill": {
     "slug": "ingleborough-via-moughton-scars-and-gaping-gill",
@@ -118978,7 +119626,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Only alternative end stations given are Clapham (CPY) and Ribblehead (RHD) — not Giggleswick. Walk data already correct; note was a misleading digression."
+    "resolution": "Only alternative end stations given are Clapham (CPY) and Ribblehead (RHD) — not Giggleswick. Walk data already correct; note was a misleading digression.",
+    "source": "saturday-walkers-club"
   },
   "pen-y-ghent-and-plover-hill": {
     "slug": "pen-y-ghent-and-plover-hill",
@@ -119074,7 +119723,8 @@
       }
     ],
     "resolved": true,
-    "resolution": "Fuzzy-matched station name to the correct CRS."
+    "resolution": "Fuzzy-matched station name to the correct CRS.",
+    "source": "saturday-walkers-club"
   },
   "pendle-hill": {
     "slug": "pendle-hill",
@@ -119326,7 +119976,8 @@
           "type": "shorter"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "settle-circular-via-malham": {
     "slug": "settle-circular-via-malham",
@@ -119457,7 +120108,8 @@
           "type": "main"
         }
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "whernside": {
     "slug": "whernside",
@@ -119560,7 +120212,8 @@
         },
         "suffix": "via Whernside"
       }
-    ]
+    ],
+    "source": "saturday-walkers-club"
   },
   "leicester-ramblers-101": {
     "slug": "leicester-ramblers-101",
@@ -119643,7 +120296,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/101%20Nottingham%20to%20Parkway%20Station.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/101%20Nottingham%20to%20Parkway%20Station.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-102": {
     "slug": "leicester-ramblers-102",
@@ -119725,7 +120379,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/102%20Parkway%20Station%20to%20Barrow%20on%20Soar.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/102%20Parkway%20Station%20to%20Barrow%20on%20Soar.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-103": {
     "slug": "leicester-ramblers-103",
@@ -119797,7 +120452,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/103%20Barrow%20on%20Soar%20to%20Leicester.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/103%20Barrow%20on%20Soar%20to%20Leicester.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-105": {
     "slug": "leicester-ramblers-105",
@@ -119870,7 +120526,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/105%20Mkt%20Hboro%20Circular%209m.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/105%20Mkt%20Hboro%20Circular%209m.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-106": {
     "slug": "leicester-ramblers-106",
@@ -119946,7 +120603,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/106%20Oakham%20Circular%2012m.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/106%20Oakham%20Circular%2012m.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-107": {
     "slug": "leicester-ramblers-107",
@@ -120022,7 +120680,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/107%20Syston%20to%20Melton%2013m.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/107%20Syston%20to%20Melton%2013m.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-108": {
     "slug": "leicester-ramblers-108",
@@ -120088,7 +120747,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/108%20Melton%20to%20Oakham%20v%20Whissendine%2012.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/108%20Melton%20to%20Oakham%20v%20Whissendine%2012.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-109": {
     "slug": "leicester-ramblers-109",
@@ -120166,7 +120826,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/109%20Parkway%20Circular%20via%20Gotham%2011.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/109%20Parkway%20Circular%20via%20Gotham%2011.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-204": {
     "slug": "leicester-ramblers-204",
@@ -120249,7 +120910,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/204%20Nottingham%20to%20Parkway%20South%20Bank.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/204%20Nottingham%20to%20Parkway%20South%20Bank.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-206": {
     "slug": "leicester-ramblers-206",
@@ -120320,7 +120982,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/206%20Bluebells%20and%20Beer%2012.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/206%20Bluebells%20and%20Beer%2012.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-210": {
     "slug": "leicester-ramblers-210",
@@ -120389,7 +121052,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/210%20Derby%20to%20Long%20Eaton.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/210%20Derby%20to%20Long%20Eaton.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-212": {
     "slug": "leicester-ramblers-212",
@@ -120462,7 +121126,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/212%20Atherstone%20Circular%2010.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/212%20Atherstone%20Circular%2010.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-311": {
     "slug": "leicester-ramblers-311",
@@ -120536,7 +121201,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/311%20Fiskerton%20Southwell.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/311%20Fiskerton%20Southwell.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-305": {
     "slug": "leicester-ramblers-305",
@@ -120600,7 +121266,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/305%20Lichfield.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/305%20Lichfield.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-315": {
     "slug": "leicester-ramblers-315",
@@ -120676,7 +121343,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/315%20Derby%20City%20Circular.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/315%20Derby%20City%20Circular.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-317": {
     "slug": "leicester-ramblers-317",
@@ -120746,7 +121414,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/317%20Bingham.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/317%20Bingham.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-402": {
     "slug": "leicester-ramblers-402",
@@ -120820,7 +121489,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/402%20Attenborough.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/402%20Attenborough.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-404": {
     "slug": "leicester-ramblers-404",
@@ -120905,7 +121575,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/404%20Burton%20Joyce%20to%20Fiskerton.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/404%20Burton%20Joyce%20to%20Fiskerton.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-409": {
     "slug": "leicester-ramblers-409",
@@ -120973,7 +121644,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/409%20Lboro%20Circular.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/409%20Lboro%20Circular.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-410": {
     "slug": "leicester-ramblers-410",
@@ -121049,7 +121721,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/410%20Spondon%20Circular.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/410%20Spondon%20Circular.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-411": {
     "slug": "leicester-ramblers-411",
@@ -121122,7 +121795,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/411%20Nuneaton%20Circular.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/411%20Nuneaton%20Circular.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-415": {
     "slug": "leicester-ramblers-415",
@@ -121202,7 +121876,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/415%20Stamford.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/415%20Stamford.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-416": {
     "slug": "leicester-ramblers-416",
@@ -121270,7 +121945,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/416%20Erewash%20Valley.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/416%20Erewash%20Valley.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-417": {
     "slug": "leicester-ramblers-417",
@@ -121348,7 +122024,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/417%20Lowdham%20to%20Burton%20Joyce.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/417%20Lowdham%20to%20Burton%20Joyce.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-418": {
     "slug": "leicester-ramblers-418",
@@ -121416,7 +122093,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/418%20Kettering%20Circular.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/418%20Kettering%20Circular.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-419": {
     "slug": "leicester-ramblers-419",
@@ -121488,7 +122166,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/419%20Ruddington%20Lboro.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/419%20Ruddington%20Lboro.gpx",
+    "source": "leicester-ramblers"
   },
   "leicester-ramblers-426": {
     "slug": "leicester-ramblers-426",
@@ -121557,7 +122236,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx"
+    "gpx": "https://ramblers-leicester.org.uk/images/CF%20Train%20Routes/426%20Duffield%20to%20Derby.gpx",
+    "source": "leicester-ramblers"
   },
   "heart-rail-trail-warwick": {
     "slug": "heart-rail-trail-warwick",
@@ -121664,7 +122344,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-wythall": {
     "slug": "heart-rail-trail-wythall",
@@ -121750,7 +122431,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-wootton-wawen": {
     "slug": "heart-rail-trail-wootton-wawen",
@@ -121847,7 +122529,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-wilmcote": {
     "slug": "heart-rail-trail-wilmcote",
@@ -121957,7 +122640,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-whitlocks-end": {
     "slug": "heart-rail-trail-whitlocks-end",
@@ -122049,7 +122733,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-warwick-parkway": {
     "slug": "heart-rail-trail-warwick-parkway",
@@ -122132,7 +122817,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-the-lakes": {
     "slug": "heart-rail-trail-the-lakes",
@@ -122226,7 +122912,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-tile-hill": {
     "slug": "heart-rail-trail-tile-hill",
@@ -122329,7 +123016,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-stratford-upon-avon": {
     "slug": "heart-rail-trail-stratford-upon-avon",
@@ -122442,7 +123130,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-stratford-upon-avon-parkway": {
     "slug": "heart-rail-trail-stratford-upon-avon-parkway",
@@ -122529,7 +123218,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-shirley": {
     "slug": "heart-rail-trail-shirley",
@@ -122633,7 +123323,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-rugby": {
     "slug": "heart-rail-trail-rugby",
@@ -122723,7 +123414,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-nuneaton": {
     "slug": "heart-rail-trail-nuneaton",
@@ -122817,7 +123509,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-marston-green": {
     "slug": "heart-rail-trail-marston-green",
@@ -122912,7 +123605,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-leamington-spa": {
     "slug": "heart-rail-trail-leamington-spa",
@@ -122994,7 +123688,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-henley-in-arden": {
     "slug": "heart-rail-trail-henley-in-arden",
@@ -123109,7 +123804,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-hatton": {
     "slug": "heart-rail-trail-hatton",
@@ -123228,7 +123924,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-earlswood": {
     "slug": "heart-rail-trail-earlswood",
@@ -123315,7 +124012,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-claverdon": {
     "slug": "heart-rail-trail-claverdon",
@@ -123400,7 +124098,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-canley": {
     "slug": "heart-rail-trail-canley",
@@ -123510,7 +124209,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-bermuda-park": {
     "slug": "heart-rail-trail-bermuda-park",
@@ -123602,7 +124302,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-bedworth": {
     "slug": "heart-rail-trail-bedworth",
@@ -123705,7 +124406,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-bearley": {
     "slug": "heart-rail-trail-bearley",
@@ -123790,7 +124492,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-birmingham-international": {
     "slug": "heart-rail-trail-birmingham-international",
@@ -123879,7 +124582,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-coventry": {
     "slug": "heart-rail-trail-coventry",
@@ -124025,7 +124729,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-coventry-arena": {
     "slug": "heart-rail-trail-coventry-arena",
@@ -124115,7 +124820,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-berkswell": {
     "slug": "heart-rail-trail-berkswell",
@@ -124210,7 +124916,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-danzey": {
     "slug": "heart-rail-trail-danzey",
@@ -124302,7 +125009,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-olton": {
     "slug": "heart-rail-trail-olton",
@@ -124392,7 +125100,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-kenilworth": {
     "slug": "heart-rail-trail-kenilworth",
@@ -124481,7 +125190,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-hampton-in-arden": {
     "slug": "heart-rail-trail-hampton-in-arden",
@@ -124571,7 +125281,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-lapworth": {
     "slug": "heart-rail-trail-lapworth",
@@ -124660,7 +125371,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-solihull": {
     "slug": "heart-rail-trail-solihull",
@@ -124772,7 +125484,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-dorridge": {
     "slug": "heart-rail-trail-dorridge",
@@ -124872,7 +125585,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-widney-manor": {
     "slug": "heart-rail-trail-widney-manor",
@@ -124968,7 +125682,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "heart-rail-trail-wood-end": {
     "slug": "heart-rail-trail-wood-end",
@@ -125062,7 +125777,8 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails"
+    "sourceIndex": "https://www.heartcommunityrail.org.uk/railtrails",
+    "source": "heart-rail-trails"
   },
   "abbey-line-abbey-trail": {
     "slug": "abbey-line-abbey-trail",
@@ -125263,9 +125979,9 @@
     "issues": false,
     "notes": "",
     "outsideMainlandBritain": false,
-    "sourceIndex": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/"
+    "sourceIndex": "https://abbeylinecommunityrail.org.uk/days-out/abbey-trail/",
+    "source": "abbey-line"
   },
-  "_readme": "Manually-added walks with no external source — admin-created via the WalksAdminPanel '+ New walk' button. Entry shape matches data/rambler-walks.json so the build + API pipeline treats them uniformly. Slug convention: `manual-{id}` where {id} is the walk's own 4-char id.",
   "manual-0xfy": {
     "slug": "manual-0xfy",
     "title": "Manual MOR to BMY",
@@ -125319,7 +126035,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-52wh": {
     "slug": "manual-52wh",
@@ -125367,7 +126084,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-76xj": {
     "slug": "manual-76xj",
@@ -125415,7 +126133,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-cohcohbream": {
     "slug": "manual-cohcohbream",
@@ -125464,7 +126183,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-fkcfkcsamphire": {
     "slug": "manual-fkcfkcsamphire",
@@ -125513,7 +126233,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-pevbatfox": {
     "slug": "manual-pevbatfox",
@@ -125565,7 +126286,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-gomgomwren": {
     "slug": "manual-gomgomwren",
@@ -125628,7 +126350,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-tritrirobin": {
     "slug": "manual-tritrirobin",
@@ -125691,7 +126414,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-hndhndswift": {
     "slug": "manual-hndhndswift",
@@ -125744,7 +126468,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-egregrswallow": {
     "slug": "manual-egregrswallow",
@@ -125803,7 +126528,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-amyaruheron": {
     "slug": "manual-amyaruheron",
@@ -125859,7 +126585,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-ebnseflark": {
     "slug": "manual-ebnseflark",
@@ -125909,7 +126636,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wndwndfinch": {
     "slug": "manual-wndwndfinch",
@@ -125956,7 +126684,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wbcelypike": {
     "slug": "manual-wbcelypike",
@@ -126003,7 +126732,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-tbwtbwbadger": {
     "slug": "manual-tbwtbwbadger",
@@ -126052,7 +126782,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-apgapghazel": {
     "slug": "manual-apgapghazel",
@@ -126087,7 +126818,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-02T02:16:05.321Z",
+        "updatedAt": "2026-05-05T13:14:56.778Z",
         "komootUrl": "https://www.komoot.com/tour/849772927",
         "distanceKm": 13.9,
         "hours": 2.93,
@@ -126099,14 +126830,16 @@
         ],
         "uphillMetres": 134.87,
         "difficulty": "moderate",
-        "name": "Aspley Guise Circular via the Woburn Estate"
+        "name": "Aspley Guise Circular via the Woburn Estate",
+        "destinationStops": []
       }
     ],
     "extracted": true,
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wsehgstern": {
     "slug": "manual-wsehgstern",
@@ -126152,7 +126885,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-phrphroak": {
     "slug": "manual-phrphroak",
@@ -126207,7 +126941,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-cilcbeplover": {
     "slug": "manual-cilcbeplover",
@@ -126254,7 +126989,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-chgcilkestrel": {
     "slug": "manual-chgcilkestrel",
@@ -126301,7 +127037,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-gorpanotter": {
     "slug": "manual-gorpanotter",
@@ -126350,7 +127087,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-hotmlwbeech": {
     "slug": "manual-hotmlwbeech",
@@ -126396,7 +127134,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-hskhskbirch": {
     "slug": "manual-hskhskbirch",
@@ -126452,7 +127191,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-bxwbxwfern": {
     "slug": "manual-bxwbxwfern",
@@ -126499,7 +127239,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-cldcldpipit": {
     "slug": "manual-cldcldpipit",
@@ -126546,7 +127287,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-babbabdunnock": {
     "slug": "manual-babbabdunnock",
@@ -126599,7 +127341,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-lwsseethrush": {
     "slug": "manual-lwsseethrush",
@@ -126647,7 +127390,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-gbswrhblackcap": {
     "slug": "manual-gbswrhblackcap",
@@ -126693,7 +127437,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-fsbfsbmagpie": {
     "slug": "manual-fsbfsbmagpie",
@@ -126741,7 +127486,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-gldgldraven": {
     "slug": "manual-gldgldraven",
@@ -126788,7 +127534,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-kitkitcrow": {
     "slug": "manual-kitkitcrow",
@@ -126835,7 +127582,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wnrwnrrook": {
     "slug": "manual-wnrwnrrook",
@@ -126882,7 +127630,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-prrprrjackdaw": {
     "slug": "manual-prrprrjackdaw",
@@ -126929,7 +127678,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wndwndjay": {
     "slug": "manual-wndwndjay",
@@ -126977,7 +127727,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-amramrgull": {
     "slug": "manual-amramrgull",
@@ -127025,7 +127776,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-sacsacsnipe": {
     "slug": "manual-sacsacsnipe",
@@ -127074,7 +127826,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-bissawowl": {
     "slug": "manual-bissawowl",
@@ -127121,7 +127874,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-cbgcbgfalcon": {
     "slug": "manual-cbgcbgfalcon",
@@ -127169,7 +127923,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-salsalharrier": {
     "slug": "manual-salsalharrier",
@@ -127217,7 +127972,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-lytbcubuzzard": {
     "slug": "manual-lytbcubuzzard",
@@ -127265,7 +128021,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-pbrpbrhare": {
     "slug": "manual-pbrpbrhare",
@@ -127314,7 +128071,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-alfalfowl": {
     "slug": "manual-alfalfowl",
@@ -127356,7 +128114,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-blpblpoak": {
     "slug": "manual-blpblpoak",
@@ -127395,7 +128154,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-blpblpash": {
     "slug": "manual-blpblpash",
@@ -127434,7 +128194,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-dfidfibirch": {
     "slug": "manual-dfidfibirch",
@@ -127476,7 +128237,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-lgmlgmwren": {
     "slug": "manual-lgmlgmwren",
@@ -127518,7 +128280,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-cmfcmfheron": {
     "slug": "manual-cmfcmfheron",
@@ -127560,7 +128323,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-wtscmfrobin": {
     "slug": "manual-wtscmfrobin",
@@ -127602,7 +128366,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-blpblphazel": {
     "slug": "manual-blpblphazel",
@@ -127640,7 +128405,8 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
   },
   "manual-hurphrgean": {
     "slug": "manual-hurphrgean",
@@ -127682,6 +128448,200 @@
     "onMap": true,
     "issues": false,
     "notes": "",
-    "outsideMainlandBritain": false
+    "outsideMainlandBritain": false,
+    "source": "manual"
+  },
+  "manual-hpdhpdguillemot": {
+    "slug": "manual-hpdhpdguillemot",
+    "title": "Manual HPD Circular",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "name": "Harpenden Circular via the Devil's Dyke",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "HPD",
+        "endStation": "HPD",
+        "stationToStation": true,
+        "distanceKm": 16,
+        "hours": 3.4,
+        "lunchStops": [
+          {
+            "name": "The Swan",
+            "location": "Wheathampstead",
+            "url": "http://theswanwheathampstead.co.uk/",
+            "lat": 51.811503,
+            "lng": -0.293896,
+            "kmIntoRoute": 6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "The Reading Rooms",
+            "location": "Wheathampstead",
+            "url": "https://www.thereadingrooms.pub/",
+            "lat": 51.812553,
+            "lng": -0.293689,
+            "kmIntoRoute": 6.7,
+            "businessStatus": "CLOSED_TEMPORARILY",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "The Wicked Lady",
+            "location": "St Albans",
+            "url": "https://www.thewickedladypub.co.uk/?utm_source=google&utm_medium=organic&utm_campaign=gmb-homepage",
+            "lat": 51.799839,
+            "lng": -0.296874,
+            "kmIntoRoute": 11.6,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "restaurant",
+              "pub"
+            ]
+          }
+        ],
+        "destinationStops": [
+          {
+            "name": "Elephant & Castle Pub",
+            "location": "St Albans",
+            "url": "https://www.google.com/maps/place/?q=place_id:ChIJG79Tu3Q5dkgRasV49kl6eFc",
+            "lat": 51.804942,
+            "lng": -0.307922,
+            "kmIntoRoute": 12.9,
+            "businessStatus": "CLOSED_TEMPORARILY",
+            "types": [
+              "pub",
+              "restaurant"
+            ]
+          },
+          {
+            "name": "Marquis of Granby",
+            "location": "Harpenden",
+            "url": "https://www.omgmog.pub/",
+            "lat": 51.820195,
+            "lng": -0.334997,
+            "kmIntoRoute": 15.3,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          },
+          {
+            "name": "Amble Inn",
+            "location": "Harpenden",
+            "url": "http://www.theambleinn.co.uk/",
+            "lat": 51.821876,
+            "lng": -0.339709,
+            "kmIntoRoute": 16,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          }
+        ],
+        "sights": [
+          {
+            "name": "Wheathampstead",
+            "url": "https://www.enjoystalbans.com/listing/wheathampstead-heritage-trail/",
+            "lat": 51.813859,
+            "lng": -0.293104,
+            "kmIntoRoute": 7.2,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "village"
+            ]
+          },
+          {
+            "name": "St Helen's Church",
+            "url": "http://www.sth-stp.org/",
+            "lat": 51.812337,
+            "lng": -0.294837,
+            "kmIntoRoute": 6.4,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "church"
+            ]
+          },
+          {
+            "name": "Miller & Carter",
+            "url": "https://www.millerandcarter.co.uk/restaurants/east-of-england/millerandcarterwheathampstead?utm_source=google&utm_medium=organic&utm_campaign=gmb-homepage",
+            "lat": 51.813409,
+            "lng": -0.29327,
+            "kmIntoRoute": 7.1,
+            "businessStatus": "OPERATIONAL",
+            "types": [
+              "pub"
+            ]
+          }
+        ],
+        "id": "hpdhpdguillemot",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-05T16:56:43.968Z",
+        "komootUrl": "https://www.komoot.com/tour/849724061",
+        "uphillMetres": 163.33,
+        "difficulty": "moderate"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "source": "manual"
+  },
+  "manual-lwsseeeel": {
+    "slug": "manual-lwsseeeel",
+    "title": "Manual LWS to SEE",
+    "url": "",
+    "favourite": false,
+    "tags": [
+      "manual"
+    ],
+    "categories": [],
+    "region": "",
+    "walks": [
+      {
+        "role": "main",
+        "startPlace": "",
+        "endPlace": "",
+        "startStation": "LWS",
+        "endStation": "SEE",
+        "stationToStation": true,
+        "lunchStops": [],
+        "destinationStops": [],
+        "sights": [],
+        "id": "lwsseeeel",
+        "source": {
+          "orgSlug": "rough-guide-walks-london-south-east-3rd",
+          "pageName": "",
+          "pageURL": "",
+          "type": "main"
+        },
+        "updatedAt": "2026-05-05T18:04:22.575Z",
+        "komootUrl": "https://www.komoot.com/tour/2925729139"
+      }
+    ],
+    "extracted": true,
+    "onMap": true,
+    "issues": false,
+    "notes": "",
+    "outsideMainlandBritain": false,
+    "source": "manual"
   }
 }

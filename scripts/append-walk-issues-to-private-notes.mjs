@@ -17,13 +17,8 @@ import { dirname, join } from "path"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
-const WALKS = join(ROOT, "data", "rambler-walks.json")
-// Additional walks sources whose issues should also populate privateNotes.
-const EXTRA_WALKS = [
-  join(ROOT, "data", "leicester-ramblers-walks.json"),
-  join(ROOT, "data", "heart-rail-trails-walks.json"),
-  join(ROOT, "data", "abbey-line-walks.json"),
-]
+const WALKS = join(ROOT, "data", "walks.json")
+const EXTRA_WALKS = []
 const NOTES = join(ROOT, "data", "station-notes.json")
 const STATIONS = join(ROOT, "public", "stations.json")
 

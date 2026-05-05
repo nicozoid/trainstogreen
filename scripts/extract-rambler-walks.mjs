@@ -1,5 +1,5 @@
 // Extracts structured walk data from walkingclub.org.uk pages using the Claude
-// API. For each walk listed in data/rambler-walks.json this script:
+// API. For each saturday-walkers-club entry in data/walks.json this script:
 //
 //   1. Fetches the page HTML
 //   2. Strips noise (scripts, styles, HTML comments, obvious nav/footer)
@@ -7,8 +7,9 @@
 //      (`extract_walk`) whose input_schema defines the output shape
 //   4. Post-processes: resolves place names to CRS codes, derives `features`
 //      from SWC categories + extractor output, flags ambiguities
-//   5. Writes the merged entry back into data/rambler-walks.json (atomic
-//      per-walk so interruptions don't lose progress)
+//   5. Writes the merged entry back into data/walks.json (atomic per-walk
+//      so interruptions don't lose progress). Entries owned by other
+//      sources are not touched.
 //
 // Prompt caching is on — the extractor's tool schema and system prompt are
 // identical across every request, so the first call pays the full prefix
@@ -34,7 +35,8 @@ import Anthropic from "@anthropic-ai/sdk"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
-const WALKS_PATH = join(PROJECT_ROOT, "data", "rambler-walks.json")
+const WALKS_PATH = join(PROJECT_ROOT, "data", "walks.json")
+const OWN_SOURCE = "saturday-walkers-club"
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 
 const MODEL = "claude-sonnet-4-6"
@@ -552,7 +554,10 @@ function computeCost(usage) {
 // ── Target selection ───────────────────────────────────────────────────────
 
 function selectTargets(walks, args) {
-  const all = Object.values(walks)
+  // Only operate on saturday-walkers-club entries — walks.json now
+  // contains entries from other sources too. The slug-based --slug
+  // selector still allows targeting any entry directly.
+  const all = Object.values(walks).filter((w) => w?.source === OWN_SOURCE)
   let targets = all
   if (args.slug) {
     const one = walks[args.slug]

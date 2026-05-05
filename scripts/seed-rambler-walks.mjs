@@ -1,8 +1,10 @@
-// Seeds data/rambler-walks.json by fetching the walkingclub.org.uk walk
-// index and parsing out slug, title, region, and favourite status for every
-// walk listed. Safe to re-run — merges with any existing data, so per-walk
-// extraction state (extracted/onMap/issues/notes/walks/places/…) is
-// preserved and only the index-level fields are refreshed.
+// Seeds the saturday-walkers-club entries in data/walks.json by fetching
+// the walkingclub.org.uk walk index and parsing out slug, title, region,
+// and favourite status for every walk listed. Safe to re-run — merges
+// with any existing data, so per-walk extraction state (extracted/onMap/
+// issues/notes/walks/places/…) is preserved and only the index-level
+// fields are refreshed. Entries from other sources (leicester-ramblers,
+// manual, etc.) are left alone.
 //
 // Usage:  node scripts/seed-rambler-walks.mjs
 //
@@ -25,7 +27,8 @@ import { dirname, join } from "path"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
-const OUT_PATH = join(PROJECT_ROOT, "data", "rambler-walks.json")
+const OUT_PATH = join(PROJECT_ROOT, "data", "walks.json")
+const OWN_SOURCE = "saturday-walkers-club"
 const INDEX_URL = "https://www.walkingclub.org.uk/walk/"
 
 // Bot-block workaround — the site rejects default curl/node user agents
@@ -76,12 +79,18 @@ function parseIndex(html) {
 }
 
 function mergeWithExisting(fresh) {
-  // Load any existing file so per-walk extraction state is preserved
+  // Load any existing file so per-walk extraction state is preserved.
   const existing = existsSync(OUT_PATH)
     ? JSON.parse(readFileSync(OUT_PATH, "utf-8"))
     : {}
 
+  // Start with every NON-saturday-walkers-club entry untouched. Only
+  // entries this seeder owns will be replaced from the fresh scrape.
   const merged = {}
+  for (const [slug, entry] of Object.entries(existing)) {
+    if (entry?.source !== OWN_SOURCE) merged[slug] = entry
+  }
+
   for (const row of fresh) {
     const prev = existing[row.slug] ?? {}
     merged[row.slug] = {
@@ -104,6 +113,7 @@ function mergeWithExisting(fresh) {
       ...(prev.tags && { tags: prev.tags }),
       ...(prev.places && { places: prev.places }),
       ...(prev.walks && { walks: prev.walks }),
+      source: OWN_SOURCE,
     }
   }
   return merged

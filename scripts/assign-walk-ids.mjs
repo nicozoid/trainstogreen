@@ -28,13 +28,7 @@ import { WALK_ID_WORDS } from "./walk-id-words.mjs"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 
-const WALKS_FILES = [
-  join(PROJECT_ROOT, "data", "rambler-walks.json"),
-  join(PROJECT_ROOT, "data", "leicester-ramblers-walks.json"),
-  join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json"),
-  join(PROJECT_ROOT, "data", "abbey-line-walks.json"),
-  join(PROJECT_ROOT, "data", "manual-walks.json"),
-]
+const WALKS_FILES = [join(PROJECT_ROOT, "data", "walks.json")]
 
 // "nul" stands in for a missing station endpoint — keeps every id
 // the same shape (3 letters per slot) so the format stays uniform.

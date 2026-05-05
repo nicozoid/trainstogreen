@@ -6,8 +6,9 @@
 // Run:
 //   node scripts/seed-leicester-walks.mjs
 //
-// Writes data/leicester-ramblers-walks.json in the same shape as
-// data/rambler-walks.json so build-rambler-notes.mjs can merge the two.
+// Writes Leicester entries into the unified data/walks.json, stamping
+// each with `source: "leicester-ramblers"`. Entries owned by other
+// sources (saturday-walkers-club, manual, etc.) are preserved.
 
 import { readFileSync, writeFileSync } from "fs"
 import { fileURLToPath } from "url"
@@ -16,7 +17,8 @@ import { dirname, join } from "path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, "..")
 const STATIONS_PATH = join(ROOT, "public", "stations.json")
-const OUT_PATH = join(ROOT, "data", "leicester-ramblers-walks.json")
+const OUT_PATH = join(ROOT, "data", "walks.json")
+const OWN_SOURCE = "leicester-ramblers"
 
 const SOURCE_URL = "https://ramblers-leicester.org.uk/car-free-walks/120-car-free-train-routes.html"
 const PAGE_TITLE = "Leicester Ramblers car-free train walks"
@@ -116,10 +118,18 @@ function entryFor(w) {
     issues: false,
     notes: "",
     outsideMainlandBritain: false,
+    source: OWN_SOURCE,
   }
 }
 
+// Read the existing unified walks file and preserve every entry not
+// owned by this source — only Leicester entries get rewritten.
+const existing = JSON.parse(readFileSync(OUT_PATH, "utf-8"))
 const merged = {}
+for (const [slug, entry] of Object.entries(existing)) {
+  if (entry?.source !== OWN_SOURCE) merged[slug] = entry
+}
+
 let resolved = 0, bus = 0, unresolved = 0
 for (const w of walksSource) {
   const e = entryFor(w)
@@ -133,5 +143,5 @@ for (const w of walksSource) {
 writeFileSync(OUT_PATH, JSON.stringify(merged, null, 2) + "\n", "utf-8")
 // eslint-disable-next-line no-console
 console.log(
-  `Wrote ${Object.keys(merged).length} Leicester walks to ${OUT_PATH}  (s2s=${resolved}  bus=${bus}  unresolved=${unresolved})`
+  `Wrote ${walksSource.length} Leicester walks to ${OUT_PATH}  (s2s=${resolved}  bus=${bus}  unresolved=${unresolved}); ${Object.keys(merged).length} total entries.`
 )

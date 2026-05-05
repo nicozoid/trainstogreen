@@ -28,12 +28,7 @@ import { dirname, join } from "path"
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
 
-const WALKS_FILES = [
-  "data/rambler-walks.json",
-  "data/leicester-ramblers-walks.json",
-  "data/heart-rail-trails-walks.json",
-  "data/abbey-line-walks.json",
-]
+const WALKS_FILES = ["data/walks.json"]
 
 function parseArgs(argv) {
   return { dryRun: argv.includes("--dry-run") }

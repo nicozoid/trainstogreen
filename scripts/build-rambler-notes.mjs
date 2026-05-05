@@ -1,4 +1,4 @@
-// Builds per-station RamblerNotes from data/rambler-walks.json and writes
+// Builds per-station RamblerNotes from data/walks.json and writes
 // them to data/station-notes.json. Idempotent — re-running produces the
 // same output, regenerating from the walks data each time.
 //
@@ -21,21 +21,10 @@ import { dirname, join } from "path"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const PROJECT_ROOT = join(__dirname, "..")
-const WALKS_PATH = join(PROJECT_ROOT, "data", "rambler-walks.json")
-// Additional walk source(s). Currently just the Leicester Ramblers
-// dataset, which shares the same entry shape so we merge into a single
-// map keyed by slug. If future sources are added, extend this list —
-// the later sources' entries override earlier ones on slug collision,
-// so pick slug prefixes that don't clash (e.g. "leicester-ramblers-…").
-const EXTRA_WALKS_PATHS = [
-  join(PROJECT_ROOT, "data", "leicester-ramblers-walks.json"),
-  join(PROJECT_ROOT, "data", "heart-rail-trails-walks.json"),
-  join(PROJECT_ROOT, "data", "abbey-line-walks.json"),
-  // Manual walks created through the admin UI ("+ New walk") —
-  // same entry shape as rambler-walks.json, one entry per walk
-  // keyed `manual-{id}`.
-  join(PROJECT_ROOT, "data", "manual-walks.json"),
-]
+// Single unified walks file. Each entry carries a top-level `source`
+// field identifying its origin: "saturday-walkers-club",
+// "leicester-ramblers", "heart-rail-trails", "abbey-line", or "manual".
+const WALKS_PATH = join(PROJECT_ROOT, "data", "walks.json")
 const NOTES_PATH = join(PROJECT_ROOT, "data", "station-notes.json")
 const STATIONS_PATH = join(PROJECT_ROOT, "public", "stations.json")
 // Synthetic-cluster topology — read from lib/clusters-data.json so this
@@ -898,20 +887,7 @@ function buildSummary(variant, entry, crsIndex, sources) {
 // instead of re-reading the stale on-disk version. Without this,
 // derived files end up one-save behind the source file.
 function loadAllWalks(overrideWalks) {
-  const readOrOverride = (path) => overrideWalks?.get(path) ?? JSON.parse(readFileSync(path, "utf-8"))
-  const merged = readOrOverride(WALKS_PATH)
-  for (const path of EXTRA_WALKS_PATHS) {
-    try {
-      const extra = overrideWalks?.has(path) ? overrideWalks.get(path) : JSON.parse(readFileSync(path, "utf-8"))
-      for (const [slug, entry] of Object.entries(extra)) merged[slug] = entry
-    } catch (err) {
-      // Missing file is fine (extras are optional) — rethrow if it's a
-      // different problem so we don't silently eat parse errors.
-      // eslint-disable-next-line no-console
-      if ((err instanceof Error) && !/ENOENT/.test(err.message)) throw err
-    }
-  }
-  return merged
+  return overrideWalks?.get(WALKS_PATH) ?? JSON.parse(readFileSync(WALKS_PATH, "utf-8"))
 }
 
 function buildRamblerNotes(args) {
@@ -1463,26 +1439,18 @@ function buildRamblerNotes(args) {
   console.log(`Wrote ${Object.keys(bySourceSorted).length} source orgs to ${STATIONS_BY_SOURCE_PATH}`)
 
   if (args.flipOnMap) {
-    // Update onMap per-source so each file only holds its own entries —
-    // otherwise merging `walks` would push Leicester entries into the SWC
-    // rambler-walks.json on writeback.
     let flipped = 0
-    const updateFile = (path) => {
-      let data
-      try { data = JSON.parse(readFileSync(path, "utf-8")) } catch { return }
-      for (const slug of Object.keys(data)) {
-        const entry = data[slug]
-        if (!entry.extracted) continue
-        const onMapNow = urlsUsed.has(slug) || !!entry.outsideMainlandBritain
-        if (entry.onMap !== onMapNow) {
-          entry.onMap = onMapNow
-          flipped++
-        }
+    const data = JSON.parse(readFileSync(WALKS_PATH, "utf-8"))
+    for (const slug of Object.keys(data)) {
+      const entry = data[slug]
+      if (!entry.extracted) continue
+      const onMapNow = urlsUsed.has(slug) || !!entry.outsideMainlandBritain
+      if (entry.onMap !== onMapNow) {
+        entry.onMap = onMapNow
+        flipped++
       }
-      writeFileSync(path, JSON.stringify(data, null, 2) + "\n", "utf-8")
     }
-    updateFile(WALKS_PATH)
-    for (const p of EXTRA_WALKS_PATHS) updateFile(p)
+    writeFileSync(WALKS_PATH, JSON.stringify(data, null, 2) + "\n", "utf-8")
     // eslint-disable-next-line no-console
     console.log(`Flipped onMap on ${flipped} walk entries.`)
   }
