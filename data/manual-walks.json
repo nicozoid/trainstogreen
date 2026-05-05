@@ -826,7 +826,7 @@
           "pageURL": "",
           "type": "main"
         },
-        "updatedAt": "2026-05-05T13:13:49.787Z",
+        "updatedAt": "2026-05-05T13:14:56.778Z",
         "komootUrl": "https://www.komoot.com/tour/849772927",
         "distanceKm": 13.9,
         "hours": 2.93,
@@ -839,11 +839,6 @@
         "uphillMetres": 134.87,
         "difficulty": "moderate",
         "name": "Aspley Guise Circular via the Woburn Estate",
-        "bestSeasons": [
-          "jun",
-          "jul",
-          "aug"
-        ],
         "destinationStops": []
       }
     ],
